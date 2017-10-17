@@ -1,0 +1,75 @@
+{
+	"ImportPath": "github.com/KyberNetwork/reserve-data",
+	"GoVersion": "go1.9",
+	"GodepVersion": "v79",
+	"Deps": [
+		{
+			"ImportPath": "github.com/certifi/gocertifi",
+			"Comment": "2017.07.27",
+			"Rev": "3fd9e1adb12b72d2f3f82191d49be9b93c69f67c"
+		},
+		{
+			"ImportPath": "github.com/getsentry/raven-go",
+			"Rev": "1452f6376ddb15c546b6d7567e1d9518765391b5"
+		},
+		{
+			"ImportPath": "github.com/gin-contrib/sentry",
+			"Rev": "5806d6ecb7b26ed3c169118532b43bcf1fb2b650"
+		},
+		{
+			"ImportPath": "github.com/gin-contrib/sse",
+			"Rev": "22d885f9ecc78bf4ee5d72b937e4bbcdc58e8cae"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/gin",
+			"Comment": "v1.2-117-gb8b6831",
+			"Rev": "b8b68314faa067acae5b17c828127b04af51ebe2"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/gin/binding",
+			"Comment": "v1.2-117-gb8b6831",
+			"Rev": "b8b68314faa067acae5b17c828127b04af51ebe2"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/gin/json",
+			"Comment": "v1.2-117-gb8b6831",
+			"Rev": "b8b68314faa067acae5b17c828127b04af51ebe2"
+		},
+		{
+			"ImportPath": "github.com/gin-gonic/gin/render",
+			"Comment": "v1.2-117-gb8b6831",
+			"Rev": "b8b68314faa067acae5b17c828127b04af51ebe2"
+		},
+		{
+			"ImportPath": "github.com/golang/protobuf/proto",
+			"Rev": "130e6b02ab059e7b717a096f397c5b60111cae74"
+		},
+		{
+			"ImportPath": "github.com/json-iterator/go",
+			"Comment": "1.0.3",
+			"Rev": "6240e1e7983a85228f7fd9c3e1b6932d46ec58e2"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-isatty",
+			"Comment": "v0.0.3-1-ga5cdd64",
+			"Rev": "a5cdd64afdee435007ee3e9f6ed4684af949d568"
+		},
+		{
+			"ImportPath": "github.com/ugorji/go/codec",
+			"Rev": "54210f4e076c57f351166f0ed60e67d3fca57a36"
+		},
+		{
+			"ImportPath": "golang.org/x/sys/unix",
+			"Rev": "8dbc5d05d6edcc104950cc299a1ce6641235bc86"
+		},
+		{
+			"ImportPath": "gopkg.in/go-playground/validator.v8",
+			"Comment": "v8.18.2",
+			"Rev": "5f1438d3fca68893a817e4a66806cea46a9e4ebf"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "4c78c975fe7c825c6d1466c42be594d1d6f3aba6"
+		}
+	]
+}
