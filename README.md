@@ -25,6 +25,8 @@ eg:
 curl -X GET "http://13.229.54.28:8000/prices"
 ```
 
+### Get balances for all tokens
+
 
 ## Supported tokens
 
