@@ -79,7 +79,6 @@ func (self *Liqui) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice
 					one_pair_result.BuyPrices = append(
 						one_pair_result.BuyPrices,
 						common.PriceEntry{
-							returnTime,
 							buy[1],
 							buy[0],
 						},
@@ -89,7 +88,6 @@ func (self *Liqui) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice
 					one_pair_result.SellPrices = append(
 						one_pair_result.SellPrices,
 						common.PriceEntry{
-							returnTime,
 							sell[1],
 							sell[0],
 						},

@@ -73,7 +73,6 @@ func (self Bitfinex) FetchOnePairData(
 					result.BuyPrices = append(
 						result.BuyPrices,
 						common.PriceEntry{
-							returnTime,
 							quantity,
 							rate,
 						},
@@ -85,7 +84,6 @@ func (self Bitfinex) FetchOnePairData(
 					result.SellPrices = append(
 						result.SellPrices,
 						common.PriceEntry{
-							returnTime,
 							quantity,
 							rate,
 						},

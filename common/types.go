@@ -24,9 +24,8 @@ func NewTokenPairID(base, quote string) TokenPairID {
 type ExchangeID string
 
 type PriceEntry struct {
-	Timestamp Timestamp
-	Quantity  float64
-	Rate      float64
+	Quantity float64
+	Rate     float64
 }
 
 type AllPriceResponse struct {

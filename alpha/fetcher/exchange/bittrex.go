@@ -70,7 +70,6 @@ func (self Bittrex) FetchOnePairData(
 					result.BuyPrices = append(
 						result.BuyPrices,
 						common.PriceEntry{
-							returnTime,
 							buy["Quantity"],
 							buy["Rate"],
 						},
@@ -80,7 +79,6 @@ func (self Bittrex) FetchOnePairData(
 					result.SellPrices = append(
 						result.SellPrices,
 						common.PriceEntry{
-							returnTime,
 							sell["Quantity"],
 							sell["Rate"],
 						},
