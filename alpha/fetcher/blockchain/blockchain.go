@@ -1,7 +1,7 @@
 package blockchain
 
 import (
-	"fmt"
+	// "fmt"
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -56,7 +56,6 @@ func NewBlockchain(addr ethereum.Address) (*Blockchain, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("wrapper address: %s\n", addr.Hex())
 	client, err := NewContractWrapper(addr, infura)
 	if err != nil {
 		return nil, err

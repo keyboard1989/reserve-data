@@ -21,7 +21,8 @@ func main() {
 	storage := storage.NewRamStorage()
 	fetcher := fetcher.NewFetcher(
 		storage, 3*time.Second, 2*time.Second,
-		ethereum.HexToAddress("0x00f915055992d04e4ecde9c4724e4925142ea059"),
+		// ethereum.HexToAddress("0x00f915055992d04e4ecde9c4724e4925142ea059"),
+		ethereum.HexToAddress("0x7ffdb79da310995b0d5778b87f69a1340b639266"),
 	)
 	fetcher.AddExchange(exchange.NewLiqui())
 	fetcher.AddExchange(exchange.NewBinance())

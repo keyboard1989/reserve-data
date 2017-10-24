@@ -90,7 +90,7 @@ func (self *Fetcher) fetchAllBalances() {
 		log.Printf("Fetching data from blockchain failed: %s\n", err)
 	}
 	err = self.storage.StoreBalance(data)
-	fmt.Printf("balance data: %v\n", data)
+	// fmt.Printf("balance data: %v\n", data)
 	if err != nil {
 		log.Printf("Storing balance data failed: %s\n", err)
 	}

@@ -41,10 +41,10 @@ func (self *Liqui) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice
 	req.Header.Add("Accept", "application/json")
 	timestamp := common.GetTimestamp()
 	resp, err := client.Do(req)
-	one_pair_result := common.ExchangePrice{}
-	one_pair_result.Timestamp = timestamp
 	if err != nil {
 		for _, pair := range pairs {
+			one_pair_result := common.ExchangePrice{}
+			one_pair_result.Timestamp = timestamp
 			one_pair_result.Valid = false
 			one_pair_result.Error = err.Error()
 			result[pair.PairID()] = one_pair_result
@@ -53,9 +53,11 @@ func (self *Liqui) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
 		returnTime := common.GetTimestamp()
-		one_pair_result.ReturnTime = returnTime
 		if err != nil {
 			for _, pair := range pairs {
+				one_pair_result := common.ExchangePrice{}
+				one_pair_result.Timestamp = timestamp
+				one_pair_result.ReturnTime = returnTime
 				one_pair_result.Valid = false
 				one_pair_result.Error = err.Error()
 				result[pair.PairID()] = one_pair_result
@@ -64,6 +66,9 @@ func (self *Liqui) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice
 			resp_data := liqresp{}
 			json.Unmarshal(resp_body, &resp_data)
 			for _, pair := range pairs {
+				one_pair_result := common.ExchangePrice{}
+				one_pair_result.Timestamp = timestamp
+				one_pair_result.ReturnTime = returnTime
 				one_pair_result.Valid = true
 				one_data := resp_data[fmt.Sprintf(
 					"%s_%s",
