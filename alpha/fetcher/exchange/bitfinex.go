@@ -111,7 +111,7 @@ func (self Bitfinex) FetchPriceData() (map[common.TokenPairID]common.ExchangePri
 		result[key.(common.TokenPairID)] = value.(common.ExchangePrice)
 		return true
 	})
-	fmt.Printf("result: %v\n", result)
+	// fmt.Printf("result: %v\n", result)
 	return result, nil
 }
 

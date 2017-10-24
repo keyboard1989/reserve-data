@@ -114,7 +114,7 @@ func (self Binance) FetchPriceData() (map[common.TokenPairID]common.ExchangePric
 		result[key.(common.TokenPairID)] = value.(common.ExchangePrice)
 		return true
 	})
-	fmt.Printf("result: %v\n", result)
+	// fmt.Printf("result: %v\n", result)
 	return result, nil
 }
 

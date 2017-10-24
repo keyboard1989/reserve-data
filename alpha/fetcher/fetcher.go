@@ -5,30 +5,56 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 type Fetcher struct {
-	storage   Storage
-	exchanges []Exchange
-	ticker    <-chan time.Time
+	storage    Storage
+	exchanges  []Exchange
+	ticker     <-chan time.Time
+	blockchain Blockchain
+	bticker    <-chan time.Time
+	rmaddr     common.Address
 }
 
-func NewFetcher(storage Storage, duration time.Duration) *Fetcher {
+func NewFetcher(
+	storage Storage,
+	duration, bduration time.Duration,
+	address common.Address) *Fetcher {
 	return &Fetcher{
-		storage:   storage,
-		exchanges: []Exchange{},
-		ticker:    time.Tick(duration),
+		storage:    storage,
+		exchanges:  []Exchange{},
+		ticker:     time.Tick(duration),
+		blockchain: nil,
+		bticker:    time.Tick(bduration),
+		rmaddr:     address,
 	}
+}
+
+func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
+	self.blockchain = blockchain
 }
 
 func (self *Fetcher) AddExchange(exchange Exchange) {
 	self.exchanges = append(self.exchanges, exchange)
 }
 
-func (self *Fetcher) Run() error {
+func (self *Fetcher) fetchingFromExchanges() {
 	for _ = range self.ticker {
-		self.fetchAll()
+		self.fetchAllFromExchanges()
 	}
+}
+
+func (self *Fetcher) fetchingFromBlockchain() {
+	for _ = range self.bticker {
+		self.fetchAllFromBlockchain()
+	}
+}
+
+func (self *Fetcher) Run() error {
+	go self.fetchingFromExchanges()
+	go self.fetchingFromBlockchain()
 	return nil
 }
 
@@ -52,14 +78,30 @@ func (self *Fetcher) fetchAllPrices() {
 		go self.fetchPriceFromExchange(&wait, exchange, data)
 	}
 	wait.Wait()
-	fmt.Printf("Data: %v\n", data)
 	err := self.storage.StorePrice(data.GetData())
 	if err != nil {
-		log.Printf("Storing data failed: %v\n", err)
+		log.Printf("Storing data failed: %s\n", err)
 	}
 }
 
-func (self *Fetcher) fetchAll() {
+func (self *Fetcher) fetchAllBalances() {
+	data, err := self.blockchain.FetchBalanceData(self.rmaddr)
+	if err != nil {
+		log.Printf("Fetching data from blockchain failed: %s\n", err)
+	}
+	err = self.storage.StoreBalance(data)
+	fmt.Printf("balance data: %v\n", data)
+	if err != nil {
+		log.Printf("Storing balance data failed: %s\n", err)
+	}
+}
+
+func (self *Fetcher) fetchAllFromExchanges() {
 	fmt.Printf("Fetching data...")
 	self.fetchAllPrices()
+}
+
+func (self *Fetcher) fetchAllFromBlockchain() {
+	fmt.Printf("Fetching data from blockchain...")
+	self.fetchAllBalances()
 }

@@ -63,3 +63,11 @@ func GetToken(id string) (Token, error) {
 		return t, nil
 	}
 }
+
+func MustGetToken(id string) Token {
+	t, e := GetToken(id)
+	if e != nil {
+		panic(e)
+	}
+	return t
+}

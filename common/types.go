@@ -2,6 +2,7 @@ package common
 
 import (
 	"fmt"
+	"math/big"
 	"strconv"
 	"time"
 )
@@ -51,4 +52,31 @@ type ExchangePrice struct {
 	BuyPrices  []PriceEntry
 	SellPrices []PriceEntry
 	ReturnTime Timestamp
+}
+
+type RawBalance big.Int
+
+func (self *RawBalance) ToFloat(decimal int64) float64 {
+	f := new(big.Float).SetInt((*big.Int)(self))
+	power := new(big.Float).SetInt(new(big.Int).Exp(
+		big.NewInt(10), big.NewInt(decimal), nil,
+	))
+	res := new(big.Float).Quo(f, power)
+	result, _ := res.Float64()
+	return result
+}
+
+type BalanceResponse struct {
+	Valid      bool
+	Error      string
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Balance    float64
+}
+
+type AllBalanceResponse struct {
+	Version    Version
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Data       map[string]BalanceResponse
 }

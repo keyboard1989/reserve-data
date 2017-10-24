@@ -1,18 +1,18 @@
 package storage
 
 import (
-	"errors"
 	"github.com/KyberNetwork/reserve-data/common"
-	"sync"
 )
 
 type RamStorage struct {
-	price *RamPriceStorage
+	price   *RamPriceStorage
+	balance *RamBalanceStorage
 }
 
 func NewRamStorage() *RamStorage {
 	return &RamStorage{
 		NewRamPriceStorage(),
+		NewRamBalanceStorage(),
 	}
 }
 
@@ -33,58 +33,6 @@ func (self *RamStorage) StorePrice(data map[common.TokenPairID]common.OnePrice) 
 	return self.price.StoreNewData(data)
 }
 
-type RamPriceStorage struct {
-	mu      sync.RWMutex
-	version int64
-	data    map[int64]map[common.TokenPairID]common.OnePrice
-}
-
-func NewRamPriceStorage() *RamPriceStorage {
-	return &RamPriceStorage{
-		mu:      sync.RWMutex{},
-		version: 0,
-		data:    map[int64]map[common.TokenPairID]common.OnePrice{},
-	}
-}
-
-func (self *RamPriceStorage) CurrentVersion() (int64, error) {
-	self.mu.RLock()
-	defer self.mu.RUnlock()
-	return self.version, nil
-}
-
-func (self *RamPriceStorage) GetAllPrices(version int64) (map[common.TokenPairID]common.OnePrice, error) {
-	self.mu.RLock()
-	defer self.mu.RUnlock()
-	all := self.data[version]
-	if all == nil {
-		return map[common.TokenPairID]common.OnePrice{}, errors.New("Version doesn't exist")
-	} else {
-		return all, nil
-	}
-}
-
-func (self *RamPriceStorage) GetOnePrice(pair common.TokenPairID, version int64) (common.OnePrice, error) {
-	self.mu.RLock()
-	defer self.mu.RUnlock()
-	all := self.data[version]
-	if all == nil {
-		return common.OnePrice{}, errors.New("Version doesn't exist")
-	} else {
-		data := all[pair]
-		if len(data) == 0 {
-			return common.OnePrice{}, errors.New("Pair of token is not supported")
-		} else {
-			return data, nil
-		}
-	}
-}
-
-func (self *RamPriceStorage) StoreNewData(data map[common.TokenPairID]common.OnePrice) error {
-	self.mu.Lock()
-	defer self.mu.Unlock()
-	self.version = self.version + 1
-	self.data[self.version] = data
-	delete(self.data, self.version-1)
-	return nil
+func (self *RamStorage) StoreBalance(data map[string]common.RawBalance) error {
+	return self.balance.StoreNewData(data)
 }
