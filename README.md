@@ -25,8 +25,15 @@ eg:
 curl -X GET "http://13.229.54.28:8000/prices"
 ```
 
-### Get balances for all tokens
+### Get balances for all tokens of the reserve manager
+```
+<host>:8000/balances
+```
 
+eg:
+```
+curl -X GET "http://13.229.54.28:8000/balances"
+```
 
 ## Supported tokens
 
