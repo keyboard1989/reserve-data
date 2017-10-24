@@ -21,6 +21,11 @@ func (self *RamStorage) CurrentPriceVersion() (common.Version, error) {
 	return common.Version(version), err
 }
 
+func (self *RamStorage) CurrentBalanceVersion() (common.Version, error) {
+	version, err := self.balance.CurrentVersion()
+	return common.Version(version), err
+}
+
 func (self *RamStorage) GetAllPrices(version common.Version) (map[common.TokenPairID]common.OnePrice, error) {
 	return self.price.GetAllPrices(int64(version))
 }
@@ -29,10 +34,14 @@ func (self *RamStorage) GetOnePrice(pair common.TokenPairID, version common.Vers
 	return self.price.GetOnePrice(pair, int64(version))
 }
 
+func (self *RamStorage) GetAllBalances(version common.Version) (map[string]common.BalanceEntry, error) {
+	return self.balance.GetAllBalances(int64(version))
+}
+
 func (self *RamStorage) StorePrice(data map[common.TokenPairID]common.OnePrice) error {
 	return self.price.StoreNewData(data)
 }
 
-func (self *RamStorage) StoreBalance(data map[string]common.RawBalance) error {
+func (self *RamStorage) StoreBalance(data map[string]common.BalanceEntry) error {
 	return self.balance.StoreNewData(data)
 }

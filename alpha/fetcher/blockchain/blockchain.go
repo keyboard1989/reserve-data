@@ -16,22 +16,36 @@ func (self *Blockchain) AddToken(t common.Token) {
 	self.tokens = append(self.tokens, t)
 }
 
-func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]common.RawBalance, error) {
-	result := map[string]common.RawBalance{}
+func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]common.BalanceEntry, error) {
+	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
 	for _, tok := range self.tokens {
 		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 	}
-	fmt.Printf("reserve: %v\n", reserve)
-	fmt.Printf("client: %v\n", self.client.ContractWrapperCaller.contract)
+	// fmt.Printf("reserve: %v\n", reserve)
+	// fmt.Printf("client: %v\n", self.client.ContractWrapperCaller.contract)
+	timestamp := common.GetTimestamp()
 	balances, err := self.client.GetBalances(nil, reserve, tokens)
-	fmt.Printf("balances: %v\n", balances)
-	fmt.Printf("errors: %v\n", err)
+	returnTime := common.GetTimestamp()
+	// fmt.Printf("balances: %v\n", balances)
+	// fmt.Printf("errors: %v\n", err)
 	if err != nil {
-		return result, err
-	}
-	for i, tok := range self.tokens {
-		result[tok.ID] = common.RawBalance(*balances[i])
+		for tokenID, _ := range common.SupportedTokens {
+			result[tokenID] = common.BalanceEntry{
+				Valid:      false,
+				Timestamp:  timestamp,
+				ReturnTime: returnTime,
+			}
+		}
+	} else {
+		for i, tok := range self.tokens {
+			result[tok.ID] = common.BalanceEntry{
+				Valid:      true,
+				Timestamp:  timestamp,
+				ReturnTime: returnTime,
+				Balance:    common.RawBalance(*balances[i]),
+			}
+		}
 	}
 	return result, nil
 }

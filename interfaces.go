@@ -10,5 +10,7 @@ type ReserveData interface {
 	GetAllPrices() (common.AllPriceResponse, error)
 	GetOnePrice(common.TokenPairID) (common.OnePriceResponse, error)
 
+	CurrentBalanceVersion() (common.Version, error)
+	GetAllBalances() (common.AllBalanceResponse, error)
 	Run() error
 }

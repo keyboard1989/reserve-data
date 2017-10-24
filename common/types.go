@@ -66,6 +66,24 @@ func (self *RawBalance) ToFloat(decimal int64) float64 {
 	return result
 }
 
+type BalanceEntry struct {
+	Valid      bool
+	Error      string
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Balance    RawBalance
+}
+
+func (self BalanceEntry) ToBalanceResponse(decimal int64) BalanceResponse {
+	return BalanceResponse{
+		Valid:      self.Valid,
+		Error:      self.Error,
+		Timestamp:  self.Timestamp,
+		ReturnTime: self.ReturnTime,
+		Balance:    self.Balance.ToFloat(decimal),
+	}
+}
+
 type BalanceResponse struct {
 	Valid      bool
 	Error      string

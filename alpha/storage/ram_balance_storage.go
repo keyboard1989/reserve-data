@@ -9,14 +9,14 @@ import (
 type RamBalanceStorage struct {
 	mu      sync.RWMutex
 	version int64
-	data    map[int64]map[string]common.RawBalance
+	data    map[int64]map[string]common.BalanceEntry
 }
 
 func NewRamBalanceStorage() *RamBalanceStorage {
 	return &RamBalanceStorage{
 		mu:      sync.RWMutex{},
 		version: 0,
-		data:    map[int64]map[string]common.RawBalance{},
+		data:    map[int64]map[string]common.BalanceEntry{},
 	}
 }
 
@@ -26,18 +26,18 @@ func (self *RamBalanceStorage) CurrentVersion() (int64, error) {
 	return self.version, nil
 }
 
-func (self *RamBalanceStorage) GetAllBalances(version int64) (map[string]common.RawBalance, error) {
+func (self *RamBalanceStorage) GetAllBalances(version int64) (map[string]common.BalanceEntry, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
 	all := self.data[version]
 	if all == nil {
-		return map[string]common.RawBalance{}, errors.New("Version doesn't exist")
+		return map[string]common.BalanceEntry{}, errors.New("Version doesn't exist")
 	} else {
 		return all, nil
 	}
 }
 
-func (self *RamBalanceStorage) StoreNewData(data map[string]common.RawBalance) error {
+func (self *RamBalanceStorage) StoreNewData(data map[string]common.BalanceEntry) error {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.version = self.version + 1

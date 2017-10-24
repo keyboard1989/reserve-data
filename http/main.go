@@ -20,7 +20,7 @@ func main() {
 
 	storage := storage.NewRamStorage()
 	fetcher := fetcher.NewFetcher(
-		storage, 3*time.Second, 1*time.Second,
+		storage, 3*time.Second, 2*time.Second,
 		ethereum.HexToAddress("0x00f915055992d04e4ecde9c4724e4925142ea059"),
 	)
 	fetcher.AddExchange(exchange.NewLiqui())

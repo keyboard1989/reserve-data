@@ -6,5 +6,5 @@ import (
 
 type Storage interface {
 	StorePrice(map[common.TokenPairID]common.OnePrice) error
-	StoreBalance(map[string]common.RawBalance) error
+	StoreBalance(map[string]common.BalanceEntry) error
 }
