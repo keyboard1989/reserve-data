@@ -21,7 +21,7 @@ func main() {
 	storage := storage.NewRamStorage()
 	fetcher := fetcher.NewFetcher(
 		storage, 3*time.Second, 2*time.Second,
-		ethereum.HexToAddress("0xc2292d8efd38ca814e4de11152bd87b216cf5b7f"),
+		ethereum.HexToAddress("0x7811f3b0505f621bac23cc0ad01bc8ccb68bbfdb"),
 	)
 	fetcher.AddExchange(exchange.NewLiqui())
 	fetcher.AddExchange(exchange.NewBinance())
@@ -29,7 +29,7 @@ func main() {
 	fetcher.AddExchange(exchange.NewBitfinex())
 
 	bc, err := blockchain.NewBlockchain(
-		ethereum.HexToAddress("0xe4f555fd5353e3ee9b22b4b6e012347f4e99d758"),
+		ethereum.HexToAddress("0x96aa24f61f16c28385e0a1c2ffa60a3518ded3ee"),
 	)
 	bc.AddToken(common.MustGetToken("ETH"))
 	bc.AddToken(common.MustGetToken("OMG"))

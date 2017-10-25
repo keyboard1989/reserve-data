@@ -42,18 +42,18 @@ func MustCreateTokenPair(base, quote string) TokenPair {
 
 var SupportedTokens = map[string]Token{
 	"ETH":  Token{"ETH", "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", 18},
-	"OMG":  Token{"OMG", "0xa0306f99fa78b3261937f0e5959545c40d95a87a", 18},
-	"DGD":  Token{"DGD", "0x9b4c72f6f713b57c2b9e48fe88d0e331d7f85c67", 9},
-	"CVC":  Token{"CVC", "0x1964ed8dd6c55a995f9ac19f1172b875326f17f3", 8},
-	"FUN":  Token{"FUN", "0x2acb94b917ad26e74c677096f3ca6f06ce5356c4", 8},
-	"MCO":  Token{"MCO", "0xb76c34d957a27ce7e28d29c154cf7fbe123df77b", 8},
-	"GNT":  Token{"GNT", "0xb2951dabddd6b1d3e49b59ce9631a7db454cf426", 18},
-	"ADX":  Token{"ADX", "0x56831302d650a193fc1e16595807b60822150ed6", 4},
-	"PAY":  Token{"PAY", "0x2a42c22023b89d3920ec8f572d2496bc969a3935", 18},
-	"BAT":  Token{"BAT", "0xc3af5d9fd03980dcee5c1cb7738464a649cb80d7", 18},
-	"KNC":  Token{"KNC", "0x81b2e459253e0f6848fa68719878641be90f6736", 18},
-	"EOS":  Token{"EOS", "0x4f394ed0d40eabc8db58b03a03fe44daea550180", 18},
-	"LINK": Token{"LINK", "0xf1bbe08842b9247a045e47fd734b563ffa391922", 18},
+	"OMG":  Token{"OMG", "0xd19034874ba588b5d4cb0c998afd6852ad8f4718", 18},
+	"DGD":  Token{"DGD", "0xd667cd12cafeeb55678461f7925549e26f07a7a5", 9},
+	"CVC":  Token{"CVC", "0xf3e24a4e6df726d839d44aa21badb8770763855a", 8},
+	"FUN":  Token{"FUN", "0xf0282a5a5d3c1bb06162e1524d51fdf2c6daadb0", 8},
+	"MCO":  Token{"MCO", "0xd8a32ef63c0b21fe276dfd04950a745f6f158a33", 8},
+	"GNT":  Token{"GNT", "0xb1ea7e08bc945b699548dba15a0296b5f0ce60b1", 18},
+	"ADX":  Token{"ADX", "0xcad1ebc2244738722f43efe4d1859bd16f7ad87d", 4},
+	"PAY":  Token{"PAY", "0x6022dce3b1f6d953d9f0256b2aa24da99bbd3187", 18},
+	"BAT":  Token{"BAT", "0x209dba78da77cba9ff7d788512a8128e4ab854a8", 18},
+	"KNC":  Token{"KNC", "0x03b50798dcc087953a5bd2e36e6112ad1092ceed", 18},
+	"EOS":  Token{"EOS", "0x9f0ca0b0c755006f313d951502b1c603b5edeaf1", 18},
+	"LINK": Token{"LINK", "0x61d3e3b963add2a43d6a93608b3c66b5baef111d", 18},
 }
 
 func GetToken(id string) (Token, error) {
