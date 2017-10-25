@@ -1,12 +1,12 @@
 package main
 
 import (
-	"github.com/KyberNetwork/reserve-data/alpha"
-	"github.com/KyberNetwork/reserve-data/alpha/fetcher"
-	"github.com/KyberNetwork/reserve-data/alpha/fetcher/blockchain"
-	"github.com/KyberNetwork/reserve-data/alpha/fetcher/exchange"
-	"github.com/KyberNetwork/reserve-data/alpha/storage"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/data"
+	"github.com/KyberNetwork/reserve-data/data/fetcher"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/blockchain"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/exchange"
+	"github.com/KyberNetwork/reserve-data/data/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 
 	"fmt"
@@ -46,7 +46,7 @@ func main() {
 		fmt.Printf("Can't connect to infura: %s\n", err)
 	} else {
 		fetcher.SetBlockchain(bc)
-		app := alpha.NewReserveData(
+		app := data.NewReserveData(
 			storage,
 			fetcher,
 		)
