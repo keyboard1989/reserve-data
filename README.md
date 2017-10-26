@@ -25,7 +25,7 @@ eg:
 curl -X GET "http://13.229.54.28:8000/prices"
 ```
 
-### Get balances for all tokens of the reserve manager
+### Get balances for all tokens of the reserve manager on blockchain
 ```
 <host>:8000/balances
 ```
@@ -33,6 +33,16 @@ curl -X GET "http://13.229.54.28:8000/prices"
 eg:
 ```
 curl -X GET "http://13.229.54.28:8000/balances"
+```
+
+### Get balances for all tokens of the reserve manager on supported changes
+```
+<host>:8000/ebalances
+```
+
+eg:
+```
+curl -X GET "http://13.229.54.28:8000/ebalances"
 ```
 
 ## Supported tokens
