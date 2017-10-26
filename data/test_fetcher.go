@@ -1,4 +1,4 @@
-package alpha
+package data
 
 type TestFetcher struct{}
 

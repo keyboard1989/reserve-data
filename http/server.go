@@ -92,10 +92,32 @@ func (self *HTTPServer) AllBalances(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) AllEBalances(c *gin.Context) {
+	fmt.Printf("Getting all balances \n")
+	data, err := self.app.GetAllEBalances()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success":   true,
+				"version":   data.Version,
+				"timestamp": data.Timestamp,
+				"data":      data.Data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
 	self.r.GET("/balances", self.AllBalances)
+	self.r.GET("/ebalances", self.AllEBalances)
 
 	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

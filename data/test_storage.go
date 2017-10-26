@@ -1,4 +1,4 @@
-package alpha
+package data
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"

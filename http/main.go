@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/KyberNetwork/reserve-data/alpha"
-	"github.com/KyberNetwork/reserve-data/alpha/fetcher"
-	"github.com/KyberNetwork/reserve-data/alpha/fetcher/blockchain"
-	"github.com/KyberNetwork/reserve-data/alpha/fetcher/exchange"
-	"github.com/KyberNetwork/reserve-data/alpha/storage"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/data"
+	"github.com/KyberNetwork/reserve-data/data/fetcher"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/blockchain"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/exchange"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/exchange/signer"
+	"github.com/KyberNetwork/reserve-data/data/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 
 	"fmt"
@@ -23,10 +24,15 @@ func main() {
 		storage, 3*time.Second, 2*time.Second,
 		ethereum.HexToAddress("0x7811f3b0505f621bac23cc0ad01bc8ccb68bbfdb"),
 	)
-	fetcher.AddExchange(exchange.NewLiqui())
-	fetcher.AddExchange(exchange.NewBinance())
-	fetcher.AddExchange(exchange.NewBittrex())
-	fetcher.AddExchange(exchange.NewBitfinex())
+	fileSigner := signer.NewFileSigner("config.json")
+	fetcher.AddExchange(exchange.NewLiqui(
+		fileSigner,
+		exchange.NewRealLiquiEndpoint(),
+		// exchange.NewSimulatedLiquiEndpoint(),
+	))
+	// fetcher.AddExchange(exchange.NewBinance())
+	// fetcher.AddExchange(exchange.NewBittrex())
+	// fetcher.AddExchange(exchange.NewBitfinex())
 
 	bc, err := blockchain.NewBlockchain(
 		ethereum.HexToAddress("0x96aa24f61f16c28385e0a1c2ffa60a3518ded3ee"),
@@ -46,7 +52,7 @@ func main() {
 		fmt.Printf("Can't connect to infura: %s\n", err)
 	} else {
 		fetcher.SetBlockchain(bc)
-		app := alpha.NewReserveData(
+		app := data.NewReserveData(
 			storage,
 			fetcher,
 		)

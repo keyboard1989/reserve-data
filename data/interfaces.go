@@ -1,4 +1,4 @@
-package alpha
+package data
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"
@@ -11,6 +11,9 @@ type Storage interface {
 
 	CurrentBalanceVersion() (common.Version, error)
 	GetAllBalances(common.Version) (map[string]common.BalanceEntry, error)
+
+	CurrentEBalanceVersion() (common.Version, error)
+	GetAllEBalances(common.Version) (map[common.ExchangeID]common.EBalanceEntry, error)
 }
 
 type Fetcher interface {

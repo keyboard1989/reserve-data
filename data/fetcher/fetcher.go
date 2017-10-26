@@ -6,7 +6,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type Fetcher struct {
@@ -15,13 +16,13 @@ type Fetcher struct {
 	ticker     <-chan time.Time
 	blockchain Blockchain
 	bticker    <-chan time.Time
-	rmaddr     common.Address
+	rmaddr     ethereum.Address
 }
 
 func NewFetcher(
 	storage Storage,
 	duration, bduration time.Duration,
-	address common.Address) *Fetcher {
+	address ethereum.Address) *Fetcher {
 	return &Fetcher{
 		storage:    storage,
 		exchanges:  []Exchange{},
@@ -58,6 +59,15 @@ func (self *Fetcher) Run() error {
 	return nil
 }
 
+func (self *Fetcher) fetchEBalanceFromExchange(wg *sync.WaitGroup, exchange Exchange, data *sync.Map) {
+	defer wg.Done()
+	exdata, err := exchange.FetchEBalanceData()
+	if err != nil {
+		log.Printf("Fetching exchange balances from %s failed: %v\n", exchange.Name(), err)
+	}
+	data.Store(exchange.ID(), exdata)
+}
+
 func (self *Fetcher) fetchPriceFromExchange(wg *sync.WaitGroup, exchange Exchange, data *ConcurrentAllPriceData) {
 	defer wg.Done()
 	exdata, err := exchange.FetchPriceData()
@@ -69,7 +79,8 @@ func (self *Fetcher) fetchPriceFromExchange(wg *sync.WaitGroup, exchange Exchang
 	}
 }
 
-func (self *Fetcher) fetchAllPrices() {
+func (self *Fetcher) fetchAllPrices(w *sync.WaitGroup) {
+	defer w.Done()
 	data := NewConcurrentAllPriceData()
 	// start fetching
 	wait := sync.WaitGroup{}
@@ -84,7 +95,29 @@ func (self *Fetcher) fetchAllPrices() {
 	}
 }
 
-func (self *Fetcher) fetchAllBalances() {
+func (self *Fetcher) fetchAllEBalances(w *sync.WaitGroup) {
+	defer w.Done()
+	data := sync.Map{}
+	// start fetching
+	wait := sync.WaitGroup{}
+	for _, exchange := range self.exchanges {
+		wait.Add(1)
+		go self.fetchEBalanceFromExchange(&wait, exchange, &data)
+	}
+	wait.Wait()
+	ebalances := map[common.ExchangeID]common.EBalanceEntry{}
+	data.Range(func(key, value interface{}) bool {
+		ebalances[key.(common.ExchangeID)] = value.(common.EBalanceEntry)
+		return true
+	})
+	err := self.storage.StoreEBalance(ebalances)
+	if err != nil {
+		log.Printf("Storing exchange balances failed: %s\n", err)
+	}
+}
+
+func (self *Fetcher) fetchAllBalances(w *sync.WaitGroup) {
+	defer w.Done()
 	data, err := self.blockchain.FetchBalanceData(self.rmaddr)
 	if err != nil {
 		log.Printf("Fetching data from blockchain failed: %s\n", err)
@@ -98,10 +131,18 @@ func (self *Fetcher) fetchAllBalances() {
 
 func (self *Fetcher) fetchAllFromExchanges() {
 	fmt.Printf("Fetching data...")
-	self.fetchAllPrices()
+	wait := sync.WaitGroup{}
+	wait.Add(1)
+	go self.fetchAllPrices(&wait)
+	wait.Add(1)
+	go self.fetchAllEBalances(&wait)
+	wait.Wait()
 }
 
 func (self *Fetcher) fetchAllFromBlockchain() {
 	fmt.Printf("Fetching data from blockchain...")
-	self.fetchAllBalances()
+	wait := sync.WaitGroup{}
+	wait.Add(1)
+	self.fetchAllBalances(&wait)
+	wait.Wait()
 }

@@ -1,4 +1,4 @@
-package alpha
+package data
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"
@@ -38,6 +38,27 @@ func (self ReserveData) GetOnePrice(pairID common.TokenPairID) (common.OnePriceR
 	} else {
 		result := common.OnePriceResponse{}
 		data, err := self.storage.GetOnePrice(pairID, version)
+		returnTime := common.GetTimestamp()
+		result.Version = version
+		result.Timestamp = timestamp
+		result.ReturnTime = returnTime
+		result.Data = data
+		return result, err
+	}
+}
+
+func (self ReserveData) CurrentEBalanceVersion() (common.Version, error) {
+	return self.storage.CurrentEBalanceVersion()
+}
+
+func (self ReserveData) GetAllEBalances() (common.AllEBalanceResponse, error) {
+	timestamp := common.GetTimestamp()
+	version, err := self.storage.CurrentEBalanceVersion()
+	if err != nil {
+		return common.AllEBalanceResponse{}, err
+	} else {
+		result := common.AllEBalanceResponse{}
+		data, err := self.storage.GetAllEBalances(version)
 		returnTime := common.GetTimestamp()
 		result.Version = version
 		result.Timestamp = timestamp
