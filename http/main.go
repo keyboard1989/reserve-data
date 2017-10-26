@@ -25,7 +25,11 @@ func main() {
 		ethereum.HexToAddress("0x7811f3b0505f621bac23cc0ad01bc8ccb68bbfdb"),
 	)
 	fileSigner := signer.NewFileSigner("config.json")
-	fetcher.AddExchange(exchange.NewLiqui(fileSigner))
+	fetcher.AddExchange(exchange.NewLiqui(
+		fileSigner,
+		exchange.NewRealLiquiEndpoint(),
+		// exchange.NewSimulatedLiquiEndpoint(),
+	))
 	// fetcher.AddExchange(exchange.NewBinance())
 	// fetcher.AddExchange(exchange.NewBittrex())
 	// fetcher.AddExchange(exchange.NewBitfinex())
