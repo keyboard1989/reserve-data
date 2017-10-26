@@ -6,6 +6,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/blockchain"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/exchange"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/exchange/signer"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 
@@ -23,10 +24,11 @@ func main() {
 		storage, 3*time.Second, 2*time.Second,
 		ethereum.HexToAddress("0x7811f3b0505f621bac23cc0ad01bc8ccb68bbfdb"),
 	)
-	fetcher.AddExchange(exchange.NewLiqui())
-	fetcher.AddExchange(exchange.NewBinance())
-	fetcher.AddExchange(exchange.NewBittrex())
-	fetcher.AddExchange(exchange.NewBitfinex())
+	fileSigner := signer.NewFileSigner("config.json")
+	fetcher.AddExchange(exchange.NewLiqui(fileSigner))
+	// fetcher.AddExchange(exchange.NewBinance())
+	// fetcher.AddExchange(exchange.NewBittrex())
+	// fetcher.AddExchange(exchange.NewBitfinex())
 
 	bc, err := blockchain.NewBlockchain(
 		ethereum.HexToAddress("0x96aa24f61f16c28385e0a1c2ffa60a3518ded3ee"),

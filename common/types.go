@@ -97,3 +97,18 @@ type AllBalanceResponse struct {
 	ReturnTime Timestamp
 	Data       map[string]BalanceResponse
 }
+
+type EBalanceEntry struct {
+	Valid      bool
+	Error      string
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Balance    map[string]float64
+}
+
+type AllEBalanceResponse struct {
+	Version    Version
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Data       map[ExchangeID]EBalanceEntry
+}

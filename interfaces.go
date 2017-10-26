@@ -12,5 +12,8 @@ type ReserveData interface {
 
 	CurrentBalanceVersion() (common.Version, error)
 	GetAllBalances() (common.AllBalanceResponse, error)
+
+	CurrentEBalanceVersion() (common.Version, error)
+	GetAllEBalances() (common.AllEBalanceResponse, error)
 	Run() error
 }
