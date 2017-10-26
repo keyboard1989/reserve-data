@@ -1,13 +1,13 @@
 package main
 
 import (
+	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
-	"github.com/KyberNetwork/reserve-data/data/fetcher/blockchain"
-	"github.com/KyberNetwork/reserve-data/data/fetcher/exchange"
-	"github.com/KyberNetwork/reserve-data/data/fetcher/exchange/signer"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	"github.com/KyberNetwork/reserve-data/exchange"
+	"github.com/KyberNetwork/reserve-data/exchange/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 
 	"fmt"
