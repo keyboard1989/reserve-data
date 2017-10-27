@@ -4,8 +4,8 @@ type SimulatedLiquiEndpoint struct {
 	*RealLiquiEndpoint
 }
 
-func NewSimulatedLiquiEndpoint() *SimulatedLiquiEndpoint {
+func NewSimulatedLiquiEndpoint(authendpoint string) *SimulatedLiquiEndpoint {
 	realone := NewRealLiquiEndpoint()
-	realone.AuthenticatedEndpoint = "http://127.0.0.1:8000"
+	realone.AuthenticatedEndpoint = authendpoint
 	return &SimulatedLiquiEndpoint{realone}
 }

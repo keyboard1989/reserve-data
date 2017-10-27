@@ -1,6 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"os"
+	"runtime"
+	"time"
+
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data"
@@ -9,10 +14,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
-
-	"fmt"
-	"runtime"
-	"time"
 )
 
 func main() {
@@ -24,11 +25,17 @@ func main() {
 		storage, 3*time.Second, 2*time.Second,
 		ethereum.HexToAddress("0x7811f3b0505f621bac23cc0ad01bc8ccb68bbfdb"),
 	)
+
 	fileSigner := signer.NewFileSigner("config.json")
+
+	fakeEndpoint := "http://127.0.0.1:8000"
+	if len(os.Args) > 1 {
+		fakeEndpoint = os.Args[1]
+	}
 	fetcher.AddExchange(exchange.NewLiqui(
 		fileSigner,
-		exchange.NewRealLiquiEndpoint(),
-		// exchange.NewSimulatedLiquiEndpoint(),
+		// exchange.NewRealLiquiEndpoint(),
+		exchange.NewSimulatedLiquiEndpoint(fakeEndpoint),
 	))
 	// fetcher.AddExchange(exchange.NewBinance())
 	// fetcher.AddExchange(exchange.NewBittrex())
