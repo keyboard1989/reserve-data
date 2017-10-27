@@ -33,6 +33,7 @@ type liqinfo struct {
 func (self *Liqui) FetchEBalanceData() (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.GetTimestamp()
+	result.Valid = true
 	resp_data, err := self.endpoint.GetInfo(
 		self.signer.GetLiquiKey(),
 		self.signer,
