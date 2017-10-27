@@ -17,3 +17,6 @@ type ReserveData interface {
 	GetAllEBalances() (common.AllEBalanceResponse, error)
 	Run() error
 }
+
+type ReserveCore interface {
+}

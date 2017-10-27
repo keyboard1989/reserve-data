@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"runtime"
 	"time"
 
@@ -28,14 +27,10 @@ func main() {
 
 	fileSigner := signer.NewFileSigner("config.json")
 
-	fakeEndpoint := "http://127.0.0.1:8000"
-	if len(os.Args) > 1 {
-		fakeEndpoint = os.Args[1]
-	}
 	fetcher.AddExchange(exchange.NewLiqui(
 		fileSigner,
 		// exchange.NewRealLiquiEndpoint(),
-		exchange.NewSimulatedLiquiEndpoint(fakeEndpoint),
+		exchange.NewSimulatedLiquiEndpoint(),
 	))
 	// fetcher.AddExchange(exchange.NewBinance())
 	// fetcher.AddExchange(exchange.NewBittrex())
