@@ -7,11 +7,12 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
-	"github.com/KyberNetwork/reserve-data/exchange/signer"
+	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -27,17 +28,20 @@ func main() {
 
 	fileSigner := signer.NewFileSigner("config.json")
 
-	fetcher.AddExchange(exchange.NewLiqui(
+	liqui := exchange.NewLiqui(
 		fileSigner,
-		// exchange.NewRealLiquiEndpoint(),
-		exchange.NewSimulatedLiquiEndpoint(),
-	))
+		exchange.NewRealLiquiEndpoint(),
+		// exchange.NewSimulatedLiquiEndpoint(),
+	)
+	common.SupportedExchanges[liqui.ID()] = liqui
+	fetcher.AddExchange(liqui)
 	// fetcher.AddExchange(exchange.NewBinance())
 	// fetcher.AddExchange(exchange.NewBittrex())
 	// fetcher.AddExchange(exchange.NewBitfinex())
 
 	bc, err := blockchain.NewBlockchain(
 		ethereum.HexToAddress("0x96aa24f61f16c28385e0a1c2ffa60a3518ded3ee"),
+		fileSigner,
 	)
 	bc.AddToken(common.MustGetToken("ETH"))
 	bc.AddToken(common.MustGetToken("OMG"))
@@ -59,7 +63,8 @@ func main() {
 			fetcher,
 		)
 		app.Run()
-		server := NewHTTPServer(app, ":8000")
+		core := core.NewReserveCore(bc)
+		server := NewHTTPServer(app, core, ":8000")
 		server.Run()
 	}
 }

@@ -5,12 +5,19 @@ import (
 	"strings"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type Liqui struct {
-	signer   Signer
-	endpoint LiquiEndpoint
-	pairs    []common.TokenPair
+	signer    Signer
+	endpoint  LiquiEndpoint
+	pairs     []common.TokenPair
+	addresses map[string]ethereum.Address
+}
+
+func (self *Liqui) Address(token common.Token) (ethereum.Address, bool) {
+	addr, supported := self.addresses[token.ID]
+	return addr, supported
 }
 
 func (self *Liqui) ID() common.ExchangeID {
@@ -127,6 +134,19 @@ func NewLiqui(signer Signer, endpoint LiquiEndpoint) *Liqui {
 			common.MustCreateTokenPair("PAY", "ETH"),
 			common.MustCreateTokenPair("BAT", "ETH"),
 			common.MustCreateTokenPair("KNC", "ETH"),
+		},
+		map[string]ethereum.Address{
+			"ETH": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"OMG": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"DGD": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"CVC": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"MCO": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"GNT": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"ADX": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"EOS": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"PAY": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"BAT": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
+			"KNC": ethereum.HexToAddress("0x80f35d402a77f0a72d2e72e1a72997934f7a288b"),
 		},
 	}
 }

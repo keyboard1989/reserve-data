@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/getsentry/raven-go"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
@@ -15,6 +16,7 @@ import (
 
 type HTTPServer struct {
 	app  reserve.ReserveData
+	core reserve.ReserveCore
 	host string
 	r    *gin.Engine
 }
@@ -113,11 +115,59 @@ func (self *HTTPServer) AllEBalances(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) Deposit(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	amountParam := c.PostForm("amount")
+	tokenParam := c.PostForm("token")
+
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	token, err := common.GetToken(tokenParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	amount, err := hexutil.DecodeBig(amountParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	fmt.Printf("Depositing %s %s to %s\n", amount.Text(10), token.ID, exchange.ID())
+	hash, err := self.core.Deposit(exchange, token, amount)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"hash":    hash.Hex(),
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
 	self.r.GET("/balances", self.AllBalances)
 	self.r.GET("/ebalances", self.AllEBalances)
+	self.r.POST("/deposit/:exchangeid", self.Deposit)
 
 	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
@@ -129,13 +179,13 @@ func (self *HTTPServer) Run() {
 	self.r.Run(self.host)
 }
 
-func NewHTTPServer(app reserve.ReserveData, host string) *HTTPServer {
+func NewHTTPServer(app reserve.ReserveData, core reserve.ReserveCore, host string) *HTTPServer {
 	raven.SetDSN("https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067")
 
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
 
 	return &HTTPServer{
-		app, host, r,
+		app, core, host, r,
 	}
 }
