@@ -71,6 +71,36 @@ Response:
 ```
 Where `hash` is the transaction hash
 
+### Setting rates
+```
+<host>:8000/setrates
+POST request
+Form params:
+  - sources: string, represent all base token IDs separated by "-", eg: "ETH-ETH"
+  - dests: string, represent all quote token IDs separated by "-", eg: "KNC-EOS"
+  - rates: string, represent all the rates in little endian hex string, rates are separated by "-", eg: "0x5-0x7"
+  - expiries: string, represent all the expiry blocks in little endian hex string, they are separated by "-", eg: "0x989680-0x989680"
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/setrates \
+  -H 'content-type: multipart/form-data' \
+  -F sources=ETH-ETH \
+  -F dests=KNC-EOS \
+  -F rates=0x5-0x7 \
+  -F expiries=0x989680-0x989680
+```
+Response:
+
+```json
+{
+    "hash": "0x8004f8613b9944fc73c59b7a70b0a491c9d190e7d3703488423855ac8dada239",
+    "success": true
+}
+```
+Where `hash` is the transaction hash
+
 ## Supported tokens
 
 1. eth (ETH)
