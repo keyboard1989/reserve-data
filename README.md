@@ -44,6 +44,32 @@ eg:
 ```
 curl -X GET "http://13.229.54.28:8000/ebalances"
 ```
+### Deposit to exchanges
+```
+<host>:8000/deposit/:exchange_id
+POST request
+Form params:
+  - amount: little endian hex string (must starts with 0x), eg: 0xde0b6b3a7640000
+  - token: token id string, eg: ETH, EOS...
+```
+
+eg:
+```
+curl -X POST \
+  http://localhost:8000/deposit/liqui \
+  -H 'content-type: multipart/form-data' \
+  -F token=EOS \
+  -F amount=0xde0b6b3a7640000
+```
+Response:
+
+```json
+{
+    "hash": "0x1b0c09f059904f1a9587641f2357c16c1c9fe43dfea161db31607f9221b0cfbb",
+    "success": true
+}
+```
+Where `hash` is the transaction hash
 
 ## Supported tokens
 
@@ -63,7 +89,7 @@ curl -X GET "http://13.229.54.28:8000/ebalances"
 
 ## Supported exchanges
 
-1. Bittrex
-2. Binance
-3. Bitfinex
-4. Liqui
+1. Bittrex (bittrex)
+2. Binance (binance)
+3. Bitfinex (bitfinex)
+4. Liqui (liqui)
