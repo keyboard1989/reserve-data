@@ -4,7 +4,6 @@ import (
 	"crypto/hmac"
 	"crypto/sha512"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -46,7 +45,6 @@ func (self FileSigner) LiquiSign(msg string) string {
 
 func NewFileSigner(file string) *FileSigner {
 	raw, err := ioutil.ReadFile(file)
-	fmt.Printf("read from file: %s\n", raw)
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +53,6 @@ func NewFileSigner(file string) *FileSigner {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("keystore: %s\n", signer.Keystore)
 	keyio, err := os.Open(signer.Keystore)
 	if err != nil {
 		panic(err)

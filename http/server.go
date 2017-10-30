@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github.com/KyberNetwork/reserve-data"
 	"log"
+	"math/big"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -115,6 +117,83 @@ func (self *HTTPServer) AllEBalances(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) SetRate(c *gin.Context) {
+	sources := c.PostForm("sources")
+	fmt.Printf("sources: %v\n", sources)
+	dests := c.PostForm("dests")
+	fmt.Printf("dests: %v\n", dests)
+	rates := c.PostForm("rates")
+	fmt.Printf("rates: %v\n", rates)
+	blocks := c.PostForm("expiries")
+	fmt.Printf("blocks: %v\n", blocks)
+	sourceTokens := []common.Token{}
+	for _, source := range strings.Split(sources, "-") {
+		token, err := common.GetToken(source)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		} else {
+			sourceTokens = append(sourceTokens, token)
+		}
+	}
+	destTokens := []common.Token{}
+	for _, dest := range strings.Split(dests, "-") {
+		token, err := common.GetToken(dest)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		} else {
+			destTokens = append(destTokens, token)
+		}
+	}
+	bigRates := []*big.Int{}
+	for _, rate := range strings.Split(rates, "-") {
+		r, err := hexutil.DecodeBig(rate)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+		} else {
+			bigRates = append(bigRates, r)
+		}
+	}
+	expiryBlocks := []*big.Int{}
+	for _, expiry := range strings.Split(blocks, "-") {
+		r, err := hexutil.DecodeBig(expiry)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+		} else {
+			expiryBlocks = append(expiryBlocks, r)
+		}
+	}
+	hash, err := self.core.SetRates(sourceTokens, destTokens, bigRates, expiryBlocks)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"hash":    hash.Hex(),
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) Deposit(c *gin.Context) {
 	exchangeParam := c.Param("exchangeid")
 	amountParam := c.PostForm("amount")
@@ -168,6 +247,7 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/balances", self.AllBalances)
 	self.r.GET("/ebalances", self.AllEBalances)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
+	self.r.POST("/setrates", self.SetRate)
 
 	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

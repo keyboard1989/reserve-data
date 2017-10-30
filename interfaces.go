@@ -26,4 +26,5 @@ type ReserveCore interface {
 	// cancel order
 	// deposit
 	Deposit(exchange common.Exchange, token common.Token, amount *big.Int) (ethereum.Hash, error)
+	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (ethereum.Hash, error)
 }

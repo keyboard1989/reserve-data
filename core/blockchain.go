@@ -12,4 +12,9 @@ type Blockchain interface {
 		token common.Token,
 		amount *big.Int,
 		address ethereum.Address) (ethereum.Hash, error)
+	SetRate(
+		sources []ethereum.Address,
+		dests []ethereum.Address,
+		rates []*big.Int,
+		expiryBlocks []*big.Int) (ethereum.Hash, error)
 }

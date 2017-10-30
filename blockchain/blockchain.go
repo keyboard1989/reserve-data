@@ -54,6 +54,22 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]c
 	return result, nil
 }
 
+func (self *Blockchain) SetRate(
+	sources []ethereum.Address,
+	dests []ethereum.Address,
+	rates []*big.Int,
+	expiryBlocks []*big.Int) (ethereum.Hash, error) {
+
+	tx, err := self.reserve.SetRate(
+		self.signer.GetTransactOpts(),
+		sources, dests, rates, expiryBlocks, true)
+	if err != nil {
+		return ethereum.Hash{}, err
+	} else {
+		return tx.Hash(), err
+	}
+}
+
 func (self *Blockchain) Send(
 	token common.Token,
 	amount *big.Int,
@@ -116,7 +132,7 @@ func (self *Blockchain) Send(
 // }
 
 func NewBlockchain(wrapperAddr, reserveAddr ethereum.Address, signer Signer) (*Blockchain, error) {
-	endpoint := "https://kovan.infura.io"
+	endpoint := "http://localhost:8545"
 	infura, err := ethclient.Dial(endpoint)
 	if err != nil {
 		return nil, err
