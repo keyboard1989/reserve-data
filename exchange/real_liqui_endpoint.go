@@ -58,6 +58,7 @@ func (self *RealLiquiEndpoint) GetInfo(key string, signer Signer) (liqinfo, erro
 	)
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Key", key)
 	req.Header.Add("Sign", signer.LiquiSign(params))
 	resp, err := client.Do(req)

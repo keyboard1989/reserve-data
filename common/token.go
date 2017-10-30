@@ -12,6 +12,10 @@ type Token struct {
 	Decimal int64
 }
 
+func (self Token) IsETH() bool {
+	return self.ID == "ETH"
+}
+
 type TokenPair struct {
 	Base  Token
 	Quote Token

@@ -2,6 +2,8 @@ package reserve
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
+	"math/big"
 )
 
 // all of the functions must support concurrency
@@ -16,4 +18,12 @@ type ReserveData interface {
 	CurrentEBalanceVersion() (common.Version, error)
 	GetAllEBalances() (common.AllEBalanceResponse, error)
 	Run() error
+}
+
+type ReserveCore interface {
+	// withdraw
+	// place order
+	// cancel order
+	// deposit
+	Deposit(exchange common.Exchange, token common.Token, amount *big.Int) (ethereum.Hash, error)
 }
