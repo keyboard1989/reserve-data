@@ -30,8 +30,8 @@ func main() {
 
 	liqui := exchange.NewLiqui(
 		fileSigner,
-		exchange.NewRealLiquiEndpoint(),
-		// exchange.NewSimulatedLiquiEndpoint(),
+		// exchange.NewRealLiquiEndpoint(),
+		exchange.NewSimulatedLiquiEndpoint(),
 	)
 	common.SupportedExchanges[liqui.ID()] = liqui
 	fetcher.AddExchange(liqui)
@@ -39,8 +39,11 @@ func main() {
 	// fetcher.AddExchange(exchange.NewBittrex())
 	// fetcher.AddExchange(exchange.NewBitfinex())
 
+	wrapperAddr := ethereum.HexToAddress("0xe840e24297a0a62a9df8a0e3831cece5b6098de1")
+	reserveAddr := ethereum.HexToAddress("0xfbd6bc836656ddfd64ebc783e16ef81f4d6f2aed")
 	bc, err := blockchain.NewBlockchain(
-		ethereum.HexToAddress("0x96aa24f61f16c28385e0a1c2ffa60a3518ded3ee"),
+		wrapperAddr,
+		reserveAddr,
 		fileSigner,
 	)
 	bc.AddToken(common.MustGetToken("ETH"))

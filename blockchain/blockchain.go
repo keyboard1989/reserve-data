@@ -1,11 +1,9 @@
 package blockchain
 
 import (
-	"context"
 	"fmt"
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"math/big"
 )
@@ -13,6 +11,7 @@ import (
 type Blockchain struct {
 	ethclient *ethclient.Client
 	wrapper   *ContractWrapper
+	reserve   *ReserveContract
 	signer    Signer
 	tokens    []common.Token
 }
@@ -58,73 +57,83 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]c
 func (self *Blockchain) Send(
 	token common.Token,
 	amount *big.Int,
-	address ethereum.Address) (ethereum.Hash, error) {
+	dest ethereum.Address) (ethereum.Hash, error) {
 
-	if token.IsETH() {
-		return self.sendETH(amount, address)
-	} else {
-		return self.sendToken(token, amount, address)
-	}
-}
-
-func (self *Blockchain) sendToken(token common.Token, amount *big.Int, address ethereum.Address) (ethereum.Hash, error) {
-	erc20, err := NewErc20Contract(
-		ethereum.HexToAddress(token.Address),
-		self.ethclient,
-	)
-	fmt.Printf("address: %s\n", token.Address)
-	if err != nil {
-		return ethereum.Hash{}, err
-	}
-	tx, err := erc20.Transfer(
+	tx, err := self.reserve.Withdraw(
 		self.signer.GetTransactOpts(),
-		address, amount)
+		ethereum.HexToAddress(token.Address),
+		amount, dest)
 	if err != nil {
 		return ethereum.Hash{}, err
 	} else {
-		return tx.Hash(), nil
+		return tx.Hash(), err
 	}
 }
 
-func (self *Blockchain) sendETH(
-	amount *big.Int,
-	address ethereum.Address) (ethereum.Hash, error) {
-	// nonce, gasLimit, gasPrice gets from ethclient
+// func (self *Blockchain) sendToken(token common.Token, amount *big.Int, address ethereum.Address) (ethereum.Hash, error) {
+// 	erc20, err := NewErc20Contract(
+// 		ethereum.HexToAddress(token.Address),
+// 		self.ethclient,
+// 	)
+// 	fmt.Printf("address: %s\n", token.Address)
+// 	if err != nil {
+// 		return ethereum.Hash{}, err
+// 	}
+// 	tx, err := erc20.Transfer(
+// 		self.signer.GetTransactOpts(),
+// 		address, amount)
+// 	if err != nil {
+// 		return ethereum.Hash{}, err
+// 	} else {
+// 		return tx.Hash(), nil
+// 	}
+// }
+//
+// func (self *Blockchain) sendETH(
+// 	amount *big.Int,
+// 	address ethereum.Address) (ethereum.Hash, error) {
+// 	// nonce, gasLimit, gasPrice gets from ethclient
+//
+// 	option := context.Background()
+// 	rm := self.signer.GetAddress()
+// 	nonce, err := self.ethclient.PendingNonceAt(
+// 		option, rm)
+// 	if err != nil {
+// 		return ethereum.Hash{}, err
+// 	}
+// 	gasLimit := big.NewInt(1000000)
+// 	gasPrice := big.NewInt(20000000000)
+// 	rawTx := types.NewTransaction(
+// 		nonce, address, amount, gasLimit, gasPrice, []byte{})
+// 	signedTx, err := self.signer.Sign(rm, rawTx)
+// 	if err != nil {
+// 		return ethereum.Hash{}, err
+// 	}
+// 	if err = self.ethclient.SendTransaction(option, signedTx); err != nil {
+// 		return ethereum.Hash{}, err
+// 	}
+// 	return signedTx.Hash(), nil
+// }
 
-	option := context.Background()
-	rm := self.signer.GetAddress()
-	nonce, err := self.ethclient.PendingNonceAt(
-		option, rm)
-	if err != nil {
-		return ethereum.Hash{}, err
-	}
-	gasLimit := big.NewInt(1000000)
-	gasPrice := big.NewInt(20000000000)
-	rawTx := types.NewTransaction(
-		nonce, address, amount, gasLimit, gasPrice, []byte{})
-	signedTx, err := self.signer.Sign(rm, rawTx)
-	if err != nil {
-		return ethereum.Hash{}, err
-	}
-	if err = self.ethclient.SendTransaction(option, signedTx); err != nil {
-		return ethereum.Hash{}, err
-	}
-	return signedTx.Hash(), nil
-}
-
-func NewBlockchain(addr ethereum.Address, signer Signer) (*Blockchain, error) {
+func NewBlockchain(wrapperAddr, reserveAddr ethereum.Address, signer Signer) (*Blockchain, error) {
 	endpoint := "https://kovan.infura.io"
 	infura, err := ethclient.Dial(endpoint)
 	if err != nil {
 		return nil, err
 	}
-	wrapper, err := NewContractWrapper(addr, infura)
+	wrapper, err := NewContractWrapper(wrapperAddr, infura)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("reserve address: %s\n", reserveAddr.Hex())
+	reserve, err := NewReserveContract(reserveAddr, infura)
 	if err != nil {
 		return nil, err
 	}
 	return &Blockchain{
 		ethclient: infura,
 		wrapper:   wrapper,
+		reserve:   reserve,
 		signer:    signer,
 		tokens:    []common.Token{},
 	}, nil

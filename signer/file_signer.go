@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -63,6 +64,9 @@ func NewFileSigner(file string) *FileSigner {
 	if err != nil {
 		panic(err)
 	}
+
+	auth.GasLimit = big.NewInt(1000000)
+	auth.GasPrice = big.NewInt(20000000000)
 	signer.opts = auth
 	return &signer
 }
