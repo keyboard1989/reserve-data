@@ -37,6 +37,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]c
 		for tokenID, _ := range common.SupportedTokens {
 			result[tokenID] = common.BalanceEntry{
 				Valid:      false,
+				Error:      err.Error(),
 				Timestamp:  timestamp,
 				ReturnTime: returnTime,
 			}
@@ -132,7 +133,8 @@ func (self *Blockchain) Send(
 // }
 
 func NewBlockchain(wrapperAddr, reserveAddr ethereum.Address, signer Signer) (*Blockchain, error) {
-	endpoint := "http://localhost:8545"
+	// endpoint := "http://localhost:8545"
+	endpoint := "https://kovan.kyber.network"
 	infura, err := ethclient.Dial(endpoint)
 	if err != nil {
 		return nil, err
