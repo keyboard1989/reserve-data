@@ -9,14 +9,14 @@ import (
 type RamRateStorage struct {
 	mu      sync.RWMutex
 	version int64
-	data    map[int64]map[common.TokenPairID]common.RateEntry
+	data    map[int64]common.AllRateEntry
 }
 
 func NewRamRateStorage() *RamRateStorage {
 	return &RamRateStorage{
 		mu:      sync.RWMutex{},
 		version: 0,
-		data:    map[int64]map[common.TokenPairID]common.RateEntry{},
+		data:    map[int64]common.AllRateEntry{},
 	}
 }
 
@@ -26,18 +26,18 @@ func (self *RamRateStorage) CurrentVersion() (int64, error) {
 	return self.version, nil
 }
 
-func (self *RamRateStorage) GetRates(version int64) (map[common.TokenPairID]common.RateEntry, error) {
+func (self *RamRateStorage) GetRates(version int64) (common.AllRateEntry, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
-	all := self.data[version]
-	if all == nil {
-		return map[common.TokenPairID]common.RateEntry{}, errors.New("Version doesn't exist")
+	all, exist := self.data[version]
+	if !exist {
+		return common.AllRateEntry{}, errors.New("Version doesn't exist")
 	} else {
 		return all, nil
 	}
 }
 
-func (self *RamRateStorage) StoreNewData(data map[common.TokenPairID]common.RateEntry) error {
+func (self *RamRateStorage) StoreNewData(data common.AllRateEntry) error {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.version = self.version + 1

@@ -12,6 +12,7 @@ type Blockchain struct {
 	ethclient *ethclient.Client
 	wrapper   *ContractWrapper
 	reserve   *ReserveContract
+	rm        ethereum.Address
 	signer    Signer
 	tokens    []common.Token
 }
@@ -57,8 +58,11 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]c
 
 func (self *Blockchain) FetchRates(
 	sources []common.Token,
-	dests []common.Token) (map[common.TokenPairID]common.RateEntry, error) {
+	dests []common.Token) (common.AllRateEntry, error) {
 
+	result := common.AllRateEntry{}
+	fmt.Printf("sources: %v\n", sources)
+	fmt.Printf("dests: %v\n", dests)
 	sourceAddrs := []ethereum.Address{}
 	for _, s := range sources {
 		sourceAddrs = append(sourceAddrs, ethereum.HexToAddress(s.Address))
@@ -67,14 +71,29 @@ func (self *Blockchain) FetchRates(
 	for _, d := range dests {
 		destAddrs = append(destAddrs, ethereum.HexToAddress(d.Address))
 	}
+	timestamp := common.GetTimestamp()
 	rates, expiries, balances, err := self.wrapper.GetPrices(
-		nil, self.signer.GetAddress(), sourceAddrs, destAddrs)
+		nil, self.rm, sourceAddrs, destAddrs)
+	fmt.Printf("address: %s\n", self.signer.GetAddress())
+	fmt.Printf("source addresses: %v\n", sourceAddrs)
+	fmt.Printf("dest addresses: %v\n", destAddrs)
+	fmt.Printf("rates: %v\n", rates)
+	fmt.Printf("expiries: %v\n", expiries)
+	fmt.Printf("balances: %v\n", balances)
+	fmt.Printf("error: %s\n", err)
+	returnTime := common.GetTimestamp()
+	result.Timestamp = timestamp
+	result.ReturnTime = returnTime
 	if err != nil {
-		return map[common.TokenPairID]common.RateEntry{}, err
+		panic(err)
+		result.Valid = false
+		result.Error = err.Error()
+		return result, err
 	} else {
-		result := map[common.TokenPairID]common.RateEntry{}
+		result.Valid = true
+		result.Data = map[common.TokenPairID]common.RateEntry{}
 		for i, s := range sources {
-			result[common.NewTokenPairID(
+			result.Data[common.NewTokenPairID(
 				s.ID, dests[i].ID)] = common.RateEntry{
 				rates[i], expiries[i], balances[i],
 			}
@@ -180,6 +199,7 @@ func NewBlockchain(wrapperAddr, reserveAddr ethereum.Address, signer Signer) (*B
 		ethclient: infura,
 		wrapper:   wrapper,
 		reserve:   reserve,
+		rm:        reserveAddr,
 		signer:    signer,
 		tokens:    []common.Token{},
 	}, nil

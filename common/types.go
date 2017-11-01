@@ -53,16 +53,20 @@ type ExchangePrice struct {
 	ReturnTime Timestamp
 }
 
-type RawBalance big.Int
-
-func (self *RawBalance) ToFloat(decimal int64) float64 {
-	f := new(big.Float).SetInt((*big.Int)(self))
+func BigToFloat(b *big.Int, decimal int64) float64 {
+	f := new(big.Float).SetInt(b)
 	power := new(big.Float).SetInt(new(big.Int).Exp(
 		big.NewInt(10), big.NewInt(decimal), nil,
 	))
 	res := new(big.Float).Quo(f, power)
 	result, _ := res.Float64()
 	return result
+}
+
+type RawBalance big.Int
+
+func (self *RawBalance) ToFloat(decimal int64) float64 {
+	return BigToFloat((*big.Int)(self), decimal)
 }
 
 type BalanceEntry struct {
@@ -119,11 +123,29 @@ type RateEntry struct {
 	Balance     *big.Int
 }
 
+type RateResponse struct {
+	Valid       bool
+	Error       string
+	Timestamp   Timestamp
+	ReturnTime  Timestamp
+	Rate        float64
+	ExpiryBlock int64
+	Balance     float64
+}
+
 type AllRateEntry struct {
-	Version    Version
 	Valid      bool
 	Error      string
 	Timestamp  Timestamp
 	ReturnTime Timestamp
 	Data       map[TokenPairID]RateEntry
+}
+
+type AllRateResponse struct {
+	Version    Version
+	Valid      bool
+	Error      string
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Data       map[TokenPairID]RateResponse
 }

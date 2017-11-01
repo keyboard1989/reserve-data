@@ -14,6 +14,9 @@ type Storage interface {
 
 	CurrentEBalanceVersion() (common.Version, error)
 	GetAllEBalances(common.Version) (map[common.ExchangeID]common.EBalanceEntry, error)
+
+	CurrentRateVersion() (common.Version, error)
+	GetAllRates(common.Version) (common.AllRateEntry, error)
 }
 
 type Fetcher interface {

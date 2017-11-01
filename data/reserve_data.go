@@ -95,6 +95,39 @@ func (self ReserveData) GetAllBalances() (common.AllBalanceResponse, error) {
 	}
 }
 
+func (self ReserveData) CurrentRateVersion() (common.Version, error) {
+	return self.storage.CurrentRateVersion()
+}
+
+func (self ReserveData) GetAllRates() (common.AllRateResponse, error) {
+	timestamp := common.GetTimestamp()
+	version, err := self.storage.CurrentRateVersion()
+	if err != nil {
+		return common.AllRateResponse{}, err
+	} else {
+		result := common.AllRateResponse{}
+		rates, err := self.storage.GetAllRates(version)
+		returnTime := common.GetTimestamp()
+		result.Version = version
+		result.Timestamp = timestamp
+		result.ReturnTime = returnTime
+		data := map[common.TokenPairID]common.RateResponse{}
+		for tokenPairID, rate := range rates.Data {
+			data[tokenPairID] = common.RateResponse{
+				Valid:       rates.Valid,
+				Error:       rates.Error,
+				Timestamp:   rates.Timestamp,
+				ReturnTime:  rates.ReturnTime,
+				Rate:        common.BigToFloat(rate.Rate, 18),
+				ExpiryBlock: rate.ExpiryBlock.Int64(),
+				Balance:     common.BigToFloat(rate.Balance, 18),
+			}
+		}
+		result.Data = data
+		return result, err
+	}
+}
+
 func (self ReserveData) Run() error {
 	return self.fetcher.Run()
 }
