@@ -2,5 +2,21 @@
 	"ImportPath": "github.com/KyberNetwork/reserve-data",
 	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
-	"Deps": []
+	"Deps": [
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/common",
+			"Comment": "v1.7.2-8-geea996e4",
+			"Rev": "eea996e4e1820d32a8ec82b03ff6bd17574770e7"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/common/hexutil",
+			"Comment": "v1.7.2-8-geea996e4",
+			"Rev": "eea996e4e1820d32a8ec82b03ff6bd17574770e7"
+		},
+		{
+			"ImportPath": "github.com/ethereum/go-ethereum/crypto/sha3",
+			"Comment": "v1.7.2-8-geea996e4",
+			"Rev": "eea996e4e1820d32a8ec82b03ff6bd17574770e7"
+		}
+	]
 }
