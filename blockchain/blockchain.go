@@ -55,7 +55,35 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]c
 	return result, nil
 }
 
-func (self *Blockchain) SetRate(
+func (self *Blockchain) FetchRates(
+	sources []common.Token,
+	dests []common.Token) (map[common.TokenPairID]common.RateEntry, error) {
+
+	sourceAddrs := []ethereum.Address{}
+	for _, s := range sources {
+		sourceAddrs = append(sourceAddrs, ethereum.HexToAddress(s.Address))
+	}
+	destAddrs := []ethereum.Address{}
+	for _, d := range dests {
+		destAddrs = append(destAddrs, ethereum.HexToAddress(d.Address))
+	}
+	rates, expiries, balances, err := self.wrapper.GetPrices(
+		nil, self.signer.GetAddress(), sourceAddrs, destAddrs)
+	if err != nil {
+		return map[common.TokenPairID]common.RateEntry{}, err
+	} else {
+		result := map[common.TokenPairID]common.RateEntry{}
+		for i, s := range sources {
+			result[common.NewTokenPairID(
+				s.ID, dests[i].ID)] = common.RateEntry{
+				rates[i], expiries[i], balances[i],
+			}
+		}
+		return result, nil
+	}
+}
+
+func (self *Blockchain) SetRates(
 	sources []ethereum.Address,
 	dests []ethereum.Address,
 	rates []*big.Int,

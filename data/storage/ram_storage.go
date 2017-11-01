@@ -8,6 +8,7 @@ type RamStorage struct {
 	price    *RamPriceStorage
 	balance  *RamBalanceStorage
 	ebalance *RamEBalanceStorage
+	rate     *RamRateStorage
 }
 
 func NewRamStorage() *RamStorage {
@@ -15,6 +16,7 @@ func NewRamStorage() *RamStorage {
 		NewRamPriceStorage(),
 		NewRamBalanceStorage(),
 		NewRamEBalanceStorage(),
+		NewRamRateStorage(),
 	}
 }
 
@@ -59,4 +61,8 @@ func (self *RamStorage) StoreBalance(data map[string]common.BalanceEntry) error 
 
 func (self *RamStorage) StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry) error {
 	return self.ebalance.StoreNewData(data)
+}
+
+func (self *RamStorage) StoreRate(data map[common.TokenPairID]common.RateEntry) error {
+	return self.rate.StoreNewData(data)
 }

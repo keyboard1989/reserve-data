@@ -112,3 +112,18 @@ type AllEBalanceResponse struct {
 	ReturnTime Timestamp
 	Data       map[ExchangeID]EBalanceEntry
 }
+
+type RateEntry struct {
+	Rate        *big.Int
+	ExpiryBlock *big.Int
+	Balance     *big.Int
+}
+
+type AllRateEntry struct {
+	Version    Version
+	Valid      bool
+	Error      string
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Data       map[TokenPairID]RateEntry
+}

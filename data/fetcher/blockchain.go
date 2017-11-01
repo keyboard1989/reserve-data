@@ -7,4 +7,5 @@ import (
 
 type Blockchain interface {
 	FetchBalanceData(ethereum.Address) (map[string]common.BalanceEntry, error)
+	FetchRates(sources, dests []common.Token) (map[common.TokenPairID]common.RateEntry, error)
 }

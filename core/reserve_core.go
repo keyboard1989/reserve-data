@@ -52,6 +52,6 @@ func (self ReserveCore) SetRates(
 		for _, dest := range dests {
 			destAddrs = append(destAddrs, ethereum.HexToAddress(dest.Address))
 		}
-		return self.blockchain.SetRate(sourceAddrs, destAddrs, rates, expiryBlocks)
+		return self.blockchain.SetRates(sourceAddrs, destAddrs, rates, expiryBlocks)
 	}
 }
