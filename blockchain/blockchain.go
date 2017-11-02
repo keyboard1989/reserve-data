@@ -61,8 +61,6 @@ func (self *Blockchain) FetchRates(
 	dests []common.Token) (common.AllRateEntry, error) {
 
 	result := common.AllRateEntry{}
-	fmt.Printf("sources: %v\n", sources)
-	fmt.Printf("dests: %v\n", dests)
 	sourceAddrs := []ethereum.Address{}
 	for _, s := range sources {
 		sourceAddrs = append(sourceAddrs, ethereum.HexToAddress(s.Address))
@@ -74,13 +72,16 @@ func (self *Blockchain) FetchRates(
 	timestamp := common.GetTimestamp()
 	rates, expiries, balances, err := self.wrapper.GetPrices(
 		nil, self.rm, sourceAddrs, destAddrs)
-	fmt.Printf("address: %s\n", self.signer.GetAddress())
-	fmt.Printf("source addresses: %v\n", sourceAddrs)
-	fmt.Printf("dest addresses: %v\n", destAddrs)
-	fmt.Printf("rates: %v\n", rates)
-	fmt.Printf("expiries: %v\n", expiries)
-	fmt.Printf("balances: %v\n", balances)
-	fmt.Printf("error: %s\n", err)
+	for _, s := range sourceAddrs {
+		fmt.Printf("%s, ", s.Hex())
+	}
+	for _, d := range destAddrs {
+		fmt.Printf("%s, ", d.Hex())
+	}
+	// fmt.Printf("\nrates (%d): %v\n", len(rates), rates)
+	// fmt.Printf("expiries: %v\n", expiries)
+	// fmt.Printf("balances: %v\n", balances)
+	// fmt.Printf("error: %s\n", err)
 	returnTime := common.GetTimestamp()
 	result.Timestamp = timestamp
 	result.ReturnTime = returnTime
