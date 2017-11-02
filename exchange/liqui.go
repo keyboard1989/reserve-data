@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"fmt"
+	"math/big"
 	"strings"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -39,6 +40,12 @@ type liqinfo struct {
 	Success int `json:"success"`
 	Return  map[string]map[string]float64
 	Error   string `json:"error"`
+}
+
+func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) error {
+	return self.endpoint.Withdraw(
+		self.signer.GetLiquiKey(),
+		token, amount, address, self.signer)
 }
 
 func (self *Liqui) FetchEBalanceData() (common.EBalanceEntry, error) {

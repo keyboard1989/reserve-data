@@ -215,6 +215,52 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) Withdraw(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	tokenParam := c.PostForm("token")
+	amountParam := c.PostForm("amount")
+
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	token, err := common.GetToken(tokenParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	amount, err := hexutil.DecodeBig(amountParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	fmt.Printf("Withdraw %s %s from %s\n", amount.Text(10), token.ID, exchange.ID())
+	err = self.core.Withdraw(exchange, token, amount)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 func (self *HTTPServer) Deposit(c *gin.Context) {
 	exchangeParam := c.Param("exchangeid")
 	amountParam := c.PostForm("amount")
@@ -268,6 +314,7 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/balances", self.AllBalances)
 	self.r.GET("/ebalances", self.AllEBalances)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
+	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
 	self.r.POST("/setrates", self.SetRate)
 	self.r.GET("/getrates", self.GetRate)
 

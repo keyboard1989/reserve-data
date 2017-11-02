@@ -11,11 +11,13 @@ import (
 
 type ReserveCore struct {
 	blockchain Blockchain
+	rm         ethereum.Address
 }
 
-func NewReserveCore(blockchain Blockchain) *ReserveCore {
+func NewReserveCore(blockchain Blockchain, rm ethereum.Address) *ReserveCore {
 	return &ReserveCore{
 		blockchain,
+		rm,
 	}
 }
 
@@ -29,6 +31,17 @@ func (self ReserveCore) Deposit(
 		return ethereum.Hash{}, errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
 	}
 	return self.blockchain.Send(token, amount, address)
+}
+
+func (self ReserveCore) Withdraw(
+	exchange common.Exchange, token common.Token,
+	amount *big.Int) error {
+
+	_, supported := exchange.Address(token)
+	if !supported {
+		return errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
+	}
+	return exchange.Withdraw(token, amount, self.rm)
 }
 
 func (self ReserveCore) SetRates(

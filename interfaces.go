@@ -24,10 +24,12 @@ type ReserveData interface {
 }
 
 type ReserveCore interface {
-	// withdraw
 	// place order
 	// cancel order
-	// deposit
 	Deposit(exchange common.Exchange, token common.Token, amount *big.Int) (ethereum.Hash, error)
+	// withdraw
+	Withdraw(exchange common.Exchange, token common.Token, amount *big.Int) error
+
+	// blockchain related action
 	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (ethereum.Hash, error)
 }

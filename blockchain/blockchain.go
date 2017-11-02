@@ -72,10 +72,12 @@ func (self *Blockchain) FetchRates(
 	timestamp := common.GetTimestamp()
 	rates, expiries, balances, err := self.wrapper.GetPrices(
 		nil, self.rm, sourceAddrs, destAddrs)
-	fmt.Printf("\nrates (%d): %v\n", len(rates), rates)
-	fmt.Printf("expiries: %v\n", expiries)
-	fmt.Printf("balances: %v\n", balances)
-	fmt.Printf("error: %s\n", err)
+	_ = expiries
+	_ = balances
+	// fmt.Printf("\nrates (%d): %v\n", len(rates), rates)
+	// fmt.Printf("expiries: %v\n", expiries)
+	// fmt.Printf("balances: %v\n", balances)
+	// fmt.Printf("error: %s\n", err)
 	returnTime := common.GetTimestamp()
 	result.Timestamp = timestamp
 	result.ReturnTime = returnTime

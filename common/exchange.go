@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"fmt"
+	"math/big"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -10,6 +11,7 @@ import (
 type Exchange interface {
 	ID() ExchangeID
 	Address(token Token) (address ethereum.Address, supported bool)
+	Withdraw(token Token, amount *big.Int, address ethereum.Address) error
 }
 
 var SupportedExchanges = map[ExchangeID]Exchange{}

@@ -66,7 +66,7 @@ func main() {
 			fetcher,
 		)
 		app.Run()
-		core := core.NewReserveCore(bc)
+		core := core.NewReserveCore(bc, reserveAddr)
 		server := NewHTTPServer(app, core, ":8000")
 		server.Run()
 	}

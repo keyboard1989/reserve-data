@@ -3,12 +3,17 @@ package exchange
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/big"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type RealLiquiEndpoint struct {
@@ -42,6 +47,51 @@ func (self *RealLiquiEndpoint) Depth(tokens string) (liqresp, error) {
 		}
 	}
 	return result, err
+}
+
+type liqwithdraw struct {
+	Success int `json:"success"`
+	Return  map[string]interface{}
+	Error   string `json:"error"`
+}
+
+func (self *RealLiquiEndpoint) Withdraw(key string, token common.Token, amount *big.Int, address ethereum.Address, signer Signer) error {
+	result := liqwithdraw{}
+	client := &http.Client{}
+	data := url.Values{}
+	data.Set("method", "WithdrawCoin")
+	data.Set("coinName", token.ID)
+	data.Set("amount", fmt.Sprintf("%f", common.BigToFloat(amount, token.Decimal)))
+	data.Set("address", address.Hex())
+	params := data.Encode()
+	req, _ := http.NewRequest(
+		"POST",
+		self.AuthenticatedEndpoint,
+		bytes.NewBufferString(params),
+	)
+	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Key", key)
+	req.Header.Add("Sign", signer.LiquiSign(params))
+	resp, err := client.Do(req)
+	if err == nil && resp.StatusCode == 200 {
+		defer resp.Body.Close()
+		resp_body, err := ioutil.ReadAll(resp.Body)
+		fmt.Printf("response: %s\n", resp_body)
+		if err == nil {
+			err = json.Unmarshal(resp_body, &result)
+		}
+		if err != nil {
+			return err
+		}
+		if result.Error != "" {
+			return errors.New(result.Error)
+		}
+		return nil
+	} else {
+		return errors.New("withdraw rejected by Liqui")
+	}
 }
 
 func (self *RealLiquiEndpoint) GetInfo(key string, signer Signer) (liqinfo, error) {
