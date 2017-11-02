@@ -12,6 +12,7 @@ type Blockchain struct {
 	ethclient *ethclient.Client
 	wrapper   *ContractWrapper
 	reserve   *ReserveContract
+	rm        ethereum.Address
 	signer    Signer
 	tokens    []common.Token
 }
@@ -55,7 +56,54 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]c
 	return result, nil
 }
 
-func (self *Blockchain) SetRate(
+func (self *Blockchain) FetchRates(
+	sources []common.Token,
+	dests []common.Token) (common.AllRateEntry, error) {
+
+	result := common.AllRateEntry{}
+	sourceAddrs := []ethereum.Address{}
+	for _, s := range sources {
+		sourceAddrs = append(sourceAddrs, ethereum.HexToAddress(s.Address))
+	}
+	destAddrs := []ethereum.Address{}
+	for _, d := range dests {
+		destAddrs = append(destAddrs, ethereum.HexToAddress(d.Address))
+	}
+	timestamp := common.GetTimestamp()
+	rates, expiries, balances, err := self.wrapper.GetPrices(
+		nil, self.rm, sourceAddrs, destAddrs)
+	for _, s := range sourceAddrs {
+		fmt.Printf("%s, ", s.Hex())
+	}
+	for _, d := range destAddrs {
+		fmt.Printf("%s, ", d.Hex())
+	}
+	// fmt.Printf("\nrates (%d): %v\n", len(rates), rates)
+	// fmt.Printf("expiries: %v\n", expiries)
+	// fmt.Printf("balances: %v\n", balances)
+	// fmt.Printf("error: %s\n", err)
+	returnTime := common.GetTimestamp()
+	result.Timestamp = timestamp
+	result.ReturnTime = returnTime
+	if err != nil {
+		panic(err)
+		result.Valid = false
+		result.Error = err.Error()
+		return result, err
+	} else {
+		result.Valid = true
+		result.Data = map[common.TokenPairID]common.RateEntry{}
+		for i, s := range sources {
+			result.Data[common.NewTokenPairID(
+				s.ID, dests[i].ID)] = common.RateEntry{
+				rates[i], expiries[i], balances[i],
+			}
+		}
+		return result, nil
+	}
+}
+
+func (self *Blockchain) SetRates(
 	sources []ethereum.Address,
 	dests []ethereum.Address,
 	rates []*big.Int,
@@ -152,6 +200,7 @@ func NewBlockchain(wrapperAddr, reserveAddr ethereum.Address, signer Signer) (*B
 		ethclient: infura,
 		wrapper:   wrapper,
 		reserve:   reserve,
+		rm:        reserveAddr,
 		signer:    signer,
 		tokens:    []common.Token{},
 	}, nil

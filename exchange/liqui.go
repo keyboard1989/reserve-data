@@ -24,6 +24,10 @@ func (self *Liqui) ID() common.ExchangeID {
 	return common.ExchangeID("liqui")
 }
 
+func (self *Liqui) TokenPairs() []common.TokenPair {
+	return self.pairs
+}
+
 func (self *Liqui) Name() string {
 	return "liqui"
 }

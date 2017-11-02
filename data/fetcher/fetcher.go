@@ -129,6 +129,34 @@ func (self *Fetcher) fetchAllBalances(w *sync.WaitGroup) {
 	}
 }
 
+func (self *Fetcher) fetchAllRates(w *sync.WaitGroup) {
+	defer w.Done()
+	fmt.Printf("Fetching all rates from blockchain...")
+	sources := []common.Token{}
+	dests := []common.Token{}
+	pairs := map[common.TokenPairID]bool{}
+	for _, ex := range self.exchanges {
+		tokenPairs := ex.TokenPairs()
+		for _, p := range tokenPairs {
+			_, exist := pairs[p.PairID()]
+			if !exist {
+				pairs[p.PairID()] = true
+				sources = append(sources, p.Base)
+				dests = append(dests, p.Quote)
+			}
+		}
+	}
+	data, err := self.blockchain.FetchRates(sources, dests)
+	if err != nil {
+		log.Printf("Fetching data from blockchain failed: %s\n", err)
+	}
+	err = self.storage.StoreRate(data)
+	// fmt.Printf("balance data: %v\n", data)
+	if err != nil {
+		log.Printf("Storing balance data failed: %s\n", err)
+	}
+}
+
 func (self *Fetcher) fetchAllFromExchanges() {
 	fmt.Printf("Fetching data...")
 	wait := sync.WaitGroup{}
@@ -144,5 +172,7 @@ func (self *Fetcher) fetchAllFromBlockchain() {
 	wait := sync.WaitGroup{}
 	wait.Add(1)
 	self.fetchAllBalances(&wait)
+	wait.Add(1)
+	self.fetchAllRates(&wait)
 	wait.Wait()
 }
