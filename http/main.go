@@ -20,10 +20,13 @@ func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
+	wrapperAddr := ethereum.HexToAddress("0xe840e24297a0a62a9df8a0e3831cece5b6098de1")
+	reserveAddr := ethereum.HexToAddress("0xfbd6bc836656ddfd64ebc783e16ef81f4d6f2aed")
+
 	storage := storage.NewRamStorage()
 	fetcher := fetcher.NewFetcher(
 		storage, 3*time.Second, 2*time.Second,
-		ethereum.HexToAddress("0x7811f3b0505f621bac23cc0ad01bc8ccb68bbfdb"),
+		reserveAddr,
 	)
 
 	fileSigner := signer.NewFileSigner("config.json")
@@ -39,8 +42,6 @@ func main() {
 	// fetcher.AddExchange(exchange.NewBittrex())
 	// fetcher.AddExchange(exchange.NewBitfinex())
 
-	wrapperAddr := ethereum.HexToAddress("0xe840e24297a0a62a9df8a0e3831cece5b6098de1")
-	reserveAddr := ethereum.HexToAddress("0xfbd6bc836656ddfd64ebc783e16ef81f4d6f2aed")
 	bc, err := blockchain.NewBlockchain(
 		wrapperAddr,
 		reserveAddr,

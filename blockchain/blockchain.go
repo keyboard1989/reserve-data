@@ -82,7 +82,6 @@ func (self *Blockchain) FetchRates(
 	result.Timestamp = timestamp
 	result.ReturnTime = returnTime
 	if err != nil {
-		panic(err)
 		result.Valid = false
 		result.Error = err.Error()
 		return result, err

@@ -31,7 +31,8 @@ func nonce() string {
 
 func (self *RealLiquiEndpoint) Depth(tokens string) (liqresp, error) {
 	result := liqresp{}
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Duration(2500 * time.Millisecond)}
 	url := fmt.Sprintf(
 		"%s/depth/%s?ignore_invalid=1",
 		self.PublicEndpoint,
@@ -62,7 +63,8 @@ type liqtrade struct {
 
 func (self *RealLiquiEndpoint) Trade(key string, tradeType string, base, quote common.Token, rate, amount float64, signer Signer) (done float64, remaining float64, finished bool, err error) {
 	result := liqtrade{}
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Duration(2500 * time.Millisecond)}
 	data := url.Values{}
 	data.Set("method", "Trade")
 	data.Set("pair", fmt.Sprintf("%s_%s", strings.ToLower(base.ID), strings.ToLower(quote.ID)))
@@ -96,7 +98,7 @@ func (self *RealLiquiEndpoint) Trade(key string, tradeType string, base, quote c
 		}
 		return result.Return.Done, result.Return.Remaining, result.Return.OrderID == 0, nil
 	} else {
-		fmt.Printf("Error: %v, Code: %s\n", err, resp.StatusCode)
+		fmt.Printf("Error: %v, Code: %v\n", err, resp)
 		return 0, 0, false, errors.New("Trade rejected by Liqui")
 	}
 }
@@ -109,7 +111,8 @@ type liqwithdraw struct {
 
 func (self *RealLiquiEndpoint) Withdraw(key string, token common.Token, amount *big.Int, address ethereum.Address, signer Signer) error {
 	result := liqwithdraw{}
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Duration(2500 * time.Millisecond)}
 	data := url.Values{}
 	data.Set("method", "WithdrawCoin")
 	data.Set("coinName", token.ID)
@@ -148,7 +151,8 @@ func (self *RealLiquiEndpoint) Withdraw(key string, token common.Token, amount *
 
 func (self *RealLiquiEndpoint) GetInfo(key string, signer Signer) (liqinfo, error) {
 	result := liqinfo{}
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Duration(2500 * time.Millisecond)}
 	data := url.Values{}
 	data.Set("method", "getInfo")
 	data.Add("nonce", nonce())
