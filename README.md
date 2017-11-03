@@ -127,6 +127,40 @@ Response:
 ```
 Where `hash` is the transaction hash
 
+### Trade
+```
+<host>:8000/trade/:exchange_id
+POST request
+Form params:
+  - base: token id string, eg: ETH, EOS...
+  - quote: token id string, eg: ETH, EOS...
+  - amount: float
+  - rate: float
+  - type: "buy" or "sell"
+```
+
+eg:
+```
+curl -X POST \
+  http://localhost:8000/trade/liqui \
+  -F base=ETH \
+  -F quote=KNC \
+  -F rate=300 \
+  -F type=buy \
+  -F amount=0.01
+```
+Response:
+
+```json
+{
+    "success": true,
+    "done": 0,
+    "remaining": 0.01,
+    "finished": false,
+}
+```
+Where `hash` is the transaction hash
+
 ## Supported tokens
 
 1. eth (ETH)
