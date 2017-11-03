@@ -71,6 +71,32 @@ Response:
 ```
 Where `hash` is the transaction hash
 
+### Withdraw from exchanges
+```
+<host>:8000/withdraw/:exchange_id
+POST request
+Form params:
+  - amount: little endian hex string (must starts with 0x), eg: 0xde0b6b3a7640000
+  - token: token id string, eg: ETH, EOS...
+```
+
+eg:
+```
+curl -X POST \
+  http://localhost:8000/withdraw/liqui \
+  -H 'content-type: multipart/form-data' \
+  -F token=EOS \
+  -F amount=0xde0b6b3a7640000
+```
+Response:
+
+```json
+{
+    "success": true
+}
+```
+Where `hash` is the transaction hash
+
 ### Setting rates
 ```
 <host>:8000/setrates
