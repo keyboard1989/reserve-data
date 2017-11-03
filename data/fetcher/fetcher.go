@@ -163,8 +163,8 @@ func (self *Fetcher) fetchAllFromExchanges() {
 	wait.Add(1)
 	go self.fetchAllPrices(&wait)
 	wait.Add(1)
-	go self.fetchAllEBalances(&wait)
-	wait.Wait()
+	// go self.fetchAllEBalances(&wait)
+	// wait.Wait()
 }
 
 func (self *Fetcher) fetchAllFromBlockchain() {

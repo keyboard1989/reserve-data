@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -64,7 +65,7 @@ func (self *RealLiquiEndpoint) Trade(key string, tradeType string, base, quote c
 	client := &http.Client{}
 	data := url.Values{}
 	data.Set("method", "Trade")
-	data.Set("pair", string(common.NewTokenPairID(base.ID, quote.ID)))
+	data.Set("pair", fmt.Sprintf("%s_%s", strings.ToLower(base.ID), strings.ToLower(quote.ID)))
 	data.Set("type", tradeType)
 	data.Set("rate", fmt.Sprintf("%f", rate))
 	data.Set("amount", fmt.Sprintf("%f", amount))
