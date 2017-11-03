@@ -12,6 +12,7 @@ type Exchange interface {
 	ID() ExchangeID
 	Address(token Token) (address ethereum.Address, supported bool)
 	Withdraw(token Token, amount *big.Int, address ethereum.Address) error
+	Trade(tradeType string, base Token, quote Token, rate float64, amount float64) (done float64, remaining float64, finished bool, err error)
 }
 
 var SupportedExchanges = map[ExchangeID]Exchange{}

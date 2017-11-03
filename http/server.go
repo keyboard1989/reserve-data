@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -140,13 +141,9 @@ func (self *HTTPServer) GetRate(c *gin.Context) {
 
 func (self *HTTPServer) SetRate(c *gin.Context) {
 	sources := c.PostForm("sources")
-	fmt.Printf("sources: %v\n", sources)
 	dests := c.PostForm("dests")
-	fmt.Printf("dests: %v\n", dests)
 	rates := c.PostForm("rates")
-	fmt.Printf("rates: %v\n", rates)
 	blocks := c.PostForm("expiries")
-	fmt.Printf("blocks: %v\n", blocks)
 	sourceTokens := []common.Token{}
 	for _, source := range strings.Split(sources, "-") {
 		token, err := common.GetToken(source)
@@ -213,6 +210,83 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 			},
 		)
 	}
+}
+
+func (self *HTTPServer) Trade(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	baseTokenParam := c.PostForm("base")
+	quoteTokenParam := c.PostForm("quote")
+	amountParam := c.PostForm("amount")
+	rateParam := c.PostForm("rate")
+	typeParam := c.PostForm("type")
+
+	fmt.Printf("params: %v\n", c)
+
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	base, err := common.GetToken(baseTokenParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	quote, err := common.GetToken(quoteTokenParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	amount, err := strconv.ParseFloat(amountParam, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	rate, err := strconv.ParseFloat(rateParam, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	if typeParam != "sell" && typeParam != "buy" {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": fmt.Sprintf("Trade type of %s is not supported.", typeParam)},
+		)
+		return
+	}
+	done, remaining, finished, err := self.core.Trade(
+		exchange, typeParam, base, quote, rate, amount)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success":   true,
+			"done":      done,
+			"remaining": remaining,
+			"finished":  finished,
+		},
+	)
 }
 
 func (self *HTTPServer) Withdraw(c *gin.Context) {
@@ -315,6 +389,7 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/ebalances", self.AllEBalances)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
+	self.r.POST("/trade/:exchangeid", self.Trade)
 	self.r.POST("/setrates", self.SetRate)
 	self.r.GET("/getrates", self.GetRate)
 

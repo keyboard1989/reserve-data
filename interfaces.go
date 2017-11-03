@@ -25,9 +25,8 @@ type ReserveData interface {
 
 type ReserveCore interface {
 	// place order
-	// cancel order
+	Trade(exchange common.Exchange, tradeType string, base common.Token, quote common.Token, rate float64, amount float64) (done float64, remaining float64, finished bool, err error)
 	Deposit(exchange common.Exchange, token common.Token, amount *big.Int) (ethereum.Hash, error)
-	// withdraw
 	Withdraw(exchange common.Exchange, token common.Token, amount *big.Int) error
 
 	// blockchain related action

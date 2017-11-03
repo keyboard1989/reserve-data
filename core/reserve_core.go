@@ -21,6 +21,10 @@ func NewReserveCore(blockchain Blockchain, rm ethereum.Address) *ReserveCore {
 	}
 }
 
+func (self ReserveCore) Trade(exchange common.Exchange, tradeType string, base common.Token, quote common.Token, rate float64, amount float64) (done float64, remaining float64, finished bool, err error) {
+	return exchange.Trade(tradeType, base, quote, rate, amount)
+}
+
 func (self ReserveCore) Deposit(
 	exchange common.Exchange,
 	token common.Token,

@@ -49,6 +49,57 @@ func (self *RealLiquiEndpoint) Depth(tokens string) (liqresp, error) {
 	return result, err
 }
 
+type liqtrade struct {
+	Success int `json:"success"`
+	Return  struct {
+		Done      float64 `json:"received"`
+		Remaining float64 `json:"remains"`
+		OrderID   int64   `json:"order_id"`
+	}
+	Error string `json:"error"`
+}
+
+func (self *RealLiquiEndpoint) Trade(key string, tradeType string, base, quote common.Token, rate, amount float64, signer Signer) (done float64, remaining float64, finished bool, err error) {
+	result := liqtrade{}
+	client := &http.Client{}
+	data := url.Values{}
+	data.Set("method", "Trade")
+	data.Set("pair", string(common.NewTokenPairID(base.ID, quote.ID)))
+	data.Set("type", tradeType)
+	data.Set("rate", fmt.Sprintf("%f", rate))
+	data.Set("amount", fmt.Sprintf("%f", amount))
+	params := data.Encode()
+	req, _ := http.NewRequest(
+		"POST",
+		self.AuthenticatedEndpoint,
+		bytes.NewBufferString(params),
+	)
+	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Key", key)
+	req.Header.Add("Sign", signer.LiquiSign(params))
+	resp, err := client.Do(req)
+	if err == nil && resp.StatusCode == 200 {
+		defer resp.Body.Close()
+		resp_body, err := ioutil.ReadAll(resp.Body)
+		fmt.Printf("response: %s\n", resp_body)
+		if err == nil {
+			err = json.Unmarshal(resp_body, &result)
+		}
+		if err != nil {
+			return 0, 0, false, err
+		}
+		if result.Error != "" {
+			return 0, 0, false, errors.New(result.Error)
+		}
+		return result.Return.Done, result.Return.Remaining, result.Return.OrderID == 0, nil
+	} else {
+		fmt.Printf("Error: %v, Code: %s\n", err, resp.StatusCode)
+		return 0, 0, false, errors.New("Trade rejected by Liqui")
+	}
+}
+
 type liqwithdraw struct {
 	Success int `json:"success"`
 	Return  map[string]interface{}

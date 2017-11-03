@@ -42,6 +42,12 @@ type liqinfo struct {
 	Error   string `json:"error"`
 }
 
+func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64) (done float64, remaining float64, finished bool, err error) {
+	return self.endpoint.Trade(
+		self.signer.GetLiquiKey(),
+		tradeType, base, quote, rate, amount, self.signer)
+}
+
 func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) error {
 	return self.endpoint.Withdraw(
 		self.signer.GetLiquiKey(),
