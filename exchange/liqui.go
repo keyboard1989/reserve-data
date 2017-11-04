@@ -16,6 +16,10 @@ type Liqui struct {
 	addresses map[string]ethereum.Address
 }
 
+func (self *Liqui) MarshalText() (text []byte, err error) {
+	return []byte(self.ID()), nil
+}
+
 func (self *Liqui) Address(token common.Token) (ethereum.Address, bool) {
 	addr, supported := self.addresses[token.ID]
 	return addr, supported

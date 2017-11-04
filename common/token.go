@@ -12,6 +12,12 @@ type Token struct {
 	Decimal int64
 }
 
+func (self Token) MarshalText() (text []byte, err error) {
+	return []byte(fmt.Sprintf(
+		"%s-%s", self.ID, self.Address,
+	)), nil
+}
+
 func (self Token) IsETH() bool {
 	return self.ID == "ETH"
 }

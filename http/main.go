@@ -30,7 +30,7 @@ func main() {
 		reserveAddr,
 	)
 
-	fileSigner := signer.NewFileSigner("config.json")
+	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/http/config.json")
 
 	liqui := exchange.NewLiqui(
 		fileSigner,
