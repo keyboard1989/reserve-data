@@ -14,6 +14,5 @@
 .glide/
 
 reserve-data
-vendor/
 http/http
 *.log
