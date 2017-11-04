@@ -31,4 +31,6 @@ type ReserveCore interface {
 
 	// blockchain related action
 	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (ethereum.Hash, error)
+
+	GetRecords() ([]common.ActivityRecord, error)
 }

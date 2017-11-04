@@ -8,6 +8,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/core"
+	corestorage "github.com/KyberNetwork/reserve-data/core/storage"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
@@ -67,7 +68,8 @@ func main() {
 			fetcher,
 		)
 		app.Run()
-		core := core.NewReserveCore(bc, reserveAddr)
+		activityStorage := corestorage.NewRamStorage()
+		core := core.NewReserveCore(bc, activityStorage, reserveAddr)
 		server := NewHTTPServer(app, core, ":8000")
 		server.Run()
 	}

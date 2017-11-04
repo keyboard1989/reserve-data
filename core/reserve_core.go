@@ -10,19 +10,46 @@ import (
 )
 
 type ReserveCore struct {
-	blockchain Blockchain
-	rm         ethereum.Address
+	blockchain      Blockchain
+	activityStorage ActivityStorage
+	rm              ethereum.Address
 }
 
-func NewReserveCore(blockchain Blockchain, rm ethereum.Address) *ReserveCore {
+func NewReserveCore(
+	blockchain Blockchain,
+	storage ActivityStorage,
+	rm ethereum.Address) *ReserveCore {
 	return &ReserveCore{
 		blockchain,
+		storage,
 		rm,
 	}
 }
 
-func (self ReserveCore) Trade(exchange common.Exchange, tradeType string, base common.Token, quote common.Token, rate float64, amount float64) (done float64, remaining float64, finished bool, err error) {
-	return exchange.Trade(tradeType, base, quote, rate, amount)
+func (self ReserveCore) Trade(
+	exchange common.Exchange,
+	tradeType string,
+	base common.Token,
+	quote common.Token,
+	rate float64,
+	amount float64) (done float64, remaining float64, finished bool, err error) {
+	done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount)
+	go self.activityStorage.Record(
+		"trade", map[string]interface{}{
+			"exchange": exchange,
+			"type":     tradeType,
+			"base":     base,
+			"quote":    quote,
+			"rate":     rate,
+			"amount":   amount,
+		}, map[string]interface{}{
+			"done":      done,
+			"remaining": remaining,
+			"finished":  finished,
+			"error":     err,
+		},
+	)
+	return done, remaining, finished, err
 }
 
 func (self ReserveCore) Deposit(
@@ -31,10 +58,25 @@ func (self ReserveCore) Deposit(
 	amount *big.Int) (ethereum.Hash, error) {
 
 	address, supported := exchange.Address(token)
+	tx := ethereum.Hash{}
+	var err error
 	if !supported {
-		return ethereum.Hash{}, errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
+		tx = ethereum.Hash{}
+		err = errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
+	} else {
+		tx, err = self.blockchain.Send(token, amount, address)
 	}
-	return self.blockchain.Send(token, amount, address)
+	go self.activityStorage.Record(
+		"deposit", map[string]interface{}{
+			"exchange": exchange,
+			"token":    token,
+			"amount":   common.BigToFloat(amount, token.Decimal),
+		}, map[string]interface{}{
+			"tx":    tx,
+			"error": err,
+		},
+	)
+	return tx, err
 }
 
 func (self ReserveCore) Withdraw(
@@ -42,10 +84,22 @@ func (self ReserveCore) Withdraw(
 	amount *big.Int) error {
 
 	_, supported := exchange.Address(token)
+	var err error
 	if !supported {
-		return errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
+		err = errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
+	} else {
+		err = exchange.Withdraw(token, amount, self.rm)
 	}
-	return exchange.Withdraw(token, amount, self.rm)
+	go self.activityStorage.Record(
+		"withdraw", map[string]interface{}{
+			"exchange": exchange,
+			"token":    token,
+			"amount":   common.BigToFloat(amount, token.Decimal),
+		}, map[string]interface{}{
+			"error": err,
+		},
+	)
+	return err
 }
 
 func (self ReserveCore) SetRates(
@@ -58,8 +112,10 @@ func (self ReserveCore) SetRates(
 	lendests := len(dests)
 	lenrates := len(rates)
 	lenblocks := len(expiryBlocks)
+	tx := ethereum.Hash{}
+	var err error
 	if lensources != lendests || lensources != lenrates || lensources != lenblocks {
-		return ethereum.Hash{}, errors.New("Sources, dests, rates and expiryBlocks must have the same length")
+		err = errors.New("Sources, dests, rates and expiryBlocks must have the same length")
 	} else {
 		sourceAddrs := []ethereum.Address{}
 		for _, source := range sources {
@@ -69,6 +125,22 @@ func (self ReserveCore) SetRates(
 		for _, dest := range dests {
 			destAddrs = append(destAddrs, ethereum.HexToAddress(dest.Address))
 		}
-		return self.blockchain.SetRates(sourceAddrs, destAddrs, rates, expiryBlocks)
+		tx, err = self.blockchain.SetRates(sourceAddrs, destAddrs, rates, expiryBlocks)
 	}
+	go self.activityStorage.Record(
+		"set_rates", map[string]interface{}{
+			"sources":      sources,
+			"dests":        dests,
+			"rates":        rates,
+			"expiryBlocks": expiryBlocks,
+		}, map[string]interface{}{
+			"tx":    tx,
+			"error": err,
+		},
+	)
+	return tx, err
+}
+
+func (self ReserveCore) GetRecords() ([]common.ActivityRecord, error) {
+	return self.activityStorage.GetAllRecords()
 }
