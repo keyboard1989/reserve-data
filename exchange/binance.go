@@ -1,18 +1,18 @@
 package exchange
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"net/http"
-	"strconv"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
+	"math/big"
 )
 
 type Binance struct {
-	pairs []common.TokenPair
+	signer    Signer
+	endpoint  BinanceEndpoint
+	pairs     []common.TokenPair
+	addresses map[string]ethereum.Address
 }
 
 func (self Binance) ID() common.ExchangeID {
@@ -23,88 +23,39 @@ func (self Binance) Name() string {
 	return "binance"
 }
 
-type binresp struct {
-	LastUpdatedId int64      `json:"lastUpdateId"`
-	Code          int        `json:"code"`
-	Msg           string     `json:"msg"`
-	Bids          [][]string `json:"bids"`
-	Asks          [][]string `json:"asks"`
+func (self *Binance) MarshalText() (text []byte, err error) {
+	return []byte(self.ID()), nil
 }
 
-func (self Binance) FetchOnePairData(
-	wg *sync.WaitGroup,
-	pair common.TokenPair,
-	data *sync.Map) {
-
-	defer wg.Done()
-	result := common.ExchangePrice{}
-
-	client := &http.Client{}
-	req, _ := http.NewRequest("GET", "https://www.binance.com/api/v1/depth", nil)
-	req.Header.Add("Accept", "application/json")
-
-	q := req.URL.Query()
-	q.Add("symbol", fmt.Sprintf("%s%s", pair.Base.ID, pair.Quote.ID))
-	q.Add("limit", "50")
-	req.URL.RawQuery = q.Encode()
-
-	timestamp := common.GetTimestamp()
-	resp, err := client.Do(req)
-	result.Timestamp = timestamp
-	result.Valid = true
-	if err != nil {
-		result.Valid = false
-		result.Error = err.Error()
-	} else {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		returnTime := common.GetTimestamp()
-		result.ReturnTime = returnTime
-		if err != nil {
-			result.Valid = false
-			result.Error = err.Error()
-		} else {
-			resp_data := binresp{}
-			json.Unmarshal(resp_body, &resp_data)
-			if resp_data.Code != 0 || resp_data.Msg != "" {
-				result.Valid = false
-			} else {
-				for _, buy := range resp_data.Bids {
-					quantity, _ := strconv.ParseFloat(buy[1], 64)
-					rate, _ := strconv.ParseFloat(buy[0], 64)
-					result.BuyPrices = append(
-						result.BuyPrices,
-						common.PriceEntry{
-							quantity,
-							rate,
-						},
-					)
-				}
-				for _, sell := range resp_data.Asks {
-					quantity, _ := strconv.ParseFloat(sell[1], 64)
-					rate, _ := strconv.ParseFloat(sell[0], 64)
-					result.SellPrices = append(
-						result.SellPrices,
-						common.PriceEntry{
-							quantity,
-							rate,
-						},
-					)
-				}
-			}
-		}
-	}
-	data.Store(pair.PairID(), result)
+func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
+	addr, supported := self.addresses[token.ID]
+	return addr, supported
 }
 
-// https://www.binance.com/api/v1/depth?symbol=OMGETH&limit=50
+func (self *Binance) TokenPairs() []common.TokenPair {
+	return self.pairs
+}
+
+
+func (self *Binance) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64) (done float64, remaining float64, finished bool, err error) {
+	return self.endpoint.Trade(
+		self.signer.GetBinanceKey(),
+		tradeType, base, quote, rate, amount, self.signer)
+}
+
+func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) error {
+	return self.endpoint.Withdraw(
+		self.signer.GetBinanceKey(),
+		token, amount, address, self.signer)
+}
+
 func (self Binance) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
 	pairs := self.pairs
 	for _, pair := range pairs {
 		wait.Add(1)
-		go self.FetchOnePairData(&wait, pair, &data)
+		go self.endpoint.FetchOnePairData(&wait, pair, &data)
 	}
 	wait.Wait()
 	result := map[common.TokenPairID]common.ExchangePrice{}
@@ -116,8 +67,26 @@ func (self Binance) FetchPriceData() (map[common.TokenPairID]common.ExchangePric
 	return result, nil
 }
 
-func NewBinance() *Binance {
+func (self Binance) FetchEBalanceData() (common.EBalanceEntry, error) {
+	result := common.EBalanceEntry{}
+	result.Timestamp = common.GetTimestamp()
+	result.Valid = true
+	//response, err := self.endpoint.GetInfo(
+	//	self.signer.getBinanceKey(),
+	//	self.signer,
+	//)
+	result.ReturnTime = common.GetTimestamp()
+	//if err != nil {
+	//	result.Valid = false
+	//	result.Error = error.Error()
+	//}
+	return result, nil
+}
+
+func NewBinance(signer Signer, endpoint BinanceEndpoint) *Binance {
 	return &Binance{
+		signer,
+		endpoint,
 		[]common.TokenPair{
 			common.MustCreateTokenPair("FUN", "ETH"),
 			common.MustCreateTokenPair("MCO", "ETH"),
@@ -125,6 +94,19 @@ func NewBinance() *Binance {
 			common.MustCreateTokenPair("EOS", "ETH"),
 			common.MustCreateTokenPair("KNC", "ETH"),
 			common.MustCreateTokenPair("LINK", "ETH"),
+		},
+		map[string]ethereum.Address{
+			"ETH": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"OMG": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"DGD": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"CVC": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"MCO": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"GNT": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"ADX": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"EOS": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"PAY": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"BAT": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
+			"KNC": ethereum.HexToAddress("0xce656971fe4fc43a0211b792d380900761b7862c"),
 		},
 	}
 }

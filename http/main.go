@@ -30,8 +30,9 @@ func main() {
 		reserveAddr,
 	)
 
-	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/http/config.json")
+	fileSigner := signer.NewFileSigner("./config.json")
 
+	// liqui
 	liqui := exchange.NewLiqui(
 		fileSigner,
 		// exchange.NewRealLiquiEndpoint(),
@@ -39,8 +40,25 @@ func main() {
 	)
 	common.SupportedExchanges[liqui.ID()] = liqui
 	fetcher.AddExchange(liqui)
-	// fetcher.AddExchange(exchange.NewBinance())
-	// fetcher.AddExchange(exchange.NewBittrex())
+
+	// bittrex
+	bittrex := exchange.NewBittrex(
+		fileSigner,
+		// exchange.NewRealBittrexEndpoint(),
+		exchange.NewSimulatedBittrexEndpoint(),
+	)
+	common.SupportedExchanges[bittrex.ID()] = bittrex
+	fetcher.AddExchange(bittrex)
+
+	// binance
+	binance := exchange.NewBinance(
+		fileSigner,
+		// exchange.NewRealBinanceEndpoint(),
+		exchange.NewSimulatedBinanceEndpoint(),
+	)
+	common.SupportedExchanges[binance.ID()] = binance
+	fetcher.AddExchange(binance)
+
 	// fetcher.AddExchange(exchange.NewBitfinex())
 
 	bc, err := blockchain.NewBlockchain(
