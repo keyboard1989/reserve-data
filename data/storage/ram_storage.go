@@ -20,23 +20,23 @@ func NewRamStorage() *RamStorage {
 	}
 }
 
-func (self *RamStorage) CurrentPriceVersion() (common.Version, error) {
-	version, err := self.price.CurrentVersion()
+func (self *RamStorage) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
+	version, err := self.price.CurrentVersion(timepoint)
 	return common.Version(version), err
 }
 
-func (self *RamStorage) CurrentBalanceVersion() (common.Version, error) {
-	version, err := self.balance.CurrentVersion()
+func (self *RamStorage) CurrentBalanceVersion(timepoint uint64) (common.Version, error) {
+	version, err := self.balance.CurrentVersion(timepoint)
 	return common.Version(version), err
 }
 
-func (self *RamStorage) CurrentEBalanceVersion() (common.Version, error) {
-	version, err := self.ebalance.CurrentVersion()
+func (self *RamStorage) CurrentEBalanceVersion(timepoint uint64) (common.Version, error) {
+	version, err := self.ebalance.CurrentVersion(timepoint)
 	return common.Version(version), err
 }
 
-func (self *RamStorage) CurrentRateVersion() (common.Version, error) {
-	version, err := self.rate.CurrentVersion()
+func (self *RamStorage) CurrentRateVersion(timepoint uint64) (common.Version, error) {
+	version, err := self.rate.CurrentVersion(timepoint)
 	return common.Version(version), err
 }
 

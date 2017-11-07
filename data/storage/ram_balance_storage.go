@@ -2,6 +2,7 @@ package storage
 
 import (
 	"errors"
+	"fmt"
 	"github.com/KyberNetwork/reserve-data/common"
 	"sync"
 )
@@ -20,9 +21,10 @@ func NewRamBalanceStorage() *RamBalanceStorage {
 	}
 }
 
-func (self *RamBalanceStorage) CurrentVersion() (int64, error) {
+func (self *RamBalanceStorage) CurrentVersion(timepoint uint64) (int64, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
+	fmt.Printf("!!!!!!!Unimplemented timepoint version\n")
 	return self.version, nil
 }
 

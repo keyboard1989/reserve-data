@@ -9,13 +9,13 @@ type ReserveData struct {
 	fetcher Fetcher
 }
 
-func (self ReserveData) CurrentPriceVersion() (common.Version, error) {
-	return self.storage.CurrentPriceVersion()
+func (self ReserveData) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
+	return self.storage.CurrentPriceVersion(timepoint)
 }
 
-func (self ReserveData) GetAllPrices() (common.AllPriceResponse, error) {
+func (self ReserveData) GetAllPrices(timepoint uint64) (common.AllPriceResponse, error) {
 	timestamp := common.GetTimestamp()
-	version, err := self.storage.CurrentPriceVersion()
+	version, err := self.storage.CurrentPriceVersion(timepoint)
 	if err != nil {
 		return common.AllPriceResponse{}, err
 	} else {
@@ -30,9 +30,9 @@ func (self ReserveData) GetAllPrices() (common.AllPriceResponse, error) {
 	}
 }
 
-func (self ReserveData) GetOnePrice(pairID common.TokenPairID) (common.OnePriceResponse, error) {
+func (self ReserveData) GetOnePrice(pairID common.TokenPairID, timepoint uint64) (common.OnePriceResponse, error) {
 	timestamp := common.GetTimestamp()
-	version, err := self.storage.CurrentPriceVersion()
+	version, err := self.storage.CurrentPriceVersion(timepoint)
 	if err != nil {
 		return common.OnePriceResponse{}, err
 	} else {
@@ -47,13 +47,13 @@ func (self ReserveData) GetOnePrice(pairID common.TokenPairID) (common.OnePriceR
 	}
 }
 
-func (self ReserveData) CurrentEBalanceVersion() (common.Version, error) {
-	return self.storage.CurrentEBalanceVersion()
+func (self ReserveData) CurrentEBalanceVersion(timepoint uint64) (common.Version, error) {
+	return self.storage.CurrentEBalanceVersion(timepoint)
 }
 
-func (self ReserveData) GetAllEBalances() (common.AllEBalanceResponse, error) {
+func (self ReserveData) GetAllEBalances(timepoint uint64) (common.AllEBalanceResponse, error) {
 	timestamp := common.GetTimestamp()
-	version, err := self.storage.CurrentEBalanceVersion()
+	version, err := self.storage.CurrentEBalanceVersion(timepoint)
 	if err != nil {
 		return common.AllEBalanceResponse{}, err
 	} else {
@@ -68,13 +68,13 @@ func (self ReserveData) GetAllEBalances() (common.AllEBalanceResponse, error) {
 	}
 }
 
-func (self ReserveData) CurrentBalanceVersion() (common.Version, error) {
-	return self.storage.CurrentBalanceVersion()
+func (self ReserveData) CurrentBalanceVersion(timepoint uint64) (common.Version, error) {
+	return self.storage.CurrentBalanceVersion(timepoint)
 }
 
-func (self ReserveData) GetAllBalances() (common.AllBalanceResponse, error) {
+func (self ReserveData) GetAllBalances(timepoint uint64) (common.AllBalanceResponse, error) {
 	timestamp := common.GetTimestamp()
-	version, err := self.storage.CurrentBalanceVersion()
+	version, err := self.storage.CurrentBalanceVersion(timepoint)
 	if err != nil {
 		return common.AllBalanceResponse{}, err
 	} else {
@@ -95,13 +95,13 @@ func (self ReserveData) GetAllBalances() (common.AllBalanceResponse, error) {
 	}
 }
 
-func (self ReserveData) CurrentRateVersion() (common.Version, error) {
-	return self.storage.CurrentRateVersion()
+func (self ReserveData) CurrentRateVersion(timepoint uint64) (common.Version, error) {
+	return self.storage.CurrentRateVersion(timepoint)
 }
 
-func (self ReserveData) GetAllRates() (common.AllRateResponse, error) {
+func (self ReserveData) GetAllRates(timepoint uint64) (common.AllRateResponse, error) {
 	timestamp := common.GetTimestamp()
-	version, err := self.storage.CurrentRateVersion()
+	version, err := self.storage.CurrentRateVersion(timepoint)
 	if err != nil {
 		return common.AllRateResponse{}, err
 	} else {
