@@ -1,4 +1,4 @@
-package exchange
+package liqui
 
 type Signer interface {
 	GetLiquiKey() string

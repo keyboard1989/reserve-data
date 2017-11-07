@@ -15,6 +15,11 @@ func GetTimestamp() Timestamp {
 	return Timestamp(strconv.Itoa(int(timestamp)))
 }
 
+func TimeToTimepoint(t time.Time) uint64 {
+	timestamp := t.UnixNano() / int64(time.Millisecond)
+	return uint64(timestamp)
+}
+
 type TokenPairID string
 
 func NewTokenPairID(base, quote string) TokenPairID {

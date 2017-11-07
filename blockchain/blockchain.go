@@ -71,7 +71,7 @@ func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
 	}
 }
 
-func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]common.BalanceEntry, error) {
+func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uint64) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
 	for _, tok := range self.tokens {
@@ -108,7 +108,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]c
 
 func (self *Blockchain) FetchRates(
 	sources []common.Token,
-	dests []common.Token) (common.AllRateEntry, error) {
+	dests []common.Token, timepoint uint64) (common.AllRateEntry, error) {
 
 	result := common.AllRateEntry{}
 	sourceAddrs := []ethereum.Address{}

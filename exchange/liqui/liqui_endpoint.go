@@ -1,4 +1,4 @@
-package exchange
+package liqui
 
 import (
 	"bytes"
@@ -9,17 +9,19 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-type RealLiquiEndpoint struct {
-	AuthenticatedEndpoint string
-	PublicEndpoint        string
+type LiquiEndpoint struct {
+	signer Signer
+	interf Interface
 }
 
 func nonce() string {
@@ -29,16 +31,23 @@ func nonce() string {
 	return strconv.Itoa(int(timestamp))
 }
 
-func (self *RealLiquiEndpoint) Depth(tokens string) (liqresp, error) {
-	result := liqresp{}
+func (self *LiquiEndpoint) Depth(tokens string, timepoint uint64) (exchange.Liqresp, error) {
+	result := exchange.Liqresp{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second)}
-	url := fmt.Sprintf(
-		"%s/depth/%s?ignore_invalid=1",
-		self.PublicEndpoint,
+	u, err := url.Parse(self.interf.PublicEndpoint(timepoint))
+	if err != nil {
+		panic(err)
+	}
+	q := u.Query()
+	q.Set("ignore_invalid", "1")
+	u.RawQuery = q.Encode()
+	u.Path = path.Join(
+		u.Path,
+		"depth",
 		tokens,
 	)
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequest("GET", u.String(), nil)
 	req.Header.Add("Accept", "application/json")
 	resp, err := client.Do(req)
 	if err == nil {
@@ -51,18 +60,8 @@ func (self *RealLiquiEndpoint) Depth(tokens string) (liqresp, error) {
 	return result, err
 }
 
-type liqtrade struct {
-	Success int `json:"success"`
-	Return  struct {
-		Done      float64 `json:"received"`
-		Remaining float64 `json:"remains"`
-		OrderID   int64   `json:"order_id"`
-	}
-	Error string `json:"error"`
-}
-
-func (self *RealLiquiEndpoint) Trade(key string, tradeType string, base, quote common.Token, rate, amount float64, signer Signer) (done float64, remaining float64, finished bool, err error) {
-	result := liqtrade{}
+func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+	result := exchange.Liqtrade{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second)}
 	data := url.Values{}
@@ -74,14 +73,14 @@ func (self *RealLiquiEndpoint) Trade(key string, tradeType string, base, quote c
 	params := data.Encode()
 	req, _ := http.NewRequest(
 		"POST",
-		self.AuthenticatedEndpoint,
+		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", key)
-	req.Header.Add("Sign", signer.LiquiSign(params))
+	req.Header.Add("Key", self.signer.GetLiquiKey())
+	req.Header.Add("Sign", self.signer.LiquiSign(params))
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
@@ -103,14 +102,9 @@ func (self *RealLiquiEndpoint) Trade(key string, tradeType string, base, quote c
 	}
 }
 
-type liqwithdraw struct {
-	Success int `json:"success"`
-	Return  map[string]interface{}
-	Error   string `json:"error"`
-}
-
-func (self *RealLiquiEndpoint) Withdraw(key string, token common.Token, amount *big.Int, address ethereum.Address, signer Signer) error {
-	result := liqwithdraw{}
+func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) error {
+	// ignoring timepoint because it's only relevant in simulation
+	result := exchange.Liqwithdraw{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
@@ -122,14 +116,14 @@ func (self *RealLiquiEndpoint) Withdraw(key string, token common.Token, amount *
 	params := data.Encode()
 	req, _ := http.NewRequest(
 		"POST",
-		self.AuthenticatedEndpoint,
+		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", key)
-	req.Header.Add("Sign", signer.LiquiSign(params))
+	req.Header.Add("Key", self.signer.GetLiquiKey())
+	req.Header.Add("Sign", self.signer.LiquiSign(params))
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
@@ -151,24 +145,26 @@ func (self *RealLiquiEndpoint) Withdraw(key string, token common.Token, amount *
 	}
 }
 
-func (self *RealLiquiEndpoint) GetInfo(key string, signer Signer) (liqinfo, error) {
-	result := liqinfo{}
+func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
+	result := exchange.Liqinfo{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second)}
 	data := url.Values{}
 	data.Set("method", "getInfo")
 	data.Add("nonce", nonce())
 	params := data.Encode()
+	fmt.Printf("endpoint: %v\n", self.interf.AuthenticatedEndpoint(timepoint))
 	req, _ := http.NewRequest(
 		"POST",
-		self.AuthenticatedEndpoint,
+		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
+	fmt.Printf("params: %v\n", params)
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", key)
-	req.Header.Add("Sign", signer.LiquiSign(params))
+	req.Header.Add("Key", self.signer.GetLiquiKey())
+	req.Header.Add("Sign", self.signer.LiquiSign(params))
 	resp, err := client.Do(req)
 	if err == nil {
 		defer resp.Body.Close()
@@ -180,9 +176,14 @@ func (self *RealLiquiEndpoint) GetInfo(key string, signer Signer) (liqinfo, erro
 	return result, err
 }
 
-func NewRealLiquiEndpoint() *RealLiquiEndpoint {
-	return &RealLiquiEndpoint{
-		"https://api.liqui.io/tapi",
-		"https://api.liqui.io/api/3",
-	}
+func NewLiquiEndpoint(signer Signer, interf Interface) *LiquiEndpoint {
+	return &LiquiEndpoint{signer, interf}
+}
+
+func NewRealLiquiEndpoint(signer Signer) *LiquiEndpoint {
+	return &LiquiEndpoint{signer, NewRealInterface()}
+}
+
+func NewSimulatedLiquiEndpoint(signer Signer) *LiquiEndpoint {
+	return &LiquiEndpoint{signer, NewSimulatedInterface()}
 }

@@ -8,6 +8,6 @@ type Exchange interface {
 	ID() common.ExchangeID
 	Name() string
 	TokenPairs() []common.TokenPair
-	FetchPriceData() (map[common.TokenPairID]common.ExchangePrice, error)
-	FetchEBalanceData() (common.EBalanceEntry, error)
+	FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error)
+	FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error)
 }
