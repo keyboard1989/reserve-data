@@ -122,8 +122,6 @@ func (self *Blockchain) FetchRates(
 	timestamp := common.GetTimestamp()
 	rates, expiries, balances, err := self.wrapper.GetPrices(
 		nil, self.rm, sourceAddrs, destAddrs)
-	_ = expiries
-	_ = balances
 	// fmt.Printf("\nrates (%d): %v\n", len(rates), rates)
 	// fmt.Printf("expiries: %v\n", expiries)
 	// fmt.Printf("balances: %v\n", balances)
@@ -141,8 +139,8 @@ func (self *Blockchain) FetchRates(
 		for i, s := range sources {
 			result.Data[common.NewTokenPairID(
 				s.ID, dests[i].ID)] = common.RateEntry{
-				// rates[i], expiries[i], balances[i],
-				rates[3*i], rates[3*i+1], rates[3*i+2],
+				rates[i], expiries[i], balances[i],
+				// rates[3*i], rates[3*i+1], rates[3*i+2],
 			}
 		}
 		return result, nil
