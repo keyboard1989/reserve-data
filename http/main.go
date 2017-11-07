@@ -13,6 +13,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
+	"github.com/KyberNetwork/reserve-data/exchange/liqui"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -21,23 +22,30 @@ func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	wrapperAddr := ethereum.HexToAddress("0xe840e24297a0a62a9df8a0e3831cece5b6098de1")
-	reserveAddr := ethereum.HexToAddress("0xfbd6bc836656ddfd64ebc783e16ef81f4d6f2aed")
+	wrapperAddr := ethereum.HexToAddress("0x9624ec965ff9bf947a90d5b66392d41c53777c3d")
+	reserveAddr := ethereum.HexToAddress("0xc9f8edc40f8b5369a3144bb29d7465b632fdb563")
 
 	storage := storage.NewRamStorage()
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
 	fetcher := fetcher.NewFetcher(
-		storage, 3*time.Second, 2*time.Second,
+		storage,
+		fetcherRunner,
 		reserveAddr,
 	)
 
 	fileSigner := signer.NewFileSigner("./config.json")
 
+<<<<<<< HEAD
 	// liqui
 	liqui := exchange.NewLiqui(
 		fileSigner,
 		// exchange.NewRealLiquiEndpoint(),
 		exchange.NewSimulatedLiquiEndpoint(),
 	)
+=======
+	// liqui := exchange.NewRealLiqui(fileSigner)
+	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
+>>>>>>> master
 	common.SupportedExchanges[liqui.ID()] = liqui
 	fetcher.AddExchange(liqui)
 

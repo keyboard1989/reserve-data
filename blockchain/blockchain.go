@@ -71,7 +71,7 @@ func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
 	}
 }
 
-func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]common.BalanceEntry, error) {
+func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uint64) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
 	for _, tok := range self.tokens {
@@ -108,7 +108,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address) (map[string]c
 
 func (self *Blockchain) FetchRates(
 	sources []common.Token,
-	dests []common.Token) (common.AllRateEntry, error) {
+	dests []common.Token, timepoint uint64) (common.AllRateEntry, error) {
 
 	result := common.AllRateEntry{}
 	sourceAddrs := []ethereum.Address{}
@@ -122,8 +122,6 @@ func (self *Blockchain) FetchRates(
 	timestamp := common.GetTimestamp()
 	rates, expiries, balances, err := self.wrapper.GetPrices(
 		nil, self.rm, sourceAddrs, destAddrs)
-	_ = expiries
-	_ = balances
 	// fmt.Printf("\nrates (%d): %v\n", len(rates), rates)
 	// fmt.Printf("expiries: %v\n", expiries)
 	// fmt.Printf("balances: %v\n", balances)
@@ -141,8 +139,8 @@ func (self *Blockchain) FetchRates(
 		for i, s := range sources {
 			result.Data[common.NewTokenPairID(
 				s.ID, dests[i].ID)] = common.RateEntry{
-				// rates[i], expiries[i], balances[i],
-				rates[3*i], rates[3*i+1], rates[3*i+2],
+				rates[i], expiries[i], balances[i],
+				// rates[3*i], rates[3*i+1], rates[3*i+2],
 			}
 		}
 		return result, nil

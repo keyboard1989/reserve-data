@@ -10,8 +10,7 @@ import (
 )
 
 type Liqui struct {
-	signer    Signer
-	endpoint  LiquiEndpoint
+	interf    LiquiInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
 }
@@ -37,35 +36,19 @@ func (self *Liqui) Name() string {
 	return "liqui"
 }
 
-// map of token pair to map of asks/bids to array of [rate, amount]
-type liqresp map[string]map[string][][]float64
-
-type liqinfo struct {
-	Success int `json:"success"`
-	Return  map[string]map[string]float64
-	Error   string `json:"error"`
+func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 
-func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64) (done float64, remaining float64, finished bool, err error) {
-	return self.endpoint.Trade(
-		self.signer.GetLiquiKey(),
-		tradeType, base, quote, rate, amount, self.signer)
+func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) error {
+	return self.interf.Withdraw(token, amount, address, timepoint)
 }
 
-func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) error {
-	return self.endpoint.Withdraw(
-		self.signer.GetLiquiKey(),
-		token, amount, address, self.signer)
-}
-
-func (self *Liqui) FetchEBalanceData() (common.EBalanceEntry, error) {
+func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.GetTimestamp()
 	result.Valid = true
-	resp_data, err := self.endpoint.GetInfo(
-		self.signer.GetLiquiKey(),
-		self.signer,
-	)
+	resp_data, err := self.interf.GetInfo(timepoint)
 	result.ReturnTime = common.GetTimestamp()
 	if err != nil {
 		result.Valid = false
@@ -85,15 +68,16 @@ func (self *Liqui) FetchEBalanceData() (common.EBalanceEntry, error) {
 	return result, nil
 }
 
-func (self *Liqui) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice, error) {
+func (self *Liqui) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	result := map[common.TokenPairID]common.ExchangePrice{}
 	pairs_str := []string{}
 	for _, pair := range self.pairs {
 		pairs_str = append(pairs_str, fmt.Sprintf("%s_%s", pair.Base.ID, pair.Quote.ID))
 	}
 	timestamp := common.GetTimestamp()
-	resp_data, err := self.endpoint.Depth(
+	resp_data, err := self.interf.Depth(
 		strings.ToLower(strings.Join(pairs_str, "-")),
+		timepoint,
 	)
 	returnTime := common.GetTimestamp()
 	if err != nil {
@@ -140,10 +124,9 @@ func (self *Liqui) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice
 	return result, err
 }
 
-func NewLiqui(signer Signer, endpoint LiquiEndpoint) *Liqui {
+func NewLiqui(interf LiquiInterface) *Liqui {
 	return &Liqui{
-		signer,
-		endpoint,
+		interf,
 		[]common.TokenPair{
 			common.MustCreateTokenPair("OMG", "ETH"),
 			common.MustCreateTokenPair("DGD", "ETH"),
