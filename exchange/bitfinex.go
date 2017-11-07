@@ -70,8 +70,8 @@ func (self Bitfinex) FetchOnePairData(
 				for _, buy := range resp_data.Bids {
 					quantity, _ := strconv.ParseFloat(buy["amount"], 64)
 					rate, _ := strconv.ParseFloat(buy["price"], 64)
-					result.BuyPrices = append(
-						result.BuyPrices,
+					result.Bids = append(
+						result.Bids,
 						common.PriceEntry{
 							quantity,
 							rate,
@@ -81,8 +81,8 @@ func (self Bitfinex) FetchOnePairData(
 				for _, sell := range resp_data.Asks {
 					quantity, _ := strconv.ParseFloat(sell["amount"], 64)
 					rate, _ := strconv.ParseFloat(sell["price"], 64)
-					result.SellPrices = append(
-						result.SellPrices,
+					result.Asks = append(
+						result.Asks,
 						common.PriceEntry{
 							quantity,
 							rate,
