@@ -14,6 +14,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/liqui"
+	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -33,12 +34,18 @@ func main() {
 		reserveAddr,
 	)
 
-	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/http/config.json")
+	fileSigner := signer.NewFileSigner("./config.json")
 
 	// liqui := exchange.NewRealLiqui(fileSigner)
 	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
 	common.SupportedExchanges[liqui.ID()] = liqui
 	fetcher.AddExchange(liqui)
+
+	// binance
+	binance := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(fileSigner))
+	common.SupportedExchanges[binance.ID()] = binance
+	fetcher.AddExchange(binance)
+
 	// fetcher.AddExchange(exchange.NewBinance())
 	// fetcher.AddExchange(exchange.NewBittrex())
 	// fetcher.AddExchange(exchange.NewBitfinex())
