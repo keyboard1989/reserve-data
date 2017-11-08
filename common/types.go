@@ -61,8 +61,8 @@ type ExchangePrice struct {
 	Valid      bool
 	Error      string
 	Timestamp  Timestamp
-	BuyPrices  []PriceEntry
-	SellPrices []PriceEntry
+	Bids       []PriceEntry
+	Asks       []PriceEntry
 	ReturnTime Timestamp
 }
 

@@ -67,8 +67,8 @@ func (self Bittrex) FetchOnePairData(
 				result.Valid = false
 			} else {
 				for _, buy := range resp_data.Result["buy"] {
-					result.BuyPrices = append(
-						result.BuyPrices,
+					result.Bids = append(
+						result.Bids,
 						common.PriceEntry{
 							buy["Quantity"],
 							buy["Rate"],
@@ -76,8 +76,8 @@ func (self Bittrex) FetchOnePairData(
 					)
 				}
 				for _, sell := range resp_data.Result["sell"] {
-					result.SellPrices = append(
-						result.SellPrices,
+					result.Asks = append(
+						result.Asks,
 						common.PriceEntry{
 							sell["Quantity"],
 							sell["Rate"],
