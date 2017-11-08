@@ -1,9 +1,7 @@
 package blockchain
 
 import (
-	"context"
 	"fmt"
-	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -13,48 +11,21 @@ import (
 )
 
 type Blockchain struct {
-	ethclient *ethclient.Client
-	wrapper   *ContractWrapper
-	reserve   *ReserveContract
-	rm        ethereum.Address
-	signer    Signer
-	tokens    []common.Token
-
-	mu          sync.Mutex
-	manualNonce *big.Int
+	wrapper *ContractWrapper
+	reserve *ReserveContract
+	rm      ethereum.Address
+	signer  Signer
+	tokens  []common.Token
+	nonce   NonceCorpus
 }
 
 func (self *Blockchain) AddToken(t common.Token) {
 	self.tokens = append(self.tokens, t)
 }
 
-func (self *Blockchain) getNonceFromNode() (*big.Int, error) {
-	option := context.Background()
-	nonce, err := self.ethclient.PendingNonceAt(option, self.signer.GetAddress())
-	return big.NewInt(int64(nonce)), err
-}
-
-func (self *Blockchain) getNonce() (*big.Int, error) {
-	nodeNonce, err := self.getNonceFromNode()
-	if err != nil {
-		return nodeNonce, err
-	} else {
-		if nodeNonce.Cmp(self.manualNonce) == 1 {
-			self.manualNonce = big.NewInt(0).Add(nodeNonce, ethereum.Big1)
-			return nodeNonce, nil
-		} else {
-			nextNonce := self.manualNonce
-			self.manualNonce = big.NewInt(0).Add(nextNonce, ethereum.Big1)
-			return nextNonce, nil
-		}
-	}
-}
-
 func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
-	self.mu.Lock()
-	defer self.mu.Unlock()
 	shared := self.signer.GetTransactOpts()
-	nonce, err := self.getNonce()
+	nonce, err := self.nonce.GetNextNonce()
 	if err != nil {
 		return nil, err
 	} else {
@@ -234,30 +205,25 @@ func (self *Blockchain) Send(
 // 	return signedTx.Hash(), nil
 // }
 
-func NewBlockchain(wrapperAddr, reserveAddr ethereum.Address, signer Signer) (*Blockchain, error) {
-	// endpoint := "http://localhost:8545"
-	endpoint := "https://kovan.kyber.network"
-	infura, err := ethclient.Dial(endpoint)
-	if err != nil {
-		return nil, err
-	}
-	wrapper, err := NewContractWrapper(wrapperAddr, infura)
+func NewBlockchain(
+	ethereum *ethclient.Client,
+	wrapperAddr, reserveAddr ethereum.Address,
+	signer Signer, nonceCorpus NonceCorpus) (*Blockchain, error) {
+	wrapper, err := NewContractWrapper(wrapperAddr, ethereum)
 	if err != nil {
 		return nil, err
 	}
 	fmt.Printf("reserve address: %s\n", reserveAddr.Hex())
-	reserve, err := NewReserveContract(reserveAddr, infura)
+	reserve, err := NewReserveContract(reserveAddr, ethereum)
 	if err != nil {
 		return nil, err
 	}
 	return &Blockchain{
-		ethclient:   infura,
-		wrapper:     wrapper,
-		reserve:     reserve,
-		rm:          reserveAddr,
-		signer:      signer,
-		tokens:      []common.Token{},
-		mu:          sync.Mutex{},
-		manualNonce: big.NewInt(0),
+		wrapper: wrapper,
+		reserve: reserve,
+		rm:      reserveAddr,
+		signer:  signer,
+		tokens:  []common.Token{},
+		nonce:   nonceCorpus,
 	}, nil
 }
