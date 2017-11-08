@@ -9,14 +9,14 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"path"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
+	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"sync"
 )
 
 type BittrexEndpoint struct {
@@ -31,56 +31,89 @@ func nonce() string {
 	return strconv.Itoa(int(timestamp))
 }
 
-func (self *BittrexEndpoint) Depth(tokens string, timepoint uint64) (exchange.Liqresp, error) {
-	result := exchange.Liqresp{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second)}
-	u, err := url.Parse(self.interf.PublicEndpoint(timepoint))
-	if err != nil {
-		panic(err)
+func (self *BittrexEndpoint) fillRequest(req *http.Request, signNeeded bool) {
+	if req.Method == "POST" || req.Method == "PUT" {
+		req.Header.Add("Content-Type", "application/json;charset=utf-8")
 	}
-	q := u.Query()
-	q.Set("ignore_invalid", "1")
-	u.RawQuery = q.Encode()
-	u.Path = path.Join(
-		u.Path,
-		"depth",
-		tokens,
-	)
-	req, _ := http.NewRequest("GET", u.String(), nil)
 	req.Header.Add("Accept", "application/json")
-	resp, err := client.Do(req)
-	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			json.Unmarshal(resp_body, &result)
+	if signNeeded == true {
+		q := req.URL.Query()
+		q.Set("apiKey", self.signer.GetBittrexKey())
+		q.Set("nonce", nonce())
+		req.URL.RawQuery = q.Encode()
+		req.Header.Add("apisign", self.signer.BittrexSign(req.URL.String()))
+	}
+}
+
+func (self *BittrexEndpoint) FetchOnePairData(wq *sync.WaitGroup, pair common.TokenPair, data *sync.Map, timepoint uint64) {
+	defer wq.Done()
+	result := common.ExchangePrice{}
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", self.interf.PublicEndpoint(timepoint)+"/getorderbook", nil)
+	q := req.URL.Query()
+	q.Set("market", fmt.Sprintf("%s-%s", pair.Quote.ID, pair.Base.ID))
+	q.Set("type", "both")
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, false)
+	res, err := client.Do(req)
+
+	result.Timestamp = common.GetTimestamp()
+	result.Valid = true
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
+		defer res.Body.Close()
+		body, err := ioutil.ReadAll(res.Body)
+		result.ReturnTime = common.GetTimestamp()
+		if err != nil {
+			result.Valid = false
+			result.Error = err.Error()
+		} else {
+			data := exchange.Bittresp{}
+			json.Unmarshal(body, &data)
+			if !data.Success {
+				result.Valid = false
+			} else {
+				for _, buy := range data.Result["buy"] {
+					result.Bids = append(
+						result.Bids,
+						common.PriceEntry{
+							buy["Quantity"],
+							buy["Rate"],
+						},
+					)
+				}
+				for _, sell := range data.Result["sell"] {
+					result.Asks = append(
+						result.Asks,
+						common.PriceEntry{
+							sell["Quantity"],
+							sell["Rate"],
+						},
+					)
+				}
+			}
 		}
 	}
-	return result, err
+	data.Store(pair.PairID(), result)
 }
 
 func (self *BittrexEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
-	result := exchange.Liqtrade{}
+	result := exchange.Bitttrade{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second)}
-	data := url.Values{}
-	data.Set("method", "Trade")
-	data.Set("pair", fmt.Sprintf("%s_%s", strings.ToLower(base.ID), strings.ToLower(quote.ID)))
-	data.Set("type", tradeType)
-	data.Set("rate", fmt.Sprintf("%f", rate))
-	data.Set("amount", fmt.Sprintf("%f", amount))
-	params := data.Encode()
 	req, _ := http.NewRequest(
-		"POST",
-		self.interf.AuthenticatedEndpoint(timepoint),
-		bytes.NewBufferString(params),
+		"GET",
+		self.interf.MarketEndpoint(timepoint)+"/selllimit",
+		nil,
 	)
-	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", self.signer.GetLiquiKey())
-	req.Header.Add("Sign", self.signer.LiquiSign(params))
+	q := req.URL.Query()
+	q.Set("market", fmt.Sprintf("%s-%s", strings.ToUpper(base.ID), strings.ToUpper(quote.ID)))
+	q.Set("quantity", fmt.Sprintf("%f", amount))
+	q.Set("rate", fmt.Sprintf("%f", rate))
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, true)
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
@@ -98,32 +131,27 @@ func (self *BittrexEndpoint) Trade(tradeType string, base, quote common.Token, r
 		return result.Return.Done, result.Return.Remaining, result.Return.OrderID == 0, nil
 	} else {
 		fmt.Printf("Error: %v, Code: %v\n", err, resp)
-		return 0, 0, false, errors.New("Trade rejected by Liqui")
+		return 0, 0, false, errors.New("Trade rejected by Bittrex")
 	}
 }
 
 func (self *BittrexEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) error {
 	// ignoring timepoint because it's only relevant in simulation
-	result := exchange.Liqwithdraw{}
+	result := exchange.Bittwithdraw{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
-	data := url.Values{}
-	data.Set("method", "WithdrawCoin")
-	data.Set("coinName", token.ID)
-	data.Set("amount", fmt.Sprintf("%f", common.BigToFloat(amount, token.Decimal)))
-	data.Set("address", address.Hex())
-	params := data.Encode()
 	req, _ := http.NewRequest(
-		"POST",
-		self.interf.AuthenticatedEndpoint(timepoint),
-		bytes.NewBufferString(params),
+		"GET",
+		self.interf.MarketEndpoint(timepoint)+"/withdraw",
+		nil,
 	)
-	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", self.signer.GetLiquiKey())
-	req.Header.Add("Sign", self.signer.LiquiSign(params))
+	q := req.URL.Query()
+	q.Set("currency", strings.ToUpper(token.ID))
+	q.Set("quantity", fmt.Sprintf("%f", common.BigToFloat(amount, token.Decimal)))
+	q.Set("address", address.Hex())
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, true)
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
@@ -141,30 +169,24 @@ func (self *BittrexEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 		return nil
 	} else {
 		fmt.Printf("Error: %v, Code: %v\n", err, resp)
-		return errors.New("withdraw rejected by Liqui")
+		return errors.New("withdraw rejected by Bittrex")
 	}
 }
 
-func (self *BittrexEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
-	result := exchange.Liqinfo{}
+func (self *BittrexEndpoint) GetInfo(timepoint uint64) (exchange.Bittinfo, error) {
+	result := exchange.Bittinfo{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second)}
 	data := url.Values{}
 	data.Set("method", "getInfo")
 	data.Add("nonce", nonce())
 	params := data.Encode()
-	fmt.Printf("endpoint: %v\n", self.interf.AuthenticatedEndpoint(timepoint))
 	req, _ := http.NewRequest(
 		"POST",
-		self.interf.AuthenticatedEndpoint(timepoint),
+		self.interf.AccountEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
-	fmt.Printf("params: %v\n", params)
-	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", self.signer.GetLiquiKey())
-	req.Header.Add("Sign", self.signer.LiquiSign(params))
+	self.fillRequest(req, true)
 	resp, err := client.Do(req)
 	if err == nil {
 		defer resp.Body.Close()
@@ -176,14 +198,14 @@ func (self *BittrexEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error)
 	return result, err
 }
 
-func NewLiquiEndpoint(signer Signer, interf Interface) *BittrexEndpoint {
+func NewBittrexEndpoint(signer Signer, interf Interface) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, interf}
 }
 
-func NewRealLiquiEndpoint(signer Signer) *BittrexEndpoint {
+func NewRealBittrexEndpoint(signer Signer) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, NewRealInterface()}
 }
 
-func NewSimulatedLiquiEndpoint(signer Signer) *BittrexEndpoint {
+func NewSimulatedBittrexEndpoint(signer Signer) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, NewSimulatedInterface()}
 }

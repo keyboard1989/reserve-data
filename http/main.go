@@ -46,15 +46,6 @@ func main() {
 	common.SupportedExchanges[bittrex.ID()] = bittrex
 	fetcher.AddExchange(bittrex)
 
-	// binance
-	binance := exchange.NewBinance(
-		fileSigner,
-		// exchange.NewRealBinanceEndpoint(),
-		exchange.NewSimulatedBinanceEndpoint(),
-	)
-	common.SupportedExchanges[binance.ID()] = binance
-	fetcher.AddExchange(binance)
-
 	// fetcher.AddExchange(exchange.NewBitfinex())
 
 	bc, err := blockchain.NewBlockchain(

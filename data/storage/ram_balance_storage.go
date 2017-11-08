@@ -39,7 +39,7 @@ func (self *RamBalanceStorage) GetAllBalances(version int64) (map[string]common.
 	}
 }
 
-func (self *RamBalanceStorage) StoreNewData(data map[string]common.BalanceEntry) error {
+func (self *RamBalanceStorage) StoreNewData(data map[string]common.BalanceEntry, timepoint uint64) error {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.version = self.version + 1

@@ -45,6 +45,7 @@ func (self *SimulatedInterface) baseurl() string {
 }
 
 func (self *SimulatedInterface) PublicEndpoint(timepoint uint64) string {
+	return "https://bittrex.com/api/" + apiVersion + "/public"
 	return fmt.Sprintf("%s?timestamp=%d", self.baseurl(), timepoint)
 }
 

@@ -10,8 +10,7 @@ import (
 )
 
 type Bittrex struct {
-	signer    Signer
-	endpoint  BittrexEndpoint
+	interf    BittrexInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
 }
@@ -37,25 +36,21 @@ func (self *Bittrex) Name() string {
 	return "bittrex"
 }
 
-func (self *Bittrex) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64) (done float64, remaining float64, finished bool, err error) {
-	return self.endpoint.Trade(
-		self.signer.GetBittrexKey(),
-		tradeType, base, quote, rate, amount, self.signer)
+func (self *Bittrex) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 
-func (self *Bittrex) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) error {
-	return self.endpoint.Withdraw(
-		self.signer.GetBittrexKey(),
-		token, amount, address, self.signer)
+func (self *Bittrex) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) error {
+	return self.interf.Withdraw(token, amount, address, timepoint)
 }
 
-func (self Bittrex) FetchPriceData() (map[common.TokenPairID]common.ExchangePrice, error) {
+func (self *Bittrex) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
 	pairs := self.pairs
 	for _, pair := range pairs {
 		wait.Add(1)
-		go self.endpoint.FetchOnePairData(&wait, pair, &data)
+		go self.interf.FetchOnePairData(&wait, pair, &data, timepoint)
 	}
 	wait.Wait()
 	result := map[common.TokenPairID]common.ExchangePrice{}
@@ -66,7 +61,7 @@ func (self Bittrex) FetchPriceData() (map[common.TokenPairID]common.ExchangePric
 	return result, nil
 }
 
-func (self Bittrex) FetchEBalanceData() (common.EBalanceEntry, error) {
+func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.GetTimestamp()
 	result.Valid = true
@@ -82,10 +77,9 @@ func (self Bittrex) FetchEBalanceData() (common.EBalanceEntry, error) {
 	return result, nil
 }
 
-func NewBittrex(signer Signer, endpoint BittrexEndpoint) *Bittrex {
+func NewBittrex(interf BittrexInterface) *Bittrex {
 	return &Bittrex{
-		signer,
-		endpoint,
+		interf,
 		[]common.TokenPair{
 			common.MustCreateTokenPair("OMG", "ETH"),
 			common.MustCreateTokenPair("DGD", "ETH"),
