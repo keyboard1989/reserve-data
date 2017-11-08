@@ -41,7 +41,7 @@ func main() {
 	// liqui := exchange.NewRealLiqui(fileSigner)
 	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
 	common.SupportedExchanges[liqui.ID()] = liqui
-	fetcher.AddExchange(liqui)
+	//fetcher.AddExchange(liqui)
 
 	// binance
 	binance := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(fileSigner))

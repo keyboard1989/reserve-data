@@ -4,10 +4,15 @@ import (
 	"math/big"
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"sync"
 )
 
 type BinanceInterface interface {
-	Depth(tokens string, timepoint uint64) (Binaresp, error)
+	FetchOnePairData(
+		wg *sync.WaitGroup,
+		pair common.TokenPair,
+		data *sync.Map,
+		timepoint uint64)
 
 	GetInfo(timepoint uint64) (Binainfo, error)
 

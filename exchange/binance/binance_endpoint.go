@@ -12,6 +12,8 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"errors"
+	"sync"
+	"strconv"
 )
 
 type BinanceEndpoint struct {
@@ -34,24 +36,75 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 	}
 }
 
-func (self *BinanceEndpoint) Depth(tokens string, timepoint uint64) (exchange.Binaresp, error) {
-	result := exchange.Binaresp{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second)}
+func (self *BinanceEndpoint) FetchOnePairData(
+	wg *sync.WaitGroup,
+	pair common.TokenPair,
+	data *sync.Map,
+	timepoint uint64) {
+
+	defer wg.Done()
+	result := common.ExchangePrice{}
+
+	client := &http.Client{}
 	req, _ := http.NewRequest(
 		"GET",
 		self.interf.PublicEndpoint()+"/api/v1/depth",
 		nil)
+	req.Header.Add("Accept", "application/json")
+
+	q := req.URL.Query()
+	q.Add("symbol", fmt.Sprintf("%s%s", pair.Base.ID, pair.Quote.ID))
+	q.Add("limit", "50")
+	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, false, timepoint)
+
+	timestamp := common.GetTimestamp()
 	resp, err := client.Do(req)
-	if err == nil {
+	result.Timestamp = timestamp
+	result.Valid = true
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			json.Unmarshal(resp_body, &result)
+		returnTime := common.GetTimestamp()
+		result.ReturnTime = returnTime
+		if err != nil {
+			result.Valid = false
+			result.Error = err.Error()
+		} else {
+			resp_data := exchange.Binaresp{}
+			json.Unmarshal(resp_body, &resp_data)
+			if resp_data.Code != 0 || resp_data.Msg != "" {
+				result.Valid = false
+			} else {
+				for _, buy := range resp_data.Bids {
+					quantity, _ := strconv.ParseFloat(buy[1], 64)
+					rate, _ := strconv.ParseFloat(buy[0], 64)
+					result.Bids = append(
+						result.Bids,
+						common.PriceEntry{
+							quantity,
+							rate,
+						},
+					)
+				}
+				for _, sell := range resp_data.Asks {
+					quantity, _ := strconv.ParseFloat(sell[1], 64)
+					rate, _ := strconv.ParseFloat(sell[0], 64)
+					result.Asks = append(
+						result.Asks,
+						common.PriceEntry{
+							quantity,
+							rate,
+						},
+					)
+				}
+			}
 		}
 	}
-	return result, err
+	data.Store(pair.PairID(), result)
 }
 
 func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
