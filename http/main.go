@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
+	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/core"
 	corestorage "github.com/KyberNetwork/reserve-data/core/storage"
@@ -16,6 +17,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange/liqui"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 func main() {
@@ -43,10 +45,21 @@ func main() {
 	// fetcher.AddExchange(exchange.NewBittrex())
 	// fetcher.AddExchange(exchange.NewBitfinex())
 
+	// endpoint := "http://localhost:8545"
+	endpoint := "https://kovan.kyber.network"
+	infura, err := ethclient.Dial(endpoint)
+	if err != nil {
+		panic(err)
+	}
+
+	nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
+
 	bc, err := blockchain.NewBlockchain(
+		infura,
 		wrapperAddr,
 		reserveAddr,
 		fileSigner,
+		nonceCorpus,
 	)
 	bc.AddToken(common.MustGetToken("ETH"))
 	bc.AddToken(common.MustGetToken("OMG"))
