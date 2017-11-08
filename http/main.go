@@ -15,6 +15,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/liqui"
+	"github.com/KyberNetwork/reserve-data/exchange/bitfinex"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -41,6 +42,12 @@ func main() {
 	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
 	common.SupportedExchanges[liqui.ID()] = liqui
 	fetcher.AddExchange(liqui)
+
+	// bitfinex
+	bitfinex := exchange.NewBitfinex(bitfinex.NewSimulatedBitfinexEndpoint(fileSigner))
+	common.SupportedExchanges[bitfinex.ID()] = bitfinex
+	fetcher.AddExchange(bitfinex)
+
 	// fetcher.AddExchange(exchange.NewBinance())
 	// fetcher.AddExchange(exchange.NewBittrex())
 	// fetcher.AddExchange(exchange.NewBitfinex())
