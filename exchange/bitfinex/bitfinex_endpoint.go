@@ -3,6 +3,7 @@ package bitfinex
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,6 +17,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"sync"
 )
 
 type BitfinexEndpoint struct {
@@ -30,18 +32,92 @@ func nonce() string {
 	return strconv.Itoa(int(timestamp))
 }
 
-func (self *BitfinexEndpoint) fillRequest(req *http.Request, signNeeded bool) {
+func (self *BitfinexEndpoint) fillRequest(req *http.Request, signNeeded bool, timepoint uint64) {
 	if req.Method == "POST" || req.Method == "PUT" {
 		req.Header.Add("Content-Type", "application/json;charset=utf-8")
 	}
 	req.Header.Add("Accept", "application/json")
 	if signNeeded == true {
-		q := req.URL.Query()
-		q.Set("apiKey", self.signer.GetBitfinexKey())
-		q.Set("nonce", nonce())
-		req.URL.RawQuery = q.Encode()
-		req.Header.Add("apisign", self.signer.BitfinexSign(req.URL.String()))
+		payload := map[string]interface{}{
+			"request": req.URL.Path,
+			"nonce":   fmt.Sprintf("%v", timepoint),
+		}
+		payloadJson, _ := json.Marshal(payload)
+		payloadEnc := base64.StdEncoding.EncodeToString(payloadJson)
+		req.Header.Add("X-BFX-APIKEY", self.signer.GetBitfinexKey())
+		req.Header.Add("X-BFX-PAYLOAD", payloadEnc)
+		req.Header.Add("X-BFX-SIGNATURE", self.signer.BitfinexSign(req.URL.String()))
 	}
+}
+
+func (self *BitfinexEndpoint) FetchOnePairData(
+	wg *sync.WaitGroup,
+	pair common.TokenPair,
+	data *sync.Map,
+	timepoint uint64) {
+
+	defer wg.Done()
+	result := common.ExchangePrice{}
+
+	client := &http.Client{}
+	url := self.interf.PublicEndpoint() + fmt.Sprintf(
+		"/book/%s%s",
+		strings.ToLower(pair.Base.ID),
+		strings.ToLower(pair.Quote.ID))
+	req, _ := http.NewRequest("GET", url, nil)
+	q := req.URL.Query()
+	q.Set("group", "1")
+	q.Set("limit_bids", "50")
+	q.Set("limit_asks", "50")
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, false, 0)
+
+	resp, err := client.Do(req)
+	result.Timestamp = common.GetTimestamp()
+	result.Valid = true
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
+		defer resp.Body.Close()
+		resp_body, err := ioutil.ReadAll(resp.Body)
+		returnTime := common.GetTimestamp()
+		result.ReturnTime = returnTime
+		if err != nil {
+			result.Valid = false
+			result.Error = err.Error()
+		} else {
+			resp_data := exchange.Bitfresp{}
+			json.Unmarshal(resp_body, &resp_data)
+			if len(resp_data.Asks) == 0 && len(resp_data.Bids) == 0 {
+				result.Valid = false
+			} else {
+				for _, buy := range resp_data.Bids {
+					quantity, _ := strconv.ParseFloat(buy["amount"], 64)
+					rate, _ := strconv.ParseFloat(buy["price"], 64)
+					result.Bids = append(
+						result.Bids,
+						common.PriceEntry{
+							quantity,
+							rate,
+						},
+					)
+				}
+				for _, sell := range resp_data.Asks {
+					quantity, _ := strconv.ParseFloat(sell["amount"], 64)
+					rate, _ := strconv.ParseFloat(sell["price"], 64)
+					result.Asks = append(
+						result.Asks,
+						common.PriceEntry{
+							quantity,
+							rate,
+						},
+					)
+				}
+			}
+		}
+	}
+	data.Store(pair.PairID(), result)
 }
 
 func (self *BitfinexEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {

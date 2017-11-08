@@ -5,12 +5,18 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"sync"
 )
 
 type BitfinexInterface interface {
-	Depth(tokens string, timepoint uint64) (Bitfresp, error)
 
 	GetInfo(timepoint uint64) (Bitfinfo, error)
+
+	FetchOnePairData(
+		wg *sync.WaitGroup,
+		pair common.TokenPair,
+		data *sync.Map,
+		timepoint uint64)
 
 	Withdraw(
 		token common.Token,

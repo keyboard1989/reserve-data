@@ -36,12 +36,12 @@ func main() {
 		reserveAddr,
 	)
 
-	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/http/config.json")
+	fileSigner := signer.NewFileSigner("./config.json")
 
 	// liqui := exchange.NewRealLiqui(fileSigner)
 	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
 	common.SupportedExchanges[liqui.ID()] = liqui
-	fetcher.AddExchange(liqui)
+	//fetcher.AddExchange(liqui)
 
 	// bitfinex
 	bitfinex := exchange.NewBitfinex(bitfinex.NewSimulatedBitfinexEndpoint(fileSigner))
