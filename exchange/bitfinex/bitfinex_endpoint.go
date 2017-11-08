@@ -70,7 +70,7 @@ func (self *BitfinexEndpoint) FetchOnePairData(
 	q.Set("limit_bids", "50")
 	q.Set("limit_asks", "50")
 	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, false, 0)
+	self.fillRequest(req, false, timepoint)
 
 	resp, err := client.Do(req)
 	result.Timestamp = common.GetTimestamp()
