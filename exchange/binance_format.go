@@ -9,7 +9,23 @@ type Binaresp struct {
 }
 
 type Binainfo struct {
-	Success int `json:"success"`
-	Return  map[string]map[string]float64
-	Error   string `json:"error"`
+	MakerCommission  int64 `json:"makerCommission"`
+	TakerCommission  int64 `json:"takerCommission"`
+	BuyerCommission  int64 `json:"buyerCommission"`
+	SellerCommission int64 `json:"sellerCommission"`
+	CanTrade         bool  `json:"canTrade"`
+	CanWithdraw      bool  `json:"canWithdraw"`
+	CanDeposit       bool  `json:"canDeposit"`
+	Balances []struct {
+		Asset  string  `json:"asset"`
+		Free   float64 `json:"free"`
+		Locked float64 `json:"locked`
+	} `json:"balances`
+}
+
+type Binatrade struct{}
+
+type Binawithdraw struct {
+	Success bool   `json:"success"`
+	Message string `json:"msg"`
 }
