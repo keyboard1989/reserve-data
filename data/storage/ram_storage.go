@@ -60,18 +60,18 @@ func (self *RamStorage) GetAllRates(version common.Version) (common.AllRateEntry
 	return self.rate.GetRates(int64(version))
 }
 
-func (self *RamStorage) StorePrice(data map[common.TokenPairID]common.OnePrice) error {
-	return self.price.StoreNewData(data)
+func (self *RamStorage) StorePrice(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error {
+	return self.price.StoreNewData(data, timepoint)
 }
 
-func (self *RamStorage) StoreBalance(data map[string]common.BalanceEntry) error {
-	return self.balance.StoreNewData(data)
+func (self *RamStorage) StoreBalance(data map[string]common.BalanceEntry, timepoint uint64) error {
+	return self.balance.StoreNewData(data, timepoint)
 }
 
-func (self *RamStorage) StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry) error {
-	return self.ebalance.StoreNewData(data)
+func (self *RamStorage) StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry, timepoint uint64) error {
+	return self.ebalance.StoreNewData(data, timepoint)
 }
 
-func (self *RamStorage) StoreRate(data common.AllRateEntry) error {
-	return self.rate.StoreNewData(data)
+func (self *RamStorage) StoreRate(data common.AllRateEntry, timepoint uint64) error {
+	return self.rate.StoreNewData(data, timepoint)
 }

@@ -55,7 +55,7 @@ func (self *RamPriceStorage) GetOnePrice(pair common.TokenPairID, version int64)
 	}
 }
 
-func (self *RamPriceStorage) StoreNewData(data map[common.TokenPairID]common.OnePrice) error {
+func (self *RamPriceStorage) StoreNewData(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.version = self.version + 1

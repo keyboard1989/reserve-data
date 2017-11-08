@@ -39,7 +39,7 @@ func (self *RamRateStorage) GetRates(version int64) (common.AllRateEntry, error)
 	}
 }
 
-func (self *RamRateStorage) StoreNewData(data common.AllRateEntry) error {
+func (self *RamRateStorage) StoreNewData(data common.AllRateEntry, timepoint uint64) error {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.version = self.version + 1

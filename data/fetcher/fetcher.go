@@ -86,7 +86,7 @@ func (self *Fetcher) fetchAllPrices(w *sync.WaitGroup, timepoint uint64) {
 		go self.fetchPriceFromExchange(&wait, exchange, data, timepoint)
 	}
 	wait.Wait()
-	err := self.storage.StorePrice(data.GetData())
+	err := self.storage.StorePrice(data.GetData(), timepoint)
 	if err != nil {
 		log.Printf("Storing data failed: %s\n", err)
 	}
@@ -107,7 +107,7 @@ func (self *Fetcher) fetchAllEBalances(w *sync.WaitGroup, timepoint uint64) {
 		ebalances[key.(common.ExchangeID)] = value.(common.EBalanceEntry)
 		return true
 	})
-	err := self.storage.StoreEBalance(ebalances)
+	err := self.storage.StoreEBalance(ebalances, timepoint)
 	if err != nil {
 		log.Printf("Storing exchange balances failed: %s\n", err)
 	}
@@ -119,7 +119,7 @@ func (self *Fetcher) fetchAllBalances(w *sync.WaitGroup, timepoint uint64) {
 	if err != nil {
 		log.Printf("Fetching data from blockchain failed: %s\n", err)
 	}
-	err = self.storage.StoreBalance(data)
+	err = self.storage.StoreBalance(data, timepoint)
 	// fmt.Printf("balance data: %v\n", data)
 	if err != nil {
 		log.Printf("Storing balance data failed: %s\n", err)
@@ -147,7 +147,7 @@ func (self *Fetcher) fetchAllRates(w *sync.WaitGroup, timepoint uint64) {
 	if err != nil {
 		log.Printf("Fetching data from blockchain failed: %s\n", err)
 	}
-	err = self.storage.StoreRate(data)
+	err = self.storage.StoreRate(data, timepoint)
 	// fmt.Printf("balance data: %v\n", data)
 	if err != nil {
 		log.Printf("Storing balance data failed: %s\n", err)

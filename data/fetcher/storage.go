@@ -5,8 +5,8 @@ import (
 )
 
 type Storage interface {
-	StorePrice(map[common.TokenPairID]common.OnePrice) error
-	StoreBalance(map[string]common.BalanceEntry) error
-	StoreEBalance(map[common.ExchangeID]common.EBalanceEntry) error
-	StoreRate(common.AllRateEntry) error
+	StorePrice(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error
+	StoreBalance(data map[string]common.BalanceEntry, timepoint uint64) error
+	StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry, timepoint uint64) error
+	StoreRate(data common.AllRateEntry, timepoint uint64) error
 }
