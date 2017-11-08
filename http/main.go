@@ -52,7 +52,8 @@ func main() {
 		panic(err)
 	}
 
-	nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
+	// nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
+	nonceCorpus := nonce.NewTimeWindow(infura, fileSigner)
 
 	bc, err := blockchain.NewBlockchain(
 		infura,
