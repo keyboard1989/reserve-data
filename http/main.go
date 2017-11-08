@@ -14,6 +14,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/liqui"
+	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -35,26 +36,13 @@ func main() {
 
 	fileSigner := signer.NewFileSigner("./config.json")
 
-<<<<<<< HEAD
-	// liqui
-	liqui := exchange.NewLiqui(
-		fileSigner,
-		// exchange.NewRealLiquiEndpoint(),
-		exchange.NewSimulatedLiquiEndpoint(),
-	)
-=======
 	// liqui := exchange.NewRealLiqui(fileSigner)
 	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
->>>>>>> master
 	common.SupportedExchanges[liqui.ID()] = liqui
 	fetcher.AddExchange(liqui)
 
 	// bittrex
-	bittrex := exchange.NewBittrex(
-		fileSigner,
-		// exchange.NewRealBittrexEndpoint(),
-		exchange.NewSimulatedBittrexEndpoint(),
-	)
+	bittrex := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(fileSigner))
 	common.SupportedExchanges[bittrex.ID()] = bittrex
 	fetcher.AddExchange(bittrex)
 
