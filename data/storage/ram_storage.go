@@ -4,6 +4,13 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
+// RamStorage is a simple and fast storage that eliminate all old
+// data but the newest one
+// RamStorage works fine when Core doesn't use historical data
+// and doesn't take timestamp into account
+//
+// If Core uses such data, please use other kind of storage such as
+// bolt.
 type RamStorage struct {
 	price    *RamPriceStorage
 	balance  *RamBalanceStorage

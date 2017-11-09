@@ -46,7 +46,7 @@ func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereu
 
 func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
-	result.Timestamp = common.GetTimestamp()
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
 	resp_data, err := self.interf.GetInfo(timepoint)
 	result.ReturnTime = common.GetTimestamp()
@@ -74,7 +74,7 @@ func (self *Liqui) FetchPriceData(timepoint uint64) (map[common.TokenPairID]comm
 	for _, pair := range self.pairs {
 		pairs_str = append(pairs_str, fmt.Sprintf("%s_%s", pair.Base.ID, pair.Quote.ID))
 	}
-	timestamp := common.GetTimestamp()
+	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
 	fmt.Printf("depth: %s - %s\n",
 		strings.ToLower(strings.Join(pairs_str, "-")),
 		timepoint,
