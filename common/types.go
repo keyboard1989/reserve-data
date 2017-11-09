@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type Version int64
+type Version uint64
 type Timestamp string
 
 func GetTimestamp() Timestamp {
