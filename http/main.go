@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"runtime"
 	"time"
 
@@ -20,15 +22,32 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+func loadTimestamp(path string) []uint64 {
+	raw, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	timestamp := []uint64{}
+	err = json.Unmarshal(raw, &timestamp)
+	if err != nil {
+		panic(err)
+	}
+	return timestamp
+}
+
 func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	wrapperAddr := ethereum.HexToAddress("0x9624ec965ff9bf947a90d5b66392d41c53777c3d")
-	reserveAddr := ethereum.HexToAddress("0xc9f8edc40f8b5369a3144bb29d7465b632fdb563")
+	wrapperAddr := ethereum.HexToAddress("0x5aa7b0c53affef857523014ac6ce6c8d30bc68e6")
+	reserveAddr := ethereum.HexToAddress("0x98990ee596d7c383a496f54c9e617ce7d2b3ed46")
 
 	storage := storage.NewRamStorage()
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	// fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	fetcherRunner := fetcher.NewTimestampRunner(
+		loadTimestamp("/go/src/github.com/KyberNetwork/reserve-data/http/timestamps.json"),
+		2*time.Second,
+	)
 	fetcher := fetcher.NewFetcher(
 		storage,
 		fetcherRunner,
@@ -46,7 +65,8 @@ func main() {
 	// fetcher.AddExchange(exchange.NewBitfinex())
 
 	// endpoint := "http://localhost:8545"
-	endpoint := "https://kovan.kyber.network"
+	// endpoint := "https://kovan.kyber.network"
+	endpoint := "https://kovan.infura.io"
 	infura, err := ethclient.Dial(endpoint)
 	if err != nil {
 		panic(err)
