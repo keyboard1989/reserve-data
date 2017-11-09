@@ -65,7 +65,8 @@ func main() {
 	// fetcher.AddExchange(exchange.NewBitfinex())
 
 	// endpoint := "http://localhost:8545"
-	endpoint := "https://kovan.kyber.network"
+	// endpoint := "https://kovan.kyber.network"
+	endpoint := "https://kovan.infura.io"
 	infura, err := ethclient.Dial(endpoint)
 	if err != nil {
 		panic(err)
