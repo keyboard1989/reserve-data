@@ -39,8 +39,8 @@ func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	wrapperAddr := ethereum.HexToAddress("0x9624ec965ff9bf947a90d5b66392d41c53777c3d")
-	reserveAddr := ethereum.HexToAddress("0xc9f8edc40f8b5369a3144bb29d7465b632fdb563")
+	wrapperAddr := ethereum.HexToAddress("0x5aa7b0c53affef857523014ac6ce6c8d30bc68e6")
+	reserveAddr := ethereum.HexToAddress("0x98990ee596d7c383a496f54c9e617ce7d2b3ed46")
 
 	storage := storage.NewRamStorage()
 	// fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
