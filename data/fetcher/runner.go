@@ -24,3 +24,26 @@ func NewTickerRunner(eduration, bduration time.Duration) *TickerRunner {
 		time.Tick(bduration),
 	}
 }
+
+type TimestampRunner struct {
+	eticker <-chan time.Time
+	bticker <-chan time.Time
+}
+
+func (self *TimestampRunner) GetExchangeTicker() <-chan time.Time   { return self.eticker }
+func (self *TimestampRunner) GetBlockchainTicker() <-chan time.Time { return self.bticker }
+
+func tickTimestamp(timestamp []uint64, echan chan time.Time) {
+	for _, t := range timestamp {
+		echan <- time.Unix(0, int64(t)*int64(time.Millisecond))
+	}
+}
+
+func NewTimestampRunner(timestamps []uint64, bduration time.Duration) *TickerRunner {
+	echan := make(chan time.Time)
+	go tickTimestamp(timestamps, echan)
+	return &TickerRunner{
+		echan,
+		time.Tick(bduration),
+	}
+}

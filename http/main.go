@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"runtime"
 	"time"
 
@@ -20,6 +22,19 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+func loadTimestamp(path string) []uint64 {
+	raw, err := ioutil.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+	timestamp := []uint64{}
+	err = json.Unmarshal(raw, &timestamp)
+	if err != nil {
+		panic(err)
+	}
+	return timestamp
+}
+
 func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
@@ -28,7 +43,11 @@ func main() {
 	reserveAddr := ethereum.HexToAddress("0xc9f8edc40f8b5369a3144bb29d7465b632fdb563")
 
 	storage := storage.NewRamStorage()
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	// fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	fetcherRunner := fetcher.NewTimestampRunner(
+		loadTimestamp("/go/src/github.com/KyberNetwork/reserve-data/http/timestamps.json"),
+		2*time.Second,
+	)
 	fetcher := fetcher.NewFetcher(
 		storage,
 		fetcherRunner,

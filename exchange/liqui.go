@@ -75,6 +75,10 @@ func (self *Liqui) FetchPriceData(timepoint uint64) (map[common.TokenPairID]comm
 		pairs_str = append(pairs_str, fmt.Sprintf("%s_%s", pair.Base.ID, pair.Quote.ID))
 	}
 	timestamp := common.GetTimestamp()
+	fmt.Printf("depth: %s - %s\n",
+		strings.ToLower(strings.Join(pairs_str, "-")),
+		timepoint,
+	)
 	resp_data, err := self.interf.Depth(
 		strings.ToLower(strings.Join(pairs_str, "-")),
 		timepoint,
