@@ -126,12 +126,14 @@ func (self *Blockchain) SetRates(
 
 	opts, err := self.getTransactOpts()
 	if err != nil {
+		fmt.Printf("Getting transaction opts failed!!!!!!!\n")
 		return ethereum.Hash{}, err
 	} else {
 		tx, err := self.reserve.SetRate(
 			opts,
 			sources, dests, rates, expiryBlocks, true)
 		if err != nil {
+			fmt.Printf("Broadcasting transaction failed!!!!!!!\n")
 			return ethereum.Hash{}, err
 		} else {
 			return tx.Hash(), err
