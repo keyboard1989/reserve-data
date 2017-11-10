@@ -6,7 +6,7 @@ FROM golang
 ADD . /go/src/github.com/KyberNetwork/reserve-data
 
 WORKDIR /go/src/github.com/KyberNetwork/reserve-data
-RUN go install github.com/KyberNetwork/reserve-data/http
+RUN go install github.com/KyberNetwork/reserve-data/cmd
 
 ENTRYPOINT ["http", "http://simulator:5000"]
 

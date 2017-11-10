@@ -87,6 +87,16 @@ func (self *RawBalance) ToFloat(decimal int64) float64 {
 	return BigToFloat((*big.Int)(self), decimal)
 }
 
+func (self RawBalance) MarshalJSON() ([]byte, error) {
+	selfInt := (big.Int)(self)
+	return selfInt.MarshalJSON()
+}
+
+func (self *RawBalance) UnmarshalJSON(text []byte) error {
+	selfInt := (*big.Int)(self)
+	return selfInt.UnmarshalJSON(text)
+}
+
 type BalanceEntry struct {
 	Valid      bool
 	Error      string

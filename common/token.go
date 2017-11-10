@@ -78,6 +78,7 @@ func GetToken(id string) (Token, error) {
 func MustGetToken(id string) Token {
 	t, e := GetToken(id)
 	if e != nil {
+		fmt.Printf("Token =========> ", id)
 		panic(e)
 	}
 	return t

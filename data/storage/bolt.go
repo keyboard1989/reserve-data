@@ -152,7 +152,7 @@ func (self *BoltStorage) GetAllBalances(version common.Version) (map[string]comm
 	result := map[string]common.BalanceEntry{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(PRICE_BUCKET))
+		b := tx.Bucket([]byte(BALANCE_BUCKET))
 		data := b.Get(uint64ToBytes(uint64(version)))
 		if data == nil {
 			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
@@ -179,7 +179,7 @@ func (self *BoltStorage) GetAllEBalances(version common.Version) (map[common.Exc
 	result := map[common.ExchangeID]common.EBalanceEntry{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(PRICE_BUCKET))
+		b := tx.Bucket([]byte(EXCHANGE_BALANCE_BUCKET))
 		data := b.Get(uint64ToBytes(uint64(version)))
 		if data == nil {
 			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
