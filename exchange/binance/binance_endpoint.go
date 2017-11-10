@@ -8,12 +8,12 @@ import (
 	"net/http"
 	"time"
 
+	"errors"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"errors"
-	"sync"
 	"strconv"
+	"sync"
 )
 
 type BinanceEndpoint struct {
@@ -58,7 +58,7 @@ func (self *BinanceEndpoint) FetchOnePairData(
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, false, timepoint)
 
-	timestamp := common.GetTimestamp()
+	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
 	resp, err := client.Do(req)
 	result.Timestamp = timestamp
 	result.Valid = true
