@@ -12,6 +12,11 @@
 			"Rev": "aa6ce169f053a4951175ecedfdecdc1920abd9d3"
 		},
 		{
+			"ImportPath": "github.com/boltdb/bolt",
+			"Comment": "v1.3.1-1-gfa5367d",
+			"Rev": "fa5367d20c994db73282594be0146ab221657943"
+		},
+		{
 			"ImportPath": "github.com/btcsuite/btcd/btcec",
 			"Comment": "BTCD_0_12_0_BETA-606-gc7588cb",
 			"Rev": "c7588cbf7690cd9f047a28efa2dcd8f2435a4e5e"
