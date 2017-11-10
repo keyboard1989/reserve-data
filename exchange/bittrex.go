@@ -6,8 +6,8 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 
-	"math/big"
 	"fmt"
+	"math/big"
 )
 
 type Bittrex struct {
@@ -64,7 +64,7 @@ func (self *Bittrex) FetchPriceData(timepoint uint64) (map[common.TokenPairID]co
 
 func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
-	result.Timestamp = common.GetTimestamp()
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
 	response, err := self.interf.GetInfo(timepoint)
 	fmt.Printf("response: %v\n", response)

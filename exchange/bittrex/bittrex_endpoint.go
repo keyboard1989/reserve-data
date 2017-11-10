@@ -1,20 +1,18 @@
 package bittrex
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"math/big"
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"sync"
 )
@@ -57,7 +55,7 @@ func (self *BittrexEndpoint) FetchOnePairData(wq *sync.WaitGroup, pair common.To
 	self.fillRequest(req, false)
 	res, err := client.Do(req)
 
-	result.Timestamp = common.GetTimestamp()
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
 	if err != nil {
 		result.Valid = false
