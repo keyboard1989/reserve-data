@@ -116,6 +116,7 @@ func (self *Fetcher) fetchAllEBalances(w *sync.WaitGroup, timepoint uint64) {
 func (self *Fetcher) fetchAllBalances(w *sync.WaitGroup, timepoint uint64) {
 	defer w.Done()
 	data, err := self.blockchain.FetchBalanceData(self.rmaddr, timepoint)
+	fmt.Printf("All Balances: %v", data)
 	if err != nil {
 		log.Printf("Fetching data from blockchain failed: %s\n", err)
 	}

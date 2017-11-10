@@ -17,6 +17,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/liqui"
+	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -43,13 +44,13 @@ func main() {
 	reserveAddr := ethereum.HexToAddress("0x98990ee596d7c383a496f54c9e617ce7d2b3ed46")
 
 	// storage := storage.NewRamStorage()
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/http/core.db")
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
 	if err != nil {
 		panic(err)
 	}
 	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
 	// fetcherRunner := fetcher.NewTimestampRunner(
-	// 	loadTimestamp("/go/src/github.com/KyberNetwork/reserve-data/http/timestamps.json"),
+	// 	loadTimestamp("/go/src/github.com/KyberNetwork/reserve-data/cmd/timestamps.json"),
 	// 	2*time.Second,
 	// )
 	fetcher := fetcher.NewFetcher(
@@ -58,7 +59,7 @@ func main() {
 		reserveAddr,
 	)
 
-	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/http/config.json")
+	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
 	// liqui := exchange.NewRealLiqui(fileSigner)
 	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
@@ -108,7 +109,7 @@ func main() {
 		app.Run()
 		activityStorage := corestorage.NewRamStorage()
 		core := core.NewReserveCore(bc, activityStorage, reserveAddr)
-		server := NewHTTPServer(app, core, ":8000")
+		server := http.NewHTTPServer(app, core, ":8000")
 		server.Run()
 	}
 }
