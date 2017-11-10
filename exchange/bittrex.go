@@ -7,6 +7,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 
 	"math/big"
+	"fmt"
 )
 
 type Bittrex struct {
@@ -65,15 +66,13 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.GetTimestamp()
 	result.Valid = true
-	//response, err := self.endpoint.GetInfo(
-	//	self.signer.GetBittrexKey(),
-	//	self.signer,
-	//)
+	response, err := self.interf.GetInfo(timepoint)
+	fmt.Printf("response: %v\n", response)
 	result.ReturnTime = common.GetTimestamp()
-	//if err != nil {
-	//	result.Valid = false
-	//	result.Error = error.Error()
-	//}
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	}
 	return result, nil
 }
 

@@ -8,9 +8,17 @@ type Bittresp struct {
 }
 
 type Bittinfo struct {
-	Success int    `json:"success"`
-	Return  map[string]map[string]float64
-	Error   string `json:"error"`
+	Success int `json:"success"`
+	Result struct {
+		Currency      string  `json:"Currency"`
+		Balance       float64 `json:"Balance"`
+		Available     float64 `json:"Available"`
+		Pending       float64 `json:"Pending"`
+		CryptoAddress string  `json:"CryptoAddress"`
+		Requested     bool    `json:"Requested"`
+		Uuid          string  `json:"uuid"`
+	}
+	Error string `json:"error"`
 }
 
 type Bittwithdraw struct {

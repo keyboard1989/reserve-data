@@ -177,14 +177,10 @@ func (self *BittrexEndpoint) GetInfo(timepoint uint64) (exchange.Bittinfo, error
 	result := exchange.Bittinfo{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second)}
-	data := url.Values{}
-	data.Set("method", "getInfo")
-	data.Add("nonce", nonce())
-	params := data.Encode()
 	req, _ := http.NewRequest(
-		"POST",
-		self.interf.AccountEndpoint(timepoint),
-		bytes.NewBufferString(params),
+		"GET",
+		self.interf.AccountEndpoint(timepoint)+"/getbalances",
+		nil,
 	)
 	self.fillRequest(req, true)
 	resp, err := client.Do(req)
