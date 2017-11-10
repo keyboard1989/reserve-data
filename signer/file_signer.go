@@ -14,15 +14,15 @@ import (
 )
 
 type FileSigner struct {
-	LiquiKey    	string `json:"liqui_key"`
-	LiquiSecret 	string `json:"liqui_secret"`
-	BittrexKey		string `json:"bittrex_key"`
-	BittrexSecret 	string `json:"bittrex_secret"`
-	BinanceKey		string `json:"binance_key"`
-	BinanceSecret	string `json:"binance_secret"`
-	Keystore    	string `json:"keystore_path"`
-	Passphrase  	string `json:"passphrase"`
-	opts        	*bind.TransactOpts
+	LiquiKey      string `json:"liqui_key"`
+	LiquiSecret   string `json:"liqui_secret"`
+	BinanceKey    string `json:"binance_key"`
+	BinanceSecret string `json:"binance_secret"`
+	BittrexKey    string `json:"bittrex_key"`
+	BittrexSecret string `json:"bittrex_secret"`
+	Keystore      string `json:"keystore_path"`
+	Passphrase    string `json:"passphrase"`
+	opts          *bind.TransactOpts
 }
 
 func (self FileSigner) GetAddress() ethereum.Address {
@@ -62,7 +62,7 @@ func (self FileSigner) BittrexSign(msg string) string {
 }
 
 func (self FileSigner) BinanceSign(msg string) string {
-	mac := hmac.New(sha512.New, []byte(self.BittrexSecret))
+	mac := hmac.New(sha512.New, []byte(self.BinanceSecret))
 	mac.Write([]byte(msg))
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }

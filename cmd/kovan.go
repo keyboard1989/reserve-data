@@ -8,6 +8,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
+	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/liqui"
 	"github.com/KyberNetwork/reserve-data/signer"
@@ -35,12 +36,16 @@ func GetConfigForKovan() *Config {
 	// liqui := exchange.NewRealLiqui(fileSigner)
 	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
 	bittrex := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(fileSigner))
+	binance := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(fileSigner))
+
 	fetcherExchanges = append(fetcherExchanges, liqui)
 	fetcherExchanges = append(fetcherExchanges, bittrex)
+	fetcherExchanges = append(fetcherExchanges, binance)
 
 	exchanges := []common.Exchange{}
 	exchanges = append(exchanges, liqui)
 	exchanges = append(exchanges, bittrex)
+	exchanges = append(exchanges, binance)
 
 	// endpoint := "http://localhost:8545"
 	// endpoint := "https://kovan.kyber.network"
