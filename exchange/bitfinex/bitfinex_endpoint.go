@@ -2,8 +2,8 @@ package bitfinex
 
 import (
 	"bytes"
-	"encoding/json"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -73,7 +73,7 @@ func (self *BitfinexEndpoint) FetchOnePairData(
 	self.fillRequest(req, false, timepoint)
 
 	resp, err := client.Do(req)
-	result.Timestamp = common.GetTimestamp()
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
 	if err != nil {
 		result.Valid = false

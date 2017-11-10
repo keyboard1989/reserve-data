@@ -16,6 +16,10 @@ import (
 type FileSigner struct {
 	LiquiKey       string `json:"liqui_key"`
 	LiquiSecret    string `json:"liqui_secret"`
+	BinanceKey     string `json:"binance_key"`
+	BinanceSecret  string `json:"binance_secret"`
+	BittrexKey     string `json:"bittrex_key"`
+	BittrexSecret  string `json:"bittrex_secret"`
 	BitfinexKey    string `json:"bitfinex_key"`
 	BitfinexSecret string `json:"bitfinex_secret"`
 	Keystore       string `json:"keystore_path"`
@@ -43,6 +47,14 @@ func (self FileSigner) GetBitfinexKey() string {
 	return self.BitfinexKey
 }
 
+func (self FileSigner) GetBittrexKey() string {
+	return self.BittrexKey
+}
+
+func (self FileSigner) GetBinanceKey() string {
+	return self.BinanceKey
+}
+
 func (self FileSigner) LiquiSign(msg string) string {
 	mac := hmac.New(sha512.New, []byte(self.LiquiSecret))
 	mac.Write([]byte(msg))
@@ -51,6 +63,18 @@ func (self FileSigner) LiquiSign(msg string) string {
 
 func (self FileSigner) BitfinexSign(msg string) string {
 	mac := hmac.New(sha512.New384, []byte(self.BitfinexSecret))
+	mac.Write([]byte(msg))
+	return ethereum.Bytes2Hex(mac.Sum(nil))
+}
+
+func (self FileSigner) BittrexSign(msg string) string {
+	mac := hmac.New(sha512.New, []byte(self.BittrexSecret))
+	mac.Write([]byte(msg))
+	return ethereum.Bytes2Hex(mac.Sum(nil))
+}
+
+func (self FileSigner) BinanceSign(msg string) string {
+	mac := hmac.New(sha512.New, []byte(self.BinanceSecret))
 	mac.Write([]byte(msg))
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }
