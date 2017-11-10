@@ -46,7 +46,7 @@ func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereu
 
 func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
-	result.Timestamp = common.GetTimestamp()
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
 	resp_data, err := self.interf.GetInfo(timepoint)
 	result.ReturnTime = common.GetTimestamp()
@@ -74,7 +74,11 @@ func (self *Liqui) FetchPriceData(timepoint uint64) (map[common.TokenPairID]comm
 	for _, pair := range self.pairs {
 		pairs_str = append(pairs_str, fmt.Sprintf("%s_%s", pair.Base.ID, pair.Quote.ID))
 	}
-	timestamp := common.GetTimestamp()
+	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
+	fmt.Printf("depth: %s - %s\n",
+		strings.ToLower(strings.Join(pairs_str, "-")),
+		timepoint,
+	)
 	resp_data, err := self.interf.Depth(
 		strings.ToLower(strings.Join(pairs_str, "-")),
 		timepoint,
@@ -140,17 +144,17 @@ func NewLiqui(interf LiquiInterface) *Liqui {
 			common.MustCreateTokenPair("KNC", "ETH"),
 		},
 		map[string]ethereum.Address{
-			"ETH": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"OMG": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"DGD": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"CVC": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"MCO": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"GNT": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"ADX": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"EOS": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"PAY": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"BAT": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"KNC": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
+			"ETH": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"OMG": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"DGD": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"CVC": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"MCO": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"GNT": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"ADX": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"EOS": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"PAY": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"BAT": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
+			"KNC": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
 		},
 	}
 }

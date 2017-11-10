@@ -18,7 +18,3 @@ type Storage interface {
 	CurrentRateVersion(timepoint uint64) (common.Version, error)
 	GetAllRates(common.Version) (common.AllRateEntry, error)
 }
-
-type Fetcher interface {
-	Run() error
-}
