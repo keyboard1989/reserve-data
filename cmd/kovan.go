@@ -17,11 +17,11 @@ func GetConfigForKovan() *Config {
 	wrapperAddr := ethereum.HexToAddress("0x5aa7b0c53affef857523014ac6ce6c8d30bc68e6")
 	reserveAddr := ethereum.HexToAddress("0x98990ee596d7c383a496f54c9e617ce7d2b3ed46")
 
-	// storage := storage.NewRamStorage()
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
-	if err != nil {
-		panic(err)
-	}
+	storage := storage.NewRamStorage()
+	// storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
+	// if err != nil {
+	// 	panic(err)
+	// }
 	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
 	// fetcherRunner := fetcher.NewTimestampRunner(
 	// 	loadTimestamp("/go/src/github.com/KyberNetwork/reserve-data/cmd/timestamps.json"),
