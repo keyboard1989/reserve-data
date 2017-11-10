@@ -174,6 +174,7 @@ func (self *BoltStorage) CurrentEBalanceVersion(timepoint uint64) (common.Versio
 	})
 	return common.Version(result), err
 }
+
 func (self *BoltStorage) GetAllEBalances(version common.Version) (map[common.ExchangeID]common.EBalanceEntry, error) {
 	result := map[common.ExchangeID]common.EBalanceEntry{}
 	var err error
@@ -200,6 +201,7 @@ func (self *BoltStorage) CurrentRateVersion(timepoint uint64) (common.Version, e
 	})
 	return common.Version(result), err
 }
+
 func (self *BoltStorage) GetAllRates(version common.Version) (common.AllRateEntry, error) {
 	result := common.AllRateEntry{}
 	var err error
@@ -243,6 +245,7 @@ func (self *BoltStorage) StoreBalance(data map[string]common.BalanceEntry, timep
 	})
 	return err
 }
+
 func (self *BoltStorage) StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry, timepoint uint64) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
@@ -256,6 +259,7 @@ func (self *BoltStorage) StoreEBalance(data map[common.ExchangeID]common.EBalanc
 	})
 	return err
 }
+
 func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
