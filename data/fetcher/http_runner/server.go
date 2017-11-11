@@ -2,8 +2,6 @@ package http_runner
 
 import (
 	"github.com/gin-gonic/gin"
-	"os"
-	"log"
 	"github.com/gin-contrib/sentry"
 	"github.com/getsentry/raven-go"
 	"time"
