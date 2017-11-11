@@ -1,0 +1,51 @@
+package http_runner
+
+import (
+	"github.com/gin-gonic/gin"
+	"os"
+	"log"
+	"github.com/gin-contrib/sentry"
+	"github.com/getsentry/raven-go"
+	"time"
+	"net/http"
+)
+
+type HttpRunnerServer struct {
+	runner HttpRunner
+	host   string
+	r      *gin.Engine
+}
+
+func (self *HttpRunnerServer) tick(c *gin.Context) {
+	timestamp := time.Now()
+	self.runner.eticker <- timestamp
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success":   true,
+			"timestamp": timestamp,
+		},
+	)
+}
+
+func (self *HttpRunnerServer) Run() {
+	self.r.GET("/tick", self.tick)
+	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Couldn't open log file: %v", err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
+
+	self.r.Run(self.host)
+}
+
+func NewHttpRunnerServer(runner HttpRunner, host string) *HttpRunnerServer {
+	r := gin.Default()
+	r.Use(sentry.Recovery(raven.DefaultClient, false))
+	return &HttpRunnerServer{
+		runner,
+		host,
+		r,
+	}
+}
