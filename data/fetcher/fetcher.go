@@ -1,7 +1,6 @@
 package fetcher
 
 import (
-	"fmt"
 	"log"
 	"sync"
 
@@ -128,7 +127,7 @@ func (self *Fetcher) fetchAllBalances(w *sync.WaitGroup, timepoint uint64) {
 
 func (self *Fetcher) fetchAllRates(w *sync.WaitGroup, timepoint uint64) {
 	defer w.Done()
-	fmt.Printf("Fetching all rates from blockchain...")
+	log.Printf("Fetching all rates from blockchain...")
 	sources := []common.Token{}
 	dests := []common.Token{}
 	pairs := map[common.TokenPairID]bool{}
@@ -155,7 +154,7 @@ func (self *Fetcher) fetchAllRates(w *sync.WaitGroup, timepoint uint64) {
 }
 
 func (self *Fetcher) fetchAllFromExchanges(timepoint uint64) {
-	fmt.Printf("Fetching data...")
+	log.Printf("Fetching data...")
 	wait := sync.WaitGroup{}
 	wait.Add(1)
 	go self.fetchAllPrices(&wait, timepoint)
@@ -165,7 +164,7 @@ func (self *Fetcher) fetchAllFromExchanges(timepoint uint64) {
 }
 
 func (self *Fetcher) fetchAllFromBlockchain(timepoint uint64) {
-	fmt.Printf("Fetching data from blockchain...")
+	log.Printf("Fetching data from blockchain...")
 	wait := sync.WaitGroup{}
 	wait.Add(1)
 	self.fetchAllBalances(&wait, timepoint)

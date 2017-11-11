@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"os"
@@ -39,8 +40,10 @@ func main() {
 	if err != nil {
 		log.Fatalf("Couldn't open log file: %v", err)
 	}
+	mw := io.MultiWriter(os.Stdout, f)
 	defer f.Close()
-	log.SetOutput(f)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetOutput(mw)
 
 	config := GetConfigForKovan()
 

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -85,7 +86,7 @@ func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		fmt.Printf("response: %s\n", resp_body)
+		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
 		}
@@ -97,7 +98,7 @@ func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 		}
 		return result.Return.Done, result.Return.Remaining, result.Return.OrderID == 0, nil
 	} else {
-		fmt.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v, Code: %v\n", err, resp)
 		return 0, 0, false, errors.New("Trade rejected by Liqui")
 	}
 }
@@ -128,7 +129,7 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		fmt.Printf("response: %s\n", resp_body)
+		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
 		}
@@ -140,7 +141,7 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		}
 		return nil
 	} else {
-		fmt.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v, Code: %v\n", err, resp)
 		return errors.New("withdraw rejected by Liqui")
 	}
 }
@@ -153,13 +154,12 @@ func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
 	data.Set("method", "getInfo")
 	data.Add("nonce", nonce())
 	params := data.Encode()
-	fmt.Printf("endpoint: %v\n", self.interf.AuthenticatedEndpoint(timepoint))
+	log.Printf("endpoint: %v\n", self.interf.AuthenticatedEndpoint(timepoint))
 	req, _ := http.NewRequest(
 		"POST",
 		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
-	fmt.Printf("params: %v\n", params)
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
