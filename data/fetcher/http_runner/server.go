@@ -6,12 +6,14 @@ import (
 	"github.com/getsentry/raven-go"
 	"time"
 	"net/http"
+	"errors"
 )
 
 type HttpRunnerServer struct {
-	runner HttpRunner
+	runner *HttpRunner
 	host   string
 	r      *gin.Engine
+	http   *http.Server
 }
 
 func (self *HttpRunnerServer) etick(c *gin.Context) {
@@ -38,18 +40,42 @@ func (self *HttpRunnerServer) btick(c *gin.Context) {
 	)
 }
 
-func (self *HttpRunnerServer) Run() {
+func (self *HttpRunnerServer) init() {
 	self.r.GET("/etick", self.etick)
 	self.r.GET("/btick", self.btick)
-	self.r.Run(self.host)
 }
 
-func NewHttpRunnerServer(runner HttpRunner, host string) *HttpRunnerServer {
+func (self *HttpRunnerServer) Start() error {
+	if self.http == nil {
+		self.http = &http.Server{
+			Addr:    self.host,
+			Handler: self.r,
+		}
+		return self.http.ListenAndServe()
+	} else {
+		return errors.New("server start already")
+	}
+}
+
+func (self *HttpRunnerServer) Stop() error {
+	if self.http != nil {
+		err := self.http.Shutdown(nil)
+		self.http = nil
+		return err
+	} else {
+		return errors.New("server stop already")
+	}
+}
+
+func NewHttpRunnerServer(runner *HttpRunner, host string) *HttpRunnerServer {
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
-	return &HttpRunnerServer{
+	server := HttpRunnerServer{
 		runner,
 		host,
 		r,
+		nil,
 	}
+	server.init()
+	return &server
 }
