@@ -43,13 +43,6 @@ func (self *HttpRunnerServer) btick(c *gin.Context) {
 func (self *HttpRunnerServer) Run() {
 	self.r.GET("/etick", self.etick)
 	self.r.GET("/btick", self.btick)
-	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("Couldn't open log file: %v", err)
-	}
-	defer f.Close()
-	log.SetOutput(f)
-
 	self.r.Run(self.host)
 }
 
