@@ -29,7 +29,7 @@ func NewHttpRunner(port int) *HttpRunner {
 	}
 	NewHttpRunnerServer(
 		runner,
-		fmt.Sprintf(":%v", port),
+		fmt.Sprintf(":%d", port),
 	)
 	return &runner
 }
