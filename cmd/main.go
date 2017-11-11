@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
+	"os"
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
@@ -32,6 +34,13 @@ func loadTimestamp(path string) []uint64 {
 func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
+
+	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Couldn't open log file: %v", err)
+	}
+	defer f.Close()
+	log.SetOutput(f)
 
 	config := GetConfigForKovan()
 

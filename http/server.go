@@ -3,10 +3,8 @@ package http
 import (
 	"fmt"
 	"github.com/KyberNetwork/reserve-data"
-	"log"
 	"math/big"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 
@@ -431,13 +429,6 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/setrates", self.SetRate)
 	self.r.GET("/getrates", self.GetRate)
 	self.r.GET("/activities", self.GetActivities)
-
-	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("Couldn't open log file: %v", err)
-	}
-	defer f.Close()
-	log.SetOutput(f)
 
 	self.r.Run(self.host)
 }
