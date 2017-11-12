@@ -38,18 +38,25 @@ func (self *Fetcher) AddExchange(exchange Exchange) {
 }
 
 func (self *Fetcher) fetchingFromExchanges() {
-	for t := range self.runner.GetExchangeTicker() {
+	for {
+		t := <-self.runner.GetExchangeTicker()
 		self.fetchAllFromExchanges(common.TimeToTimepoint(t))
 	}
 }
 
 func (self *Fetcher) fetchingFromBlockchain() {
-	for t := range self.runner.GetBlockchainTicker() {
+	for {
+		t := <-self.runner.GetBlockchainTicker()
 		self.fetchAllFromBlockchain(common.TimeToTimepoint(t))
 	}
 }
 
+func (self *Fetcher) Stop() error {
+	return self.runner.Stop()
+}
+
 func (self *Fetcher) Run() error {
+	self.runner.Start()
 	go self.fetchingFromExchanges()
 	go self.fetchingFromBlockchain()
 	return nil
