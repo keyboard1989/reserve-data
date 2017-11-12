@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"net/http"
 	"time"
@@ -122,12 +123,12 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		fmt.Printf("response: %s\n", resp_body)
+		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
 		}
 	} else {
-		fmt.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v, Code: %v\n", err, resp)
 	}
 	return
 }
@@ -147,7 +148,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		fmt.Printf("response: %s\n", resp_body)
+		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
 		}
@@ -159,7 +160,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 		}
 		return nil
 	} else {
-		fmt.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v, Code: %v\n", err, resp)
 		return errors.New("withdraw rejected by Binnace")
 	}
 }

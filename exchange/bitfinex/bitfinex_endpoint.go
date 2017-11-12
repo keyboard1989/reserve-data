@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -145,12 +146,12 @@ func (self *BitfinexEndpoint) Trade(tradeType string, base, quote common.Token, 
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		fmt.Printf("response: %s\n", resp_body)
+		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
 		}
 	} else {
-		fmt.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v, Code: %v\n", err, resp)
 	}
 	return
 }
@@ -181,7 +182,7 @@ func (self *BitfinexEndpoint) Withdraw(token common.Token, amount *big.Int, addr
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		fmt.Printf("response: %s\n", resp_body)
+		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
 		}
@@ -193,7 +194,7 @@ func (self *BitfinexEndpoint) Withdraw(token common.Token, amount *big.Int, addr
 		}
 		return nil
 	} else {
-		fmt.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v, Code: %v\n", err, resp)
 		return errors.New("withdraw rejected by Bitfinex")
 	}
 }
@@ -206,13 +207,13 @@ func (self *BitfinexEndpoint) GetInfo(timepoint uint64) (exchange.Bitfinfo, erro
 	data.Set("method", "getInfo")
 	data.Add("nonce", nonce())
 	params := data.Encode()
-	fmt.Printf("endpoint: %v\n", self.interf.AuthenticatedEndpoint())
+	log.Printf("endpoint: %v\n", self.interf.AuthenticatedEndpoint())
 	req, _ := http.NewRequest(
 		"POST",
 		self.interf.AuthenticatedEndpoint(),
 		bytes.NewBufferString(params),
 	)
-	fmt.Printf("params: %v\n", params)
+	log.Printf("params: %v\n", params)
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")

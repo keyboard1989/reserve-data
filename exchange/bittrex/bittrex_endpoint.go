@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math/big"
 	"net/http"
 	"strconv"
@@ -116,7 +117,7 @@ func (self *BittrexEndpoint) Trade(tradeType string, base, quote common.Token, r
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		fmt.Printf("response: %s\n", resp_body)
+		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
 		}
@@ -128,7 +129,7 @@ func (self *BittrexEndpoint) Trade(tradeType string, base, quote common.Token, r
 		}
 		return result.Return.Done, result.Return.Remaining, result.Return.OrderID == 0, nil
 	} else {
-		fmt.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v, Code: %v\n", err, resp)
 		return 0, 0, false, errors.New("Trade rejected by Bittrex")
 	}
 }
@@ -154,7 +155,7 @@ func (self *BittrexEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
-		fmt.Printf("response: %s\n", resp_body)
+		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
 		}
@@ -166,7 +167,7 @@ func (self *BittrexEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 		}
 		return nil
 	} else {
-		fmt.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v, Code: %v\n", err, resp)
 		return errors.New("withdraw rejected by Bittrex")
 	}
 }

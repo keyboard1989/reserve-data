@@ -66,8 +66,7 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
-	response, err := self.interf.GetInfo(timepoint)
-	fmt.Printf("response: %v\n", response)
+	_, err := self.interf.GetInfo(timepoint)
 	result.ReturnTime = common.GetTimestamp()
 	if err != nil {
 		result.Valid = false

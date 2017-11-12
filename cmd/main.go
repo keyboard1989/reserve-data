@@ -3,7 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
+	"os"
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
@@ -35,6 +38,17 @@ func main() {
 
 	// config := GetConfigForKovan()
 	config := GetConfigForSimulation()
+
+	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Couldn't open log file: %v", err)
+	}
+	mw := io.MultiWriter(os.Stdout, f)
+	defer f.Close()
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetOutput(mw)
+
+	config := GetConfigForKovan()
 
 	fetcher := fetcher.NewFetcher(
 		config.FetcherStorage,
