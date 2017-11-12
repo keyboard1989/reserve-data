@@ -420,6 +420,23 @@ func (self *HTTPServer) GetActivities(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) StopFetcher(c *gin.Context) {
+	err := self.app.Stop()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -431,6 +448,8 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/setrates", self.SetRate)
 	self.r.GET("/getrates", self.GetRate)
 	self.r.GET("/activities", self.GetActivities)
+
+	self.r.POST("/stop-fetcher", self.StopFetcher)
 
 	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {

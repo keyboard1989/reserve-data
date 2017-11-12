@@ -20,7 +20,9 @@ type ReserveData interface {
 
 	CurrentRateVersion(timestamp uint64) (common.Version, error)
 	GetAllRates(timestamp uint64) (common.AllRateResponse, error)
+
 	Run() error
+	Stop() error
 }
 
 type ReserveCore interface {

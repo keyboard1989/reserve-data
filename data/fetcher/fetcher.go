@@ -50,7 +50,12 @@ func (self *Fetcher) fetchingFromBlockchain() {
 	}
 }
 
+func (self *Fetcher) Stop() error {
+	return self.runner.Stop()
+}
+
 func (self *Fetcher) Run() error {
+	self.runner.Start()
 	go self.fetchingFromExchanges()
 	go self.fetchingFromBlockchain()
 	return nil

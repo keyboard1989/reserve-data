@@ -132,6 +132,10 @@ func (self ReserveData) Run() error {
 	return self.fetcher.Run()
 }
 
+func (self ReserveData) Stop() error {
+	return self.fetcher.Stop()
+}
+
 func NewReserveData(storage Storage, fetcher Fetcher) *ReserveData {
 	return &ReserveData{storage, fetcher}
 }
