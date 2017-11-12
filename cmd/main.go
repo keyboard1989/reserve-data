@@ -33,7 +33,8 @@ func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	config := GetConfigForKovan()
+	// config := GetConfigForKovan()
+	config := GetConfigForSimulation()
 
 	fetcher := fetcher.NewFetcher(
 		config.FetcherStorage,

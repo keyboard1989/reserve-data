@@ -1,15 +1,16 @@
 package http_runner
 
 import (
-	"time"
 	"errors"
 	"fmt"
+	"log"
+	"time"
 )
 
 type HttpRunner struct {
 	port    int
-	eticker <-chan time.Time
-	bticker <-chan time.Time
+	eticker chan time.Time
+	bticker chan time.Time
 	server  *HttpRunnerServer
 }
 
@@ -26,7 +27,13 @@ func (self *HttpRunner) Start() error {
 		return errors.New("runner start already")
 	} else {
 		self.server = NewHttpRunnerServer(self, fmt.Sprintf(":%d", self.port))
-		return self.server.Start()
+		go func() {
+			err := self.server.Start()
+			if err != nil {
+				log.Printf("Http server for runner couldn't start or get stopped. Error: %s", err)
+			}
+		}()
+		return nil
 	}
 }
 
