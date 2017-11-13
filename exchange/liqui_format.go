@@ -4,15 +4,15 @@ package exchange
 type Liqresp map[string]map[string][][]float64
 
 type Liqinfo struct {
-	Success int `json:"success"`
-	Return  map[string]map[string]float64
-	Error   string `json:"error"`
+	Success int                           `json:"success"`
+	Return  map[string]map[string]float64 `json:"return"`
+	Error   string                        `json:"error"`
 }
 
 type Liqwithdraw struct {
-	Success int `json:"success"`
-	Return  map[string]interface{}
-	Error   string `json:"error"`
+	Success int                    `json:"success"`
+	Return  map[string]interface{} `json:"return"`
+	Error   string                 `json:"error"`
 }
 
 type Liqtrade struct {
@@ -21,6 +21,6 @@ type Liqtrade struct {
 		Done      float64 `json:"received"`
 		Remaining float64 `json:"remains"`
 		OrderID   int64   `json:"order_id"`
-	}
+	} `json:"return"`
 	Error string `json:"error"`
 }

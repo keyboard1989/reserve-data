@@ -169,9 +169,11 @@ func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
 	if err == nil {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
+		log.Printf("Liqui GetInfo response: %s\n", string(resp_body))
 		if err == nil {
 			json.Unmarshal(resp_body, &result)
 		}
+		log.Printf("Liqui GetInfo data: %s\n", result)
 	}
 	return result, err
 }

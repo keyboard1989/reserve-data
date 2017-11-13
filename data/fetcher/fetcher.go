@@ -39,8 +39,11 @@ func (self *Fetcher) AddExchange(exchange Exchange) {
 
 func (self *Fetcher) fetchingFromExchanges() {
 	for {
+		log.Printf("waiting for signal from runner for exchange ticker")
 		t := <-self.runner.GetExchangeTicker()
+		log.Printf("got signal in exchange ticker")
 		self.fetchAllFromExchanges(common.TimeToTimepoint(t))
+		log.Printf("fetched data from exchanges")
 	}
 }
 
@@ -56,7 +59,9 @@ func (self *Fetcher) Stop() error {
 }
 
 func (self *Fetcher) Run() error {
+	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
+	log.Printf("Fetcher runner is running...")
 	go self.fetchingFromExchanges()
 	go self.fetchingFromBlockchain()
 	return nil
@@ -161,12 +166,13 @@ func (self *Fetcher) fetchAllRates(w *sync.WaitGroup, timepoint uint64) {
 }
 
 func (self *Fetcher) fetchAllFromExchanges(timepoint uint64) {
-	log.Printf("Fetching data...")
+	log.Printf("Fetching all data from exchanges...")
 	wait := sync.WaitGroup{}
 	wait.Add(1)
 	go self.fetchAllPrices(&wait, timepoint)
 	wait.Add(1)
 	go self.fetchAllEBalances(&wait, timepoint)
+	log.Printf("Waiting price and balance data from exchanges...")
 	wait.Wait()
 }
 

@@ -39,7 +39,7 @@ func main() {
 	config := GetConfigForKovan()
 	// config := GetConfigForSimulation()
 
-	f, err := os.OpenFile("log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	f, err := os.OpenFile("/reserve-data/log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Couldn't open log file: %v", err)
 	}

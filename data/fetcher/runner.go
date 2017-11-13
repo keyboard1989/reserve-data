@@ -25,11 +25,15 @@ type TickerRunner struct {
 }
 
 func (self *TickerRunner) GetExchangeTicker() <-chan time.Time {
-	<-self.signal
+	if self.eclock == nil {
+		<-self.signal
+	}
 	return self.eclock.C
 }
 func (self *TickerRunner) GetBlockchainTicker() <-chan time.Time {
-	<-self.signal
+	if self.bclock == nil {
+		<-self.signal
+	}
 	return self.bclock.C
 }
 
