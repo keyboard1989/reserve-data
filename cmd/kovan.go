@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -17,8 +18,26 @@ import (
 )
 
 func GetConfigForKovan() *Config {
-	wrapperAddr := ethereum.HexToAddress("0x5aa7b0c53affef857523014ac6ce6c8d30bc68e6")
-	reserveAddr := ethereum.HexToAddress("0x98990ee596d7c383a496f54c9e617ce7d2b3ed46")
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
+	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
+	if err != nil {
+		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
+	}
+	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
+	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+
+	common.SupportedTokens = map[string]common.Token{}
+	tokens := []common.Token{}
+	for id, t := range addressConfig.Tokens {
+		tok := common.Token{
+			id, t.Address, t.Decimals,
+		}
+		common.SupportedTokens[id] = tok
+		tokens = append(tokens, tok)
+	}
+
+	// wrapperAddr := ethereum.HexToAddress("0x5aa7b0c53affef857523014ac6ce6c8d30bc68e6")
+	// reserveAddr := ethereum.HexToAddress("0x98990ee596d7c383a496f54c9e617ce7d2b3ed46")
 
 	storage := storage.NewRamStorage()
 	// storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
@@ -54,19 +73,6 @@ func GetConfigForKovan() *Config {
 	// endpoint := "http://localhost:8545"
 	// endpoint := "https://kovan.kyber.network"
 	endpoint := "https://kovan.infura.io"
-
-	tokens := []common.Token{}
-	tokens = append(tokens, common.MustGetToken("ETH"))
-	tokens = append(tokens, common.MustGetToken("OMG"))
-	tokens = append(tokens, common.MustGetToken("DGD"))
-	tokens = append(tokens, common.MustGetToken("CVC"))
-	tokens = append(tokens, common.MustGetToken("MCO"))
-	tokens = append(tokens, common.MustGetToken("GNT"))
-	tokens = append(tokens, common.MustGetToken("ADX"))
-	tokens = append(tokens, common.MustGetToken("EOS"))
-	tokens = append(tokens, common.MustGetToken("PAY"))
-	tokens = append(tokens, common.MustGetToken("BAT"))
-	tokens = append(tokens, common.MustGetToken("KNC"))
 
 	activityStorage := corestorage.NewRamStorage()
 	return &Config{

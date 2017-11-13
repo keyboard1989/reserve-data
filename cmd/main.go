@@ -36,10 +36,11 @@ func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	config := GetConfigForKovan()
-	// config := GetConfigForSimulation()
+	// config := GetConfigForKovan()
+	config := GetConfigForSimulation()
 
-	f, err := os.OpenFile("/reserve-data/log.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	logPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/log.log"
+	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Couldn't open log file: %v", err)
 	}

@@ -26,3 +26,11 @@ type Config struct {
 	WrapperAddress ethereum.Address
 	ReserveAddress ethereum.Address
 }
+
+func (self *Config) MapTokens() map[string]common.Token {
+	result := map[string]common.Token{}
+	for _, t := range self.SupportedTokens {
+		result[t.ID] = t
+	}
+	return result
+}
