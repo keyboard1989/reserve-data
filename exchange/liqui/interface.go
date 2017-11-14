@@ -29,7 +29,7 @@ func NewRealInterface() *RealInterface {
 type SimulatedInterface struct{}
 
 func (self *SimulatedInterface) baseurl() string {
-	baseurl := "http://127.0.0.1:8000"
+	baseurl := "http://simulator:8000"
 	if len(os.Args) > 1 {
 		baseurl = os.Args[1]
 	}
@@ -37,8 +37,8 @@ func (self *SimulatedInterface) baseurl() string {
 }
 
 func (self *SimulatedInterface) PublicEndpoint(timepoint uint64) string {
-	// return fmt.Sprintf("%s?timestamp=%d", self.baseurl(), timepoint)
-	return "https://api.liqui.io/api/3"
+	return fmt.Sprintf("%s?timestamp=%d", self.baseurl(), timepoint)
+	// return "https://api.liqui.io/api/3"
 }
 
 func (self *SimulatedInterface) AuthenticatedEndpoint(timepoint uint64) string {
