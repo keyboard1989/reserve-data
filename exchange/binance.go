@@ -23,6 +23,16 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
+func (self *Binance) UpdateAllDepositAddresses(address string) {
+	for k, _ := range self.addresses {
+		self.addresses[k] = ethereum.HexToAddress(address)
+	}
+}
+
+func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
+	self.addresses[token.ID] = ethereum.HexToAddress(address)
+}
+
 func (self *Binance) ID() common.ExchangeID {
 	return common.ExchangeID("binance")
 }

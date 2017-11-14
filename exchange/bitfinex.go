@@ -23,6 +23,16 @@ func (self *Bitfinex) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
+func (self *Bitfinex) UpdateAllDepositAddresses(address string) {
+	for k, _ := range self.addresses {
+		self.addresses[k] = ethereum.HexToAddress(address)
+	}
+}
+
+func (self *Bitfinex) UpdateDepositAddress(token common.Token, address string) {
+	self.addresses[token.ID] = ethereum.HexToAddress(address)
+}
+
 func (self *Bitfinex) ID() common.ExchangeID {
 	return common.ExchangeID("bitfinex")
 }
