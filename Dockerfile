@@ -8,6 +8,4 @@ ADD . /go/src/github.com/KyberNetwork/reserve-data
 WORKDIR /go/src/github.com/KyberNetwork/reserve-data
 RUN go install -v github.com/KyberNetwork/reserve-data/cmd
 
-ENTRYPOINT ["cmd", "http://simulator:5000"]
-
 EXPOSE 8000
