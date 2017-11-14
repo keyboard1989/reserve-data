@@ -1,13 +1,17 @@
 package http_runner
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/gin-contrib/sentry"
-	"github.com/getsentry/raven-go"
-	"time"
-	"net/http"
 	"errors"
+	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/getsentry/raven-go"
+	"github.com/gin-contrib/sentry"
+	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
+	"strconv"
 )
+
+const MAX_TIMESPOT uint64 = 18446744073709551615
 
 type HttpRunnerServer struct {
 	runner *HttpRunner
@@ -16,26 +20,41 @@ type HttpRunnerServer struct {
 	http   *http.Server
 }
 
+func getTimePoint(c *gin.Context) uint64 {
+	timestamp := c.DefaultQuery("timestamp", "")
+	if timestamp == "" {
+		log.Printf("Interpreted timestamp(%s) to default - %s\n", timestamp, MAX_TIMESPOT)
+		return MAX_TIMESPOT
+	} else {
+		timepoint, err := strconv.ParseUint(timestamp, 10, 64)
+		if err != nil {
+			log.Printf("Interpreted timestamp(%s) to default - %s\n", timestamp, MAX_TIMESPOT)
+			return MAX_TIMESPOT
+		} else {
+			log.Printf("Interpreted timestamp(%s) to %s\n", timestamp, timepoint)
+			return timepoint
+		}
+	}
+}
+
 func (self *HttpRunnerServer) etick(c *gin.Context) {
-	timestamp := time.Now()
-	self.runner.eticker <- timestamp
+	timepoint := getTimePoint(c)
+	self.runner.eticker <- common.TimepointToTime(timepoint)
 	c.JSON(
 		http.StatusOK,
 		gin.H{
-			"success":   true,
-			"timestamp": timestamp,
+			"success": true,
 		},
 	)
 }
 
 func (self *HttpRunnerServer) btick(c *gin.Context) {
-	timestamp := time.Now()
-	self.runner.bticker <- timestamp
+	timepoint := getTimePoint(c)
+	self.runner.bticker <- common.TimepointToTime(timepoint)
 	c.JSON(
 		http.StatusOK,
 		gin.H{
-			"success":   true,
-			"timestamp": timestamp,
+			"success": true,
 		},
 	)
 }

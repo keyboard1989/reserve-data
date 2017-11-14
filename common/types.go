@@ -25,6 +25,10 @@ func TimeToTimepoint(t time.Time) uint64 {
 	return uint64(timestamp)
 }
 
+func TimepointToTime(t uint64) time.Time {
+	return time.Unix(0, int64(t)*1000)
+}
+
 type TokenPairID string
 
 func NewTokenPairID(base, quote string) TokenPairID {
