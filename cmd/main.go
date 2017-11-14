@@ -36,8 +36,20 @@ func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	// config := GetConfigForKovan()
-	config := GetConfigForSimulation()
+	var config *Config
+	switch os.Getenv("KYBER_ENV") {
+	case "simulation":
+		log.Printf("Running in simulation mode")
+		config = GetConfigForSimulation()
+		break
+	case "kovan":
+		log.Printf("Running in kovan mode")
+		config = GetConfigForKovan()
+		break
+	default:
+		log.Printf("Running in kovan mode")
+		config = GetConfigForKovan()
+	}
 
 	logPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/log.log"
 	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
