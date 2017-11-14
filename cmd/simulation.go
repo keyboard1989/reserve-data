@@ -47,6 +47,7 @@ func GetConfigForSimulation() *Config {
 	fetcherExchanges := []fetcher.Exchange{}
 	// liqui := exchange.NewRealLiqui(fileSigner)
 	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
+	liqui.UpdateAllDepositAddresses(addressConfig.Exchanges["liqui"])
 
 	fetcherExchanges = append(fetcherExchanges, liqui)
 

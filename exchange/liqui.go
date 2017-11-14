@@ -25,6 +25,12 @@ func (self *Liqui) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
+func (self *Liqui) UpdateAllDepositAddresses(address string) {
+	for k, _ := range self.addresses {
+		self.addresses[k] = ethereum.HexToAddress(address)
+	}
+}
+
 func (self *Liqui) ID() common.ExchangeID {
 	return common.ExchangeID("liqui")
 }
