@@ -15,7 +15,7 @@ import (
 )
 
 func GetConfigForSimulation() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/deployment_dev.json"
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
