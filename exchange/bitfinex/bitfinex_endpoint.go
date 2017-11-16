@@ -129,8 +129,8 @@ func (self *BitfinexEndpoint) Trade(tradeType string, base, quote common.Token, 
 	data.Set("method", "Trade")
 	data.Set("pair", fmt.Sprintf("%s_%s", strings.ToLower(base.ID), strings.ToLower(quote.ID)))
 	data.Set("type", tradeType)
-	data.Set("rate", fmt.Sprintf("%f", rate))
-	data.Set("amount", fmt.Sprintf("%f", amount))
+	data.Set("rate", strconv.FormatFloat(rate, 'f', -1, 64))
+	data.Set("amount", strconv.FormatFloat(amount, 'f', -1, 64))
 	params := data.Encode()
 	req, _ := http.NewRequest(
 		"POST",
@@ -165,7 +165,7 @@ func (self *BitfinexEndpoint) Withdraw(token common.Token, amount *big.Int, addr
 	data := url.Values{}
 	data.Set("method", "WithdrawCoin")
 	data.Set("coinName", token.ID)
-	data.Set("amount", fmt.Sprintf("%f", common.BigToFloat(amount, token.Decimal)))
+	data.Set("amount", strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64))
 	data.Set("address", address.Hex())
 	params := data.Encode()
 	req, _ := http.NewRequest(

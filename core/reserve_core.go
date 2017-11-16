@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strconv"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -54,8 +55,13 @@ func (self ReserveCore) Trade(
 		},
 	)
 	log.Printf(
-		"Core ----------> %s on %s: base: %s, quote: %s, rate: %f, amount: %f, timestamp: %d ==> Result: done: %f, remaining: %f, finished: %s, error: %s",
-		tradeType, exchange.ID(), base.ID, quote.ID, rate, amount, timepoint, done, remaining, finished, err,
+		"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: done: %s, remaining: %s, finished: %t, error: %s",
+		tradeType, exchange.ID(), base.ID, quote.ID,
+		strconv.FormatFloat(rate, 'f', -1, 64),
+		strconv.FormatFloat(amount, 'f', -1, 64), timepoint,
+		strconv.FormatFloat(done, 'f', -1, 64),
+		strconv.FormatFloat(remaining, 'f', -1, 64),
+		finished, err,
 	)
 	return done, remaining, finished, err
 }
@@ -87,8 +93,8 @@ func (self ReserveCore) Deposit(
 		},
 	)
 	log.Printf(
-		"Core ----------> Deposit to %s: token: %s, amount: %f, timestamp: %d ==> Result: tx: %s, error: %s",
-		exchange.ID(), token.ID, amount, timepoint, tx.Hex(), err,
+		"Core ----------> Deposit to %s: token: %s, amount: %d, timestamp: %d ==> Result: tx: %s, error: %s",
+		exchange.ID(), token.ID, amount.Uint64(), timepoint, tx.Hex(), err,
 	)
 	return tx, err
 }
@@ -115,8 +121,8 @@ func (self ReserveCore) Withdraw(
 		},
 	)
 	log.Printf(
-		"Core ----------> Withdraw from %s: token: %s, amount: %f, timestamp: %d ==> Result: error: %s",
-		exchange.ID(), token.ID, amount, timepoint, err,
+		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: error: %s",
+		exchange.ID(), token.ID, amount.Uint64(), timepoint, err,
 	)
 	return err
 }
