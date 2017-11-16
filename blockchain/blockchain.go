@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -48,13 +49,10 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uin
 	for _, tok := range self.tokens {
 		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 	}
-	// fmt.Printf("reserve: %v\n", reserve)
-	// fmt.Printf("wrapper: %v\n", self.wrapper.ContractWrapperCaller.contract)
 	timestamp := common.GetTimestamp()
 	balances, err := self.wrapper.GetBalances(nil, reserve, tokens)
 	returnTime := common.GetTimestamp()
-	// fmt.Printf("balances: %v\n", balances)
-	// fmt.Printf("errors: %v\n", err)
+	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
 	if err != nil {
 		for tokenID, _ := range common.SupportedTokens {
 			result[tokenID] = common.BalanceEntry{
