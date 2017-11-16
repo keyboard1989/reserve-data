@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -52,6 +53,10 @@ func (self ReserveCore) Trade(
 			"error":     err,
 		},
 	)
+	log.Printf(
+		"Core ----------> %s on %s: base: %s, quote: %s, rate: %f, amount: %f, timestamp: %d ==> Result: done: %f, remaining: %f, finished: %s, error: %s",
+		tradeType, exchange.ID(), base.ID, quote.ID, rate, amount, timepoint, done, remaining, finished, err,
+	)
 	return done, remaining, finished, err
 }
 
@@ -81,6 +86,10 @@ func (self ReserveCore) Deposit(
 			"error": err,
 		},
 	)
+	log.Printf(
+		"Core ----------> Deposit to %s: token: %s, amount: %f, timestamp: %d ==> Result: tx: %s, error: %s",
+		exchange.ID(), token.ID, amount, timepoint, tx.Hex(), err,
+	)
 	return tx, err
 }
 
@@ -104,6 +113,10 @@ func (self ReserveCore) Withdraw(
 		}, map[string]interface{}{
 			"error": err,
 		},
+	)
+	log.Printf(
+		"Core ----------> Withdraw from %s: token: %s, amount: %f, timestamp: %d ==> Result: error: %s",
+		exchange.ID(), token.ID, amount, timepoint, err,
 	)
 	return err
 }
@@ -143,6 +156,10 @@ func (self ReserveCore) SetRates(
 			"tx":    tx,
 			"error": err,
 		},
+	)
+	log.Printf(
+		"Core ----------> Set rates: ==> Result: tx: %s, error: %s",
+		tx.Hex(), err,
 	)
 	return tx, err
 }
