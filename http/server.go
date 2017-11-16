@@ -271,6 +271,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		return
 	}
 	rate, err := strconv.ParseFloat(rateParam, 64)
+	log.Printf("http server: Trade: rate: %f, raw rate: %s", rate, rateParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
