@@ -44,3 +44,17 @@ func (self *SimulatedInterface) AuthenticatedEndpoint() string {
 func NewSimulatedInterface() *SimulatedInterface {
 	return &SimulatedInterface{}
 }
+
+type KovanInterface struct{}
+
+func (self *KovanInterface) PublicEndpoint() string {
+	return "https://www.binance.com"
+}
+
+func (self *KovanInterface) AuthenticatedEndpoint() string {
+	return "https://www.binance.com"
+}
+
+func NewKovanInterface() *KovanInterface {
+	return &KovanInterface{}
+}

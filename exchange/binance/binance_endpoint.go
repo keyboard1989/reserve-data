@@ -171,13 +171,14 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 		Timeout: time.Duration(30 * time.Second)}
 	req, _ := http.NewRequest(
 		"GET",
-		self.interf.AuthenticatedEndpoint()+"/api/account",
+		self.interf.AuthenticatedEndpoint()+"/api/v3/account",
 		nil)
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
 	if err == nil {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
+		log.Printf("Binance get balances: %s", string(resp_body))
 		if err == nil {
 			json.Unmarshal(resp_body, &result)
 		}
@@ -195,4 +196,8 @@ func NewRealBinanceEndpoint(signer Signer) *BinanceEndpoint {
 
 func NewSimulatedBinanceEndpoint(signer Signer) *BinanceEndpoint {
 	return &BinanceEndpoint{signer, NewSimulatedInterface()}
+}
+
+func NewKovanBinanceEndpoint(signer Signer) *BinanceEndpoint {
+	return &BinanceEndpoint{signer, NewKovanInterface()}
 }

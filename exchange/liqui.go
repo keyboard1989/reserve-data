@@ -67,9 +67,14 @@ func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 	} else {
 		if resp_data.Success == 1 {
 			balances := resp_data.Return["funds"]
-			result.Balance = map[string]float64{}
+			result.AvailableBalance = map[string]float64{}
+			result.LockedBalance = map[string]float64{}
+			result.DepositBalance = map[string]float64{}
 			for tokenID, _ := range common.SupportedTokens {
-				result.Balance[tokenID] = balances[strings.ToLower(tokenID)]
+				result.AvailableBalance[tokenID] = balances[strings.ToLower(tokenID)]
+				// TODO: need to take open order into account
+				result.LockedBalance[tokenID] = 0
+				result.DepositBalance[tokenID] = 0
 			}
 		} else {
 			result.Valid = false

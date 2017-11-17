@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -72,6 +73,32 @@ func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]com
 
 func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
+	result.Valid = true
+	resp_data, err := self.interf.GetInfo(timepoint)
+	result.ReturnTime = common.GetTimestamp()
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
+		result.AvailableBalance = map[string]float64{}
+		result.LockedBalance = map[string]float64{}
+		result.DepositBalance = map[string]float64{}
+		if resp_data.Code != 0 {
+			result.Valid = false
+			result.Error = fmt.Sprintf("Code: %s, Msg: %s", resp_data.Code, resp_data.Msg)
+		} else {
+			for _, b := range resp_data.Balances {
+				tokenID := b.Asset
+				_, exist := common.SupportedTokens[tokenID]
+				if exist {
+					result.AvailableBalance[tokenID] = b.Free
+					result.LockedBalance[tokenID] = b.Locked
+					result.DepositBalance[tokenID] = 0
+				}
+			}
+		}
+	}
 	return result, nil
 }
 

@@ -135,11 +135,13 @@ type AllBalanceResponse struct {
 }
 
 type EBalanceEntry struct {
-	Valid      bool
-	Error      string
-	Timestamp  Timestamp
-	ReturnTime Timestamp
-	Balance    map[string]float64
+	Valid            bool
+	Error            string
+	Timestamp        Timestamp
+	ReturnTime       Timestamp
+	AvailableBalance map[string]float64
+	LockedBalance    map[string]float64
+	DepositBalance   map[string]float64
 }
 
 type AllEBalanceResponse struct {
