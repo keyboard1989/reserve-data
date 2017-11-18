@@ -108,6 +108,16 @@ func (self *BinanceEndpoint) FetchOnePairData(
 	data.Store(pair.PairID(), result)
 }
 
+// Relevant params:
+// symbol ("%s%s", base, quote)
+// side (BUY/SELL)
+// type (LIMIT/MARKET)
+// timeInForce (GTC/IOC)
+// quantity
+// price
+//
+// In this version, we only support LIMIT order which means only buy/sell with acceptable price,
+// and GTC time in force which means that the order will be active until it's implicitly canceled
 func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
 	result := exchange.Binatrade{}
 	client := &http.Client{
@@ -115,9 +125,17 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	}
 	req, _ := http.NewRequest(
 		"POST",
-		self.interf.AuthenticatedEndpoint()+"/api/v3/order/test",
+		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
 		nil,
 	)
+	q := req.URL.Query()
+	q.Add("symbol", base.ID+quote.ID)
+	q.Add("side", strconv.ToUpper(tradeType))
+	q.Add("type", "LIMIT")
+	q.Add("timeInForce", "GTC")
+	q.Add("quantity", strconv.FloatFormat(amount))
+	q.Add("price", strconv.FloatFormat(rate))
+	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
@@ -143,6 +161,11 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 		self.interf.AuthenticatedEndpoint()+"/wapi/v1/withdraw.html",
 		nil,
 	)
+	q := req.URL.Query()
+	q.Add("asset", token.ID)
+	q.Add("address", address.Hex())
+	q.Add("amount", strconv.FloatFormat(common.BigToFloat(amount), 'f', -1, 64))
+	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
