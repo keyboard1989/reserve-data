@@ -2,19 +2,20 @@ package binance
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"net/http"
+	"strconv"
+	"strings"
+	"sync"
 	"time"
 
-	"errors"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"strconv"
-	"sync"
 )
 
 type BinanceEndpoint struct {
@@ -130,11 +131,11 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	)
 	q := req.URL.Query()
 	q.Add("symbol", base.ID+quote.ID)
-	q.Add("side", strconv.ToUpper(tradeType))
+	q.Add("side", strings.ToUpper(tradeType))
 	q.Add("type", "LIMIT")
 	q.Add("timeInForce", "GTC")
-	q.Add("quantity", strconv.FloatFormat(amount))
-	q.Add("price", strconv.FloatFormat(rate))
+	q.Add("quantity", strconv.FormatFloat(amount, 'f', -1, 64))
+	q.Add("price", strconv.FormatFloat(rate, 'f', -1, 64))
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
@@ -164,7 +165,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	q := req.URL.Query()
 	q.Add("asset", token.ID)
 	q.Add("address", address.Hex())
-	q.Add("amount", strconv.FloatFormat(common.BigToFloat(amount), 'f', -1, 64))
+	q.Add("amount", strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64))
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
