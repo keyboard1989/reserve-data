@@ -159,7 +159,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	}
 	req, _ := http.NewRequest(
 		"POST",
-		self.interf.AuthenticatedEndpoint()+"/wapi/v1/withdraw.html",
+		self.interf.AuthenticatedEndpoint()+"/wapi/v3/withdraw.html",
 		nil,
 	)
 	q := req.URL.Query()
