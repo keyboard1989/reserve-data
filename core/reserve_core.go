@@ -101,14 +101,15 @@ func (self ReserveCore) Deposit(
 
 func (self ReserveCore) Withdraw(
 	exchange common.Exchange, token common.Token,
-	amount *big.Int, timepoint uint64) error {
+	amount *big.Int, timepoint uint64) (ethereum.Hash, error) {
 
 	_, supported := exchange.Address(token)
 	var err error
+	var txHash ethereum.Hash
 	if !supported {
 		err = errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
 	} else {
-		err = exchange.Withdraw(token, amount, self.rm, timepoint)
+		txHash, err = exchange.Withdraw(token, amount, self.rm, timepoint)
 	}
 	go self.activityStorage.Record(
 		"withdraw", map[string]interface{}{
@@ -117,14 +118,15 @@ func (self ReserveCore) Withdraw(
 			"amount":    common.BigToFloat(amount, token.Decimal),
 			"timepoint": timepoint,
 		}, map[string]interface{}{
-			"error": err,
+			"error":  err,
+			"txhash": txHash,
 		},
 	)
 	log.Printf(
-		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: error: %s",
-		exchange.ID(), token.ID, amount.Uint64(), timepoint, err,
+		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: txhash: %s, error: %s",
+		exchange.ID(), token.ID, amount.Uint64(), timepoint, txHash, err,
 	)
-	return err
+	return txHash, err
 }
 
 func (self ReserveCore) SetRates(

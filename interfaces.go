@@ -35,16 +35,18 @@ type ReserveCore interface {
 		rate float64,
 		amount float64,
 		timestamp uint64) (done float64, remaining float64, finished bool, err error)
+
 	Deposit(
 		exchange common.Exchange,
 		token common.Token,
 		amount *big.Int,
 		timestamp uint64) (ethereum.Hash, error)
+
 	Withdraw(
 		exchange common.Exchange,
 		token common.Token,
 		amount *big.Int,
-		timestamp uint64) error
+		timestamp uint64) (ethereum.Hash, error)
 
 	// blockchain related action
 	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (ethereum.Hash, error)

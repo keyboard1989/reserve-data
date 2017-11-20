@@ -51,8 +51,9 @@ func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token
 	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 
-func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) error {
-	return self.interf.Withdraw(token, amount, address, timepoint)
+func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
+	err := self.interf.Withdraw(token, amount, address, timepoint)
+	return ethereum.Hash{}, err
 }
 
 func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {

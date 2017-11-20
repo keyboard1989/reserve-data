@@ -336,7 +336,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		return
 	}
 	log.Printf("Withdraw %s %s from %s\n", amount.Text(10), token.ID, exchange.ID())
-	err = self.core.Withdraw(exchange, token, amount, getTimePoint(c))
+	txHash, err := self.core.Withdraw(exchange, token, amount, getTimePoint(c))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -348,6 +348,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success": true,
+			"txhash":  txHash.Hex(),
 		},
 	)
 }
