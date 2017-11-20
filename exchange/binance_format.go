@@ -41,7 +41,7 @@ type Binawithdraw struct {
 type Binaorder struct {
 	Code          int    `json:"code"`
 	Message       string `json:"msg"`
-	symbol        string `json:"symbol"`
+	Symbol        string `json:"symbol"`
 	OrderId       uint64 `json:"orderId"`
 	ClientOrderId string `json:"clientOrderId"`
 	Price         string `json:"price"`
@@ -55,3 +55,5 @@ type Binaorder struct {
 	IcebergQty    string `json:"icebergQty"`
 	Time          uint64 `json:"time"`
 }
+
+type Binaorders []Binaorder

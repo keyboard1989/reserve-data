@@ -21,6 +21,9 @@ type ReserveData interface {
 	CurrentRateVersion(timestamp uint64) (common.Version, error)
 	GetAllRates(timestamp uint64) (common.AllRateResponse, error)
 
+	CurrentOrderVersion(timestamp uint64) (common.Version, error)
+	GetAllOrders(timestamp uint64) (common.AllOrderResponse, error)
+
 	Run() error
 	Stop() error
 }

@@ -255,6 +255,56 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 	return result, err
 }
 
+func (self *BinanceEndpoint) OpenOrdersForOnePair(
+	wg *sync.WaitGroup,
+	pair common.TokenPair,
+	data *sync.Map,
+	timepoint uint64) {
+
+	defer wg.Done()
+	result := exchange.Binaorders{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second)}
+	req, _ := http.NewRequest(
+		"GET",
+		self.interf.AuthenticatedEndpoint()+"/api/v3/openOrders",
+		nil)
+	q := req.URL.Query()
+	q.Add("symbol", pair.Base.ID+pair.Quote.ID)
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, true, timepoint)
+	resp, err := client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+		resp_body, err := ioutil.ReadAll(resp.Body)
+		log.Printf("Binance get open orders for %s: %s", pair.PairID(), string(resp_body))
+		if err == nil {
+			json.Unmarshal(resp_body, &result)
+			orders := []common.Order{}
+			for _, order := range result {
+				price, _ := strconv.ParseFloat(order.Price, 64)
+				orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
+				executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
+				orders = append(orders, common.Order{
+					Base:        strings.ToUpper(pair.Base.ID),
+					Quote:       strings.ToUpper(pair.Quote.ID),
+					OrderId:     fmt.Sprintf("%d", order.OrderId),
+					Price:       price,
+					OrigQty:     orgQty,
+					ExecutedQty: executedQty,
+					TimeInForce: order.TimeInForce,
+					Type:        order.Type,
+					Side:        order.Side,
+					StopPrice:   order.StopPrice,
+					IcebergQty:  order.IcebergQty,
+					Time:        order.Time,
+				})
+			}
+			data.Store(pair.PairID(), orders)
+		}
+	}
+}
+
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {
 	return &BinanceEndpoint{signer, interf}
 }

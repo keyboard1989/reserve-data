@@ -178,6 +178,38 @@ func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
 	return result, err
 }
 
+func (self *LiquiEndpoint) ActiveOrders(timepoint uint64) (exchange.Liqorders, error) {
+	result := exchange.Liqorders{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second)}
+	data := url.Values{}
+	data.Set("method", "ActiveOrders")
+	data.Set("pair", "") // all pairs
+	data.Add("nonce", nonce())
+	params := data.Encode()
+	req, _ := http.NewRequest(
+		"POST",
+		self.interf.AuthenticatedEndpoint(timepoint),
+		bytes.NewBufferString(params),
+	)
+	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Key", self.signer.GetLiquiKey())
+	req.Header.Add("Sign", self.signer.LiquiSign(params))
+	resp, err := client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+		resp_body, err := ioutil.ReadAll(resp.Body)
+		log.Printf("Liqui ActiveOrders response: %s\n", string(resp_body))
+		if err == nil {
+			json.Unmarshal(resp_body, &result)
+		}
+		log.Printf("Liqui ActiveOrders data: %s\n", result)
+	}
+	return result, err
+}
+
 func NewLiquiEndpoint(signer Signer, interf Interface) *LiquiEndpoint {
 	return &LiquiEndpoint{signer, interf}
 }

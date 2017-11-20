@@ -124,6 +124,36 @@ func (self *Fetcher) fetchAllEBalances(w *sync.WaitGroup, timepoint uint64) {
 	}
 }
 
+func (self *Fetcher) fetchOrderFromExchange(wg *sync.WaitGroup, exchange Exchange, data *sync.Map, timepoint uint64) {
+	defer wg.Done()
+	orderData, err := exchange.FetchOrderData(timepoint)
+	if err != nil {
+		log.Printf("Fetching orders from %s failed: %v\n", exchange.Name(), err)
+	}
+	data.Store(exchange.ID(), orderData)
+}
+
+func (self *Fetcher) fetchAllOrders(w *sync.WaitGroup, timepoint uint64) {
+	defer w.Done()
+	data := sync.Map{}
+	// start fetching
+	wait := sync.WaitGroup{}
+	for _, exchange := range self.exchanges {
+		wait.Add(1)
+		go self.fetchOrderFromExchange(&wait, exchange, &data, timepoint)
+	}
+	wait.Wait()
+	orders := common.AllOrderEntry{}
+	data.Range(func(key, value interface{}) bool {
+		orders[key.(common.ExchangeID)] = value.(common.OrderEntry)
+		return true
+	})
+	err := self.storage.StoreOrder(orders, timepoint)
+	if err != nil {
+		log.Printf("Storing orders failed: %s\n", err)
+	}
+}
+
 func (self *Fetcher) fetchAllBalances(w *sync.WaitGroup, timepoint uint64) {
 	defer w.Done()
 	data, err := self.blockchain.FetchBalanceData(self.rmaddr, timepoint)
@@ -172,7 +202,9 @@ func (self *Fetcher) fetchAllFromExchanges(timepoint uint64) {
 	go self.fetchAllPrices(&wait, timepoint)
 	wait.Add(1)
 	go self.fetchAllEBalances(&wait, timepoint)
-	log.Printf("Waiting price and balance data from exchanges...")
+	wait.Add(1)
+	go self.fetchAllOrders(&wait, timepoint)
+	log.Printf("Waiting price, balance, order data from exchanges...")
 	wait.Wait()
 }
 

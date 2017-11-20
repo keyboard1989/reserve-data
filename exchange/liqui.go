@@ -56,6 +56,41 @@ func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereu
 	return ethereum.Hash{}, err
 }
 
+func (self *Liqui) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
+	result := common.OrderEntry{}
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
+	result.Valid = true
+	result.Data = []common.Order{}
+	resp_data, err := self.interf.ActiveOrders(timepoint)
+	result.ReturnTime = common.GetTimestamp()
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
+		if resp_data.Success == 1 {
+			for id, order := range resp_data.Return {
+				tokens := strings.Split(order.Pair, "_")
+				result.Data = append(result.Data, common.Order{
+					Base:        strings.ToUpper(tokens[0]),
+					Quote:       strings.ToUpper(tokens[1]),
+					OrderId:     id,
+					Price:       order.Rate,
+					OrigQty:     order.Amount,
+					ExecutedQty: 0,
+					TimeInForce: "GTC",
+					Type:        "LIMIT",
+					Side:        order.Type,
+					Time:        order.Timestamp,
+				})
+			}
+		} else {
+			result.Valid = false
+			result.Error = resp_data.Error
+		}
+	}
+	return result, nil
+}
+
 func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))

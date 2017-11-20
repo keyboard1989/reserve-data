@@ -71,6 +71,31 @@ func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]com
 	return result, nil
 }
 
+func (self *Binance) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
+	result := common.OrderEntry{}
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
+	result.Valid = true
+	result.Data = []common.Order{}
+
+	wait := sync.WaitGroup{}
+	data := sync.Map{}
+	pairs := self.pairs
+	for _, pair := range pairs {
+		wait.Add(1)
+		go self.interf.OpenOrdersForOnePair(&wait, pair, &data, timepoint)
+	}
+	wait.Wait()
+
+	result.ReturnTime = common.GetTimestamp()
+
+	data.Range(func(key, value interface{}) bool {
+		orders := value.([]common.Order)
+		result.Data = append(result.Data, orders...)
+		return true
+	})
+	return result, nil
+}
+
 func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))

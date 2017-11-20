@@ -14,6 +14,12 @@ type BinanceInterface interface {
 		data *sync.Map,
 		timepoint uint64)
 
+	OpenOrdersForOnePair(
+		wg *sync.WaitGroup,
+		pair common.TokenPair,
+		data *sync.Map,
+		timepoint uint64)
+
 	GetInfo(timepoint uint64) (Binainfo, error)
 
 	Withdraw(

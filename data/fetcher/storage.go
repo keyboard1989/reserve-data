@@ -9,4 +9,5 @@ type Storage interface {
 	StoreBalance(data map[string]common.BalanceEntry, timepoint uint64) error
 	StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry, timepoint uint64) error
 	StoreRate(data common.AllRateEntry, timepoint uint64) error
+	StoreOrder(data common.AllOrderEntry, timepoint uint64) error
 }

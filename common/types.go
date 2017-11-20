@@ -134,6 +134,38 @@ type AllBalanceResponse struct {
 	Data       map[string]BalanceResponse
 }
 
+type Order struct {
+	Base        string
+	Quote       string
+	OrderId     string
+	Price       float64
+	OrigQty     float64 `original quantity`
+	ExecutedQty float64 `matched quantity`
+	TimeInForce string
+	Type        string `market or limit`
+	Side        string `buy or sell`
+	StopPrice   string
+	IcebergQty  string
+	Time        uint64
+}
+
+type OrderEntry struct {
+	Valid      bool
+	Error      string
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Data       []Order
+}
+
+type AllOrderEntry map[ExchangeID]OrderEntry
+
+type AllOrderResponse struct {
+	Version    Version
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Data       AllOrderEntry
+}
+
 type EBalanceEntry struct {
 	Valid            bool
 	Error            string
