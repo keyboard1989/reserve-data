@@ -47,7 +47,7 @@ func (self *Liqui) Name() string {
 	return "liqui"
 }
 
-func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 

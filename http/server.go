@@ -286,7 +286,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		)
 		return
 	}
-	done, remaining, finished, err := self.core.Trade(
+	id, done, remaining, finished, err := self.core.Trade(
 		exchange, typeParam, base, quote, rate, amount, getTimePoint(c))
 	if err != nil {
 		c.JSON(
@@ -299,6 +299,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success":   true,
+			"id":        id,
 			"done":      done,
 			"remaining": remaining,
 			"finished":  finished,

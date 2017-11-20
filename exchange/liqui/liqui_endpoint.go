@@ -61,7 +61,7 @@ func (self *LiquiEndpoint) Depth(tokens string, timepoint uint64) (exchange.Liqr
 	return result, err
 }
 
-func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 	result := exchange.Liqtrade{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second)}
@@ -91,15 +91,15 @@ func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 			err = json.Unmarshal(resp_body, &result)
 		}
 		if err != nil {
-			return 0, 0, false, err
+			return "", 0, 0, false, err
 		}
 		if result.Error != "" {
-			return 0, 0, false, errors.New(result.Error)
+			return "", 0, 0, false, errors.New(result.Error)
 		}
-		return result.Return.Done, result.Return.Remaining, result.Return.OrderID == 0, nil
+		return result.Return.OrderID, result.Return.Done, result.Return.Remaining, result.Return.OrderID == "0", nil
 	} else {
 		log.Printf("Error: %v, Code: %v\n", err, resp)
-		return 0, 0, false, errors.New("Trade rejected by Liqui")
+		return "", 0, 0, false, errors.New("Trade rejected by Liqui")
 	}
 }
 

@@ -34,7 +34,7 @@ type ReserveCore interface {
 		quote common.Token,
 		rate float64,
 		amount float64,
-		timestamp uint64) (done float64, remaining float64, finished bool, err error)
+		timestamp uint64) (id string, done float64, remaining float64, finished bool, err error)
 
 	Deposit(
 		exchange common.Exchange,

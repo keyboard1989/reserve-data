@@ -18,6 +18,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+const EPSILON float64 = 0.0000000001 // 10e-10
+
 type BinanceEndpoint struct {
 	signer Signer
 	interf Interface
@@ -119,7 +121,7 @@ func (self *BinanceEndpoint) FetchOnePairData(
 //
 // In this version, we only support LIMIT order which means only buy/sell with acceptable price,
 // and GTC time in force which means that the order will be active until it's implicitly canceled
-func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 	result := exchange.Binatrade{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
@@ -149,7 +151,50 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	} else {
 		log.Printf("Error: %v, Code: %v\n", err, resp)
 	}
-	return
+	done, remaining, finished, err = self.QueryOrder(
+		base.ID+quote.ID,
+		result.OrderID,
+		timepoint+20,
+	)
+	return result.ClientOrderID, done, remaining, finished, err
+}
+
+func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+	result := exchange.Binaorder{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second),
+	}
+	req, _ := http.NewRequest(
+		"GET",
+		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
+		nil,
+	)
+	q := req.URL.Query()
+	q.Add("symbol", symbol)
+	q.Add("orderId", fmt.Sprintf("%d", id))
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, true, timepoint)
+	resp, err := client.Do(req)
+	if err == nil && resp.StatusCode == 200 {
+		defer resp.Body.Close()
+		resp_body, err := ioutil.ReadAll(resp.Body)
+		log.Printf("response: %s\n", resp_body)
+		if err == nil {
+			err = json.Unmarshal(resp_body, &result)
+		}
+		if err != nil {
+			return 0, 0, false, err
+		}
+		if result.Code != 0 {
+			return 0, 0, false, errors.New(result.Message)
+		}
+		done, _ := strconv.ParseFloat(result.ExecutedQty, 64)
+		total, _ := strconv.ParseFloat(result.OrigQty, 64)
+		return done, total - done, total-done < EPSILON, nil
+	} else {
+		log.Printf("Error: %v, Code: %v\n", err, resp)
+		return 0, 0, false, errors.New("withdraw rejected by Binnace")
+	}
 }
 
 func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {

@@ -25,10 +25,33 @@ type Binainfo struct {
 	} `json:"balances`
 }
 
-type Binatrade struct{}
+type Binatrade struct {
+	Symbol        string `json:"symbol"`
+	OrderID       uint64 `json:"orderId"`
+	ClientOrderID string `json:"clientOrderId"`
+	TransactTime  uint64 `json:"transactTime"`
+}
 
 type Binawithdraw struct {
 	Success bool   `json:"success"`
 	Message string `json:"msg"`
 	TxHash  string `json:"id"`
+}
+
+type Binaorder struct {
+	Code          int    `json:"code"`
+	Message       string `json:"msg"`
+	symbol        string `json:"symbol"`
+	OrderId       uint64 `json:"orderId"`
+	ClientOrderId string `json:"clientOrderId"`
+	Price         string `json:"price"`
+	OrigQty       string `json:"origQty"`
+	ExecutedQty   string `json:"executedQty"`
+	Status        string `json:"status"`
+	TimeInForce   string `json:"timeInForce"`
+	Type          string `json:"type"`
+	Side          string `json:"side"`
+	StopPrice     string `json:"stopPrice"`
+	IcebergQty    string `json:"icebergQty"`
+	Time          uint64 `json:"time"`
 }

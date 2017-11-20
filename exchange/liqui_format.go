@@ -20,7 +20,7 @@ type Liqtrade struct {
 	Return  struct {
 		Done      float64 `json:"received"`
 		Remaining float64 `json:"remains"`
-		OrderID   int64   `json:"order_id"`
+		OrderID   string  `json:"order_id"`
 	} `json:"return"`
 	Error string `json:"error"`
 }

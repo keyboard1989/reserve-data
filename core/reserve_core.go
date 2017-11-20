@@ -35,9 +35,9 @@ func (self ReserveCore) Trade(
 	quote common.Token,
 	rate float64,
 	amount float64,
-	timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+	timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 
-	done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+	id, done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
 	go self.activityStorage.Record(
 		"trade", map[string]interface{}{
 			"exchange":  exchange,
@@ -63,7 +63,7 @@ func (self ReserveCore) Trade(
 		strconv.FormatFloat(remaining, 'f', -1, 64),
 		finished, err,
 	)
-	return done, remaining, finished, err
+	return id, done, remaining, finished, err
 }
 
 func (self ReserveCore) Deposit(
