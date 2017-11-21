@@ -11,13 +11,15 @@ type token struct {
 	Decimals int64  `json:"decimals"`
 }
 
+type exchange map[string]string
+
 type AddressConfig struct {
-	Tokens    map[string]token  `json:"tokens"`
-	Exchanges map[string]string `json:"exchanges"`
-	Bank      string            `json:"bank"`
-	Reserve   string            `json:"reserve"`
-	Network   string            `json:"network"`
-	Wrapper   string            `json:"wrapper"`
+	Tokens    map[string]token    `json:"tokens"`
+	Exchanges map[string]exchange `json:"exchanges"`
+	Bank      string              `json:"bank"`
+	Reserve   string              `json:"reserve"`
+	Network   string              `json:"network"`
+	Wrapper   string              `json:"wrapper"`
 }
 
 func GetAddressConfigFromFile(path string) (AddressConfig, error) {
