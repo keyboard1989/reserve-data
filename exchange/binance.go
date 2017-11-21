@@ -2,6 +2,7 @@ package exchange
 
 import (
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -117,8 +118,10 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 				tokenID := b.Asset
 				_, exist := common.SupportedTokens[tokenID]
 				if exist {
-					result.AvailableBalance[tokenID] = b.Free
-					result.LockedBalance[tokenID] = b.Locked
+					avai, _ := strconv.ParseFloat(b.Free, 64)
+					locked, _ := strconv.ParseFloat(b.Locked, 64)
+					result.AvailableBalance[tokenID] = avai
+					result.LockedBalance[tokenID] = locked
 					result.DepositBalance[tokenID] = 0
 				}
 			}

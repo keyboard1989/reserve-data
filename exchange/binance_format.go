@@ -19,9 +19,9 @@ type Binainfo struct {
 	CanWithdraw      bool   `json:"canWithdraw"`
 	CanDeposit       bool   `json:"canDeposit"`
 	Balances         []struct {
-		Asset  string  `json:"asset"`
-		Free   float64 `json:"free"`
-		Locked float64 `json:"locked`
+		Asset  string `json:"asset"`
+		Free   string `json:"free"`
+		Locked string `json:"locked`
 	} `json:"balances`
 }
 
