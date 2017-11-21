@@ -20,7 +20,19 @@ type Liqtrade struct {
 	Return  struct {
 		Done      float64 `json:"received"`
 		Remaining float64 `json:"remains"`
-		OrderID   int64   `json:"order_id"`
+		OrderID   string  `json:"order_id"`
+	} `json:"return"`
+	Error string `json:"error"`
+}
+
+type Liqorders struct {
+	Success int `json:"success"`
+	Return  map[string]struct {
+		Pair      string  `json:"pair"`
+		Type      string  `json:"type"`
+		Amount    float64 `json:"amount"`
+		Rate      float64 `json:"rate"`
+		Timestamp uint64  `json:"timestamp_created"`
 	} `json:"return"`
 	Error string `json:"error"`
 }

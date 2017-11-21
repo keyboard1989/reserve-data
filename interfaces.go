@@ -21,6 +21,9 @@ type ReserveData interface {
 	CurrentRateVersion(timestamp uint64) (common.Version, error)
 	GetAllRates(timestamp uint64) (common.AllRateResponse, error)
 
+	CurrentOrderVersion(timestamp uint64) (common.Version, error)
+	GetAllOrders(timestamp uint64) (common.AllOrderResponse, error)
+
 	Run() error
 	Stop() error
 }
@@ -34,17 +37,19 @@ type ReserveCore interface {
 		quote common.Token,
 		rate float64,
 		amount float64,
-		timestamp uint64) (done float64, remaining float64, finished bool, err error)
+		timestamp uint64) (id string, done float64, remaining float64, finished bool, err error)
+
 	Deposit(
 		exchange common.Exchange,
 		token common.Token,
 		amount *big.Int,
 		timestamp uint64) (ethereum.Hash, error)
+
 	Withdraw(
 		exchange common.Exchange,
 		token common.Token,
 		amount *big.Int,
-		timestamp uint64) error
+		timestamp uint64) (ethereum.Hash, error)
 
 	// blockchain related action
 	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (ethereum.Hash, error)

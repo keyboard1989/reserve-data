@@ -2,6 +2,7 @@ package signer
 
 import (
 	"crypto/hmac"
+	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/json"
 	"io/ioutil"
@@ -74,7 +75,7 @@ func (self FileSigner) BittrexSign(msg string) string {
 }
 
 func (self FileSigner) BinanceSign(msg string) string {
-	mac := hmac.New(sha512.New, []byte(self.BinanceSecret))
+	mac := hmac.New(sha256.New, []byte(self.BinanceSecret))
 	mac.Write([]byte(msg))
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }

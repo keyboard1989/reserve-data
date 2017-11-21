@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"fmt"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -45,11 +46,11 @@ func (self *Binance) Name() string {
 	return "binance"
 }
 
-func (self *Binance) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+func (self *Binance) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 
-func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) error {
+func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
 	return self.interf.Withdraw(token, amount, address, timepoint)
 }
 
@@ -70,8 +71,59 @@ func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]com
 	return result, nil
 }
 
+func (self *Binance) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
+	result := common.OrderEntry{}
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
+	result.Valid = true
+	result.Data = []common.Order{}
+
+	wait := sync.WaitGroup{}
+	data := sync.Map{}
+	pairs := self.pairs
+	for _, pair := range pairs {
+		wait.Add(1)
+		go self.interf.OpenOrdersForOnePair(&wait, pair, &data, timepoint)
+	}
+	wait.Wait()
+
+	result.ReturnTime = common.GetTimestamp()
+
+	data.Range(func(key, value interface{}) bool {
+		orders := value.([]common.Order)
+		result.Data = append(result.Data, orders...)
+		return true
+	})
+	return result, nil
+}
+
 func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
+	result.Valid = true
+	resp_data, err := self.interf.GetInfo(timepoint)
+	result.ReturnTime = common.GetTimestamp()
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
+		result.AvailableBalance = map[string]float64{}
+		result.LockedBalance = map[string]float64{}
+		result.DepositBalance = map[string]float64{}
+		if resp_data.Code != 0 {
+			result.Valid = false
+			result.Error = fmt.Sprintf("Code: %s, Msg: %s", resp_data.Code, resp_data.Msg)
+		} else {
+			for _, b := range resp_data.Balances {
+				tokenID := b.Asset
+				_, exist := common.SupportedTokens[tokenID]
+				if exist {
+					result.AvailableBalance[tokenID] = b.Free
+					result.LockedBalance[tokenID] = b.Locked
+					result.DepositBalance[tokenID] = 0
+				}
+			}
+		}
+	}
 	return result, nil
 }
 

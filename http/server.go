@@ -136,6 +136,27 @@ func (self *HTTPServer) AllEBalances(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) AllOrders(c *gin.Context) {
+	log.Printf("Getting all open orders \n")
+	data, err := self.app.GetAllOrders(getTimePoint(c))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success":   true,
+				"version":   data.Version,
+				"timestamp": data.Timestamp,
+				"data":      data.Data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) GetRate(c *gin.Context) {
 	log.Printf("Getting all rates \n")
 	data, err := self.app.GetAllRates(getTimePoint(c))
@@ -286,7 +307,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		)
 		return
 	}
-	done, remaining, finished, err := self.core.Trade(
+	id, done, remaining, finished, err := self.core.Trade(
 		exchange, typeParam, base, quote, rate, amount, getTimePoint(c))
 	if err != nil {
 		c.JSON(
@@ -299,6 +320,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success":   true,
+			"id":        id,
 			"done":      done,
 			"remaining": remaining,
 			"finished":  finished,
@@ -336,7 +358,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		return
 	}
 	log.Printf("Withdraw %s %s from %s\n", amount.Text(10), token.ID, exchange.ID())
-	err = self.core.Withdraw(exchange, token, amount, getTimePoint(c))
+	txHash, err := self.core.Withdraw(exchange, token, amount, getTimePoint(c))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -348,6 +370,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success": true,
+			"txhash":  txHash.Hex(),
 		},
 	)
 }
@@ -440,6 +463,7 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/prices/:base/:quote", self.Price)
 	self.r.GET("/balances", self.AllBalances)
 	self.r.GET("/ebalances", self.AllEBalances)
+	self.r.GET("/orders", self.AllOrders)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
 	self.r.POST("/trade/:exchangeid", self.Trade)

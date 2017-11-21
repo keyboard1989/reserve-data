@@ -48,3 +48,25 @@ func (self *SimulatedInterface) AuthenticatedEndpoint(timepoint uint64) string {
 func NewSimulatedInterface() *SimulatedInterface {
 	return &SimulatedInterface{}
 }
+
+type KovanInterface struct{}
+
+func (self *KovanInterface) baseurl() string {
+	baseurl := "http://simulator:8000"
+	if len(os.Args) > 1 {
+		baseurl = os.Args[1]
+	}
+	return baseurl
+}
+
+func (self *KovanInterface) PublicEndpoint(timepoint uint64) string {
+	return "https://api.liqui.io/api/3"
+}
+
+func (self *KovanInterface) AuthenticatedEndpoint(timepoint uint64) string {
+	return "https://api.liqui.io/tapi"
+}
+
+func NewKovanInterface() *KovanInterface {
+	return &KovanInterface{}
+}

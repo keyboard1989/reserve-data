@@ -15,6 +15,7 @@ const (
 	BALANCE_BUCKET          string = "balances"
 	EXCHANGE_BALANCE_BUCKET string = "ebalances"
 	RATE_BUCKET             string = "rates"
+	ORDER_BUCKET            string = "orders"
 )
 
 type BoltStorage struct {
@@ -44,6 +45,10 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 			return err
 		}
 		_, err = tx.CreateBucket([]byte(RATE_BUCKET))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucket([]byte(ORDER_BUCKET))
 		if err != nil {
 			return err
 		}
@@ -218,6 +223,33 @@ func (self *BoltStorage) GetAllRates(version common.Version) (common.AllRateEntr
 	return result, err
 }
 
+func (self *BoltStorage) CurrentOrderVersion(timepoint uint64) (common.Version, error) {
+	var result uint64
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(ORDER_BUCKET)).Cursor()
+		result, err = reverseSeek(timepoint, c)
+		return nil
+	})
+	return common.Version(result), err
+}
+
+func (self *BoltStorage) GetAllOrders(version common.Version) (common.AllOrderEntry, error) {
+	result := common.AllOrderEntry{}
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ORDER_BUCKET))
+		data := b.Get(uint64ToBytes(uint64(version)))
+		if data == nil {
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
+		} else {
+			err = json.Unmarshal(data, &result)
+		}
+		return nil
+	})
+	return result, err
+}
+
 func (self *BoltStorage) StorePrice(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
@@ -265,6 +297,20 @@ func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) e
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(RATE_BUCKET))
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		return b.Put(uint64ToBytes(timepoint), dataJson)
+	})
+	return err
+}
+
+func (self *BoltStorage) StoreOrder(data common.AllOrderEntry, timepoint uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(ORDER_BUCKET))
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err

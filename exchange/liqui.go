@@ -47,12 +47,48 @@ func (self *Liqui) Name() string {
 	return "liqui"
 }
 
-func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 
-func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) error {
-	return self.interf.Withdraw(token, amount, address, timepoint)
+func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
+	err := self.interf.Withdraw(token, amount, address, timepoint)
+	return ethereum.Hash{}, err
+}
+
+func (self *Liqui) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
+	result := common.OrderEntry{}
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
+	result.Valid = true
+	result.Data = []common.Order{}
+	resp_data, err := self.interf.ActiveOrders(timepoint)
+	result.ReturnTime = common.GetTimestamp()
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
+		if resp_data.Success == 1 {
+			for id, order := range resp_data.Return {
+				tokens := strings.Split(order.Pair, "_")
+				result.Data = append(result.Data, common.Order{
+					Base:        strings.ToUpper(tokens[0]),
+					Quote:       strings.ToUpper(tokens[1]),
+					OrderId:     id,
+					Price:       order.Rate,
+					OrigQty:     order.Amount,
+					ExecutedQty: 0,
+					TimeInForce: "GTC",
+					Type:        "LIMIT",
+					Side:        order.Type,
+					Time:        order.Timestamp,
+				})
+			}
+		} else {
+			result.Valid = false
+			result.Error = resp_data.Error
+		}
+	}
+	return result, nil
 }
 
 func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
@@ -67,9 +103,14 @@ func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 	} else {
 		if resp_data.Success == 1 {
 			balances := resp_data.Return["funds"]
-			result.Balance = map[string]float64{}
+			result.AvailableBalance = map[string]float64{}
+			result.LockedBalance = map[string]float64{}
+			result.DepositBalance = map[string]float64{}
 			for tokenID, _ := range common.SupportedTokens {
-				result.Balance[tokenID] = balances[strings.ToLower(tokenID)]
+				result.AvailableBalance[tokenID] = balances[strings.ToLower(tokenID)]
+				// TODO: need to take open order into account
+				result.LockedBalance[tokenID] = 0
+				result.DepositBalance[tokenID] = 0
 			}
 		} else {
 			result.Valid = false

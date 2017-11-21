@@ -12,6 +12,8 @@ type LiquiInterface interface {
 
 	GetInfo(timepoint uint64) (Liqinfo, error)
 
+	ActiveOrders(timepoint uint64) (Liqorders, error)
+
 	Withdraw(
 		token common.Token,
 		amount *big.Int,
@@ -22,5 +24,5 @@ type LiquiInterface interface {
 		tradeType string,
 		base, quote common.Token,
 		rate, amount float64,
-		timepoint uint64) (done float64, remaining float64, finished bool, err error)
+		timepoint uint64) (id string, done float64, remaining float64, finished bool, err error)
 }
