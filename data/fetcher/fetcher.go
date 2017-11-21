@@ -73,6 +73,7 @@ func (self *Fetcher) fetchEBalanceFromExchange(wg *sync.WaitGroup, exchange Exch
 	if err != nil {
 		log.Printf("Fetching exchange balances from %s failed: %v\n", exchange.Name(), err)
 	}
+	log.Printf("Fetched balance data from %s: %v", exchange.ID(), exdata)
 	data.Store(exchange.ID(), exdata)
 }
 

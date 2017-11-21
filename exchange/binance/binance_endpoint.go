@@ -30,14 +30,14 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		req.Header.Add("Content-Type", "application/json;charset=utf-8")
 	}
 	req.Header.Add("Accept", "application/json")
+	q := req.URL.Query()
+	q.Set("timestamp", fmt.Sprintf("%d", timepoint))
 	if signNeeded {
 		req.Header.Add("X-MBX-APIKEY", self.signer.GetBinanceKey())
-		q := req.URL.Query()
-		q.Set("timestamp", fmt.Sprintf("%d", timepoint))
 		q.Set("recvWindow", "5000")
 		q.Set("signature", self.signer.BinanceSign(q.Encode()))
-		req.URL.RawQuery = q.Encode()
 	}
+	req.URL.RawQuery = q.Encode()
 }
 
 func (self *BinanceEndpoint) FetchOnePairData(
