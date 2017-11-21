@@ -124,7 +124,7 @@ func (self ReserveCore) Withdraw(
 	)
 	log.Printf(
 		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: txhash: %s, error: %s",
-		exchange.ID(), token.ID, amount.Uint64(), timepoint, txHash, err,
+		exchange.ID(), token.ID, amount.Uint64(), timepoint, txHash.Hex(), err,
 	)
 	return txHash, err
 }
