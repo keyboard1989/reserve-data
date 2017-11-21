@@ -245,11 +245,15 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("Binance get balances: %s", string(resp_body))
-		if err == nil {
-			json.Unmarshal(resp_body, &result)
+		if resp.StatusCode == 200 {
+			defer resp.Body.Close()
+			resp_body, err := ioutil.ReadAll(resp.Body)
+			log.Printf("Binance get balances: %s", string(resp_body))
+			if err == nil {
+				json.Unmarshal(resp_body, &result)
+			}
+		} else {
+			err = errors.New("Unsuccessful response from Binance: Status " + resp.Status)
 		}
 	}
 	return result, err
@@ -275,32 +279,36 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("Binance get open orders for %s: %s", pair.PairID(), string(resp_body))
-		if err == nil {
-			json.Unmarshal(resp_body, &result)
-			orders := []common.Order{}
-			for _, order := range result {
-				price, _ := strconv.ParseFloat(order.Price, 64)
-				orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
-				executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
-				orders = append(orders, common.Order{
-					Base:        strings.ToUpper(pair.Base.ID),
-					Quote:       strings.ToUpper(pair.Quote.ID),
-					OrderId:     fmt.Sprintf("%d", order.OrderId),
-					Price:       price,
-					OrigQty:     orgQty,
-					ExecutedQty: executedQty,
-					TimeInForce: order.TimeInForce,
-					Type:        order.Type,
-					Side:        order.Side,
-					StopPrice:   order.StopPrice,
-					IcebergQty:  order.IcebergQty,
-					Time:        order.Time,
-				})
+		if resp.StatusCode == 200 {
+			defer resp.Body.Close()
+			resp_body, err := ioutil.ReadAll(resp.Body)
+			log.Printf("Binance get open orders for %s: %s", pair.PairID(), string(resp_body))
+			if err == nil {
+				json.Unmarshal(resp_body, &result)
+				orders := []common.Order{}
+				for _, order := range result {
+					price, _ := strconv.ParseFloat(order.Price, 64)
+					orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
+					executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
+					orders = append(orders, common.Order{
+						Base:        strings.ToUpper(pair.Base.ID),
+						Quote:       strings.ToUpper(pair.Quote.ID),
+						OrderId:     fmt.Sprintf("%d", order.OrderId),
+						Price:       price,
+						OrigQty:     orgQty,
+						ExecutedQty: executedQty,
+						TimeInForce: order.TimeInForce,
+						Type:        order.Type,
+						Side:        order.Side,
+						StopPrice:   order.StopPrice,
+						IcebergQty:  order.IcebergQty,
+						Time:        order.Time,
+					})
+				}
+				data.Store(pair.PairID(), orders)
 			}
-			data.Store(pair.PairID(), orders)
+		} else {
+			err = errors.New("Unsuccessful response from Binance: Status " + resp.Status)
 		}
 	}
 }

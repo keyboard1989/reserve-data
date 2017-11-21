@@ -52,10 +52,14 @@ func (self *LiquiEndpoint) Depth(tokens string, timepoint uint64) (exchange.Liqr
 	req.Header.Add("Accept", "application/json")
 	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		if err == nil {
-			json.Unmarshal(resp_body, &result)
+		if resp.StatusCode == 200 {
+			defer resp.Body.Close()
+			resp_body, err := ioutil.ReadAll(resp.Body)
+			if err == nil {
+				json.Unmarshal(resp_body, &result)
+			}
+		} else {
+			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 		}
 	}
 	return result, err
@@ -167,13 +171,17 @@ func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
 	req.Header.Add("Sign", self.signer.LiquiSign(params))
 	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("Liqui GetInfo response: %s\n", string(resp_body))
-		if err == nil {
-			json.Unmarshal(resp_body, &result)
+		if resp.StatusCode == 200 {
+			defer resp.Body.Close()
+			resp_body, err := ioutil.ReadAll(resp.Body)
+			log.Printf("Liqui GetInfo response: %s\n", string(resp_body))
+			if err == nil {
+				json.Unmarshal(resp_body, &result)
+			}
+			log.Printf("Liqui GetInfo data: %s\n", result)
+		} else {
+			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 		}
-		log.Printf("Liqui GetInfo data: %s\n", result)
 	}
 	return result, err
 }
@@ -199,13 +207,17 @@ func (self *LiquiEndpoint) ActiveOrders(timepoint uint64) (exchange.Liqorders, e
 	req.Header.Add("Sign", self.signer.LiquiSign(params))
 	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("Liqui ActiveOrders response: %s\n", string(resp_body))
-		if err == nil {
-			json.Unmarshal(resp_body, &result)
+		if resp.StatusCode == 200 {
+			defer resp.Body.Close()
+			resp_body, err := ioutil.ReadAll(resp.Body)
+			log.Printf("Liqui ActiveOrders response: %s\n", string(resp_body))
+			if err == nil {
+				json.Unmarshal(resp_body, &result)
+			}
+			log.Printf("Liqui ActiveOrders data: %s\n", result)
+		} else {
+			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 		}
-		log.Printf("Liqui ActiveOrders data: %s\n", result)
 	}
 	return result, err
 }
