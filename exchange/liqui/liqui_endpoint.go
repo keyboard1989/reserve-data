@@ -96,7 +96,7 @@ func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 		if result.Error != "" {
 			return "", 0, 0, false, errors.New(result.Error)
 		}
-		return result.Return.OrderID, result.Return.Done, result.Return.Remaining, result.Return.OrderID == "0", nil
+		return strconv.FormatUint(result.Return.OrderID, 64), result.Return.Done, result.Return.Remaining, result.Return.OrderID == 0, nil
 	} else {
 		log.Printf("Error: %v, Code: %v\n", err, resp)
 		return "", 0, 0, false, errors.New("Trade rejected by Liqui")
