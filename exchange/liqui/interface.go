@@ -29,11 +29,11 @@ func NewRealInterface() *RealInterface {
 type SimulatedInterface struct{}
 
 func (self *SimulatedInterface) baseurl() string {
-	baseurl := "http://simulator:8000"
+	baseurl := "127.0.0.1"
 	if len(os.Args) > 1 {
 		baseurl = os.Args[1]
 	}
-	return baseurl
+	return baseurl + ":5000"
 }
 
 func (self *SimulatedInterface) PublicEndpoint(timepoint uint64) string {
