@@ -202,8 +202,8 @@ func (self *Fetcher) fetchAllFromExchanges(timepoint uint64) {
 	go self.fetchAllPrices(&wait, timepoint)
 	wait.Add(1)
 	go self.fetchAllEBalances(&wait, timepoint)
-	wait.Add(1)
-	go self.fetchAllOrders(&wait, timepoint)
+	// wait.Add(1)
+	// go self.fetchAllOrders(&wait, timepoint)
 	log.Printf("Waiting price, balance, order data from exchanges...")
 	wait.Wait()
 }
