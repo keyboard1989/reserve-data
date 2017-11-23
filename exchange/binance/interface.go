@@ -60,3 +60,17 @@ func (self *KovanInterface) AuthenticatedEndpoint() string {
 func NewKovanInterface() *KovanInterface {
 	return &KovanInterface{}
 }
+
+type DevInterface struct{}
+
+func (self *DevInterface) PublicEndpoint() string {
+	return "https://www.binance.com"
+}
+
+func (self *DevInterface) AuthenticatedEndpoint() string {
+	return "https://www.binance.com"
+}
+
+func NewDevInterface() *DevInterface {
+	return &DevInterface{}
+}

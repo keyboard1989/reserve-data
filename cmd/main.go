@@ -46,9 +46,12 @@ func main() {
 		log.Printf("Running in kovan mode")
 		config = GetConfigForKovan()
 		break
+	case "dev":
+		log.Printf("Running in dev mode")
+		config = GetConfigForDev()
 	default:
-		log.Printf("Running in kovan mode")
-		config = GetConfigForKovan()
+		log.Printf("Running in dev mode")
+		config = GetConfigForDev()
 	}
 
 	logPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/log.log"

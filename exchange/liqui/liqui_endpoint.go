@@ -272,3 +272,7 @@ func NewSimulatedLiquiEndpoint(signer Signer) *LiquiEndpoint {
 func NewKovanLiquiEndpoint(signer Signer) *LiquiEndpoint {
 	return &LiquiEndpoint{signer, NewKovanInterface()}
 }
+
+func NewDevLiquiEndpoint(signer Signer) *LiquiEndpoint {
+	return &LiquiEndpoint{signer, NewDevInterface()}
+}

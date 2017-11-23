@@ -70,3 +70,17 @@ func (self *KovanInterface) AuthenticatedEndpoint(timepoint uint64) string {
 func NewKovanInterface() *KovanInterface {
 	return &KovanInterface{}
 }
+
+type DevInterface struct{}
+
+func (self *DevInterface) PublicEndpoint(timepoint uint64) string {
+	return "https://api.liqui.io/api/3"
+}
+
+func (self *DevInterface) AuthenticatedEndpoint(timepoint uint64) string {
+	return "https://api.liqui.io/tapi"
+}
+
+func NewDevInterface() *DevInterface {
+	return &DevInterface{}
+}
