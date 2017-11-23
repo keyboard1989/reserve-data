@@ -51,6 +51,8 @@ type ReserveCore interface {
 		amount *big.Int,
 		timestamp uint64) (ethereum.Hash, error)
 
+	CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error
+
 	// blockchain related action
 	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (ethereum.Hash, error)
 

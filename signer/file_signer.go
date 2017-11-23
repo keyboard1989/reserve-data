@@ -77,7 +77,8 @@ func (self FileSigner) BittrexSign(msg string) string {
 func (self FileSigner) BinanceSign(msg string) string {
 	mac := hmac.New(sha256.New, []byte(self.BinanceSecret))
 	mac.Write([]byte(msg))
-	return ethereum.Bytes2Hex(mac.Sum(nil))
+	result := ethereum.Bytes2Hex(mac.Sum(nil))
+	return result
 }
 
 func NewFileSigner(file string) *FileSigner {

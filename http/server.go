@@ -328,6 +328,53 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) CancelOrder(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	baseParam := c.PostForm("base")
+	quoteParam := c.PostForm("quote")
+	id := c.PostForm("order_id")
+
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	base, err := common.GetToken(baseParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	quote, err := common.GetToken(quoteParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	log.Printf("Cancel order id: %s from %s\n", id, exchange.ID())
+	err = self.core.CancelOrder(base, quote, id, exchange)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 func (self *HTTPServer) Withdraw(c *gin.Context) {
 	exchangeParam := c.Param("exchangeid")
 	tokenParam := c.PostForm("token")
@@ -464,6 +511,7 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/balances", self.AllBalances)
 	self.r.GET("/ebalances", self.AllEBalances)
 	self.r.GET("/orders", self.AllOrders)
+	self.r.POST("/cancelorder/:exchangeid", self.CancelOrder)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
 	self.r.POST("/trade/:exchangeid", self.Trade)

@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -54,6 +55,17 @@ func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token
 func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
 	err := self.interf.Withdraw(token, amount, address, timepoint)
 	return ethereum.Hash{}, err
+}
+
+func (self *Liqui) CancelOrder(base, quote common.Token, id string) error {
+	result, err := self.interf.CancelOrder(id)
+	if err != nil {
+		return err
+	}
+	if result.Success != 1 {
+		return errors.New("Couldn't cancel order id " + id + " err: " + result.Error)
+	}
+	return nil
 }
 
 func (self *Liqui) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {

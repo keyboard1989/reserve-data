@@ -26,14 +26,14 @@ type BinanceEndpoint struct {
 }
 
 func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, timepoint uint64) {
-	if req.Method == "POST" || req.Method == "PUT" {
-		req.Header.Add("Content-Type", "application/json;charset=utf-8")
+	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	}
 	req.Header.Add("Accept", "application/json")
 	q := req.URL.Query()
-	q.Set("timestamp", fmt.Sprintf("%d", timepoint))
 	if signNeeded {
-		req.Header.Add("X-MBX-APIKEY", self.signer.GetBinanceKey())
+		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
+		q.Set("timestamp", fmt.Sprintf("%d", timepoint))
 		q.Set("recvWindow", "5000")
 		q.Set("signature", self.signer.BinanceSign(q.Encode()))
 	}
@@ -82,6 +82,7 @@ func (self *BinanceEndpoint) FetchOnePairData(
 			json.Unmarshal(resp_body, &resp_data)
 			if resp_data.Code != 0 || resp_data.Msg != "" {
 				result.Valid = false
+				result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
 			} else {
 				for _, buy := range resp_data.Bids {
 					quantity, _ := strconv.ParseFloat(buy[1], 64)
@@ -141,7 +142,7 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
-	if err == nil && resp.StatusCode == 200 {
+	if err == nil {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
 		log.Printf("response: %s\n", resp_body)
@@ -157,6 +158,34 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 		timepoint+20,
 	)
 	return result.ClientOrderID, done, remaining, finished, err
+}
+
+func (self *BinanceEndpoint) CancelOrder(base, quote common.Token, id uint64) (exchange.Binacancel, error) {
+	result := exchange.Binacancel{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second),
+	}
+	req, _ := http.NewRequest(
+		"DELETE",
+		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
+		nil,
+	)
+	q := req.URL.Query()
+	q.Add("symbol", base.ID+quote.ID)
+	q.Add("orderId", fmt.Sprintf("%d", id))
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, true, common.GetTimepoint())
+	var resp_body []byte
+	resp, err := client.Do(req)
+	if err == nil && resp.StatusCode == 200 {
+		defer resp.Body.Close()
+		resp_body, err = ioutil.ReadAll(resp.Body)
+		log.Printf("response: %s\n", resp_body)
+		if err == nil {
+			err = json.Unmarshal(resp_body, &result)
+		}
+	}
+	return result, err
 }
 
 func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
@@ -311,6 +340,41 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 			err = errors.New("Unsuccessful response from Binance: Status " + resp.Status)
 		}
 	}
+}
+
+func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepositaddress, error) {
+	result := exchange.Binadepositaddress{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second)}
+	req, _ := http.NewRequest(
+		"GET",
+		self.interf.AuthenticatedEndpoint()+"/wapi/v3/depositAddress.html",
+		nil)
+	timepoint := common.GetTimepoint()
+	q := req.URL.Query()
+	q.Add("asset", asset)
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, true, timepoint)
+	log.Printf("Request to binance: %s", req.URL)
+	log.Printf("Header for Request to binance: %s", req.Header)
+	resp, err := client.Do(req)
+	var resp_body []byte
+	if err == nil {
+		if resp.StatusCode == 200 {
+			defer resp.Body.Close()
+			resp_body, err = ioutil.ReadAll(resp.Body)
+			log.Printf("Binance get balances: %s", string(resp_body))
+			if err == nil {
+				err = json.Unmarshal(resp_body, &result)
+				if !result.Success {
+					err = errors.New(result.Msg)
+				}
+			}
+		} else {
+			err = errors.New("Unsuccessful response from Binance: Status " + resp.Status)
+		}
+	}
+	return result, err
 }
 
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {

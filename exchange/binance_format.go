@@ -57,3 +57,20 @@ type Binaorder struct {
 }
 
 type Binaorders []Binaorder
+
+type Binadepositaddress struct {
+	Msg        string `json:"msg"`
+	Address    string `json:"address"`
+	Success    bool   `json:"success"`
+	AddressTag string `json:"addressTag"`
+	Asset      string `json:"asset"`
+}
+
+type Binacancel struct {
+	Code              int    `json:"code"`
+	Msg               string `json:"msg"`
+	Symbol            string `json:"symbol"`
+	OrigClientOrderId string `json:"origClientOrderId"`
+	OrderId           uint64 `json:"orderId"`
+	ClientOrderId     string `json:"clientOrderId"`
+}

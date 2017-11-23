@@ -99,6 +99,10 @@ func (self ReserveCore) Deposit(
 	return tx, err
 }
 
+func (self ReserveCore) CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error {
+	return exchange.CancelOrder(base, quote, id)
+}
+
 func (self ReserveCore) Withdraw(
 	exchange common.Exchange, token common.Token,
 	amount *big.Int, timepoint uint64) (ethereum.Hash, error) {

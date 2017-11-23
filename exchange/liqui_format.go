@@ -36,3 +36,12 @@ type Liqorders struct {
 	} `json:"return"`
 	Error string `json:"error"`
 }
+
+type Liqcancel struct {
+	Success int `json:"success"`
+	Return  struct {
+		OrderID uint64             `json:"order_id"`
+		Funds   map[string]float64 `json:"funds"`
+	} `json:"return"`
+	Error string `json:"error"`
+}

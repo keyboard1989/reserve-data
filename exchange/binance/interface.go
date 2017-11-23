@@ -48,12 +48,13 @@ func NewSimulatedInterface() *SimulatedInterface {
 type KovanInterface struct{}
 
 func (self *KovanInterface) PublicEndpoint() string {
-	return "http://192.168.24.197:5100"
-	// return "https://www.binance.com"
+	// return "http://192.168.24.197:5100"
+	return "https://www.binance.com"
 }
 
 func (self *KovanInterface) AuthenticatedEndpoint() string {
-	return "http://192.168.24.197:5100"
+	// return "http://192.168.24.197:5100"
+	return "https://www.binance.com"
 }
 
 func NewKovanInterface() *KovanInterface {
