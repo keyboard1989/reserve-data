@@ -74,11 +74,13 @@ func NewKovanInterface() *KovanInterface {
 type DevInterface struct{}
 
 func (self *DevInterface) PublicEndpoint(timepoint uint64) string {
-	return "https://api.liqui.io/api/3"
+	// return "https://api.liqui.io/api/3"
+	return "http://192.168.25.16:5000"
 }
 
 func (self *DevInterface) AuthenticatedEndpoint(timepoint uint64) string {
-	return "https://api.liqui.io/tapi"
+	// return "https://api.liqui.io/tapi"
+	return "http://192.168.25.16:5000"
 }
 
 func NewDevInterface() *DevInterface {

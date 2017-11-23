@@ -37,6 +37,8 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		q.Set("recvWindow", "5000")
 		q.Set("signature", self.signer.BinanceSign(q.Encode()))
 	}
+	log.Printf("Raw Query: %s", q.Encode())
+	log.Printf("Binance key: %s", self.signer.GetBinanceKey())
 	req.URL.RawQuery = q.Encode()
 }
 
@@ -122,7 +124,7 @@ func (self *BinanceEndpoint) FetchOnePairData(
 //
 // In this version, we only support LIMIT order which means only buy/sell with acceptable price,
 // and GTC time in force which means that the order will be active until it's implicitly canceled
-func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
+func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (string, float64, float64, bool, error) {
 	result := exchange.Binatrade{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
@@ -135,10 +137,13 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	q := req.URL.Query()
 	q.Add("symbol", base.ID+quote.ID)
 	q.Add("side", strings.ToUpper(tradeType))
-	q.Add("type", "LIMIT")
+	orderType := "LIMIT"
+	q.Add("type", orderType)
 	q.Add("timeInForce", "GTC")
 	q.Add("quantity", strconv.FormatFloat(amount, 'f', -1, 64))
-	q.Add("price", strconv.FormatFloat(rate, 'f', -1, 64))
+	if orderType == "LIMIT" {
+		q.Add("price", strconv.FormatFloat(rate, 'f', -1, 64))
+	}
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
@@ -152,12 +157,13 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	} else {
 		log.Printf("Error: %v, Code: %v\n", err, resp)
 	}
-	done, remaining, finished, err = self.QueryOrder(
+	done, remaining, finished, err := self.QueryOrder(
 		base.ID+quote.ID,
 		result.OrderID,
 		timepoint+20,
 	)
-	return result.ClientOrderID, done, remaining, finished, err
+	log.Printf("Done: %f, remaining: %f, finished %v", done, remaining, finished)
+	return strconv.FormatUint(result.OrderID, 10), done, remaining, finished, err
 }
 
 func (self *BinanceEndpoint) CancelOrder(base, quote common.Token, id uint64) (exchange.Binacancel, error) {
@@ -224,6 +230,7 @@ func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint
 		}
 		done, _ := strconv.ParseFloat(result.ExecutedQty, 64)
 		total, _ := strconv.ParseFloat(result.OrigQty, 64)
+		log.Printf("Query order: done: %f, total: %f", done, total)
 		return done, total - done, total-done < EPSILON, nil
 	} else {
 		log.Printf("Error: %v, Code: %v\n", err, resp)
@@ -243,7 +250,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	)
 	q := req.URL.Query()
 	q.Add("asset", token.ID)
-	q.Add("address", address.Hex())
+	q.Add("address", address.Hex()[2:])
 	q.Add("amount", strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64))
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
