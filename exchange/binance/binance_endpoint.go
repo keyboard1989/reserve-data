@@ -177,12 +177,17 @@ func (self *BinanceEndpoint) CancelOrder(base, quote common.Token, id uint64) (e
 	self.fillRequest(req, true, common.GetTimepoint())
 	var resp_body []byte
 	resp, err := client.Do(req)
-	if err == nil && resp.StatusCode == 200 {
+	if err == nil {
 		defer resp.Body.Close()
 		resp_body, err = ioutil.ReadAll(resp.Body)
 		log.Printf("response: %s\n", resp_body)
 		if err == nil {
 			err = json.Unmarshal(resp_body, &result)
+			if err == nil {
+				if result.Code != 0 {
+					err = errors.New("Canceling order from Binance failed: " + result.Msg)
+				}
+			}
 		}
 	}
 	return result, err
