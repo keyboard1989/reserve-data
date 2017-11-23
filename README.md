@@ -161,6 +161,70 @@ Response:
 ```
 Where `hash` is the transaction hash
 
+### Get open orders
+```
+<host>:8000/orders
+GET request
+```
+
+Response:
+```json
+{
+	"data": {
+		"binance": {
+			"Valid": true,
+			"Error": "",
+			"Timestamp": "1511426133904",
+			"ReturnTime": "1511426134053",
+			"Data": [{
+				"Base": "KNC",
+				"Quote": "ETH",
+				"OrderId": "2025775",
+				"Price": 0.002,
+				"OrigQty": 10,
+				"ExecutedQty": 0,
+				"TimeInForce": "GTC",
+				"Type": "LIMIT",
+				"Side": "BUY",
+				"StopPrice": "0.00000000",
+				"IcebergQty": "0.00000000",
+				"Time": 1511426052681
+			}]
+		},
+		"liqui": {
+			"Valid": true,
+			"Error": "",
+			"Timestamp": "1511426133904",
+			"ReturnTime": "1511426134159",
+			"Data": []
+		}
+	},
+	"success": true,
+	"timestamp": "1511426136158",
+	"version": 26
+}
+```
+
+### Cancel order
+```
+<host>:8000/cancelorder/:exchange
+POST request
+Form params:
+  - base: token id string, eg: ETH, EOS...
+  - quote: token id string, eg: ETH, EOS...
+  - order_id: string
+```
+
+response:
+```json
+{
+    "reason": "UNKNOWN_ORDER",
+    "success": false
+}
+```
+
+
+
 ## Supported tokens
 
 1. eth (ETH)
