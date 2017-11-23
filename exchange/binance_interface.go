@@ -33,4 +33,6 @@ type BinanceInterface interface {
 		base, quote common.Token,
 		rate, amount float64,
 		timepoint uint64) (id string, done float64, remaining float64, finished bool, err error)
+
+	CancelOrder(base, quote common.Token, id uint64) (Binacancel, error)
 }

@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"sync"
@@ -53,6 +54,21 @@ func (self *Binance) Trade(tradeType string, base common.Token, quote common.Tok
 
 func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
 	return self.interf.Withdraw(token, amount, address, timepoint)
+}
+
+func (self *Binance) CancelOrder(base, quote common.Token, id string) error {
+	idNo, err := strconv.ParseUint(id, 10, 64)
+	if err != nil {
+		return err
+	}
+	result, err := self.interf.CancelOrder(base, quote, idNo)
+	if err != nil {
+		return err
+	}
+	if result.Code != 0 {
+		return errors.New("Couldn't cancel order id " + id + " err: " + result.Msg)
+	}
+	return nil
 }
 
 func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {

@@ -65,6 +65,39 @@ func (self *LiquiEndpoint) Depth(tokens string, timepoint uint64) (exchange.Liqr
 	return result, err
 }
 
+func (self *LiquiEndpoint) CancelOrder(id string) (exchange.Liqcancel, error) {
+	result := exchange.Liqcancel{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second)}
+	data := url.Values{}
+	data.Set("method", "CancelOrder")
+	data.Set("order_id", id)
+	data.Add("nonce", nonce())
+	params := data.Encode()
+	req, _ := http.NewRequest(
+		"POST",
+		self.interf.AuthenticatedEndpoint(common.GetTimepoint()),
+		bytes.NewBufferString(params),
+	)
+	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Key", self.signer.GetLiquiKey())
+	req.Header.Add("Sign", self.signer.LiquiSign(params))
+	resp, err := client.Do(req)
+	if err == nil && resp.StatusCode == 200 {
+		defer resp.Body.Close()
+		resp_body, err := ioutil.ReadAll(resp.Body)
+		log.Printf("response: %s\n", resp_body)
+		if err == nil {
+			err = json.Unmarshal(resp_body, &result)
+		}
+		return result, err
+	} else {
+		return result, errors.New("Cancel rejected by Liqui")
+	}
+}
+
 func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 	result := exchange.Liqtrade{}
 	client := &http.Client{
@@ -75,6 +108,7 @@ func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	data.Set("type", tradeType)
 	data.Set("rate", strconv.FormatFloat(rate, 'f', -1, 64))
 	data.Set("amount", strconv.FormatFloat(amount, 'f', -1, 64))
+	data.Add("nonce", nonce())
 	params := data.Encode()
 	req, _ := http.NewRequest(
 		"POST",
@@ -114,10 +148,11 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		Timeout: time.Duration(30 * time.Second),
 	}
 	data := url.Values{}
-	data.Set("method", "WithdrawCoin")
+	data.Set("method", "Withdraw")
 	data.Set("coinName", token.ID)
 	data.Set("amount", strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64))
 	data.Set("address", address.Hex())
+	data.Add("nonce", nonce())
 	params := data.Encode()
 	req, _ := http.NewRequest(
 		"POST",

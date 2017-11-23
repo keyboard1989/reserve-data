@@ -25,4 +25,6 @@ type LiquiInterface interface {
 		base, quote common.Token,
 		rate, amount float64,
 		timepoint uint64) (id string, done float64, remaining float64, finished bool, err error)
+
+	CancelOrder(id string) (Liqcancel, error)
 }
