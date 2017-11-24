@@ -148,7 +148,7 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		Timeout: time.Duration(30 * time.Second),
 	}
 	data := url.Values{}
-	data.Set("method", "Withdraw")
+	data.Set("method", "WithdrawCoin")
 	data.Set("coinName", token.ID)
 	data.Set("amount", strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64))
 	data.Set("address", address.Hex())

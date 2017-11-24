@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"sync"
@@ -28,18 +29,24 @@ type BinanceEndpoint struct {
 func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, timepoint uint64) {
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Add("User-Agent", "binance/go")
 	}
 	req.Header.Add("Accept", "application/json")
 	q := req.URL.Query()
+	sig := url.Values{}
 	if signNeeded {
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
 		q.Set("timestamp", fmt.Sprintf("%d", timepoint))
 		q.Set("recvWindow", "5000")
-		q.Set("signature", self.signer.BinanceSign(q.Encode()))
+		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
 	}
-	log.Printf("Raw Query: %s", q.Encode())
-	log.Printf("Binance key: %s", self.signer.GetBinanceKey())
-	req.URL.RawQuery = q.Encode()
+	// log.Printf("Raw Query: %s", q.Encode())
+	// log.Printf("Binance key: %s", self.signer.GetBinanceKey())
+
+	// Using separated values map for signature to ensure it is at the end
+	// of the query. This is required for /wapi apis from binance without
+	// any damn documentation about it!!!
+	req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 }
 
 func (self *BinanceEndpoint) FetchOnePairData(
@@ -162,7 +169,6 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 		result.OrderID,
 		timepoint+20,
 	)
-	log.Printf("Done: %f, remaining: %f, finished %v", done, remaining, finished)
 	return strconv.FormatUint(result.OrderID, 10), done, remaining, finished, err
 }
 
@@ -230,7 +236,6 @@ func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint
 		}
 		done, _ := strconv.ParseFloat(result.ExecutedQty, 64)
 		total, _ := strconv.ParseFloat(result.OrigQty, 64)
-		log.Printf("Query order: done: %f, total: %f", done, total)
 		return done, total - done, total-done < EPSILON, nil
 	} else {
 		log.Printf("Error: %v, Code: %v\n", err, resp)
@@ -250,7 +255,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	)
 	q := req.URL.Query()
 	q.Add("asset", token.ID)
-	q.Add("address", address.Hex()[2:])
+	q.Add("address", address.Hex())
 	q.Add("amount", strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64))
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
