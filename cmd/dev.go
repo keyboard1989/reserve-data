@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
-	// "time"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
-	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
+	// "github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
@@ -44,7 +44,9 @@ func GetConfigForDev() *Config {
 	// if err != nil {
 	// 	panic(err)
 	// }
-	fetcherRunner := http_runner.NewHttpRunner(8001)
+
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	// fetcherRunner := http_runner.NewHttpRunner(8001)
 	// fetcherRunner := fetcher.NewTimestampRunner(
 	// 	loadTimestamp("/go/src/github.com/KyberNetwork/reserve-data/cmd/timestamps.json"),
 	// 	2*time.Second,

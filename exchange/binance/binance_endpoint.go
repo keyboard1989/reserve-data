@@ -32,21 +32,20 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		req.Header.Add("User-Agent", "binance/go")
 	}
 	req.Header.Add("Accept", "application/json")
-	q := req.URL.Query()
-	sig := url.Values{}
 	if signNeeded {
+		q := req.URL.Query()
+		sig := url.Values{}
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
 		q.Set("timestamp", fmt.Sprintf("%d", timepoint))
 		q.Set("recvWindow", "5000")
 		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
+		// Using separated values map for signature to ensure it is at the end
+		// of the query. This is required for /wapi apis from binance without
+		// any damn documentation about it!!!
+		req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 	}
 	// log.Printf("Raw Query: %s", q.Encode())
 	// log.Printf("Binance key: %s", self.signer.GetBinanceKey())
-
-	// Using separated values map for signature to ensure it is at the end
-	// of the query. This is required for /wapi apis from binance without
-	// any damn documentation about it!!!
-	req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 }
 
 func (self *BinanceEndpoint) FetchOnePairData(
