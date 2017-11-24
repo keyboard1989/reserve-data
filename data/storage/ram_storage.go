@@ -17,6 +17,7 @@ type RamStorage struct {
 	ebalance *RamEBalanceStorage
 	order    *RamOrderStorage
 	rate     *RamRateStorage
+	activity *RamActivityStorage
 }
 
 func NewRamStorage() *RamStorage {
@@ -26,6 +27,7 @@ func NewRamStorage() *RamStorage {
 		NewRamEBalanceStorage(),
 		NewRamOrderStorage(),
 		NewRamRateStorage(),
+		NewRamActivityStorage(),
 	}
 }
 
@@ -96,4 +98,29 @@ func (self *RamStorage) StoreRate(data common.AllRateEntry, timepoint uint64) er
 
 func (self *RamStorage) StoreOrder(data common.AllOrderEntry, timepoint uint64) error {
 	return self.order.StoreNewData(data, timepoint)
+}
+
+func (self *RamStorage) Record(
+	action string,
+	id string,
+	destination string,
+	params map[string]interface{}, result interface{},
+	status string,
+	timepoint uint64) error {
+	return self.activity.StoreNewData(
+		action, id, destination,
+		params, result, status, timepoint,
+	)
+}
+
+func (self *RamStorage) GetAllRecords() ([]common.ActivityRecord, error) {
+	return self.activity.GetAllRecords()
+}
+
+func (self *RamStorage) GetPendingActivities() ([]common.ActivityRecord, error) {
+	return self.activity.GetPendingRecords()
+}
+
+func (self *RamStorage) UpdateActivityStatus(action string, id string, destination string, status string) error {
+	return self.activity.UpdateActivityStatus(action, id, destination, status)
 }

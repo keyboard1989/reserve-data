@@ -9,6 +9,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/satori/go.uuid"
 )
 
 type Liqui struct {
@@ -52,9 +53,9 @@ func (self *Liqui) Trade(tradeType string, base common.Token, quote common.Token
 	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 
-func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
+func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
 	err := self.interf.Withdraw(token, amount, address, timepoint)
-	return ethereum.Hash{}, err
+	return uuid.NewV4().String(), err
 }
 
 func (self *Liqui) CancelOrder(base, quote common.Token, id string) error {

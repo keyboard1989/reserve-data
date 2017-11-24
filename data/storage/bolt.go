@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/boltdb/bolt"
@@ -16,6 +17,8 @@ const (
 	EXCHANGE_BALANCE_BUCKET string = "ebalances"
 	RATE_BUCKET             string = "rates"
 	ORDER_BUCKET            string = "orders"
+	ACTIVITY_BUCKET         string = "activities"
+	PENDING_ACTIVITY_BUCKET string = "pending_activities"
 )
 
 type BoltStorage struct {
@@ -49,6 +52,14 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 			return err
 		}
 		_, err = tx.CreateBucket([]byte(ORDER_BUCKET))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucket([]byte(ACTIVITY_BUCKET))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucket([]byte(PENDING_ACTIVITY_BUCKET))
 		if err != nil {
 			return err
 		}
@@ -316,6 +327,108 @@ func (self *BoltStorage) StoreOrder(data common.AllOrderEntry, timepoint uint64)
 			return err
 		}
 		return b.Put(uint64ToBytes(timepoint), dataJson)
+	})
+	return err
+}
+
+func (self *BoltStorage) Record(
+	action string,
+	id string,
+	destination string,
+	params map[string]interface{}, result interface{},
+	status string,
+	timepoint uint64) error {
+
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
+		record := common.ActivityRecord{
+			Action:      action,
+			ID:          id,
+			Destination: destination,
+			Params:      params,
+			Result:      result,
+			Status:      status,
+			Timestamp:   common.Timestamp(strconv.FormatUint(timepoint, 10)),
+		}
+		dataJson, err = json.Marshal(record)
+		if err != nil {
+			return err
+		}
+		err = b.Put([]byte(id), dataJson)
+		if err != nil {
+			return err
+		}
+		if status == "submitted" {
+			pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
+			err = pb.Put([]byte(id), dataJson)
+		}
+		return err
+	})
+	return err
+}
+
+func (self *BoltStorage) GetAllRecords() ([]common.ActivityRecord, error) {
+	result := []common.ActivityRecord{}
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			record := common.ActivityRecord{}
+			err = json.Unmarshal(v, &record)
+			if err != nil {
+				return err
+			}
+			result = append(result, record)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) GetPendingActivities() ([]common.ActivityRecord, error) {
+	result := []common.ActivityRecord{}
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			record := common.ActivityRecord{}
+			err = json.Unmarshal(v, &record)
+			if err != nil {
+				return err
+			}
+			result = append(result, record)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) UpdateActivityStatus(action string, id string, destination string, status string) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
+		err = pb.Delete([]byte(id))
+		if err != nil {
+			return err
+		}
+		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
+		dataJson := b.Get([]byte(id))
+		record := common.ActivityRecord{}
+		err = json.Unmarshal(dataJson, &record)
+		if err != nil {
+			return err
+		}
+		record.Status = status
+		dataJson, err = json.Marshal(record)
+		if err != nil {
+			return err
+		}
+		err = b.Put([]byte(id), dataJson)
+		return err
 	})
 	return err
 }

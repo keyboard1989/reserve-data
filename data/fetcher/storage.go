@@ -10,4 +10,6 @@ type Storage interface {
 	StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry, timepoint uint64) error
 	StoreRate(data common.AllRateEntry, timepoint uint64) error
 	StoreOrder(data common.AllOrderEntry, timepoint uint64) error
+
+	UpdateActivityStatus(action string, id string, destination string, status string) error
 }

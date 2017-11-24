@@ -24,6 +24,9 @@ type ReserveData interface {
 	CurrentOrderVersion(timestamp uint64) (common.Version, error)
 	GetAllOrders(timestamp uint64) (common.AllOrderResponse, error)
 
+	GetRecords() ([]common.ActivityRecord, error)
+	GetPendingActivities() ([]common.ActivityRecord, error)
+
 	Run() error
 	Stop() error
 }
@@ -49,12 +52,16 @@ type ReserveCore interface {
 		exchange common.Exchange,
 		token common.Token,
 		amount *big.Int,
-		timestamp uint64) (ethereum.Hash, error)
+		timestamp uint64) (string, error)
 
 	CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error
 
 	// blockchain related action
 	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (ethereum.Hash, error)
 
-	GetRecords() ([]common.ActivityRecord, error)
+	// action: ['deposit', 'withdraw', 'setrate', 'order']
+	// id: ID of the action, for deposit and setrate, it should be tx hash, for withdraw, order, it should be id returned
+	// from the exchanges
+	// return string: should be in ["", "submitted", "mined", "done", "failed"]
+	// ActivityStatus(action string, id string, destination string) (string, error)
 }

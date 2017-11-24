@@ -52,8 +52,9 @@ func (self *Binance) Trade(tradeType string, base common.Token, quote common.Tok
 	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 
-func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
-	return self.interf.Withdraw(token, amount, address, timepoint)
+func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
+	tx, err := self.interf.Withdraw(token, amount, address, timepoint)
+	return tx.Hex(), err
 }
 
 func (self *Binance) CancelOrder(base, quote common.Token, id string) error {
