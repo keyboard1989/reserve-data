@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"context"
 	"fmt"
 	"log"
 
@@ -26,7 +27,8 @@ func (self *Blockchain) AddToken(t common.Token) {
 }
 
 func (self *Blockchain) IsMined(tx ethereum.Hash) (bool, error) {
-	receipt, err := self.client.TransactionReceipt(nil, tx)
+	option := context.Background()
+	receipt, err := self.client.TransactionReceipt(option, tx)
 	return receipt != nil, err
 }
 
