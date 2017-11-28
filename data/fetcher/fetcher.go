@@ -183,7 +183,7 @@ func (self *Fetcher) fetchStatusFromBlockchainAndUpdate(w *sync.WaitGroup, activ
 	action := activity.Action
 	id := activity.ID
 	destination := activity.Destination
-	tx := ethereum.HexToHash(activity.Result["tx"].(string))
+	tx := activity.Result["tx"].(ethereum.Hash)
 	isMined, err := self.blockchain.IsMined(tx)
 	if err != nil {
 		log.Printf("Fetching Tx mining status failed: %s", err.Error())
