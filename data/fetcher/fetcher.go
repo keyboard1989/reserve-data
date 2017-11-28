@@ -1,6 +1,7 @@
 package fetcher
 
 import (
+	"errors"
 	"log"
 	"sync"
 
@@ -27,6 +28,15 @@ func NewFetcher(
 		runner:     runner,
 		rmaddr:     address,
 	}
+}
+
+func (self *Fetcher) getExchange(id string) Exchange {
+	for _, ex := range self.exchanges {
+		if string(ex.ID()) == id {
+			return ex
+		}
+	}
+	panic(errors.New("Exchange " + id + " is not registered in fetcher"))
 }
 
 func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
@@ -168,6 +178,60 @@ func (self *Fetcher) fetchAllBalances(w *sync.WaitGroup, timepoint uint64) {
 	}
 }
 
+func (self *Fetcher) fetchStatusFromBlockchainAndUpdate(w *sync.WaitGroup, activity common.ActivityRecord, timepoint uint64) {
+	defer w.Done()
+	action := activity.Action
+	id := activity.ID
+	destination := activity.Destination
+	tx := ethereum.HexToHash(activity.Result["tx"].(string))
+	isMined, err := self.blockchain.IsMined(tx)
+	if err != nil {
+		log.Printf("Fetching Tx mining status failed: %s", err.Error())
+	}
+	if isMined {
+		self.storage.UpdateActivityStatus(action, id, destination, "mined")
+	}
+}
+
+func (self *Fetcher) fetchStatusFromExchangeAndUpdate(w *sync.WaitGroup, activity common.ActivityRecord, timepoint uint64) {
+	defer w.Done()
+	action := activity.Action
+	id := activity.ID
+	destination := activity.Destination
+	exchange := self.getExchange(destination)
+	var err error
+	var status string
+	if activity.Action == "trade" {
+		status, err = exchange.OrderStatus(id, timepoint)
+	} else if activity.Action == "deposit" {
+		status, err = exchange.DepositStatus(id, timepoint)
+	} else if activity.Action == "withdraw" {
+		status, err = exchange.WithdrawStatus(id, timepoint)
+	}
+	if err == nil && status != activity.Status && status != "" {
+		self.storage.UpdateActivityStatus(action, id, destination, status)
+	}
+}
+
+func (self *Fetcher) fetchActivityStatus(w *sync.WaitGroup, timepoint uint64) {
+	defer w.Done()
+	wg := sync.WaitGroup{}
+	pendings, err := self.storage.GetPendingActivities()
+	if err != nil {
+		log.Printf("Getting pending activities from storage failed: %s", err.Error())
+	}
+	for _, activity := range pendings {
+		if activity.Action == "set_rates" {
+			wg.Add(1)
+			go self.fetchStatusFromBlockchainAndUpdate(&wg, activity, timepoint)
+		} else {
+			wg.Add(1)
+			go self.fetchStatusFromExchangeAndUpdate(&wg, activity, timepoint)
+		}
+	}
+	wg.Wait()
+}
+
 func (self *Fetcher) fetchAllRates(w *sync.WaitGroup, timepoint uint64) {
 	defer w.Done()
 	log.Printf("Fetching all rates from blockchain...")
@@ -216,5 +280,7 @@ func (self *Fetcher) fetchAllFromBlockchain(timepoint uint64) {
 	self.fetchAllBalances(&wait, timepoint)
 	wait.Add(1)
 	self.fetchAllRates(&wait, timepoint)
+	wait.Add(1)
+	self.fetchActivityStatus(&wait, timepoint)
 	wait.Wait()
 }

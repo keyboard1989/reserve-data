@@ -35,4 +35,10 @@ type BinanceInterface interface {
 		timepoint uint64) (id string, done float64, remaining float64, finished bool, err error)
 
 	CancelOrder(base, quote common.Token, id uint64) (Binacancel, error)
+
+	DepositHistory(startTime, endTime uint64) (Binadeposits, error)
+
+	WithdrawHistory(startTime, endTime uint64) (Binawithdrawals, error)
+
+	OrderStatus(symbol string, id uint64, timepoint uint64) (Binaorder, error)
 }

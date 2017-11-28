@@ -42,7 +42,7 @@ type ActivityRecord struct {
 	ID          string
 	Destination string
 	Params      map[string]interface{}
-	Result      interface{}
+	Result      map[string]interface{}
 	Status      string
 	Timestamp   Timestamp
 }

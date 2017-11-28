@@ -6,7 +6,7 @@ type ActivityStorage interface {
 		id string,
 		destination string,
 		params map[string]interface{},
-		result interface{},
+		result map[string]interface{},
 		status string,
 		timepoint uint64) error
 }

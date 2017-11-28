@@ -47,14 +47,20 @@ func NewSimulatedInterface() *SimulatedInterface {
 
 type KovanInterface struct{}
 
+func (self *KovanInterface) baseurl() string {
+	baseurl := "127.0.0.1"
+	if len(os.Args) > 1 {
+		baseurl = os.Args[1]
+	}
+	return baseurl + ":5100"
+}
+
 func (self *KovanInterface) PublicEndpoint() string {
-	// return "http://192.168.24.197:5100"
 	return "https://www.binance.com"
 }
 
 func (self *KovanInterface) AuthenticatedEndpoint() string {
-	// return "http://192.168.24.197:5100"
-	return "https://www.binance.com"
+	return self.baseurl()
 }
 
 func NewKovanInterface() *KovanInterface {

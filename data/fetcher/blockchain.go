@@ -8,4 +8,5 @@ import (
 type Blockchain interface {
 	FetchBalanceData(addr ethereum.Address, timepoint uint64) (map[string]common.BalanceEntry, error)
 	FetchRates(sources, dests []common.Token, timepoint uint64) (common.AllRateEntry, error)
+	IsMined(tx ethereum.Hash) (bool, error)
 }

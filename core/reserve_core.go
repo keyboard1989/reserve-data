@@ -33,6 +33,10 @@ func timebasedID(id string) string {
 	return strconv.Itoa(int(time.Now().UnixNano())) + "|" + id
 }
 
+func (self ReserveCore) CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error {
+	return exchange.CancelOrder(base, quote, id)
+}
+
 func (self ReserveCore) Trade(
 	exchange common.Exchange,
 	tradeType string,
@@ -129,10 +133,6 @@ func (self ReserveCore) Deposit(
 		exchange.ID(), token.ID, amount.Uint64(), timepoint, tx.Hex(), err,
 	)
 	return tx, err
-}
-
-func (self ReserveCore) CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error {
-	return exchange.CancelOrder(base, quote, id)
 }
 
 func (self ReserveCore) Withdraw(

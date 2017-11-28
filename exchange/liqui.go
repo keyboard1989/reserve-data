@@ -193,6 +193,18 @@ func (self *Liqui) FetchPriceData(timepoint uint64) (map[common.TokenPairID]comm
 	return result, err
 }
 
+func (self *Liqui) DepositStatus(id string, timepoint uint64) (string, error) {
+	return "", errors.New("Not implemented yet")
+}
+
+func (self *Liqui) WithdrawStatus(id string, timepoint uint64) (string, error) {
+	return "", errors.New("Not implemented yet")
+}
+
+func (self *Liqui) OrderStatus(id string, timepoint uint64) (string, error) {
+	return "", errors.New("Not implemented yet")
+}
+
 func NewLiqui(interf LiquiInterface) *Liqui {
 	return &Liqui{
 		interf,

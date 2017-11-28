@@ -27,3 +27,11 @@ func GetExchange(id string) (Exchange, error) {
 		return ex, nil
 	}
 }
+
+func MustGetExchange(id string) Exchange {
+	result, err := GetExchange(id)
+	if err != nil {
+		panic(err)
+	}
+	return result
+}

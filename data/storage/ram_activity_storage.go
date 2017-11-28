@@ -40,7 +40,7 @@ func (self *RamActivityStorage) StoreNewData(
 	action string,
 	id string,
 	destination string,
-	params map[string]interface{}, result interface{},
+	params map[string]interface{}, result map[string]interface{},
 	status string,
 	timepoint uint64) error {
 
