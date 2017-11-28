@@ -38,11 +38,13 @@ func NewTokenPairID(base, quote string) TokenPairID {
 type ExchangeID string
 
 type ActivityRecord struct {
-	ID        int64
-	Timestamp Timestamp
-	Action    string
-	Params    map[string]interface{}
-	Result    interface{}
+	Action      string
+	ID          string
+	Destination string
+	Params      map[string]interface{}
+	Result      map[string]interface{}
+	Status      string
+	Timestamp   Timestamp
 }
 
 type PriceEntry struct {

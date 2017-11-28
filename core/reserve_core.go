@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/big"
 	"strconv"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -28,6 +29,14 @@ func NewReserveCore(
 	}
 }
 
+func timebasedID(id string) string {
+	return strconv.Itoa(int(time.Now().UnixNano())) + "|" + id
+}
+
+func (self ReserveCore) CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error {
+	return exchange.CancelOrder(base, quote, id)
+}
+
 func (self ReserveCore) Trade(
 	exchange common.Exchange,
 	tradeType string,
@@ -38,8 +47,21 @@ func (self ReserveCore) Trade(
 	timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 
 	id, done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+	var status string
+	if err != nil {
+		status = "failed"
+	} else {
+		if finished {
+			status = "done"
+		} else {
+			status = "submitted"
+		}
+	}
 	go self.activityStorage.Record(
-		"trade", map[string]interface{}{
+		"trade",
+		timebasedID(id),
+		string(exchange.ID()),
+		map[string]interface{}{
 			"exchange":  exchange,
 			"type":      tradeType,
 			"base":      base,
@@ -48,11 +70,14 @@ func (self ReserveCore) Trade(
 			"amount":    amount,
 			"timepoint": timepoint,
 		}, map[string]interface{}{
+			"id":        id,
 			"done":      done,
 			"remaining": remaining,
 			"finished":  finished,
 			"error":     err,
 		},
+		status,
+		timepoint,
 	)
 	log.Printf(
 		"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: done: %s, remaining: %s, finished: %t, error: %s",
@@ -81,8 +106,17 @@ func (self ReserveCore) Deposit(
 	} else {
 		tx, err = self.blockchain.Send(token, amount, address)
 	}
+	var status string
+	if err != nil {
+		status = "failed"
+	} else {
+		status = "submitted"
+	}
 	go self.activityStorage.Record(
-		"deposit", map[string]interface{}{
+		"deposit",
+		timebasedID(tx.Hex()),
+		"blockchain",
+		map[string]interface{}{
 			"exchange":  exchange,
 			"token":     token,
 			"amount":    common.BigToFloat(amount, token.Decimal),
@@ -91,6 +125,8 @@ func (self ReserveCore) Deposit(
 			"tx":    tx,
 			"error": err,
 		},
+		status,
+		timepoint,
 	)
 	log.Printf(
 		"Core ----------> Deposit to %s: token: %s, amount: %d, timestamp: %d ==> Result: tx: %s, error: %s",
@@ -99,38 +135,45 @@ func (self ReserveCore) Deposit(
 	return tx, err
 }
 
-func (self ReserveCore) CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error {
-	return exchange.CancelOrder(base, quote, id)
-}
-
 func (self ReserveCore) Withdraw(
 	exchange common.Exchange, token common.Token,
-	amount *big.Int, timepoint uint64) (ethereum.Hash, error) {
+	amount *big.Int, timepoint uint64) (string, error) {
 
 	_, supported := exchange.Address(token)
 	var err error
-	var txHash ethereum.Hash
+	var id string
 	if !supported {
 		err = errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
 	} else {
-		txHash, err = exchange.Withdraw(token, amount, self.rm, timepoint)
+		id, err = exchange.Withdraw(token, amount, self.rm, timepoint)
+	}
+	var status string
+	if err != nil {
+		status = "failed"
+	} else {
+		status = "submitted"
 	}
 	go self.activityStorage.Record(
-		"withdraw", map[string]interface{}{
+		"withdraw",
+		timebasedID(id),
+		string(exchange.ID()),
+		map[string]interface{}{
 			"exchange":  exchange,
 			"token":     token,
 			"amount":    common.BigToFloat(amount, token.Decimal),
 			"timepoint": timepoint,
 		}, map[string]interface{}{
-			"error":  err,
-			"txhash": txHash,
+			"error": err,
+			"id":    id,
 		},
+		status,
+		timepoint,
 	)
 	log.Printf(
-		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: txhash: %s, error: %s",
-		exchange.ID(), token.ID, amount.Uint64(), timepoint, txHash.Hex(), err,
+		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: id: %s, error: %s",
+		exchange.ID(), token.ID, amount.Uint64(), timepoint, id, err,
 	)
-	return txHash, err
+	return id, err
 }
 
 func (self ReserveCore) SetRates(
@@ -158,8 +201,17 @@ func (self ReserveCore) SetRates(
 		}
 		tx, err = self.blockchain.SetRates(sourceAddrs, destAddrs, rates, expiryBlocks)
 	}
+	var status string
+	if err != nil {
+		status = "failed"
+	} else {
+		status = "submitted"
+	}
 	go self.activityStorage.Record(
-		"set_rates", map[string]interface{}{
+		"set_rates",
+		timebasedID(tx.Hex()),
+		"blockchain",
+		map[string]interface{}{
 			"sources":      sources,
 			"dests":        dests,
 			"rates":        rates,
@@ -168,14 +220,12 @@ func (self ReserveCore) SetRates(
 			"tx":    tx,
 			"error": err,
 		},
+		status,
+		common.GetTimepoint(),
 	)
 	log.Printf(
 		"Core ----------> Set rates: ==> Result: tx: %s, error: %s",
 		tx.Hex(), err,
 	)
 	return tx, err
-}
-
-func (self ReserveCore) GetRecords() ([]common.ActivityRecord, error) {
-	return self.activityStorage.GetAllRecords()
 }

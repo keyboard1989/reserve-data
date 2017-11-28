@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	corestorage "github.com/KyberNetwork/reserve-data/core/storage"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
@@ -67,9 +66,8 @@ func GetConfigForSimulation() *Config {
 	// endpoint := "https://kovan.kyber.network"
 	endpoint := "http://blockchain:8545"
 
-	activityStorage := corestorage.NewRamStorage()
 	return &Config{
-		ActivityStorage:  activityStorage,
+		ActivityStorage:  storage,
 		DataStorage:      storage,
 		FetcherStorage:   storage,
 		FetcherRunner:    fetcherRunner,

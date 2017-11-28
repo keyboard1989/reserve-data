@@ -405,7 +405,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		return
 	}
 	log.Printf("Withdraw %s %s from %s\n", amount.Text(10), token.ID, exchange.ID())
-	txHash, err := self.core.Withdraw(exchange, token, amount, getTimePoint(c))
+	id, err := self.core.Withdraw(exchange, token, amount, getTimePoint(c))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -417,7 +417,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success": true,
-			"txhash":  txHash.Hex(),
+			"txhash":  id,
 		},
 	)
 }
@@ -469,9 +469,28 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetPendingActivities(c *gin.Context) {
+	log.Printf("Getting all activity records \n")
+	data, err := self.app.GetPendingActivities()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) GetActivities(c *gin.Context) {
 	log.Printf("Getting all activity records \n")
-	data, err := self.core.GetRecords()
+	data, err := self.app.GetRecords()
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -518,6 +537,7 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/setrates", self.SetRate)
 	self.r.GET("/getrates", self.GetRate)
 	self.r.GET("/activities", self.GetActivities)
+	self.r.GET("/pending-activities", self.GetPendingActivities)
 
 	self.r.Run(self.host)
 }

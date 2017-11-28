@@ -32,21 +32,20 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		req.Header.Add("User-Agent", "binance/go")
 	}
 	req.Header.Add("Accept", "application/json")
-	q := req.URL.Query()
-	sig := url.Values{}
 	if signNeeded {
+		q := req.URL.Query()
+		sig := url.Values{}
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
 		q.Set("timestamp", fmt.Sprintf("%d", timepoint))
 		q.Set("recvWindow", "5000")
 		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
+		// Using separated values map for signature to ensure it is at the end
+		// of the query. This is required for /wapi apis from binance without
+		// any damn documentation about it!!!
+		req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 	}
 	// log.Printf("Raw Query: %s", q.Encode())
 	// log.Printf("Binance key: %s", self.signer.GetBinanceKey())
-
-	// Using separated values map for signature to ensure it is at the end
-	// of the query. This is required for /wapi apis from binance without
-	// any damn documentation about it!!!
-	req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 }
 
 func (self *BinanceEndpoint) FetchOnePairData(
@@ -142,7 +141,8 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 		nil,
 	)
 	q := req.URL.Query()
-	q.Add("symbol", base.ID+quote.ID)
+	symbol := base.ID + quote.ID
+	q.Add("symbol", symbol)
 	q.Add("side", strings.ToUpper(tradeType))
 	orderType := "LIMIT"
 	q.Add("type", orderType)
@@ -169,7 +169,74 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 		result.OrderID,
 		timepoint+20,
 	)
-	return strconv.FormatUint(result.OrderID, 10), done, remaining, finished, err
+	id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
+	return id, done, remaining, finished, err
+}
+
+func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchange.Binawithdrawals, error) {
+	result := exchange.Binawithdrawals{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second),
+	}
+	req, _ := http.NewRequest(
+		"GET",
+		self.interf.AuthenticatedEndpoint()+"/wapi/v3/withdrawHistory.html",
+		nil,
+	)
+	q := req.URL.Query()
+	q.Add("startTime", fmt.Sprintf("%d", startTime))
+	q.Add("endTime", fmt.Sprintf("%d", startTime))
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, true, common.GetTimepoint())
+	var resp_body []byte
+	resp, err := client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+		resp_body, err = ioutil.ReadAll(resp.Body)
+		log.Printf("response: %s\n", resp_body)
+		if err == nil {
+			err = json.Unmarshal(resp_body, &result)
+			if err == nil {
+				if !result.Success {
+					err = errors.New("Getting withdraw history from Binance failed: " + result.Msg)
+				}
+			}
+		}
+	}
+	return result, err
+}
+
+func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange.Binadeposits, error) {
+	result := exchange.Binadeposits{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second),
+	}
+	req, _ := http.NewRequest(
+		"GET",
+		self.interf.AuthenticatedEndpoint()+"/wapi/v3/depositHistory.html",
+		nil,
+	)
+	q := req.URL.Query()
+	q.Add("startTime", fmt.Sprintf("%d", startTime))
+	q.Add("endTime", fmt.Sprintf("%d", startTime))
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, true, common.GetTimepoint())
+	var resp_body []byte
+	resp, err := client.Do(req)
+	if err == nil {
+		defer resp.Body.Close()
+		resp_body, err = ioutil.ReadAll(resp.Body)
+		log.Printf("response: %s\n", resp_body)
+		if err == nil {
+			err = json.Unmarshal(resp_body, &result)
+			if err == nil {
+				if !result.Success {
+					err = errors.New("Getting deposit history from Binance failed: " + result.Msg)
+				}
+			}
+		}
+	}
+	return result, err
 }
 
 func (self *BinanceEndpoint) CancelOrder(base, quote common.Token, id uint64) (exchange.Binacancel, error) {
@@ -205,7 +272,7 @@ func (self *BinanceEndpoint) CancelOrder(base, quote common.Token, id uint64) (e
 	return result, err
 }
 
-func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64, timepoint uint64) (exchange.Binaorder, error) {
 	result := exchange.Binaorder{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
@@ -221,25 +288,32 @@ func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, true, timepoint)
 	resp, err := client.Do(req)
-	if err == nil && resp.StatusCode == 200 {
+	if err == nil {
 		defer resp.Body.Close()
 		resp_body, err := ioutil.ReadAll(resp.Body)
 		log.Printf("response: %s\n", resp_body)
-		if err == nil {
-			err = json.Unmarshal(resp_body, &result)
-		}
 		if err != nil {
-			return 0, 0, false, err
+			return result, err
+		} else {
+			err = json.Unmarshal(resp_body, &result)
+			if result.Code != 0 {
+				err = errors.New(result.Message)
+			}
+			return result, err
 		}
-		if result.Code != 0 {
-			return 0, 0, false, errors.New(result.Message)
-		}
+	} else {
+		return result, err
+	}
+}
+
+func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+	result, err := self.OrderStatus(symbol, id, timepoint)
+	if err != nil {
+		return 0, 0, false, err
+	} else {
 		done, _ := strconv.ParseFloat(result.ExecutedQty, 64)
 		total, _ := strconv.ParseFloat(result.OrigQty, 64)
 		return done, total - done, total-done < EPSILON, nil
-	} else {
-		log.Printf("Error: %v, Code: %v\n", err, resp)
-		return 0, 0, false, errors.New("withdraw rejected by Binnace")
 	}
 }
 

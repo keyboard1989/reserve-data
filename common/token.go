@@ -13,9 +13,10 @@ type Token struct {
 }
 
 func (self Token) MarshalText() (text []byte, err error) {
-	return []byte(fmt.Sprintf(
-		"%s-%s", self.ID, self.Address,
-	)), nil
+	// return []byte(fmt.Sprintf(
+	// 	"%s-%s", self.ID, self.Address,
+	// )), nil
+	return []byte(self.ID), nil
 }
 
 func (self Token) IsETH() bool {

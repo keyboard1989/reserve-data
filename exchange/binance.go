@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -52,8 +53,9 @@ func (self *Binance) Trade(tradeType string, base common.Token, quote common.Tok
 	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
 }
 
-func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
-	return self.interf.Withdraw(token, amount, address, timepoint)
+func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
+	tx, err := self.interf.Withdraw(token, amount, address, timepoint)
+	return tx.Hex(), err
 }
 
 func (self *Binance) CancelOrder(base, quote common.Token, id string) error {
@@ -144,6 +146,69 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		}
 	}
 	return result, nil
+}
+
+func (self *Binance) DepositStatus(id string, timepoint uint64) (string, error) {
+	txID := strings.Split(id, "|")[1]
+	startTime := timepoint
+	endTime := timepoint + 86400000
+	deposits, err := self.interf.DepositHistory(startTime, endTime)
+	if err != nil || !deposits.Success {
+		return "", err
+	} else {
+		for _, deposit := range deposits.Deposits {
+			if deposit.TxID == txID {
+				if deposit.Status == 1 {
+					return "done", nil
+				} else {
+					return "", nil
+				}
+			}
+		}
+		return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from binance and activity ID are not consistently designed")
+	}
+}
+
+func (self *Binance) WithdrawStatus(id string, timepoint uint64) (string, error) {
+	txID := strings.Split(id, "|")[1]
+	startTime := timepoint
+	endTime := timepoint + 86400000
+	withdraws, err := self.interf.WithdrawHistory(startTime, endTime)
+	if err != nil || !withdraws.Success {
+		return "", err
+	} else {
+		for _, withdraw := range withdraws.Withdrawals {
+			if withdraw.TxID == txID {
+				if withdraw.Status == 3 || withdraw.Status == 5 || withdraw.Status == 6 {
+					return "done", nil
+				} else {
+					return "", nil
+				}
+			}
+		}
+		return "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
+	}
+}
+
+func (self *Binance) OrderStatus(id string, timepoint uint64) (string, error) {
+	// if this crashes, it means core put malformed activity ID
+	tradeID := strings.Split(id, "|")[1]
+	parts := strings.Split(tradeID, "_")
+	orderID, err := strconv.ParseUint(parts[0], 10, 64)
+	if err != nil {
+		// if this crashes, it means core put malformed activity ID
+		panic(err)
+	}
+	symbol := parts[1]
+	order, err := self.interf.OrderStatus(symbol, orderID, timepoint)
+	if err != nil {
+		return "", err
+	}
+	if order.Status == "NEW" || order.Status == "PARTIALLY_FILLED" || order.Status == "PENDING_CANCEL" {
+		return "", nil
+	} else {
+		return "done", nil
+	}
 }
 
 func NewBinance(interf BinanceInterface) *Binance {

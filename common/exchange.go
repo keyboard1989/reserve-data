@@ -11,7 +11,7 @@ import (
 type Exchange interface {
 	ID() ExchangeID
 	Address(token Token) (address ethereum.Address, supported bool)
-	Withdraw(token Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error)
+	Withdraw(token Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error)
 	Trade(tradeType string, base Token, quote Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error)
 	CancelOrder(base, quote Token, id string) error
 	MarshalText() (text []byte, err error)
@@ -26,4 +26,12 @@ func GetExchange(id string) (Exchange, error) {
 	} else {
 		return ex, nil
 	}
+}
+
+func MustGetExchange(id string) Exchange {
+	result, err := GetExchange(id)
+	if err != nil {
+		panic(err)
+	}
+	return result
 }

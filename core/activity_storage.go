@@ -1,10 +1,12 @@
 package core
 
-import (
-	"github.com/KyberNetwork/reserve-data/common"
-)
-
 type ActivityStorage interface {
-	Record(action string, params map[string]interface{}, result interface{}) error
-	GetAllRecords() ([]common.ActivityRecord, error)
+	Record(
+		action string,
+		id string,
+		destination string,
+		params map[string]interface{},
+		result map[string]interface{},
+		status string,
+		timepoint uint64) error
 }

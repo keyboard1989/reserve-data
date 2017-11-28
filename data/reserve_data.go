@@ -149,6 +149,14 @@ func (self ReserveData) GetAllOrders(timepoint uint64) (common.AllOrderResponse,
 	}
 }
 
+func (self ReserveData) GetRecords() ([]common.ActivityRecord, error) {
+	return self.storage.GetAllRecords()
+}
+
+func (self ReserveData) GetPendingActivities() ([]common.ActivityRecord, error) {
+	return self.storage.GetPendingActivities()
+}
+
 func (self ReserveData) Run() error {
 	return self.fetcher.Run()
 }

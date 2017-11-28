@@ -12,6 +12,7 @@ import (
 )
 
 type Blockchain struct {
+	client  *ethclient.Client
 	wrapper *ContractWrapper
 	reserve *ReserveContract
 	rm      ethereum.Address
@@ -22,6 +23,11 @@ type Blockchain struct {
 
 func (self *Blockchain) AddToken(t common.Token) {
 	self.tokens = append(self.tokens, t)
+}
+
+func (self *Blockchain) IsMined(tx ethereum.Hash) (bool, error) {
+	receipt, err := self.client.TransactionReceipt(nil, tx)
+	return receipt != nil, err
 }
 
 func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
@@ -213,12 +219,14 @@ func NewBlockchain(
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("reserve address: %s\n", reserveAddr.Hex())
+	log.Printf("reserve owner address: %s", signer.GetAddress().Hex())
+	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve, err := NewReserveContract(reserveAddr, ethereum)
 	if err != nil {
 		return nil, err
 	}
 	return &Blockchain{
+		client:  ethereum,
 		wrapper: wrapper,
 		reserve: reserve,
 		rm:      reserveAddr,
