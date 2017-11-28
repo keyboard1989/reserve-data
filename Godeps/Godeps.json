@@ -3,7 +3,7 @@
 	"GoVersion": "go1.9",
 	"GodepVersion": "v79",
 	"Packages": [
-		"./..."
+		"./cmd"
 	],
 	"Deps": [
 		{
@@ -204,6 +204,11 @@
 			"ImportPath": "github.com/rs/xhandler",
 			"Comment": "v.11-5-g1eb70cf",
 			"Rev": "1eb70cf1520d43c307a89c5dabb7a7efd132fccd"
+		},
+		{
+			"ImportPath": "github.com/satori/go.uuid",
+			"Comment": "v1.1.0-8-g5bf94b6",
+			"Rev": "5bf94b69c6b68ee1b541973bb8e1144db23a194b"
 		},
 		{
 			"ImportPath": "github.com/ugorji/go/codec",
