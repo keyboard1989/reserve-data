@@ -57,7 +57,13 @@ func GetConfigForDev() *Config {
 	fetcherExchanges := []fetcher.Exchange{}
 	// liqui := exchange.NewRealLiqui(fileSigner)
 	liqui := exchange.NewLiqui(liqui.NewDevLiquiEndpoint(fileSigner))
+	for tokenID, addr := range addressConfig.Exchanges["liqui"] {
+		liqui.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+	}
 	binance := exchange.NewBinance(binance.NewDevBinanceEndpoint(fileSigner))
+	for tokenID, addr := range addressConfig.Exchanges["binance"] {
+		binance.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+	}
 	// bittrex := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(fileSigner))
 	// bitfinex := exchange.NewBitfinex(bitfinex.NewSimulatedBitfinexEndpoint(fileSigner))
 
