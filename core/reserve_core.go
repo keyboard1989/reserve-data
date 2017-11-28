@@ -115,7 +115,7 @@ func (self ReserveCore) Deposit(
 	go self.activityStorage.Record(
 		"deposit",
 		timebasedID(tx.Hex()),
-		"blockchain",
+		string(exchange.ID()),
 		map[string]interface{}{
 			"exchange":  exchange,
 			"token":     token,
