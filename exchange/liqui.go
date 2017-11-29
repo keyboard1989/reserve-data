@@ -5,11 +5,18 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/satori/go.uuid"
+)
+
+const (
+	DEPOSIT_WAITING_TIME  uint64 = 10 * 60 * 1000
+	WITHDRAW_WAITING_TIME uint64 = 5 * 60 * 1000
 )
 
 type Liqui struct {
@@ -194,15 +201,49 @@ func (self *Liqui) FetchPriceData(timepoint uint64) (map[common.TokenPairID]comm
 }
 
 func (self *Liqui) DepositStatus(id string, timepoint uint64) (string, error) {
+	timestampStr := strings.Split(id, "|")[0]
+	timestamp, _ := strconv.ParseUint(timestampStr, 10, 64)
+	if timepoint-timestamp/uint64(time.Millisecond) > DEPOSIT_WAITING_TIME {
+		return "done", nil
+	} else {
+		return "", nil
+	}
 	return "", errors.New("Not implemented yet")
 }
 
 func (self *Liqui) WithdrawStatus(id string, timepoint uint64) (string, error) {
+	timestampStr := strings.Split(id, "|")[0]
+	timestamp, _ := strconv.ParseUint(timestampStr, 10, 64)
+	if timepoint-timestamp/uint64(time.Millisecond) > WITHDRAW_WAITING_TIME {
+		return "done", nil
+	} else {
+		return "", nil
+	}
 	return "", errors.New("Not implemented yet")
 }
 
 func (self *Liqui) OrderStatus(id string, timepoint uint64) (string, error) {
-	return "", errors.New("Not implemented yet")
+	result, err := self.interf.OrderInfo(id, timepoint)
+	if err != nil {
+		return "", err
+	} else {
+		if result.Success != 1 {
+			for _, v := range result.Return {
+				if v.Status == 0 {
+					return "", nil
+				} else if v.Status == 1 {
+					return "done", nil
+				} else if v.Status == 2 {
+					return "failed", nil
+				} else if v.Status == 3 {
+					return "failed", nil
+				}
+			}
+			panic("Malformed response from liqui")
+		} else {
+			return "", errors.New(result.Error)
+		}
+	}
 }
 
 func NewLiqui(interf LiquiInterface) *Liqui {

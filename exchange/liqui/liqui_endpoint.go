@@ -221,6 +221,42 @@ func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
 	return result, err
 }
 
+func (self *LiquiEndpoint) OrderInfo(orderID string, timepoint uint64) (exchange.Liqorderinfo, error) {
+	result := exchange.Liqorderinfo{}
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second)}
+	data := url.Values{}
+	data.Set("method", "OrderInfo")
+	data.Set("order_id", orderID)
+	data.Add("nonce", nonce())
+	params := data.Encode()
+	req, _ := http.NewRequest(
+		"POST",
+		self.interf.AuthenticatedEndpoint(timepoint),
+		bytes.NewBufferString(params),
+	)
+	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Key", self.signer.GetLiquiKey())
+	req.Header.Add("Sign", self.signer.LiquiSign(params))
+	resp, err := client.Do(req)
+	if err == nil {
+		if resp.StatusCode == 200 {
+			defer resp.Body.Close()
+			resp_body, err := ioutil.ReadAll(resp.Body)
+			log.Printf("Liqui Order info response: %s\n", string(resp_body))
+			if err == nil {
+				json.Unmarshal(resp_body, &result)
+			}
+			log.Printf("Liqui Order info data: %s\n", result)
+		} else {
+			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
+		}
+	}
+	return result, err
+}
+
 func (self *LiquiEndpoint) ActiveOrders(timepoint uint64) (exchange.Liqorders, error) {
 	result := exchange.Liqorders{}
 	client := &http.Client{
