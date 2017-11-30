@@ -122,7 +122,7 @@ func (self ReserveCore) Deposit(
 			"amount":    common.BigToFloat(amount, token.Decimal),
 			"timepoint": timepoint,
 		}, map[string]interface{}{
-			"tx":    tx,
+			"tx":    tx.Hex(),
 			"error": err,
 		},
 		status,
@@ -217,7 +217,7 @@ func (self ReserveCore) SetRates(
 			"rates":        rates,
 			"expiryBlocks": expiryBlocks,
 		}, map[string]interface{}{
-			"tx":    tx,
+			"tx":    tx.Hex(),
 			"error": err,
 		},
 		status,
