@@ -84,6 +84,7 @@ func (self *Liqui) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
 			for id, order := range resp_data.Return {
 				tokens := strings.Split(order.Pair, "_")
 				result.Data = append(result.Data, common.Order{
+					ID:          id,
 					Base:        strings.ToUpper(tokens[0]),
 					Quote:       strings.ToUpper(tokens[1]),
 					OrderId:     id,

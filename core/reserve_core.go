@@ -57,9 +57,10 @@ func (self ReserveCore) Trade(
 			status = "submitted"
 		}
 	}
+	uid := timebasedID(id)
 	go self.activityStorage.Record(
 		"trade",
-		timebasedID(id),
+		uid,
 		string(exchange.ID()),
 		map[string]interface{}{
 			"exchange":  exchange,
@@ -80,15 +81,16 @@ func (self ReserveCore) Trade(
 		timepoint,
 	)
 	log.Printf(
-		"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: done: %s, remaining: %s, finished: %t, error: %s",
+		"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: id: %s, done: %s, remaining: %s, finished: %t, error: %s",
 		tradeType, exchange.ID(), base.ID, quote.ID,
 		strconv.FormatFloat(rate, 'f', -1, 64),
 		strconv.FormatFloat(amount, 'f', -1, 64), timepoint,
+		uid,
 		strconv.FormatFloat(done, 'f', -1, 64),
 		strconv.FormatFloat(remaining, 'f', -1, 64),
 		finished, err,
 	)
-	return id, done, remaining, finished, err
+	return uid, done, remaining, finished, err
 }
 
 func (self ReserveCore) Deposit(
