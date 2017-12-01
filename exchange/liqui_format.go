@@ -37,6 +37,20 @@ type Liqorders struct {
 	Error string `json:"error"`
 }
 
+type Liqorderinfo struct {
+	Success int `json:"success"`
+	Return  map[string]struct {
+		Pair        string  `json:"pair"`
+		Type        string  `json:"type"`
+		StartAmount float64 `json:"start_amount"`
+		Amount      float64 `json:"amount"`
+		Rate        float64 `json:"rate"`
+		Timestamp   uint64  `json:"timestamp_created"`
+		Status      int     `json:"status"`
+	} `json:"return"`
+	Error string `json:"error"`
+}
+
 type Liqcancel struct {
 	Success int `json:"success"`
 	Return  struct {

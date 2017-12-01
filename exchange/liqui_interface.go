@@ -14,6 +14,8 @@ type LiquiInterface interface {
 
 	ActiveOrders(timepoint uint64) (Liqorders, error)
 
+	OrderInfo(orderID string, timepoint uint64) (Liqorderinfo, error)
+
 	Withdraw(
 		token common.Token,
 		amount *big.Int,
