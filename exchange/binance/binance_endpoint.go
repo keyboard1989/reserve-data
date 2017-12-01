@@ -411,6 +411,7 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 					orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
 					executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
 					orders = append(orders, common.Order{
+						ID:          fmt.Sprintf("%s_%s%s", order.OrderId, strings.ToUpper(pair.Base.ID), strings.ToUpper(pair.Quote.ID)),
 						Base:        strings.ToUpper(pair.Base.ID),
 						Quote:       strings.ToUpper(pair.Quote.ID),
 						OrderId:     fmt.Sprintf("%d", order.OrderId),

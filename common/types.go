@@ -137,6 +137,7 @@ type AllBalanceResponse struct {
 }
 
 type Order struct {
+	ID          string `standard id across multiple exchanges`
 	Base        string
 	Quote       string
 	OrderId     string
