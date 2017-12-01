@@ -128,27 +128,6 @@ func (self ReserveData) GetAllRates(timepoint uint64) (common.AllRateResponse, e
 	}
 }
 
-func (self ReserveData) CurrentOrderVersion(timepoint uint64) (common.Version, error) {
-	return self.storage.CurrentOrderVersion(timepoint)
-}
-
-func (self ReserveData) GetAllOrders(timepoint uint64) (common.AllOrderResponse, error) {
-	timestamp := common.GetTimestamp()
-	version, err := self.storage.CurrentOrderVersion(timepoint)
-	if err != nil {
-		return common.AllOrderResponse{}, err
-	} else {
-		result := common.AllOrderResponse{}
-		orders, err := self.storage.GetAllOrders(version)
-		returnTime := common.GetTimestamp()
-		result.Version = version
-		result.Timestamp = timestamp
-		result.ReturnTime = returnTime
-		result.Data = orders
-		return result, err
-	}
-}
-
 func (self ReserveData) GetRecords() ([]common.ActivityRecord, error) {
 	return self.storage.GetAllRecords()
 }

@@ -136,27 +136,6 @@ func (self *HTTPServer) AllEBalances(c *gin.Context) {
 	}
 }
 
-func (self *HTTPServer) AllOrders(c *gin.Context) {
-	log.Printf("Getting all open orders \n")
-	data, err := self.app.GetAllOrders(getTimePoint(c))
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
-		)
-	} else {
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"success":   true,
-				"version":   data.Version,
-				"timestamp": data.Timestamp,
-				"data":      data.Data,
-			},
-		)
-	}
-}
-
 func (self *HTTPServer) GetRate(c *gin.Context) {
 	log.Printf("Getting all rates \n")
 	data, err := self.app.GetAllRates(getTimePoint(c))
@@ -529,7 +508,6 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/prices/:base/:quote", self.Price)
 	self.r.GET("/balances", self.AllBalances)
 	self.r.GET("/ebalances", self.AllEBalances)
-	self.r.GET("/orders", self.AllOrders)
 	self.r.POST("/cancelorder/:exchangeid", self.CancelOrder)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)

@@ -15,7 +15,6 @@ type RamStorage struct {
 	price    *RamPriceStorage
 	balance  *RamBalanceStorage
 	ebalance *RamEBalanceStorage
-	order    *RamOrderStorage
 	rate     *RamRateStorage
 	activity *RamActivityStorage
 }
@@ -25,7 +24,6 @@ func NewRamStorage() *RamStorage {
 		NewRamPriceStorage(),
 		NewRamBalanceStorage(),
 		NewRamEBalanceStorage(),
-		NewRamOrderStorage(),
 		NewRamRateStorage(),
 		NewRamActivityStorage(),
 	}
@@ -51,11 +49,6 @@ func (self *RamStorage) CurrentRateVersion(timepoint uint64) (common.Version, er
 	return common.Version(version), err
 }
 
-func (self *RamStorage) CurrentOrderVersion(timepoint uint64) (common.Version, error) {
-	version, err := self.order.CurrentVersion(timepoint)
-	return common.Version(version), err
-}
-
 func (self *RamStorage) GetAllPrices(version common.Version) (map[common.TokenPairID]common.OnePrice, error) {
 	return self.price.GetAllPrices(int64(version))
 }
@@ -76,10 +69,6 @@ func (self *RamStorage) GetAllRates(version common.Version) (common.AllRateEntry
 	return self.rate.GetRates(int64(version))
 }
 
-func (self *RamStorage) GetAllOrders(version common.Version) (common.AllOrderEntry, error) {
-	return self.order.GetOrders(int64(version))
-}
-
 func (self *RamStorage) StorePrice(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error {
 	return self.price.StoreNewData(data, timepoint)
 }
@@ -94,10 +83,6 @@ func (self *RamStorage) StoreEBalance(data map[common.ExchangeID]common.EBalance
 
 func (self *RamStorage) StoreRate(data common.AllRateEntry, timepoint uint64) error {
 	return self.rate.StoreNewData(data, timepoint)
-}
-
-func (self *RamStorage) StoreOrder(data common.AllOrderEntry, timepoint uint64) error {
-	return self.order.StoreNewData(data, timepoint)
 }
 
 func (self *RamStorage) Record(
