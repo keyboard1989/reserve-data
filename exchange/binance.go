@@ -59,7 +59,8 @@ func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ether
 }
 
 func (self *Binance) CancelOrder(base, quote common.Token, id string) error {
-	idNo, err := strconv.ParseUint(id, 10, 64)
+	idParts := strings.Split(id, "_")
+	idNo, err := strconv.ParseUint(idParts[0], 10, 64)
 	if err != nil {
 		return err
 	}
@@ -222,18 +223,6 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("KNC", "ETH"),
 			common.MustCreateTokenPair("LINK", "ETH"),
 		},
-		map[string]ethereum.Address{
-			"ETH": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"OMG": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"DGD": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"CVC": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"MCO": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"GNT": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"ADX": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"EOS": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"PAY": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"BAT": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-			"KNC": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
-		},
+		map[string]ethereum.Address{},
 	}
 }

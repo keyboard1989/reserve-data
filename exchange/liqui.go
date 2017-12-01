@@ -220,18 +220,6 @@ func NewLiqui(interf LiquiInterface) *Liqui {
 			common.MustCreateTokenPair("BAT", "ETH"),
 			common.MustCreateTokenPair("KNC", "ETH"),
 		},
-		map[string]ethereum.Address{
-			"ETH": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"OMG": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"DGD": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"CVC": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"MCO": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"GNT": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"ADX": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"EOS": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"PAY": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"BAT": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-			"KNC": ethereum.HexToAddress("0x2a1c0e5db761b7f176705c86c4d82fb5797b1834"),
-		},
+		map[string]ethereum.Address{},
 	}
 }
