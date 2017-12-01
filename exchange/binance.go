@@ -60,7 +60,7 @@ func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ether
 
 func (self *Binance) CancelOrder(base, quote common.Token, id string) error {
 	idParts := strings.Split(id, "|")[1]
-	idNo, err := strconv.ParseUint(strings.Split(idParts, "_")[1], 10, 64)
+	idNo, err := strconv.ParseUint(strings.Split(idParts, "_")[0], 10, 64)
 	if err != nil {
 		return err
 	}
