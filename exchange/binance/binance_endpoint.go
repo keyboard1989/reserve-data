@@ -317,7 +317,7 @@ func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint
 	}
 }
 
-func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (ethereum.Hash, error) {
+func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
 	result := exchange.Binawithdraw{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
@@ -342,15 +342,15 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 			err = json.Unmarshal(resp_body, &result)
 		}
 		if err != nil {
-			return ethereum.Hash{}, err
+			return "", err
 		}
 		if result.Success == false {
-			return ethereum.Hash{}, errors.New(result.Message)
+			return "", errors.New(result.Message)
 		}
-		return ethereum.HexToHash("0x" + result.TxHash), nil
+		return result.ID, nil
 	} else {
 		log.Printf("Error: %v, Code: %v\n", err, resp)
-		return ethereum.Hash{}, errors.New("withdraw rejected by Binnace")
+		return "", errors.New("withdraw rejected by Binnace")
 	}
 }
 

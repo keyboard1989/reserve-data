@@ -26,7 +26,7 @@ type BinanceInterface interface {
 		token common.Token,
 		amount *big.Int,
 		address ethereum.Address,
-		timepoint uint64) (ethereum.Hash, error)
+		timepoint uint64) (string, error)
 
 	Trade(
 		tradeType string,

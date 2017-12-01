@@ -55,7 +55,7 @@ func (self *Binance) Trade(tradeType string, base common.Token, quote common.Tok
 
 func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
 	tx, err := self.interf.Withdraw(token, amount, address, timepoint)
-	return tx.Hex(), err
+	return tx, err
 }
 
 func (self *Binance) CancelOrder(base, quote common.Token, id string) error {
@@ -170,7 +170,7 @@ func (self *Binance) DepositStatus(id string, timepoint uint64) (string, error) 
 }
 
 func (self *Binance) WithdrawStatus(id string, timepoint uint64) (string, error) {
-	txID := strings.Split(id, "|")[1]
+	withdrawID := strings.Split(id, "|")[1]
 	startTime := timepoint
 	endTime := timepoint + 86400000
 	withdraws, err := self.interf.WithdrawHistory(startTime, endTime)
@@ -178,7 +178,7 @@ func (self *Binance) WithdrawStatus(id string, timepoint uint64) (string, error)
 		return "", err
 	} else {
 		for _, withdraw := range withdraws.Withdrawals {
-			if withdraw.TxID == txID {
+			if withdraw.ID == withdrawID {
 				if withdraw.Status == 3 || withdraw.Status == 5 || withdraw.Status == 6 {
 					return "done", nil
 				} else {

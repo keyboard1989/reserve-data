@@ -9,7 +9,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
-	"github.com/KyberNetwork/reserve-data/exchange/liqui"
+	// "github.com/KyberNetwork/reserve-data/exchange/liqui"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -46,20 +46,20 @@ func GetConfigForSimulation() *Config {
 
 	fetcherExchanges := []fetcher.Exchange{}
 	// liqui := exchange.NewRealLiqui(fileSigner)
-	liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
-	for tokenID, addr := range addressConfig.Exchanges["liqui"] {
-		liqui.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
-	}
+	// liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
+	// for tokenID, addr := range addressConfig.Exchanges["liqui"] {
+	// 	liqui.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+	// }
 	binance := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(fileSigner))
 	for tokenID, addr := range addressConfig.Exchanges["binance"] {
 		binance.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 	}
 
-	fetcherExchanges = append(fetcherExchanges, liqui)
+	// fetcherExchanges = append(fetcherExchanges, liqui)
 	fetcherExchanges = append(fetcherExchanges, binance)
 
 	exchanges := []common.Exchange{}
-	exchanges = append(exchanges, liqui)
+	// exchanges = append(exchanges, liqui)
 	exchanges = append(exchanges, binance)
 
 	// endpoint := "http://localhost:8545"

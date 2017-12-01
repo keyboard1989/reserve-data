@@ -269,6 +269,8 @@ func (self *Fetcher) fetchAllFromExchanges(timepoint uint64) {
 	go self.fetchAllEBalances(&wait, timepoint)
 	wait.Add(1)
 	go self.fetchAllOrders(&wait, timepoint)
+	wait.Add(1)
+	go self.fetchActivityStatus(&wait, timepoint)
 	log.Printf("Waiting price, balance, order data from exchanges...")
 	wait.Wait()
 }
@@ -277,10 +279,8 @@ func (self *Fetcher) fetchAllFromBlockchain(timepoint uint64) {
 	log.Printf("Fetching data from blockchain...")
 	wait := sync.WaitGroup{}
 	wait.Add(1)
-	self.fetchAllBalances(&wait, timepoint)
+	go self.fetchAllBalances(&wait, timepoint)
 	wait.Add(1)
-	self.fetchAllRates(&wait, timepoint)
-	wait.Add(1)
-	self.fetchActivityStatus(&wait, timepoint)
+	go self.fetchAllRates(&wait, timepoint)
 	wait.Wait()
 }

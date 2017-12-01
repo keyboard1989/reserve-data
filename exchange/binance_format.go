@@ -35,7 +35,7 @@ type Binatrade struct {
 type Binawithdraw struct {
 	Success bool   `json:"success"`
 	Message string `json:"msg"`
-	TxHash  string `json:"id"`
+	ID      string `json:"id"`
 }
 
 type Binaorder struct {
