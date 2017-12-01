@@ -44,8 +44,35 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		// any damn documentation about it!!!
 		req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 	}
-	// log.Printf("Raw Query: %s", q.Encode())
-	// log.Printf("Binance key: %s", self.signer.GetBinanceKey())
+}
+
+func (self *BinanceEndpoint) GetResponse(
+	method string, url string,
+	params map[string]string, signNeeded bool, timepoint uint64) ([]byte, error) {
+
+	client := &http.Client{
+		Timeout: time.Duration(30 * time.Second),
+	}
+	req, _ := http.NewRequest(method, url, nil)
+	req.Header.Add("Accept", "application/json")
+
+	q := req.URL.Query()
+	for k, v := range params {
+		q.Add(k, v)
+	}
+	req.URL.RawQuery = q.Encode()
+	self.fillRequest(req, signNeeded, timepoint)
+	var err error
+	var resp_body []byte
+	resp, err := client.Do(req)
+	if err != nil {
+		return resp_body, err
+	} else {
+		defer resp.Body.Close()
+		resp_body, err = ioutil.ReadAll(resp.Body)
+		log.Printf("response: %s\n", resp_body)
+		return resp_body, err
+	}
 }
 
 func (self *BinanceEndpoint) FetchOnePairData(
@@ -57,63 +84,54 @@ func (self *BinanceEndpoint) FetchOnePairData(
 	defer wg.Done()
 	result := common.ExchangePrice{}
 
-	client := &http.Client{}
-	req, _ := http.NewRequest(
-		"GET",
-		self.interf.PublicEndpoint()+"/api/v1/depth",
-		nil)
-	req.Header.Add("Accept", "application/json")
-
-	q := req.URL.Query()
-	q.Add("symbol", fmt.Sprintf("%s%s", pair.Base.ID, pair.Quote.ID))
-	q.Add("limit", "50")
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, false, timepoint)
-
 	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
-	resp, err := client.Do(req)
 	result.Timestamp = timestamp
 	result.Valid = true
+
+	resp_body, err := self.GetResponse(
+		"GET", self.interf.PublicEndpoint()+"/api/v1/depth",
+		map[string]string{
+			"symbol": fmt.Sprintf("%s%s", pair.Base.ID, pair.Quote.ID),
+			"limit":  "50",
+		},
+		false,
+		timepoint,
+	)
+
+	returnTime := common.GetTimestamp()
+	result.ReturnTime = returnTime
+
 	if err != nil {
 		result.Valid = false
 		result.Error = err.Error()
 	} else {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		returnTime := common.GetTimestamp()
-		result.ReturnTime = returnTime
-		if err != nil {
+		resp_data := exchange.Binaresp{}
+		json.Unmarshal(resp_body, &resp_data)
+		if resp_data.Code != 0 || resp_data.Msg != "" {
 			result.Valid = false
-			result.Error = err.Error()
+			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
 		} else {
-			resp_data := exchange.Binaresp{}
-			json.Unmarshal(resp_body, &resp_data)
-			if resp_data.Code != 0 || resp_data.Msg != "" {
-				result.Valid = false
-				result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
-			} else {
-				for _, buy := range resp_data.Bids {
-					quantity, _ := strconv.ParseFloat(buy[1], 64)
-					rate, _ := strconv.ParseFloat(buy[0], 64)
-					result.Bids = append(
-						result.Bids,
-						common.PriceEntry{
-							quantity,
-							rate,
-						},
-					)
-				}
-				for _, sell := range resp_data.Asks {
-					quantity, _ := strconv.ParseFloat(sell[1], 64)
-					rate, _ := strconv.ParseFloat(sell[0], 64)
-					result.Asks = append(
-						result.Asks,
-						common.PriceEntry{
-							quantity,
-							rate,
-						},
-					)
-				}
+			for _, buy := range resp_data.Bids {
+				quantity, _ := strconv.ParseFloat(buy[1], 64)
+				rate, _ := strconv.ParseFloat(buy[0], 64)
+				result.Bids = append(
+					result.Bids,
+					common.PriceEntry{
+						quantity,
+						rate,
+					},
+				)
+			}
+			for _, sell := range resp_data.Asks {
+				quantity, _ := strconv.ParseFloat(sell[1], 64)
+				rate, _ := strconv.ParseFloat(sell[0], 64)
+				result.Asks = append(
+					result.Asks,
+					common.PriceEntry{
+						quantity,
+						rate,
+					},
+				)
 			}
 		}
 	}
@@ -132,75 +150,58 @@ func (self *BinanceEndpoint) FetchOnePairData(
 // and GTC time in force which means that the order will be active until it's implicitly canceled
 func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (string, float64, float64, bool, error) {
 	result := exchange.Binatrade{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second),
+	symbol := base.ID + quote.ID
+	orderType := "LIMIT"
+	params := map[string]string{
+		"symbol":      symbol,
+		"side":        strings.ToUpper(tradeType),
+		"type":        orderType,
+		"timeInForce": "GTC",
+		"quantity":    strconv.FormatFloat(amount, 'f', -1, 64),
 	}
-	req, _ := http.NewRequest(
+	if orderType == "LIMIT" {
+		params["price"] = strconv.FormatFloat(rate, 'f', -1, 64)
+	}
+	resp_body, err := self.GetResponse(
 		"POST",
 		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
-		nil,
+		params,
+		true,
+		timepoint,
 	)
-	q := req.URL.Query()
-	symbol := base.ID + quote.ID
-	q.Add("symbol", symbol)
-	q.Add("side", strings.ToUpper(tradeType))
-	orderType := "LIMIT"
-	q.Add("type", orderType)
-	q.Add("timeInForce", "GTC")
-	q.Add("quantity", strconv.FormatFloat(amount, 'f', -1, 64))
-	if orderType == "LIMIT" {
-		q.Add("price", strconv.FormatFloat(rate, 'f', -1, 64))
-	}
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, true, timepoint)
-	resp, err := client.Do(req)
-	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", resp_body)
-		if err == nil {
-			err = json.Unmarshal(resp_body, &result)
-		}
+
+	if err != nil {
+		log.Printf("Error: %s", err)
+		return "", 0, 0, false, err
 	} else {
-		log.Printf("Error: %v, Code: %v\n", err, resp)
+		json.Unmarshal(resp_body, &result)
+		done, remaining, finished, err := self.QueryOrder(
+			base.ID+quote.ID,
+			result.OrderID,
+			timepoint+20,
+		)
+		id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
+		return id, done, remaining, finished, err
 	}
-	done, remaining, finished, err := self.QueryOrder(
-		base.ID+quote.ID,
-		result.OrderID,
-		timepoint+20,
-	)
-	id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
-	return id, done, remaining, finished, err
 }
 
 func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchange.Binawithdrawals, error) {
 	result := exchange.Binawithdrawals{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second),
-	}
-	req, _ := http.NewRequest(
+	timepoint := common.GetTimepoint()
+	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/withdrawHistory.html",
-		nil,
+		map[string]string{
+			"startTime": fmt.Sprintf("%d", startTime),
+			"endTime":   fmt.Sprintf("%d", endTime),
+		},
+		true,
+		timepoint,
 	)
-	q := req.URL.Query()
-	q.Add("startTime", fmt.Sprintf("%d", startTime))
-	q.Add("endTime", fmt.Sprintf("%d", startTime))
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, true, common.GetTimepoint())
-	var resp_body []byte
-	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err = ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", resp_body)
-		if err == nil {
-			err = json.Unmarshal(resp_body, &result)
-			if err == nil {
-				if !result.Success {
-					err = errors.New("Getting withdraw history from Binance failed: " + result.Msg)
-				}
-			}
+		json.Unmarshal(resp_body, &result)
+		if !result.Success {
+			err = errors.New("Getting withdraw history from Binance failed: " + result.Msg)
 		}
 	}
 	return result, err
@@ -208,32 +209,21 @@ func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchang
 
 func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange.Binadeposits, error) {
 	result := exchange.Binadeposits{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second),
-	}
-	req, _ := http.NewRequest(
+	timepoint := common.GetTimepoint()
+	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/depositHistory.html",
-		nil,
+		map[string]string{
+			"startTime": fmt.Sprintf("%d", startTime),
+			"endTime":   fmt.Sprintf("%d", endTime),
+		},
+		true,
+		timepoint,
 	)
-	q := req.URL.Query()
-	q.Add("startTime", fmt.Sprintf("%d", startTime))
-	q.Add("endTime", fmt.Sprintf("%d", startTime))
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, true, common.GetTimepoint())
-	var resp_body []byte
-	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err = ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", resp_body)
-		if err == nil {
-			err = json.Unmarshal(resp_body, &result)
-			if err == nil {
-				if !result.Success {
-					err = errors.New("Getting deposit history from Binance failed: " + result.Msg)
-				}
-			}
+		err = json.Unmarshal(resp_body, &result)
+		if !result.Success {
+			err = errors.New("Getting deposit history from Binance failed: " + result.Msg)
 		}
 	}
 	return result, err
@@ -241,32 +231,20 @@ func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange
 
 func (self *BinanceEndpoint) CancelOrder(base, quote common.Token, id uint64) (exchange.Binacancel, error) {
 	result := exchange.Binacancel{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second),
-	}
-	req, _ := http.NewRequest(
+	resp_body, err := self.GetResponse(
 		"DELETE",
 		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
-		nil,
+		map[string]string{
+			"symbol":  base.ID + quote.ID,
+			"orderId": fmt.Sprintf("%d", id),
+		},
+		true,
+		common.GetTimepoint(),
 	)
-	q := req.URL.Query()
-	q.Add("symbol", base.ID+quote.ID)
-	q.Add("orderId", fmt.Sprintf("%d", id))
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, true, common.GetTimepoint())
-	var resp_body []byte
-	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err = ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", resp_body)
-		if err == nil {
-			err = json.Unmarshal(resp_body, &result)
-			if err == nil {
-				if result.Code != 0 {
-					err = errors.New("Canceling order from Binance failed: " + result.Msg)
-				}
-			}
+		json.Unmarshal(resp_body, &result)
+		if result.Code != 0 {
+			err = errors.New("Canceling order from Binance failed: " + result.Msg)
 		}
 	}
 	return result, err
@@ -274,36 +252,23 @@ func (self *BinanceEndpoint) CancelOrder(base, quote common.Token, id uint64) (e
 
 func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64, timepoint uint64) (exchange.Binaorder, error) {
 	result := exchange.Binaorder{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second),
-	}
-	req, _ := http.NewRequest(
+	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
-		nil,
+		map[string]string{
+			"symbol":  symbol,
+			"orderId": fmt.Sprintf("%d", id),
+		},
+		true,
+		timepoint,
 	)
-	q := req.URL.Query()
-	q.Add("symbol", symbol)
-	q.Add("orderId", fmt.Sprintf("%d", id))
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, true, timepoint)
-	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", resp_body)
-		if err != nil {
-			return result, err
-		} else {
-			err = json.Unmarshal(resp_body, &result)
-			if result.Code != 0 {
-				err = errors.New(result.Message)
-			}
-			return result, err
+		json.Unmarshal(resp_body, &result)
+		if result.Code != 0 {
+			err = errors.New(result.Message)
 		}
-	} else {
-		return result, err
 	}
+	return result, err
 }
 
 func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
@@ -319,62 +284,40 @@ func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint
 
 func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
 	result := exchange.Binawithdraw{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second),
-	}
-	req, _ := http.NewRequest(
+	resp_body, err := self.GetResponse(
 		"POST",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/withdraw.html",
-		nil,
+		map[string]string{
+			"asset":   token.ID,
+			"address": address.Hex(),
+			"amount":  strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
+		},
+		true,
+		timepoint,
 	)
-	q := req.URL.Query()
-	q.Add("asset", token.ID)
-	q.Add("address", address.Hex())
-	q.Add("amount", strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64))
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, true, timepoint)
-	resp, err := client.Do(req)
-	if err == nil && resp.StatusCode == 200 {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", resp_body)
-		if err == nil {
-			err = json.Unmarshal(resp_body, &result)
-		}
-		if err != nil {
-			return "", err
-		}
+	if err == nil {
+		json.Unmarshal(resp_body, &result)
 		if result.Success == false {
 			return "", errors.New(result.Message)
 		}
 		return result.ID, nil
 	} else {
-		log.Printf("Error: %v, Code: %v\n", err, resp)
+		log.Printf("Error: %v", err)
 		return "", errors.New("withdraw rejected by Binnace")
 	}
 }
 
 func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error) {
 	result := exchange.Binainfo{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second)}
-	req, _ := http.NewRequest(
+	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/api/v3/account",
-		nil)
-	self.fillRequest(req, true, timepoint)
-	resp, err := client.Do(req)
+		map[string]string{},
+		true,
+		timepoint,
+	)
 	if err == nil {
-		if resp.StatusCode == 200 {
-			defer resp.Body.Close()
-			resp_body, err := ioutil.ReadAll(resp.Body)
-			log.Printf("Binance get balances: %s", string(resp_body))
-			if err == nil {
-				json.Unmarshal(resp_body, &result)
-			}
-		} else {
-			err = errors.New("Unsuccessful response from Binance: Status " + resp.Status)
-		}
+		json.Unmarshal(resp_body, &result)
 	}
 	return result, err
 }
@@ -387,83 +330,60 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 
 	defer wg.Done()
 	result := exchange.Binaorders{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second)}
-	req, _ := http.NewRequest(
+	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/api/v3/openOrders",
-		nil)
-	q := req.URL.Query()
-	q.Add("symbol", pair.Base.ID+pair.Quote.ID)
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, true, timepoint)
-	resp, err := client.Do(req)
+		map[string]string{
+			"symbol": pair.Base.ID + pair.Quote.ID,
+		},
+		true,
+		timepoint,
+	)
 	if err == nil {
-		if resp.StatusCode == 200 {
-			defer resp.Body.Close()
-			resp_body, err := ioutil.ReadAll(resp.Body)
-			log.Printf("Binance get open orders for %s: %s", pair.PairID(), string(resp_body))
-			if err == nil {
-				json.Unmarshal(resp_body, &result)
-				orders := []common.Order{}
-				for _, order := range result {
-					price, _ := strconv.ParseFloat(order.Price, 64)
-					orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
-					executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
-					orders = append(orders, common.Order{
-						ID:          fmt.Sprintf("%s_%s%s", order.OrderId, strings.ToUpper(pair.Base.ID), strings.ToUpper(pair.Quote.ID)),
-						Base:        strings.ToUpper(pair.Base.ID),
-						Quote:       strings.ToUpper(pair.Quote.ID),
-						OrderId:     fmt.Sprintf("%d", order.OrderId),
-						Price:       price,
-						OrigQty:     orgQty,
-						ExecutedQty: executedQty,
-						TimeInForce: order.TimeInForce,
-						Type:        order.Type,
-						Side:        order.Side,
-						StopPrice:   order.StopPrice,
-						IcebergQty:  order.IcebergQty,
-						Time:        order.Time,
-					})
-				}
-				data.Store(pair.PairID(), orders)
-			}
-		} else {
-			err = errors.New("Unsuccessful response from Binance: Status " + resp.Status)
+		json.Unmarshal(resp_body, &result)
+		orders := []common.Order{}
+		for _, order := range result {
+			price, _ := strconv.ParseFloat(order.Price, 64)
+			orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
+			executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
+			orders = append(orders, common.Order{
+				ID:          fmt.Sprintf("%s_%s%s", order.OrderId, strings.ToUpper(pair.Base.ID), strings.ToUpper(pair.Quote.ID)),
+				Base:        strings.ToUpper(pair.Base.ID),
+				Quote:       strings.ToUpper(pair.Quote.ID),
+				OrderId:     fmt.Sprintf("%d", order.OrderId),
+				Price:       price,
+				OrigQty:     orgQty,
+				ExecutedQty: executedQty,
+				TimeInForce: order.TimeInForce,
+				Type:        order.Type,
+				Side:        order.Side,
+				StopPrice:   order.StopPrice,
+				IcebergQty:  order.IcebergQty,
+				Time:        order.Time,
+			})
 		}
+		data.Store(pair.PairID(), orders)
+	} else {
+		log.Printf("Unsuccessful response from Binance: %s", err)
 	}
 }
 
 func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepositaddress, error) {
 	result := exchange.Binadepositaddress{}
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second)}
-	req, _ := http.NewRequest(
+	timepoint := common.GetTimepoint()
+	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/depositAddress.html",
-		nil)
-	timepoint := common.GetTimepoint()
-	q := req.URL.Query()
-	q.Add("asset", asset)
-	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, true, timepoint)
-	log.Printf("Request to binance: %s", req.URL)
-	log.Printf("Header for Request to binance: %s", req.Header)
-	resp, err := client.Do(req)
-	var resp_body []byte
+		map[string]string{
+			"asset": asset,
+		},
+		true,
+		timepoint,
+	)
 	if err == nil {
-		if resp.StatusCode == 200 {
-			defer resp.Body.Close()
-			resp_body, err = ioutil.ReadAll(resp.Body)
-			log.Printf("Binance get balances: %s", string(resp_body))
-			if err == nil {
-				err = json.Unmarshal(resp_body, &result)
-				if !result.Success {
-					err = errors.New(result.Msg)
-				}
-			}
-		} else {
-			err = errors.New("Unsuccessful response from Binance: Status " + resp.Status)
+		err = json.Unmarshal(resp_body, &result)
+		if !result.Success {
+			err = errors.New(result.Msg)
 		}
 	}
 	return result, err
