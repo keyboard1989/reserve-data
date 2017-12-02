@@ -386,7 +386,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success": true,
-			"txhash":  id,
+			"id":      id,
 		},
 	)
 }

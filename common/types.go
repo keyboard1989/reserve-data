@@ -1,7 +1,6 @@
 package common
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -49,32 +48,39 @@ func (self ActivityID) MarshalText() ([]byte, error) {
 	return []byte(fmt.Sprintf("%s|%s", strconv.FormatUint(self.Timepoint, 10), self.EID)), nil
 }
 
-func (self ActivityID) MarshalJSON() ([]byte, error) {
-	return self.MarshalText()
+func (self *ActivityID) UnmarshalText(b []byte) error {
+	id, err := StringToActivityID(string(b))
+	if err != nil {
+		return err
+	} else {
+		self.Timepoint = id.Timepoint
+		self.EID = id.EID
+		return nil
+	}
 }
 
-func (self *ActivityID) UnmarshalJSON(data []byte) error {
-	parts := strings.Split("|", string(data))
+func (self ActivityID) String() string {
+	res, _ := self.MarshalText()
+	return string(res)
+}
+
+func StringToActivityID(id string) (ActivityID, error) {
+	result := ActivityID{}
+	parts := strings.Split(id, "|")
 	if len(parts) < 2 {
-		return errors.New("Invalid activity id")
+		return result, errors.New("Invalid activity id")
 	} else {
 		timeStr := parts[0]
 		eid := strings.Join(parts[1:], "|")
 		timepoint, err := strconv.ParseUint(timeStr, 10, 64)
 		if err != nil {
-			return err
+			return result, err
 		} else {
-			self.Timepoint = timepoint
-			self.EID = eid
-			return nil
+			result.Timepoint = timepoint
+			result.EID = eid
+			return result, nil
 		}
 	}
-}
-
-func StringToActivityID(id string) (ActivityID, error) {
-	result := ActivityID{}
-	err := json.Unmarshal([]byte(id), &result)
-	return result, err
 }
 
 func NewActivityID(t uint64, id string) ActivityID {
