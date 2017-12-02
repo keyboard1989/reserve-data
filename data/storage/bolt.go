@@ -292,7 +292,7 @@ func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) e
 
 func (self *BoltStorage) Record(
 	action string,
-	id string,
+	id common.ActivityID,
 	destination string,
 	params map[string]interface{}, result map[string]interface{},
 	status string,
@@ -315,13 +315,14 @@ func (self *BoltStorage) Record(
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(id), dataJson)
+		idByte, _ := id.MarshalText()
+		err = b.Put(idByte, dataJson)
 		if err != nil {
 			return err
 		}
 		if status == "submitted" {
 			pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
-			err = pb.Put([]byte(id), dataJson)
+			err = pb.Put(idByte, dataJson)
 		}
 		return err
 	})

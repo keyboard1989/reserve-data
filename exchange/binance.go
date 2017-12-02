@@ -149,10 +149,10 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	return result, nil
 }
 
-func (self *Binance) DepositStatus(id string, timepoint uint64) (string, error) {
-	txID := strings.Split(id, "|")[1]
-	startTime := timepoint
-	endTime := timepoint + 86400000
+func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
+	txID := id.EID
+	startTime := timepoint - 86400000
+	endTime := timepoint
 	deposits, err := self.interf.DepositHistory(startTime, endTime)
 	if err != nil || !deposits.Success {
 		return "", err
@@ -170,10 +170,10 @@ func (self *Binance) DepositStatus(id string, timepoint uint64) (string, error) 
 	}
 }
 
-func (self *Binance) WithdrawStatus(id string, timepoint uint64) (string, error) {
-	withdrawID := strings.Split(id, "|")[1]
-	startTime := timepoint
-	endTime := timepoint + 86400000
+func (self *Binance) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, error) {
+	withdrawID := id.EID
+	startTime := timepoint - 86400000
+	endTime := timepoint
 	withdraws, err := self.interf.WithdrawHistory(startTime, endTime)
 	if err != nil || !withdraws.Success {
 		return "", err
@@ -191,9 +191,8 @@ func (self *Binance) WithdrawStatus(id string, timepoint uint64) (string, error)
 	}
 }
 
-func (self *Binance) OrderStatus(id string, timepoint uint64) (string, error) {
-	// if this crashes, it means core put malformed activity ID
-	tradeID := strings.Split(id, "|")[1]
+func (self *Binance) OrderStatus(id common.ActivityID, timepoint uint64) (string, error) {
+	tradeID := id.EID
 	parts := strings.Split(tradeID, "_")
 	orderID, err := strconv.ParseUint(parts[0], 10, 64)
 	if err != nil {
