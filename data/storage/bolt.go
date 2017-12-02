@@ -367,16 +367,17 @@ func (self *BoltStorage) GetPendingActivities() ([]common.ActivityRecord, error)
 	return result, err
 }
 
-func (self *BoltStorage) UpdateActivityStatus(action string, id string, destination string, status string) error {
+func (self *BoltStorage) UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
-		err = pb.Delete([]byte(id))
+		idBytes, _ := id.MarshalText()
+		err = pb.Delete(idBytes)
 		if err != nil {
 			return err
 		}
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
-		dataJson := b.Get([]byte(id))
+		dataJson := b.Get(idBytes)
 		record := common.ActivityRecord{}
 		err = json.Unmarshal(dataJson, &record)
 		if err != nil {
@@ -387,7 +388,7 @@ func (self *BoltStorage) UpdateActivityStatus(action string, id string, destinat
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(id), dataJson)
+		err = b.Put(idBytes, dataJson)
 		return err
 	})
 	return err

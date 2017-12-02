@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -68,6 +69,12 @@ func (self *ActivityID) UnmarshalJSON(data []byte) error {
 			return nil
 		}
 	}
+}
+
+func StringToActivityID(id string) (ActivityID, error) {
+	result := ActivityID{}
+	err := json.Unmarshal([]byte(id), &result)
+	return result, err
 }
 
 func NewActivityID(t uint64, id string) ActivityID {

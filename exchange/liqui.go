@@ -64,13 +64,13 @@ func (self *Liqui) Withdraw(token common.Token, amount *big.Int, address ethereu
 	return uuid.NewV4().String(), err
 }
 
-func (self *Liqui) CancelOrder(base, quote common.Token, id string) error {
-	result, err := self.interf.CancelOrder(id)
+func (self *Liqui) CancelOrder(id common.ActivityID) error {
+	result, err := self.interf.CancelOrder(id.EID)
 	if err != nil {
 		return err
 	}
 	if result.Success != 1 {
-		return errors.New("Couldn't cancel order id " + id + " err: " + result.Error)
+		return errors.New("Couldn't cancel order id " + id.EID + " err: " + result.Error)
 	}
 	return nil
 }

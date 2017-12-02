@@ -29,12 +29,12 @@ func NewReserveCore(
 	}
 }
 
-func timebasedID(id string) string {
-	return strconv.Itoa(int(time.Now().UnixNano())) + "|" + id
+func timebasedID(id string) common.ActivityID {
+	return common.NewActivityID(uint64(time.Now().UnixNano()), id)
 }
 
-func (self ReserveCore) CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error {
-	return exchange.CancelOrder(base, quote, id)
+func (self ReserveCore) CancelOrder(id common.ActivityID, exchange common.Exchange) error {
+	return exchange.CancelOrder(id)
 }
 
 func (self ReserveCore) Trade(
@@ -44,9 +44,9 @@ func (self ReserveCore) Trade(
 	quote common.Token,
 	rate float64,
 	amount float64,
-	timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
+	timepoint uint64) (common.ActivityID, float64, float64, bool, error) {
 
-	id, done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+	id, done, remaining, finished, err := exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
 	var status string
 	if err != nil {
 		status = "failed"
@@ -97,7 +97,7 @@ func (self ReserveCore) Deposit(
 	exchange common.Exchange,
 	token common.Token,
 	amount *big.Int,
-	timepoint uint64) (ethereum.Hash, error) {
+	timepoint uint64) (common.ActivityID, error) {
 
 	address, supported := exchange.Address(token)
 	tx := ethereum.Hash{}
@@ -114,9 +114,10 @@ func (self ReserveCore) Deposit(
 	} else {
 		status = "submitted"
 	}
+	uid := timebasedID(tx.Hex())
 	go self.activityStorage.Record(
 		"deposit",
-		timebasedID(tx.Hex()),
+		uid,
 		string(exchange.ID()),
 		map[string]interface{}{
 			"exchange":  exchange,
@@ -134,12 +135,12 @@ func (self ReserveCore) Deposit(
 		"Core ----------> Deposit to %s: token: %s, amount: %d, timestamp: %d ==> Result: tx: %s, error: %s",
 		exchange.ID(), token.ID, amount.Uint64(), timepoint, tx.Hex(), err,
 	)
-	return tx, err
+	return uid, err
 }
 
 func (self ReserveCore) Withdraw(
 	exchange common.Exchange, token common.Token,
-	amount *big.Int, timepoint uint64) (string, error) {
+	amount *big.Int, timepoint uint64) (common.ActivityID, error) {
 
 	_, supported := exchange.Address(token)
 	var err error
@@ -155,9 +156,10 @@ func (self ReserveCore) Withdraw(
 	} else {
 		status = "submitted"
 	}
+	uid := timebasedID(id)
 	go self.activityStorage.Record(
 		"withdraw",
-		timebasedID(id),
+		uid,
 		string(exchange.ID()),
 		map[string]interface{}{
 			"exchange":  exchange,
@@ -175,14 +177,14 @@ func (self ReserveCore) Withdraw(
 		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: id: %s, error: %s",
 		exchange.ID(), token.ID, amount.Uint64(), timepoint, id, err,
 	)
-	return id, err
+	return uid, err
 }
 
 func (self ReserveCore) SetRates(
 	sources []common.Token,
 	dests []common.Token,
 	rates []*big.Int,
-	expiryBlocks []*big.Int) (ethereum.Hash, error) {
+	expiryBlocks []*big.Int) (common.ActivityID, error) {
 
 	lensources := len(sources)
 	lendests := len(dests)
@@ -209,9 +211,10 @@ func (self ReserveCore) SetRates(
 	} else {
 		status = "submitted"
 	}
+	uid := timebasedID(tx.Hex())
 	go self.activityStorage.Record(
 		"set_rates",
-		timebasedID(tx.Hex()),
+		uid,
 		"blockchain",
 		map[string]interface{}{
 			"sources":      sources,
@@ -229,5 +232,5 @@ func (self ReserveCore) SetRates(
 		"Core ----------> Set rates: ==> Result: tx: %s, error: %s",
 		tx.Hex(), err,
 	)
-	return tx, err
+	return uid, err
 }

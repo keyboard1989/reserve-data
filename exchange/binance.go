@@ -58,18 +58,19 @@ func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ether
 	return tx, err
 }
 
-func (self *Binance) CancelOrder(base, quote common.Token, id string) error {
-	idParts := strings.Split(id, "|")[1]
-	idNo, err := strconv.ParseUint(strings.Split(idParts, "_")[0], 10, 64)
+func (self *Binance) CancelOrder(id common.ActivityID) error {
+	idParts := strings.Split(id.EID, "_")
+	idNo, err := strconv.ParseUint(idParts[0], 10, 64)
 	if err != nil {
 		return err
 	}
-	result, err := self.interf.CancelOrder(base, quote, idNo)
+	symbol := idParts[1]
+	result, err := self.interf.CancelOrder(symbol, idNo)
 	if err != nil {
 		return err
 	}
 	if result.Code != 0 {
-		return errors.New("Couldn't cancel order id " + id + " err: " + result.Msg)
+		return errors.New("Couldn't cancel order id " + id.EID + " err: " + result.Msg)
 	}
 	return nil
 }
