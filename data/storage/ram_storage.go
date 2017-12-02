@@ -87,7 +87,7 @@ func (self *RamStorage) StoreRate(data common.AllRateEntry, timepoint uint64) er
 
 func (self *RamStorage) Record(
 	action string,
-	id string,
+	id common.ActivityID,
 	destination string,
 	params map[string]interface{}, result map[string]interface{},
 	status string,
@@ -106,6 +106,6 @@ func (self *RamStorage) GetPendingActivities() ([]common.ActivityRecord, error) 
 	return self.activity.GetPendingRecords()
 }
 
-func (self *RamStorage) UpdateActivityStatus(action string, id string, destination string, status string) error {
+func (self *RamStorage) UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error {
 	return self.activity.UpdateActivityStatus(action, id, destination, status)
 }

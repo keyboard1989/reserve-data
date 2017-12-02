@@ -1,9 +1,11 @@
 package common
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -37,9 +39,57 @@ func NewTokenPairID(base, quote string) TokenPairID {
 
 type ExchangeID string
 
+type ActivityID struct {
+	Timepoint uint64
+	EID       string
+}
+
+func (self ActivityID) MarshalText() ([]byte, error) {
+	return []byte(fmt.Sprintf("%s|%s", strconv.FormatUint(self.Timepoint, 10), self.EID)), nil
+}
+
+func (self *ActivityID) UnmarshalText(b []byte) error {
+	id, err := StringToActivityID(string(b))
+	if err != nil {
+		return err
+	} else {
+		self.Timepoint = id.Timepoint
+		self.EID = id.EID
+		return nil
+	}
+}
+
+func (self ActivityID) String() string {
+	res, _ := self.MarshalText()
+	return string(res)
+}
+
+func StringToActivityID(id string) (ActivityID, error) {
+	result := ActivityID{}
+	parts := strings.Split(id, "|")
+	if len(parts) < 2 {
+		return result, errors.New("Invalid activity id")
+	} else {
+		timeStr := parts[0]
+		eid := strings.Join(parts[1:], "|")
+		timepoint, err := strconv.ParseUint(timeStr, 10, 64)
+		if err != nil {
+			return result, err
+		} else {
+			result.Timepoint = timepoint
+			result.EID = eid
+			return result, nil
+		}
+	}
+}
+
+func NewActivityID(t uint64, id string) ActivityID {
+	return ActivityID{t, id}
+}
+
 type ActivityRecord struct {
 	Action      string
-	ID          string
+	ID          ActivityID
 	Destination string
 	Params      map[string]interface{}
 	Result      map[string]interface{}

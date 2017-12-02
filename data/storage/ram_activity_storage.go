@@ -38,7 +38,7 @@ func activitiesFromList(l *list.List) []common.ActivityRecord {
 
 func (self *RamActivityStorage) StoreNewData(
 	action string,
-	id string,
+	id common.ActivityID,
 	destination string,
 	params map[string]interface{}, result map[string]interface{},
 	status string,
@@ -64,7 +64,7 @@ func (self *RamActivityStorage) StoreNewData(
 	return nil
 }
 
-func (self *RamActivityStorage) UpdateActivityStatus(action string, id string, destination string, status string) error {
+func (self *RamActivityStorage) UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
 	ele := self.pendingRecords.Back()

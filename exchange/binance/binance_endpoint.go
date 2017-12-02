@@ -229,13 +229,13 @@ func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange
 	return result, err
 }
 
-func (self *BinanceEndpoint) CancelOrder(base, quote common.Token, id uint64) (exchange.Binacancel, error) {
+func (self *BinanceEndpoint) CancelOrder(symbol string, id uint64) (exchange.Binacancel, error) {
 	result := exchange.Binacancel{}
 	resp_body, err := self.GetResponse(
 		"DELETE",
 		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
 		map[string]string{
-			"symbol":  base.ID + quote.ID,
+			"symbol":  symbol,
 			"orderId": fmt.Sprintf("%d", id),
 		},
 		true,

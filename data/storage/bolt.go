@@ -292,7 +292,7 @@ func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) e
 
 func (self *BoltStorage) Record(
 	action string,
-	id string,
+	id common.ActivityID,
 	destination string,
 	params map[string]interface{}, result map[string]interface{},
 	status string,
@@ -315,13 +315,14 @@ func (self *BoltStorage) Record(
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(id), dataJson)
+		idByte, _ := id.MarshalText()
+		err = b.Put(idByte, dataJson)
 		if err != nil {
 			return err
 		}
 		if status == "submitted" {
 			pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
-			err = pb.Put([]byte(id), dataJson)
+			err = pb.Put(idByte, dataJson)
 		}
 		return err
 	})
@@ -366,16 +367,17 @@ func (self *BoltStorage) GetPendingActivities() ([]common.ActivityRecord, error)
 	return result, err
 }
 
-func (self *BoltStorage) UpdateActivityStatus(action string, id string, destination string, status string) error {
+func (self *BoltStorage) UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
-		err = pb.Delete([]byte(id))
+		idBytes, _ := id.MarshalText()
+		err = pb.Delete(idBytes)
 		if err != nil {
 			return err
 		}
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
-		dataJson := b.Get([]byte(id))
+		dataJson := b.Get(idBytes)
 		record := common.ActivityRecord{}
 		err = json.Unmarshal(dataJson, &record)
 		if err != nil {
@@ -386,7 +388,7 @@ func (self *BoltStorage) UpdateActivityStatus(action string, id string, destinat
 		if err != nil {
 			return err
 		}
-		err = b.Put([]byte(id), dataJson)
+		err = b.Put(idBytes, dataJson)
 		return err
 	})
 	return err

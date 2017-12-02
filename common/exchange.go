@@ -13,7 +13,7 @@ type Exchange interface {
 	Address(token Token) (address ethereum.Address, supported bool)
 	Withdraw(token Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error)
 	Trade(tradeType string, base Token, quote Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error)
-	CancelOrder(base, quote Token, id string) error
+	CancelOrder(id ActivityID) error
 	MarshalText() (text []byte, err error)
 }
 

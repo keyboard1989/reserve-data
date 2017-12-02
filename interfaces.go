@@ -2,7 +2,6 @@ package reserve
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"
-	ethereum "github.com/ethereum/go-ethereum/common"
 	"math/big"
 )
 
@@ -37,24 +36,24 @@ type ReserveCore interface {
 		quote common.Token,
 		rate float64,
 		amount float64,
-		timestamp uint64) (id string, done float64, remaining float64, finished bool, err error)
+		timestamp uint64) (id common.ActivityID, done float64, remaining float64, finished bool, err error)
 
 	Deposit(
 		exchange common.Exchange,
 		token common.Token,
 		amount *big.Int,
-		timestamp uint64) (ethereum.Hash, error)
+		timestamp uint64) (common.ActivityID, error)
 
 	Withdraw(
 		exchange common.Exchange,
 		token common.Token,
 		amount *big.Int,
-		timestamp uint64) (string, error)
+		timestamp uint64) (common.ActivityID, error)
 
-	CancelOrder(base, quote common.Token, id string, exchange common.Exchange) error
+	CancelOrder(id common.ActivityID, exchange common.Exchange) error
 
 	// blockchain related action
-	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (ethereum.Hash, error)
+	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (common.ActivityID, error)
 
 	// action: ['deposit', 'withdraw', 'setrate', 'order']
 	// id: ID of the action, for deposit and setrate, it should be tx hash, for withdraw, order, it should be id returned

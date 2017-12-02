@@ -212,7 +212,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 			expiryBlocks = append(expiryBlocks, r)
 		}
 	}
-	hash, err := self.core.SetRates(sourceTokens, destTokens, bigRates, expiryBlocks)
+	id, err := self.core.SetRates(sourceTokens, destTokens, bigRates, expiryBlocks)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -224,7 +224,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 			http.StatusOK,
 			gin.H{
 				"success": true,
-				"hash":    hash.Hex(),
+				"id":      id,
 			},
 		)
 	}
@@ -309,8 +309,6 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 
 func (self *HTTPServer) CancelOrder(c *gin.Context) {
 	exchangeParam := c.Param("exchangeid")
-	baseParam := c.PostForm("base")
-	quoteParam := c.PostForm("quote")
 	id := c.PostForm("order_id")
 
 	exchange, err := common.GetExchange(exchangeParam)
@@ -321,24 +319,16 @@ func (self *HTTPServer) CancelOrder(c *gin.Context) {
 		)
 		return
 	}
-	base, err := common.GetToken(baseParam)
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
-		)
-		return
-	}
-	quote, err := common.GetToken(quoteParam)
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
-		)
-		return
-	}
 	log.Printf("Cancel order id: %s from %s\n", id, exchange.ID())
-	err = self.core.CancelOrder(base, quote, id, exchange)
+	activityID, err := common.StringToActivityID(id)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	err = self.core.CancelOrder(activityID, exchange)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -396,7 +386,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success": true,
-			"txhash":  id,
+			"id":      id,
 		},
 	)
 }
@@ -431,7 +421,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 		return
 	}
 	log.Printf("Depositing %s %s to %s\n", amount.Text(10), token.ID, exchange.ID())
-	hash, err := self.core.Deposit(exchange, token, amount, getTimePoint(c))
+	id, err := self.core.Deposit(exchange, token, amount, getTimePoint(c))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -443,7 +433,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success": true,
-			"hash":    hash.Hex(),
+			"id":      id,
 		},
 	)
 }

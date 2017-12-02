@@ -11,5 +11,5 @@ type Storage interface {
 	StoreRate(data common.AllRateEntry, timepoint uint64) error
 
 	GetPendingActivities() ([]common.ActivityRecord, error)
-	UpdateActivityStatus(action string, id string, destination string, status string) error
+	UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error
 }
