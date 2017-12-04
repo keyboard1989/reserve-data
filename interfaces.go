@@ -54,10 +54,4 @@ type ReserveCore interface {
 
 	// blockchain related action
 	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (common.ActivityID, error)
-
-	// action: ['deposit', 'withdraw', 'setrate', 'order']
-	// id: ID of the action, for deposit and setrate, it should be tx hash, for withdraw, order, it should be id returned
-	// from the exchanges
-	// return string: should be in ["", "submitted", "mined", "done", "failed"]
-	// ActivityStatus(action string, id string, destination string) (string, error)
 }
