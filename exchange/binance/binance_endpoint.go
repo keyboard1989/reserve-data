@@ -64,6 +64,7 @@ func (self *BinanceEndpoint) GetResponse(
 	self.fillRequest(req, signNeeded, timepoint)
 	var err error
 	var resp_body []byte
+	log.Printf("request: %s\n", req.URL.RawQuery)
 	resp, err := client.Do(req)
 	if err != nil {
 		return resp_body, err
