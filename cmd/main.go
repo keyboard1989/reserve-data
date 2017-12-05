@@ -38,6 +38,10 @@ func main() {
 
 	var config *Config
 	switch os.Getenv("KYBER_ENV") {
+	case "mainnet", "production":
+		log.Printf("Running in simulation mode")
+		config = GetConfigForMainnet()
+		break
 	case "simulation":
 		log.Printf("Running in simulation mode")
 		config = GetConfigForSimulation()
