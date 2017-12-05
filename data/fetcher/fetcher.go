@@ -51,7 +51,7 @@ func (self *Fetcher) fetchingFromExchanges() {
 	for {
 		log.Printf("waiting for signal from runner for exchange ticker")
 		t := <-self.runner.GetExchangeTicker()
-		log.Printf("got signal in exchange ticker")
+		log.Printf("got signal in exchange ticker with timestamp %d", common.TimeToTimepoint(t))
 		self.fetchAllFromExchanges(common.TimeToTimepoint(t))
 		log.Printf("fetched data from exchanges")
 	}
