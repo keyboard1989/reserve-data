@@ -25,11 +25,17 @@ type HTTPServer struct {
 
 const MAX_TIMESPOT uint64 = 18446744073709551615
 
-func getTimePoint(c *gin.Context) uint64 {
+func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 	timestamp := c.DefaultQuery("timestamp", "")
 	if timestamp == "" {
-		log.Printf("Interpreted timestamp(%s) to default - %s\n", timestamp, MAX_TIMESPOT)
-		return MAX_TIMESPOT
+		if useDefault {
+			log.Printf("Interpreted timestamp to default - %d\n", MAX_TIMESPOT)
+			return MAX_TIMESPOT
+		} else {
+			timepoint := common.GetTimepoint()
+			log.Printf("Interpreted timestamp to current time - %d\n", timepoint)
+			return uint64(timepoint)
+		}
 	} else {
 		timepoint, err := strconv.ParseUint(timestamp, 10, 64)
 		if err != nil {
@@ -44,7 +50,7 @@ func getTimePoint(c *gin.Context) uint64 {
 
 func (self *HTTPServer) AllPrices(c *gin.Context) {
 	log.Printf("Getting all prices \n")
-	data, err := self.app.GetAllPrices(getTimePoint(c))
+	data, err := self.app.GetAllPrices(getTimePoint(c, true))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -74,7 +80,7 @@ func (self *HTTPServer) Price(c *gin.Context) {
 			gin.H{"success": false, "reason": "Token pair is not supported"},
 		)
 	} else {
-		data, err := self.app.GetOnePrice(pair.PairID(), getTimePoint(c))
+		data, err := self.app.GetOnePrice(pair.PairID(), getTimePoint(c, true))
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -96,7 +102,7 @@ func (self *HTTPServer) Price(c *gin.Context) {
 
 func (self *HTTPServer) AllBalances(c *gin.Context) {
 	log.Printf("Getting all balances \n")
-	data, err := self.app.GetAllBalances(getTimePoint(c))
+	data, err := self.app.GetAllBalances(getTimePoint(c, true))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -117,7 +123,7 @@ func (self *HTTPServer) AllBalances(c *gin.Context) {
 
 func (self *HTTPServer) AllEBalances(c *gin.Context) {
 	log.Printf("Getting all balances \n")
-	data, err := self.app.GetAllEBalances(getTimePoint(c))
+	data, err := self.app.GetAllEBalances(getTimePoint(c, true))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -138,7 +144,7 @@ func (self *HTTPServer) AllEBalances(c *gin.Context) {
 
 func (self *HTTPServer) GetRate(c *gin.Context) {
 	log.Printf("Getting all rates \n")
-	data, err := self.app.GetAllRates(getTimePoint(c))
+	data, err := self.app.GetAllRates(getTimePoint(c, true))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -287,7 +293,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		return
 	}
 	id, done, remaining, finished, err := self.core.Trade(
-		exchange, typeParam, base, quote, rate, amount, getTimePoint(c))
+		exchange, typeParam, base, quote, rate, amount, getTimePoint(c, false))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -374,7 +380,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		return
 	}
 	log.Printf("Withdraw %s %s from %s\n", amount.Text(10), token.ID, exchange.ID())
-	id, err := self.core.Withdraw(exchange, token, amount, getTimePoint(c))
+	id, err := self.core.Withdraw(exchange, token, amount, getTimePoint(c, false))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -421,7 +427,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 		return
 	}
 	log.Printf("Depositing %s %s to %s\n", amount.Text(10), token.ID, exchange.ID())
-	id, err := self.core.Deposit(exchange, token, amount, getTimePoint(c))
+	id, err := self.core.Deposit(exchange, token, amount, getTimePoint(c, false))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
