@@ -151,7 +151,14 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 }
 
 func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	txID := id.EID
+	idParts := strings.Split(id.EID, "|")
+	if len(idParts) != 2 {
+		// here, the exchange id part in id is malformed
+		// 1. because analytic didn't pass original ID
+		// 2. id is not constructed correctly in a form of uuid + "|" + token
+		return "", errors.New("Invalid deposit id")
+	}
+	txID := idParts[0]
 	startTime := timepoint - 86400000
 	endTime := timepoint
 	deposits, err := self.interf.DepositHistory(startTime, endTime)

@@ -71,14 +71,14 @@ func (self *BittrexEndpoint) GetResponse(
 	self.fillRequest(req, signNeeded)
 	var err error
 	var resp_body []byte
-	log.Printf("request: %s\n", req.URL.RawQuery)
+	log.Printf("request to bittrex: %s\n", req.URL)
 	resp, err := client.Do(req)
 	if err != nil {
 		return resp_body, err
 	} else {
 		defer resp.Body.Close()
 		resp_body, err = ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", common.TruncStr(resp_body))
+		log.Printf("request to %s, got response from bittrex: %s\n", req.URL, common.TruncStr(resp_body))
 		return resp_body, err
 	}
 }
