@@ -9,6 +9,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
+	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	// "github.com/KyberNetwork/reserve-data/exchange/liqui"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -54,13 +55,19 @@ func GetConfigForSimulation() *Config {
 	for tokenID, addr := range addressConfig.Exchanges["binance"] {
 		binance.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 	}
+	bittrex := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(fileSigner))
+	for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
+		bittrex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+	}
 
 	// fetcherExchanges = append(fetcherExchanges, liqui)
 	fetcherExchanges = append(fetcherExchanges, binance)
+	fetcherExchanges = append(fetcherExchanges, bittrex)
 
 	exchanges := []common.Exchange{}
 	// exchanges = append(exchanges, liqui)
 	exchanges = append(exchanges, binance)
+	exchanges = append(exchanges, bittrex)
 
 	// endpoint := "http://localhost:8545"
 	// endpoint := "https://kovan.kyber.network"

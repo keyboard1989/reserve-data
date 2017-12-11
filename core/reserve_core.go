@@ -114,7 +114,7 @@ func (self ReserveCore) Deposit(
 	} else {
 		status = "submitted"
 	}
-	uid := timebasedID(tx.Hex())
+	uid := timebasedID(tx.Hex() + "|" + token.ID)
 	go self.activityStorage.Record(
 		"deposit",
 		uid,
