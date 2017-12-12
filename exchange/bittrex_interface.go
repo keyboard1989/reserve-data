@@ -31,5 +31,5 @@ type BittrexInterface interface {
 
 	WithdrawHistory(currency string, timepoint uint64) (Bittwithdrawhistory, error)
 
-	QueryOrder(uuid string, timepoint uint64) (float64, float64, bool, error)
+	OrderStatus(uuid string, timepoint uint64) (Bitttraderesult, error)
 }

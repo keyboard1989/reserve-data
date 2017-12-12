@@ -136,14 +136,14 @@ func (self *Bittrex) WithdrawStatus(id common.ActivityID, timepoint uint64) (str
 
 func (self *Bittrex) OrderStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	uuid := id.EID
-	_, _, finished, err := self.interf.QueryOrder(uuid, timepoint)
+	resp_data, err := self.interf.OrderStatus(uuid, timepoint)
 	if err != nil {
 		return "", err
 	} else {
-		if finished {
-			return "done", nil
-		} else {
+		if resp_data.Result.IsOpen {
 			return "", nil
+		} else {
+			return "done", nil
 		}
 	}
 }
