@@ -68,19 +68,19 @@
   },
   "exchanges": {
     "bittrex": {
-      "ETH": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "OMG": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "DGD": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "CVC": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "FUN": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "MCO": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "GNT": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "ADX": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "PAY": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "BAT": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "KNC": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "EOS": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
-      "LINK": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547"
+      "ETH": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "OMG": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "DGD": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "CVC": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "FUN": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "MCO": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "GNT": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "ADX": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "PAY": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "BAT": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "KNC": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "EOS": "0x9db6e8d2d133448dbcf755f19d540253da4ba043",
+      "LINK": "0x9db6e8d2d133448dbcf755f19d540253da4ba043"
     },
     "liqui": {
       "ETH": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
