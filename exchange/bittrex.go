@@ -115,14 +115,14 @@ func (self *Bittrex) WithdrawStatus(id common.ActivityID, timepoint uint64) (str
 		// 2. id is not constructed correctly in a form of uuid + "|" + token
 		return "", errors.New("Invalid deposit id")
 	}
-	txID := idParts[0]
+	uuid := idParts[0]
 	currency := idParts[1]
 	histories, err := self.interf.WithdrawHistory(currency, timepoint)
 	if err != nil {
 		return "", err
 	} else {
 		for _, withdraw := range histories.Result {
-			if withdraw.TxId == txID {
+			if withdraw.PaymentUuid == uuid {
 				if withdraw.PendingPayment {
 					return "", nil
 				} else {
@@ -130,7 +130,7 @@ func (self *Bittrex) WithdrawStatus(id common.ActivityID, timepoint uint64) (str
 				}
 			}
 		}
-		return "", errors.New("Withdraw with tx " + txID + " of currency " + currency + " is not found on bittrex")
+		return "", errors.New("Withdraw with uuid " + uuid + " of currency " + currency + " is not found on bittrex")
 	}
 }
 
