@@ -72,6 +72,9 @@ func (self *Bittrex) Withdraw(token common.Token, amount *big.Int, address ether
 }
 
 func bitttimestampToUint64(input string) uint64 {
+	if len(input) == 22 {
+		input = input + "0"
+	}
 	t, err := time.Parse("2006-01-02T15:04:05.000", input)
 	if err != nil {
 		panic(err)
