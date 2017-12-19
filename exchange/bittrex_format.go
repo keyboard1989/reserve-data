@@ -90,16 +90,12 @@ type Bittdeposithistory struct {
 	Success bool   `json:"success"`
 	Error   string `json:"message"`
 	Result  []struct {
-		PaymentUuid    string
-		Currency       string
-		Amount         float64
-		Address        string
-		Opened         string
-		Authorized     bool
-		PendingPayment bool
-		TxCost         float64
-		TxId           string
-		Canceled       bool
-		InvalidAddress bool
+		Id            uint64
+		Currency      string
+		Amount        float64
+		CryptoAddress string
+		TxId          string
+		Confirmations int
+		LastUpdated   string
 	} `json:"result"`
 }

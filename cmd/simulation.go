@@ -55,7 +55,7 @@ func GetConfigForSimulation() *Config {
 	// for tokenID, addr := range addressConfig.Exchanges["binance"] {
 	// 	binance.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 	// }
-	bittrex := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(fileSigner))
+	bittrex := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(fileSigner), storage)
 	for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 		bittrex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 	}

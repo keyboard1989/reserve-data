@@ -19,6 +19,7 @@ const (
 	ORDER_BUCKET            string = "orders"
 	ACTIVITY_BUCKET         string = "activities"
 	PENDING_ACTIVITY_BUCKET string = "pending_activities"
+	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
 )
 
 type BoltStorage struct {
@@ -390,6 +391,29 @@ func (self *BoltStorage) UpdateActivityStatus(action string, id common.ActivityI
 		}
 		err = b.Put(idBytes, dataJson)
 		return err
+	})
+	return err
+}
+
+func (self *BoltStorage) IsNewBittrexDeposit(id uint64) bool {
+	res := true
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
+		v := b.Get(uint64ToBytes(id))
+		if v != nil {
+			res = false
+		}
+		return nil
+	})
+	return res
+}
+
+func (self *BoltStorage) RegisterBittrexDeposit(id uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
+		err = b.Put(uint64ToBytes(id), []byte{1})
+		return nil
 	})
 	return err
 }

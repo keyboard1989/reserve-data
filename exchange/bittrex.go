@@ -2,8 +2,10 @@ package exchange
 
 import (
 	"errors"
+	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -12,10 +14,13 @@ import (
 	"math/big"
 )
 
+const EPSILON float64 = 0.000000001
+
 type Bittrex struct {
 	interf    BittrexInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
+	storage   BittrexStorage
 }
 
 func (self *Bittrex) MarshalText() (text []byte, err error) {
@@ -66,30 +71,42 @@ func (self *Bittrex) Withdraw(token common.Token, amount *big.Int, address ether
 	}
 }
 
+func bitttimestampToUint64(input string) uint64 {
+	t, err := time.Parse("2006-01-02T15:04:05.000", input)
+	if err != nil {
+		panic(err)
+	}
+	return uint64(t.UnixNano() / int64(time.Millisecond))
+}
+
 func (self *Bittrex) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
+	timestamp := id.Timepoint
 	idParts := strings.Split(id.EID, "|")
-	if len(idParts) != 2 {
+	if len(idParts) != 3 {
 		// here, the exchange id part in id is malformed
 		// 1. because analytic didn't pass original ID
-		// 2. id is not constructed correctly in a form of uuid + "|" + token
+		// 2. id is not constructed correctly in a form of uuid + "|" + token + "|" + amount
 		return "", errors.New("Invalid deposit id")
 	}
-	txID := idParts[0]
 	currency := idParts[1]
+	amount, err := strconv.ParseFloat(idParts[2], 64)
+	if err != nil {
+		panic(err)
+	}
 	histories, err := self.interf.DepositHistory(currency, timepoint)
 	if err != nil {
 		return "", err
 	} else {
 		for _, deposit := range histories.Result {
-			if deposit.TxId == txID {
-				if deposit.PendingPayment {
-					return "", nil
-				} else {
-					return "done", nil
-				}
+			if deposit.Currency == currency &&
+				deposit.Amount-amount < EPSILON &&
+				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond) &&
+				self.storage.IsNewBittrexDeposit(deposit.Id) {
+				self.storage.RegisterBittrexDeposit(deposit.Id)
+				return "done", nil
 			}
 		}
-		return "", errors.New("Deposit with tx " + txID + " of currency " + currency + " is not found on bittrex")
+		return "", nil
 	}
 }
 
@@ -196,7 +213,7 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	return result, nil
 }
 
-func NewBittrex(interf BittrexInterface) *Bittrex {
+func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 	return &Bittrex{
 		interf,
 		[]common.TokenPair{
@@ -211,5 +228,6 @@ func NewBittrex(interf BittrexInterface) *Bittrex {
 			common.MustCreateTokenPair("BAT", "ETH"),
 		},
 		map[string]ethereum.Address{},
+		storage,
 	}
 }

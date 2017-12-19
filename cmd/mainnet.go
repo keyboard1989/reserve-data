@@ -61,7 +61,7 @@ func GetConfigForMainnet() *Config {
 	// for tokenID, addr := range addressConfig.Exchanges["binance"] {
 	// 	binance.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 	// }
-	bittrex := exchange.NewBittrex(bittrex.NewDevBittrexEndpoint(fileSigner))
+	bittrex := exchange.NewBittrex(bittrex.NewDevBittrexEndpoint(fileSigner), storage)
 	for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 		bittrex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 	}

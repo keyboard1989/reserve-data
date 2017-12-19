@@ -17,6 +17,7 @@ type RamStorage struct {
 	ebalance *RamEBalanceStorage
 	rate     *RamRateStorage
 	activity *RamActivityStorage
+	bittrex  *RamBittrexStorage
 }
 
 func NewRamStorage() *RamStorage {
@@ -26,6 +27,7 @@ func NewRamStorage() *RamStorage {
 		NewRamEBalanceStorage(),
 		NewRamRateStorage(),
 		NewRamActivityStorage(),
+		NewRamBittrexStorage(),
 	}
 }
 
@@ -108,4 +110,12 @@ func (self *RamStorage) GetPendingActivities() ([]common.ActivityRecord, error) 
 
 func (self *RamStorage) UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error {
 	return self.activity.UpdateActivityStatus(action, id, destination, status)
+}
+
+func (self *RamStorage) IsNewBittrexDeposit(id uint64) bool {
+	return self.bittrex.IsNewDeposit(id)
+}
+
+func (self *RamStorage) RegisterBittrexDeposit(id uint64) error {
+	return self.bittrex.RegisterDeposit(id)
 }

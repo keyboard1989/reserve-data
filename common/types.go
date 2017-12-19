@@ -12,6 +12,14 @@ import (
 type Version uint64
 type Timestamp string
 
+func (self Timestamp) ToUint64() uint64 {
+	res, err := strconv.ParseUint(string(self), 10, 64)
+	if err != nil {
+		panic(err)
+	}
+	return res
+}
+
 func GetTimestamp() Timestamp {
 	timestamp := time.Now().UnixNano() / int64(time.Millisecond)
 	return Timestamp(strconv.Itoa(int(timestamp)))
