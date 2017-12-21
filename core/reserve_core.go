@@ -68,7 +68,7 @@ func (self ReserveCore) Trade(
 			"base":      base,
 			"quote":     quote,
 			"rate":      rate,
-			"amount":    amount,
+			"amount":    strconv.FormatFloat(amount, 'f', -1, 64),
 			"timepoint": timepoint,
 		}, map[string]interface{}{
 			"id":        id,
@@ -165,7 +165,7 @@ func (self ReserveCore) Withdraw(
 		map[string]interface{}{
 			"exchange":  exchange,
 			"token":     token,
-			"amount":    common.BigToFloat(amount, token.Decimal),
+			"amount":    strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
 			"timepoint": timepoint,
 		}, map[string]interface{}{
 			"error": err,
