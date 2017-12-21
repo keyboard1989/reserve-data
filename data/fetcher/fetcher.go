@@ -135,15 +135,6 @@ func (self *Fetcher) fetchAllEBalances(w *sync.WaitGroup, timepoint uint64) {
 	}
 }
 
-func (self *Fetcher) fetchOrderFromExchange(wg *sync.WaitGroup, exchange Exchange, data *sync.Map, timepoint uint64) {
-	defer wg.Done()
-	orderData, err := exchange.FetchOrderData(timepoint)
-	if err != nil {
-		log.Printf("Fetching orders from %s failed: %v\n", exchange.Name(), err)
-	}
-	data.Store(exchange.ID(), orderData)
-}
-
 func (self *Fetcher) fetchAllBalances(w *sync.WaitGroup, timepoint uint64) {
 	defer w.Done()
 	data, err := self.blockchain.FetchBalanceData(self.rmaddr, timepoint)
@@ -230,7 +221,7 @@ func (self *Fetcher) fetchAllRates(w *sync.WaitGroup, timepoint uint64) {
 	}
 	data, err := self.blockchain.FetchRates(sources, dests, timepoint)
 	if err != nil {
-		log.Printf("Fetching data from blockchain failed: %s\n", err)
+		log.Printf("Fetching rate data from blockchain failed: %s\n", err)
 	}
 	err = self.storage.StoreRate(data, timepoint)
 	// fmt.Printf("balance data: %v\n", data)

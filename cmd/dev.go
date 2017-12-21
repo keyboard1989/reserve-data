@@ -9,9 +9,9 @@ import (
 	// "github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
-	"github.com/KyberNetwork/reserve-data/exchange/binance"
+	// "github.com/KyberNetwork/reserve-data/exchange/binance"
 	// "github.com/KyberNetwork/reserve-data/exchange/bitfinex"
-	// "github.com/KyberNetwork/reserve-data/exchange/bittrex"
+	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/liqui"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -60,22 +60,25 @@ func GetConfigForDev() *Config {
 	for tokenID, addr := range addressConfig.Exchanges["liqui"] {
 		liqui.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 	}
-	binance := exchange.NewBinance(binance.NewDevBinanceEndpoint(fileSigner))
-	for tokenID, addr := range addressConfig.Exchanges["binance"] {
-		binance.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+	// binance := exchange.NewBinance(binance.NewDevBinanceEndpoint(fileSigner))
+	// for tokenID, addr := range addressConfig.Exchanges["binance"] {
+	// 	binance.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+	// }
+	bittrex := exchange.NewBittrex(bittrex.NewDevBittrexEndpoint(fileSigner), storage)
+	for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
+		bittrex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 	}
-	// bittrex := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(fileSigner))
 	// bitfinex := exchange.NewBitfinex(bitfinex.NewSimulatedBitfinexEndpoint(fileSigner))
 
-	fetcherExchanges = append(fetcherExchanges, liqui)
-	fetcherExchanges = append(fetcherExchanges, binance)
-	// fetcherExchanges = append(fetcherExchanges, bittrex)
+	// fetcherExchanges = append(fetcherExchanges, liqui)
+	// fetcherExchanges = append(fetcherExchanges, binance)
+	fetcherExchanges = append(fetcherExchanges, bittrex)
 	// fetcherExchanges = append(fetcherExchanges, bitfinex)
 
 	exchanges := []common.Exchange{}
-	exchanges = append(exchanges, liqui)
-	exchanges = append(exchanges, binance)
-	// exchanges = append(exchanges, bittrex)
+	// exchanges = append(exchanges, liqui)
+	// exchanges = append(exchanges, binance)
+	exchanges = append(exchanges, bittrex)
 	// exchanges = append(exchanges, bitfinex)
 
 	// endpoint := "http://localhost:8545"

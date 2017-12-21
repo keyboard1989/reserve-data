@@ -10,7 +10,7 @@ type Exchange interface {
 	TokenPairs() []common.TokenPair
 	FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error)
 	FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error)
-	FetchOrderData(timepoint uint64) (common.OrderEntry, error)
+	// FetchOrderData(timepoint uint64) (common.OrderEntry, error)
 	OrderStatus(id common.ActivityID, timepoint uint64) (string, error)
 	DepositStatus(id common.ActivityID, timepoint uint64) (string, error)
 	WithdrawStatus(id common.ActivityID, timepoint uint64) (string, error)
