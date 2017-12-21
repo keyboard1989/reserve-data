@@ -6,7 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"io/ioutil"
-	// "math/big"
+	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
