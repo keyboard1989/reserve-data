@@ -64,6 +64,10 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		if err != nil {
 			return err
 		}
+		_, err = tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY))
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	return &BoltStorage{db}, nil
