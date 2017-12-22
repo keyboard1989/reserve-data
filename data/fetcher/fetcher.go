@@ -60,6 +60,50 @@ func (self *Fetcher) Run() error {
 	return nil
 }
 
+func (self *Fetcher) RunAuthDataFetcher() {
+	wait := sync.WaitGroup{}
+	for _, exchange := range self.exchanges {
+		go self.FetchAndStoreAuthDataFromExchange(&wait, exchange, timepoint)
+	}
+	wait.Wait()
+}
+
+func (self *Fetcher) RunOrderbookFetcher() {
+	for {
+		log.Printf("waiting for signal from runner orderbook channel")
+		t := <-self.runner.GetOrderbookTicker()
+		log.Printf("got signal in orderbook channel with timestamp %d", common.TimeToTimepoint(t))
+		self.FetchOrderbook(common.TimeToTimepoint(t))
+		log.Printf("fetched data from exchanges")
+	}
+}
+
+func (self *Fetcher) FetchOrderbook(timepoint uint64) {
+	data := NewConcurrentAllPriceData()
+	// start fetching
+	wait := sync.WaitGroup{}
+	for _, exchange := range self.exchanges {
+		wait.Add(1)
+		go self.fetchPriceFromExchange(&wait, exchange, data, timepoint)
+	}
+	wait.Wait()
+	err := self.storage.StorePrice(data.GetData(), timepoint)
+	if err != nil {
+		log.Printf("Storing data failed: %s\n", err)
+	}
+}
+
+func (self *Fetcher) fetchPriceFromExchange(wg *sync.WaitGroup, exchange Exchange, data *ConcurrentAllPriceData, timepoint uint64) {
+	defer wg.Done()
+	exdata, err := exchange.FetchPriceData(timepoint)
+	if err != nil {
+		log.Printf("Fetching data from %s failed: %v\n", exchange.Name(), err)
+	}
+	for pair, exchangeData := range exdata {
+		data.SetOnePrice(exchange.ID(), pair, exchangeData)
+	}
+}
+
 // func (self *Fetcher) fetchingFromExchanges() {
 // 	for {
 // 		log.Printf("waiting for signal from runner for exchange ticker")
@@ -88,16 +132,6 @@ func (self *Fetcher) Run() error {
 // 	data.Store(exchange.ID(), exdata)
 // }
 //
-// func (self *Fetcher) fetchPriceFromExchange(wg *sync.WaitGroup, exchange Exchange, data *ConcurrentAllPriceData, timepoint uint64) {
-// 	defer wg.Done()
-// 	exdata, err := exchange.FetchPriceData(timepoint)
-// 	if err != nil {
-// 		log.Printf("Fetching data from %s failed: %v\n", exchange.Name(), err)
-// 	}
-// 	for pair, exchangeData := range exdata {
-// 		data.SetOnePrice(exchange.ID(), pair, exchangeData)
-// 	}
-// }
 //
 // func (self *Fetcher) fetchAllPrices(w *sync.WaitGroup, timepoint uint64) {
 // 	defer w.Done()

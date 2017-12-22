@@ -14,7 +14,7 @@ type HttpRunner struct {
 	server  *HttpRunnerServer
 }
 
-func (self *HttpRunner) GetExchangeTicker() <-chan time.Time {
+func (self *HttpRunner) GetOrderbookTicker() <-chan time.Time {
 	return self.eticker
 }
 

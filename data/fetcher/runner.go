@@ -6,7 +6,7 @@ import (
 
 // Runner to trigger fetcher
 type FetcherRunner interface {
-	GetExchangeTicker() <-chan time.Time
+	GetOrderbookTicker() <-chan time.Time
 	GetBlockchainTicker() <-chan time.Time
 	// Start must be non-blocking and must only return after runner
 	// gets to ready state before GetExchangeTicker() and
@@ -24,7 +24,7 @@ type TickerRunner struct {
 	signal    chan bool
 }
 
-func (self *TickerRunner) GetExchangeTicker() <-chan time.Time {
+func (self *TickerRunner) GetOrderbookTicker() <-chan time.Time {
 	if self.eclock == nil {
 		<-self.signal
 	}
@@ -68,7 +68,7 @@ type TimestampRunner struct {
 	timestamps []uint64
 }
 
-func (self *TimestampRunner) GetExchangeTicker() <-chan time.Time {
+func (self *TimestampRunner) GetOrderbookTicker() <-chan time.Time {
 	return (<-chan time.Time)(self.eticker)
 }
 func (self *TimestampRunner) GetBlockchainTicker() <-chan time.Time { return self.bclock.C }
