@@ -7,9 +7,10 @@ import (
 	"strings"
 	"sync"
 
+	"math/big"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 type Binance struct {
@@ -75,7 +76,7 @@ func (self *Binance) CancelOrder(id common.ActivityID) error {
 	return nil
 }
 
-func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
+func (self *Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
 	pairs := self.pairs

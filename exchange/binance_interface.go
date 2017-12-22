@@ -14,6 +14,20 @@ type BinanceInterface interface {
 		data *sync.Map,
 		timepoint uint64)
 
+	SocketFetchOnePairData(
+		pair common.TokenPair,
+		dataChannel chan interface{}
+	)
+
+	SocketFetchAggTrade(
+		pair common.TokenPair,
+		dataChannel chan interface{}
+	)
+
+	SocketGetUser(
+		dataChannel chan interface{}
+	)
+
 	OpenOrdersForOnePair(
 		wg *sync.WaitGroup,
 		pair common.TokenPair,

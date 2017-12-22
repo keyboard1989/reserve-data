@@ -82,3 +82,17 @@ func (self *DevInterface) AuthenticatedEndpoint() string {
 func NewDevInterface() *DevInterface {
 	return &DevInterface{}
 }
+
+type SocketInterface struct{}
+
+func (self *SocketInterface) PuclicEndpoint() string {
+	return "wss://stream.binance.com:9443/ws/"
+}
+
+func (self *SocketInterface) AuthenticatedEndpoint() string {
+	return "wss://stream.binance.com:9443/ws/"
+}
+
+func NewSocketInterface() *SocketInterface {
+	return &SocketInterface{}
+}

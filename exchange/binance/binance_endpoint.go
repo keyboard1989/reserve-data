@@ -17,6 +17,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/gorilla/websocket"
 )
 
 const EPSILON float64 = 0.0000000001 // 10e-10
@@ -322,6 +323,76 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 		json.Unmarshal(resp_body, &result)
 	}
 	return result, err
+}
+
+// SocketFetchOnePairData fetch one pair data from socket
+func (self *BinanceEndpoint)SocketFetchOnePairData(
+	pair common.TokenPair
+	dataChannel chan interface{}) {
+
+	URL := self.interf.PublicEndpoint + strings.ToLower(pair.Base.ID) + strings.ToLower(pair.Quote.ID) + "@depth"
+
+	var dialer *websocket.Dialer
+
+	conn, _, error := dialer.Dial(URL, nil)
+	if error != nil {
+		log.Printf("Cannot connect with socket %s\n", error)
+		return
+	}
+	for {
+		res := exchange.Binasocketresp{}
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		json.Unmarshal(message, &res)
+		dataChannel <- res
+	}
+}
+
+func (self *BinanceEndpoint)SocketFetchAggTrade(
+	pair common.TokenPair
+	dataChannel chan interface{}) {
+	
+	URL := self.interf.PublicEndpoint() + strings.ToLower(pair.Base.ID) + strings.ToLower(pair.Quote.ID) + "@aggTrade"
+	var dialer *websocket.Dialer
+	conn, _, error := dialer.Dial(URL, nil)
+	if error != nil {
+		log.Printf("Cannot connect with socket %s\n", error)
+		return
+	}
+	for {
+		res := exchange.Binasockettrade{}
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		json.Unmarshal(message, &res)
+		dataChannel <- res
+	}
+}
+
+func (self *BinanceEndpoint) SocketGetUser(dataChannel chan interface{}) {
+	var dialer *websocket.Dialer
+	URL := self.AuthenticatedEndpoint() + "" // TODO: add listen key
+	conn, _, error := dialer(URL, nil)
+	if error != nil {
+		log.Printf("Cannot connect with socket %s\n", error)
+		return
+	}
+
+	for {
+		res := exchange.Binasocketuser{}
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		json.Unmarshal(message, &res)
+		dataChannel <- res
+	}
 }
 
 func (self *BinanceEndpoint) OpenOrdersForOnePair(
