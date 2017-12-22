@@ -96,13 +96,25 @@ func NewActivityID(t uint64, id string) ActivityID {
 }
 
 type ActivityRecord struct {
-	Action      string
-	ID          ActivityID
-	Destination string
-	Params      map[string]interface{}
-	Result      map[string]interface{}
-	Status      string
-	Timestamp   Timestamp
+	Action         string
+	ID             ActivityID
+	Destination    string
+	Params         map[string]interface{}
+	Result         map[string]interface{}
+	ExchangeStatus string
+	MiningStatus   string
+	Timestamp      Timestamp
+}
+
+type ActivityStatus struct {
+	ExchangeStatus string
+	MiningStatus   string
+	Error          error
+}
+
+func (self ActivityStatus) IsPending() bool {
+	return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending" ||
+		self.MiningStatus == "" || self.MiningStatus == "pending")
 }
 
 type PriceEntry struct {
