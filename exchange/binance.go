@@ -14,9 +14,10 @@ import (
 )
 
 type Binance struct {
-	interf    BinanceInterface
-	pairs     []common.TokenPair
-	addresses map[string]ethereum.Address
+	interf      BinanceInterface
+	pairs       []common.TokenPair
+	databusType string
+	addresses   map[string]ethereum.Address
 }
 
 func (self *Binance) MarshalText() (text []byte, err error) {
@@ -40,6 +41,10 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 
 func (self *Binance) ID() common.ExchangeID {
 	return common.ExchangeID("binance")
+}
+
+func (self *Binance) UpdateFetcherDatabusType(databusType string) {
+	self.databusType = databusType
 }
 
 func (self *Binance) TokenPairs() []common.TokenPair {
@@ -83,8 +88,11 @@ func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]com
 	dataChannel := make(chan Orderbook)
 	for _, pair := range pairs {
 		wait.Add(1)
-		// go self.interf.FetchOnePairData(&wait, pair, &data, timepoint)
-		go self.interf.SocketFetchOnePairData(&wait, pair, &data, dataChannel)
+		if self.databusType == "socket" {
+			go self.interf.SocketFetchOnePairData(&wait, pair, &data, dataChannel)
+		} else {
+			go self.interf.FetchOnePairData(&wait, pair, &data, timepoint)
+		}
 	}
 	wait.Wait()
 	result := map[common.TokenPairID]common.ExchangePrice{}
@@ -233,6 +241,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("KNC", "ETH"),
 			common.MustCreateTokenPair("LINK", "ETH"),
 		},
+		"http",
 		map[string]ethereum.Address{},
 	}
 }
