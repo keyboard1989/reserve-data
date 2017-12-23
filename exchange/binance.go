@@ -76,13 +76,15 @@ func (self *Binance) CancelOrder(id common.ActivityID) error {
 	return nil
 }
 
-func (self *Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
+func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
 	pairs := self.pairs
+	dataChannel := make(chan Orderbook)
 	for _, pair := range pairs {
 		wait.Add(1)
-		go self.interf.FetchOnePairData(&wait, pair, &data, timepoint)
+		// go self.interf.FetchOnePairData(&wait, pair, &data, timepoint)
+		go self.interf.SocketFetchOnePairData(&wait, pair, &data, dataChannel)
 	}
 	wait.Wait()
 	result := map[common.TokenPairID]common.ExchangePrice{}

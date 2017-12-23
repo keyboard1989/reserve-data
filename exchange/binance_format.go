@@ -1,5 +1,10 @@
 package exchange
 
+type Orderbook interface {
+	GetBids() [][]string
+	GetAsks() [][]string
+}
+
 type Binaresp struct {
 	LastUpdatedId int64      `json:"lastUpdateId"`
 	Code          int        `json:"code"`
@@ -15,6 +20,22 @@ type Binasocketresp struct {
 	LastUpdatedID int64      `json:"u"`
 	Bids          [][]string `json:"b"`
 	Asks          [][]string `json:"a"`
+}
+
+func (self Binaresp) GetBids() [][]string {
+	return self.Bids
+}
+
+func (self Binaresp) GetAsks() [][]string {
+	return self.Asks
+}
+
+func (self Binasocketresp) GetBids() [][]string {
+	return self.Bids
+}
+
+func (self Binasocketresp) GetAsks() [][]string {
+	return self.Asks
 }
 
 type Binasocketuser struct {
@@ -34,6 +55,19 @@ type Binasocketuser struct {
 	}
 }
 
+type Binasocketaggtrade struct {
+	EventType        string `json:"e"`
+	EventTime        int64  `json:"E"`
+	Symbol           string `json:"s"`
+	AggregatedID     string `json:"a"`
+	Price            string `json:"p"`
+	Quantity         string `json:"q"`
+	FirstBreakdownID int64  `json:"f"`
+	LastBreakdownID  int64  `json:"l"`
+	TradeTime        int64  `json:"T"`
+	Maker            bool   `json:"m"`
+}
+
 type Binainfo struct {
 	Code             int    `json:"code"`
 	Msg              string `json:"msg"`
@@ -49,6 +83,10 @@ type Binainfo struct {
 		Free   string `json:"free"`
 		Locked string `json:"locked`
 	} `json:"balances`
+}
+
+type Binalistenkey struct {
+	ListenKey string `json:"listenKey"`
 }
 
 type Binatrade struct {
