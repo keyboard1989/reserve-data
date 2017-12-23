@@ -13,11 +13,10 @@ import (
 
 const (
 	PRICE_BUCKET            string = "prices"
-	BALANCE_BUCKET          string = "balances"
-	EXCHANGE_BALANCE_BUCKET string = "ebalances"
 	RATE_BUCKET             string = "rates"
 	ORDER_BUCKET            string = "orders"
 	ACTIVITY_BUCKET         string = "activities"
+	AUTH_DATA_BUCKET        string = "auth_data"
 	PENDING_ACTIVITY_BUCKET string = "pending_activities"
 	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
 )
@@ -40,14 +39,6 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		if err != nil {
 			return err
 		}
-		_, err = tx.CreateBucket([]byte(BALANCE_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(EXCHANGE_BALANCE_BUCKET))
-		if err != nil {
-			return err
-		}
 		_, err = tx.CreateBucket([]byte(RATE_BUCKET))
 		if err != nil {
 			return err
@@ -57,10 +48,6 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 			return err
 		}
 		_, err = tx.CreateBucket([]byte(ACTIVITY_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(PENDING_ACTIVITY_BUCKET))
 		if err != nil {
 			return err
 		}
@@ -155,48 +142,22 @@ func (self *BoltStorage) GetOnePrice(pair common.TokenPairID, version common.Ver
 	}
 }
 
-func (self *BoltStorage) CurrentBalanceVersion(timepoint uint64) (common.Version, error) {
+func (self *BoltStorage) CurrentAuthDataVersion(timepoint uint64) (common.Version, error) {
 	var result uint64
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte(BALANCE_BUCKET)).Cursor()
-		result, err = reverseSeek(timepoint, c)
-		return nil
-	})
-	return common.Version(result), err
-}
-func (self *BoltStorage) GetAllBalances(version common.Version) (map[string]common.BalanceEntry, error) {
-	result := map[string]common.BalanceEntry{}
-	var err error
-	self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BALANCE_BUCKET))
-		data := b.Get(uint64ToBytes(uint64(version)))
-		if data == nil {
-			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
-		} else {
-			err = json.Unmarshal(data, &result)
-		}
-		return nil
-	})
-	return result, err
-}
-
-func (self *BoltStorage) CurrentEBalanceVersion(timepoint uint64) (common.Version, error) {
-	var result uint64
-	var err error
-	self.db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte(EXCHANGE_BALANCE_BUCKET)).Cursor()
+		c := tx.Bucket([]byte(AUTH_DATA_BUCKET)).Cursor()
 		result, err = reverseSeek(timepoint, c)
 		return nil
 	})
 	return common.Version(result), err
 }
 
-func (self *BoltStorage) GetAllEBalances(version common.Version) (map[common.ExchangeID]common.EBalanceEntry, error) {
-	result := map[common.ExchangeID]common.EBalanceEntry{}
+func (self *BoltStorage) GetAuthData(version common.Version) (common.AuthDataSnapshot, error) {
+	result := common.AuthDataSnapshot{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(EXCHANGE_BALANCE_BUCKET))
+		b := tx.Bucket([]byte(AUTH_DATA_BUCKET))
 		data := b.Get(uint64ToBytes(uint64(version)))
 		if data == nil {
 			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
@@ -249,25 +210,13 @@ func (self *BoltStorage) StorePrice(data map[common.TokenPairID]common.OnePrice,
 	return err
 }
 
-func (self *BoltStorage) StoreBalance(data map[string]common.BalanceEntry, timepoint uint64) error {
-	var err error
-	self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
-		b := tx.Bucket([]byte(BALANCE_BUCKET))
-		dataJson, err = json.Marshal(data)
-		if err != nil {
-			return err
-		}
-		return b.Put(uint64ToBytes(timepoint), dataJson)
-	})
-	return err
-}
+func (self *BoltStorage) StoreAuthSnapshot(
+	data *common.AuthDataSnapshot, timepoint uint64) error {
 
-func (self *BoltStorage) StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry, timepoint uint64) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
-		b := tx.Bucket([]byte(EXCHANGE_BALANCE_BUCKET))
+		b := tx.Bucket([]byte(AUTH_DATA_BUCKET))
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err
@@ -296,7 +245,8 @@ func (self *BoltStorage) Record(
 	id common.ActivityID,
 	destination string,
 	params map[string]interface{}, result map[string]interface{},
-	status string,
+	estatus string,
+	mstatus string,
 	timepoint uint64) error {
 
 	var err error
@@ -304,13 +254,14 @@ func (self *BoltStorage) Record(
 		var dataJson []byte
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
 		record := common.ActivityRecord{
-			Action:      action,
-			ID:          id,
-			Destination: destination,
-			Params:      params,
-			Result:      result,
-			Status:      status,
-			Timestamp:   common.Timestamp(strconv.FormatUint(timepoint, 10)),
+			Action:         action,
+			ID:             id,
+			Destination:    destination,
+			Params:         params,
+			Result:         result,
+			ExchangeStatus: estatus,
+			MiningStatus:   mstatus,
+			Timestamp:      common.Timestamp(strconv.FormatUint(timepoint, 10)),
 		}
 		dataJson, err = json.Marshal(record)
 		if err != nil {
@@ -321,7 +272,7 @@ func (self *BoltStorage) Record(
 		if err != nil {
 			return err
 		}
-		if status == "submitted" {
+		if record.IsPending() {
 			pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
 			err = pb.Put(idByte, dataJson)
 		}
@@ -368,29 +319,23 @@ func (self *BoltStorage) GetPendingActivities() ([]common.ActivityRecord, error)
 	return result, err
 }
 
-func (self *BoltStorage) UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error {
+func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.ActivityRecord) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
 		idBytes, _ := id.MarshalText()
-		err = pb.Delete(idBytes)
-		if err != nil {
-			return err
+		if !activity.IsPending() {
+			err = pb.Delete(idBytes)
+			if err != nil {
+				return err
+			}
 		}
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
-		dataJson := b.Get(idBytes)
-		record := common.ActivityRecord{}
-		err = json.Unmarshal(dataJson, &record)
+		dataJson, err := json.Marshal(activity)
 		if err != nil {
 			return err
 		}
-		record.Status = status
-		dataJson, err = json.Marshal(record)
-		if err != nil {
-			return err
-		}
-		err = b.Put(idBytes, dataJson)
-		return err
+		return b.Put(idBytes, dataJson)
 	})
 	return err
 }

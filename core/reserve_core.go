@@ -78,6 +78,7 @@ func (self ReserveCore) Trade(
 			"error":     err,
 		},
 		status,
+		"",
 		timepoint,
 	)
 	log.Printf(
@@ -129,6 +130,7 @@ func (self ReserveCore) Deposit(
 			"tx":    tx.Hex(),
 			"error": err,
 		},
+		"",
 		status,
 		timepoint,
 	)
@@ -170,8 +172,12 @@ func (self ReserveCore) Withdraw(
 		}, map[string]interface{}{
 			"error": err,
 			"id":    id,
+			// this field will be updated with real tx when data fetcher can fetch it
+			// from exchanges
+			"tx": "",
 		},
 		status,
+		"",
 		timepoint,
 	)
 	log.Printf(
@@ -226,6 +232,7 @@ func (self ReserveCore) SetRates(
 			"tx":    tx.Hex(),
 			"error": err,
 		},
+		"",
 		status,
 		common.GetTimepoint(),
 	)

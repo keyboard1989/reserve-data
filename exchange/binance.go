@@ -178,24 +178,24 @@ func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 	}
 }
 
-func (self *Binance) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, error) {
+func (self *Binance) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
 	withdrawID := id.EID
 	startTime := timepoint - 86400000
 	endTime := timepoint
 	withdraws, err := self.interf.WithdrawHistory(startTime, endTime)
 	if err != nil || !withdraws.Success {
-		return "", err
+		return "", "", err
 	} else {
 		for _, withdraw := range withdraws.Withdrawals {
 			if withdraw.ID == withdrawID {
 				if withdraw.Status == 3 || withdraw.Status == 5 || withdraw.Status == 6 {
-					return "done", nil
+					return "done", withdraw.TxID, nil
 				} else {
-					return "", nil
+					return "", withdraw.TxID, nil
 				}
 			}
 		}
-		return "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
+		return "", "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
 	}
 }
 

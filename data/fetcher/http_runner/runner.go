@@ -9,17 +9,17 @@ import (
 
 type HttpRunner struct {
 	port    int
-	eticker chan time.Time
-	bticker chan time.Time
+	oticker chan time.Time
+	aticker chan time.Time
 	server  *HttpRunnerServer
 }
 
 func (self *HttpRunner) GetOrderbookTicker() <-chan time.Time {
-	return self.eticker
+	return self.oticker
 }
 
-func (self *HttpRunner) GetBlockchainTicker() <-chan time.Time {
-	return self.bticker
+func (self *HttpRunner) GetAuthDataTicker() <-chan time.Time {
+	return self.aticker
 }
 
 func (self *HttpRunner) Start() error {
@@ -48,12 +48,12 @@ func (self *HttpRunner) Stop() error {
 }
 
 func NewHttpRunner(port int) *HttpRunner {
-	echan := make(chan time.Time)
-	bchan := make(chan time.Time)
+	ochan := make(chan time.Time)
+	achan := make(chan time.Time)
 	runner := HttpRunner{
 		port,
-		echan,
-		bchan,
+		ochan,
+		achan,
 		nil,
 	}
 	runner.Start()

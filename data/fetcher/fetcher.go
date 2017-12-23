@@ -61,47 +61,192 @@ func (self *Fetcher) Run() error {
 }
 
 func (self *Fetcher) RunAuthDataFetcher() {
-	wait := sync.WaitGroup{}
-	balances := sync.Map{}
-	statuses := sync.Map{}
+	for {
+		log.Printf("waiting for signal from runner auth data channel")
+		t := <-self.runner.GetAuthDataTicker()
+		log.Printf("got signal in auth data channel with timestamp %d", common.TimeToTimepoint(t))
+		self.FetchAllAuthData(common.TimeToTimepoint(t))
+		log.Printf("fetched data from exchanges")
+	}
+}
+
+func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
+	snapshot := common.AuthDataSnapshot{
+		Valid:              true,
+		Timestamp:          common.GetTimestamp(),
+		ExchangeBalances:   map[common.ExchangeID]common.EBalanceEntry{},
+		BlockchainBalances: map[string]common.BalanceEntry{},
+		PendingActivities:  []common.ActivityRecord{},
+	}
+	bbalances := map[string]common.BalanceEntry{}
+	ebalances := sync.Map{}
+	estatuses := sync.Map{}
+	bstatuses := sync.Map{}
 	pendings, err := self.storage.GetPendingActivities()
 	if err != nil {
 		log.Printf("Getting pending activites failed: %s\n", err)
 		return
 	}
+	wait := sync.WaitGroup{}
 	for _, exchange := range self.exchanges {
-		go self.FetchAndStoreAuthDataFromExchange(
-			&wait, exchange, &balances, &statuses,
+		wait.Add(1)
+		go self.FetchAuthDataFromExchange(
+			&wait, exchange, &ebalances, &estatuses,
 			pendings, timepoint)
 	}
 	wait.Wait()
-	ebalances := map[common.ExchangeID]common.EBalanceEntry{}
-	balances.Range(func(key, value interface{}) bool {
-		ebalances[key.(common.ExchangeID)] = value.(common.EBalanceEntry)
-		return true
-	})
-	pendingActivities := []common.ActivityRecord{}
-	for _, activity := range pendings {
-		status, _ := statuses.Load(activity.ID)
-		activityStatus := status.(common.ActivityStatus)
-		if activityStatus.Error != nil {
-			pendingActivities = append(pendingActivities, activity)
-		} else {
-			if activityStatus.IsPending() {
-				activity.ExchangeStatus = activityStatus.ExchangeStatus
-				activity.MiningStatus == activityStatus.MiningStatus
-				pendingActivities = append(pendingActivities, activity)
-			}
-		}
-	}
-	err := self.storage.StoreAuthSnapshot(ebalances, pendingActivities, timepoint)
+	self.FetchAuthDataFromBlockchain(
+		&wait, bbalances, &bstatuses,
+		pendings, timepoint)
+	snapshot.ReturnTime = common.GetTimestamp()
+	err = self.PersistSnapshot(
+		&ebalances, bbalances, &estatuses, &bstatuses,
+		pendings, &snapshot, timepoint)
 	if err != nil {
 		log.Printf("Storing exchange balances failed: %s\n", err)
 		return
 	}
 }
 
-func (self *Fetcher) FetchAndStoreAuthDataFromExchange(
+func (self *Fetcher) FetchAuthDataFromBlockchain(
+	wg *sync.WaitGroup,
+	allBalances map[string]common.BalanceEntry,
+	allStatuses *sync.Map,
+	pendings []common.ActivityRecord,
+	timepoint uint64) {
+
+	defer wg.Done()
+	// we apply double check strategy to mitigate race condition on exchange side like this:
+	// 1. Get list of pending activity status (A)
+	// 2. Get list of balances (B)
+	// 3. Get list of pending activity status again (C)
+	// 4. if C != A, repeat 1, otherwise return A, B
+	var balances map[string]common.BalanceEntry
+	var statuses map[common.ActivityID]common.ActivityStatus
+	var err error
+	for {
+		preStatuses := self.FetchStatusFromBlockchain(pendings)
+		balances, err = self.FetchBalanceFromBlockchain(timepoint)
+		if err != nil {
+			log.Printf("Fetching blockchain balances failed: %v\n", err)
+			break
+		}
+		statuses = self.FetchStatusFromBlockchain(pendings)
+		if unchanged(preStatuses, statuses) {
+			break
+		}
+	}
+	if err == nil {
+		for k, v := range balances {
+			allBalances[k] = v
+		}
+		for id, activityStatus := range statuses {
+			allStatuses.Store(id, activityStatus)
+		}
+	}
+}
+
+func (self *Fetcher) FetchBalanceFromBlockchain(timepoint uint64) (map[string]common.BalanceEntry, error) {
+	return self.blockchain.FetchBalanceData(self.rmaddr, timepoint)
+}
+
+func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {
+	result := map[common.ActivityID]common.ActivityStatus{}
+	for _, activity := range pendings {
+		if activity.MiningStatus != "mined" && activity.MiningStatus != "failed" {
+			switch activity.Action {
+			case "set_rates", "deposit", "withdraw":
+				tx := ethereum.HexToHash(activity.Result["tx"].(string))
+				if !tx.Big().IsInt64() || tx.Big().Int64() != 0 {
+					isMined, err := self.blockchain.IsMined(tx)
+					if isMined {
+						result[activity.ID] = common.ActivityStatus{
+							activity.ExchangeStatus,
+							activity.Result["tx"].(string),
+							"mined",
+							err,
+						}
+					}
+				}
+			}
+		}
+	}
+	return result
+}
+
+func unchanged(pre, post map[common.ActivityID]common.ActivityStatus) bool {
+	if len(pre) != len(post) {
+		return false
+	} else {
+		for k, v := range pre {
+			vpost, found := post[k]
+			if !found {
+				return false
+			}
+			if v.ExchangeStatus != vpost.ExchangeStatus || v.MiningStatus != vpost.MiningStatus {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func (self *Fetcher) PersistSnapshot(
+	ebalances *sync.Map,
+	bbalances map[string]common.BalanceEntry,
+	estatuses *sync.Map,
+	bstatuses *sync.Map,
+	pendings []common.ActivityRecord,
+	snapshot *common.AuthDataSnapshot,
+	timepoint uint64) error {
+
+	allEBalances := map[common.ExchangeID]common.EBalanceEntry{}
+	ebalances.Range(func(key, value interface{}) bool {
+		v := value.(common.EBalanceEntry)
+		allEBalances[key.(common.ExchangeID)] = v
+		if !v.Valid {
+			snapshot.Valid = false
+			snapshot.Error = v.Error
+		}
+		return true
+	})
+
+	pendingActivities := []common.ActivityRecord{}
+	for _, activity := range pendings {
+		status, _ := estatuses.Load(activity.ID)
+		activityStatus := status.(common.ActivityStatus)
+		if activityStatus.Error == nil {
+			activity.ExchangeStatus = activityStatus.ExchangeStatus
+			activity.Result["tx"] = activityStatus.Tx
+		} else {
+			snapshot.Valid = false
+			snapshot.Error = activityStatus.Error.Error()
+		}
+		status, _ = bstatuses.Load(activity.ID)
+		activityStatus = status.(common.ActivityStatus)
+		if activityStatus.Error == nil {
+			activity.MiningStatus = activityStatus.MiningStatus
+		} else {
+			snapshot.Valid = false
+			snapshot.Error = activityStatus.Error.Error()
+		}
+		if activity.IsPending() {
+			pendingActivities = append(pendingActivities, activity)
+		} else {
+			err := self.storage.UpdateActivity(activity.ID, activity)
+			if err != nil {
+				snapshot.Valid = false
+				snapshot.Error = err.Error()
+			}
+		}
+	}
+	snapshot.ExchangeBalances = allEBalances
+	snapshot.BlockchainBalances = bbalances
+	snapshot.PendingActivities = pendingActivities
+	return self.storage.StoreAuthSnapshot(snapshot, timepoint)
+}
+
+func (self *Fetcher) FetchAuthDataFromExchange(
 	wg *sync.WaitGroup, exchange Exchange,
 	allBalances *sync.Map, allStatuses *sync.Map,
 	pendings []common.ActivityRecord,
@@ -116,21 +261,13 @@ func (self *Fetcher) FetchAndStoreAuthDataFromExchange(
 	var statuses map[common.ActivityID]common.ActivityStatus
 	var err error
 	for {
-		preStatuses, err := self.FetchStatusFromExchange(exchange, pendings)
-		if err != nil {
-			log.Printf("Fetching exchange balances from %s failed: %v\n", exchange.Name(), err)
-			break
-		}
+		preStatuses := self.FetchStatusFromExchange(exchange, pendings, timepoint)
 		balances, err = exchange.FetchEBalanceData(timepoint)
 		if err != nil {
 			log.Printf("Fetching exchange balances from %s failed: %v\n", exchange.Name(), err)
 			break
 		}
-		statuses, err = self.FetchStatusFromExchange(exchange, pendings)
-		if err != nil {
-			log.Printf("Fetching exchange balances from %s failed: %v\n", exchange.Name(), err)
-			break
-		}
+		statuses = self.FetchStatusFromExchange(exchange, pendings, timepoint)
 		if unchanged(preStatuses, statuses) {
 			break
 		}
@@ -143,21 +280,26 @@ func (self *Fetcher) FetchAndStoreAuthDataFromExchange(
 	}
 }
 
-func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []common.ActivityRecord) (map[common.ActivityID]common.ActivityStatus, error) {
+func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []common.ActivityRecord, timepoint uint64) map[common.ActivityID]common.ActivityStatus {
 	result := map[common.ActivityID]common.ActivityStatus{}
 	for _, activity := range pendings {
 		if activity.Destination == string(exchange.ID()) && activity.ExchangeStatus != "done" && activity.ExchangeStatus != "failed" {
 			var err error
 			var status string
+			var tx string
+			id := activity.ID
 			if activity.Action == "trade" {
 				status, err = exchange.OrderStatus(id, timepoint)
 			} else if activity.Action == "deposit" {
 				status, err = exchange.DepositStatus(id, timepoint)
 			} else if activity.Action == "withdraw" {
-				status, err = exchange.WithdrawStatus(id, timepoint)
+				status, tx, err = exchange.WithdrawStatus(id, timepoint)
+			} else {
+				continue
 			}
-			result[activity.ID] = common.ActivityStatus{
+			result[id] = common.ActivityStatus{
 				status,
+				tx,
 				activity.MiningStatus,
 				err,
 			}

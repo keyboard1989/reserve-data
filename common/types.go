@@ -106,15 +106,24 @@ type ActivityRecord struct {
 	Timestamp      Timestamp
 }
 
-type ActivityStatus struct {
-	ExchangeStatus string
-	MiningStatus   string
-	Error          error
+func (self ActivityRecord) IsPending() bool {
+	switch self.Action {
+	case "deposit", "withdraw":
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending" ||
+			self.MiningStatus == "" || self.MiningStatus == "pending")
+	case "trade":
+		return self.ExchangeStatus == "" || self.ExchangeStatus == "pending"
+	case "set_rates":
+		return self.MiningStatus == "" || self.MiningStatus == "pending"
+	}
+	return true
 }
 
-func (self ActivityStatus) IsPending() bool {
-	return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending" ||
-		self.MiningStatus == "" || self.MiningStatus == "pending")
+type ActivityStatus struct {
+	ExchangeStatus string
+	Tx             string
+	MiningStatus   string
+	Error          error
 }
 
 type PriceEntry struct {
@@ -254,6 +263,23 @@ type AllEBalanceResponse struct {
 	Timestamp  Timestamp
 	ReturnTime Timestamp
 	Data       map[ExchangeID]EBalanceEntry
+}
+
+type AuthDataSnapshot struct {
+	Valid              bool
+	Error              string
+	Timestamp          Timestamp
+	ReturnTime         Timestamp
+	ExchangeBalances   map[ExchangeID]EBalanceEntry
+	BlockchainBalances map[string]BalanceEntry
+	PendingActivities  []ActivityRecord
+}
+
+type AuthDataResponse struct {
+	Version    Version
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Data       AuthDataSnapshot
 }
 
 type RateEntry struct {
