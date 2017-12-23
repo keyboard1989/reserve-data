@@ -96,8 +96,7 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 	}
 	wait.Wait()
 	self.FetchAuthDataFromBlockchain(
-		&wait, bbalances, &bstatuses,
-		pendings, timepoint)
+		bbalances, &bstatuses, pendings, timepoint)
 	snapshot.ReturnTime = common.GetTimestamp()
 	err = self.PersistSnapshot(
 		&ebalances, bbalances, &estatuses, &bstatuses,
@@ -109,13 +108,10 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 }
 
 func (self *Fetcher) FetchAuthDataFromBlockchain(
-	wg *sync.WaitGroup,
 	allBalances map[string]common.BalanceEntry,
 	allStatuses *sync.Map,
 	pendings []common.ActivityRecord,
 	timepoint uint64) {
-
-	defer wg.Done()
 	// we apply double check strategy to mitigate race condition on exchange side like this:
 	// 1. Get list of pending activity status (A)
 	// 2. Get list of balances (B)
