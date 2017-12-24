@@ -459,6 +459,25 @@ func (self *HTTPServer) StopFetcher(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
+	log.Printf("Getting all immediate pending activity records \n")
+	data, err := self.app.GetPendingActivities()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -470,6 +489,7 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/setrates", self.SetRate)
 	self.r.GET("/getrates", self.GetRate)
 	self.r.GET("/activities", self.GetActivities)
+	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
 
 	self.r.Run(self.host)
 }
