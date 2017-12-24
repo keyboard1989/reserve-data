@@ -266,13 +266,13 @@ type AllEBalanceResponse struct {
 }
 
 type AuthDataSnapshot struct {
-	Valid              bool
-	Error              string
-	Timestamp          Timestamp
-	ReturnTime         Timestamp
-	ExchangeBalances   map[ExchangeID]EBalanceEntry
-	BlockchainBalances map[string]BalanceEntry
-	PendingActivities  []ActivityRecord
+	Valid             bool
+	Error             string
+	Timestamp         Timestamp
+	ReturnTime        Timestamp
+	ExchangeBalances  map[ExchangeID]EBalanceEntry
+	ReserveBalances   map[string]BalanceEntry
+	PendingActivities []ActivityRecord
 }
 
 type AuthDataResponse struct {

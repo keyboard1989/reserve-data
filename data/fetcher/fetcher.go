@@ -62,11 +62,11 @@ func (self *Fetcher) RunAuthDataFetcher() {
 
 func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 	snapshot := common.AuthDataSnapshot{
-		Valid:              true,
-		Timestamp:          common.GetTimestamp(),
-		ExchangeBalances:   map[common.ExchangeID]common.EBalanceEntry{},
-		BlockchainBalances: map[string]common.BalanceEntry{},
-		PendingActivities:  []common.ActivityRecord{},
+		Valid:             true,
+		Timestamp:         common.GetTimestamp(),
+		ExchangeBalances:  map[common.ExchangeID]common.EBalanceEntry{},
+		ReserveBalances:   map[string]common.BalanceEntry{},
+		PendingActivities: []common.ActivityRecord{},
 	}
 	bbalances := map[string]common.BalanceEntry{}
 	ebalances := sync.Map{}
@@ -229,7 +229,7 @@ func (self *Fetcher) PersistSnapshot(
 		}
 	}
 	snapshot.ExchangeBalances = allEBalances
-	snapshot.BlockchainBalances = bbalances
+	snapshot.ReserveBalances = bbalances
 	snapshot.PendingActivities = pendingActivities
 	return self.storage.StoreAuthSnapshot(snapshot, timepoint)
 }
