@@ -59,6 +59,10 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		if err != nil {
 			return err
 		}
+		_, err = tx.CreateBucket([]byte(AUTH_DATA_BUCKET))
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	return &BoltStorage{db}, nil
