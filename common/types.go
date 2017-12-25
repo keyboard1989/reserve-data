@@ -299,7 +299,15 @@ type AuthDataResponse struct {
 	Version    Version
 	Timestamp  Timestamp
 	ReturnTime Timestamp
-	Data       AuthDataSnapshot
+	Data       struct {
+		Valid             bool
+		Error             string
+		Timestamp         Timestamp
+		ReturnTime        Timestamp
+		ExchangeBalances  map[ExchangeID]EBalanceEntry
+		ReserveBalances   map[string]BalanceResponse
+		PendingActivities []ActivityRecord
+	}
 }
 
 type RateEntry struct {
