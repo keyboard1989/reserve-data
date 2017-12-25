@@ -109,7 +109,7 @@ type ActivityRecord struct {
 func (self ActivityRecord) IsExchangePending() bool {
 	switch self.Action {
 	case "deposit", "withdraw":
-		return self.ExchangeStatus == "" || self.ExchangeStatus == "pending"
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending") && self.MiningStatus != "failed"
 	case "trade":
 		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
 	}
@@ -130,7 +130,7 @@ func (self ActivityRecord) IsPending() bool {
 	switch self.Action {
 	case "deposit", "withdraw":
 		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending" ||
-			self.MiningStatus == "" || self.MiningStatus == "submitted")
+			self.MiningStatus == "" || self.MiningStatus == "submitted") && self.MiningStatus != "failed"
 	case "trade":
 		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
 	case "set_rates":
