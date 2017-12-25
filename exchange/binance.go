@@ -152,7 +152,7 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 
 func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	idParts := strings.Split(id.EID, "|")
-	if len(idParts) != 2 {
+	if len(idParts) != 3 {
 		// here, the exchange id part in id is malformed
 		// 1. because analytic didn't pass original ID
 		// 2. id is not constructed correctly in a form of uuid + "|" + token

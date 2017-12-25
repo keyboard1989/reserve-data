@@ -139,7 +139,7 @@ func (self *Bittrex) WithdrawStatus(id common.ActivityID, timepoint uint64) (str
 		// here, the exchange id part in id is malformed
 		// 1. because analytic didn't pass original ID
 		// 2. id is not constructed correctly in a form of uuid + "|" + token
-		return "", "", errors.New("Invalid deposit id")
+		return "", "", errors.New("Invalid withdraw id")
 	}
 	uuid := idParts[0]
 	currency := idParts[1]

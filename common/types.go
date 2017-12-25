@@ -108,7 +108,9 @@ type ActivityRecord struct {
 
 func (self ActivityRecord) IsExchangePending() bool {
 	switch self.Action {
-	case "deposit", "withdraw":
+	case "withdraw":
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "submitted") && self.MiningStatus != "failed"
+	case "deposit":
 		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending") && self.MiningStatus != "failed"
 	case "trade":
 		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
@@ -118,9 +120,7 @@ func (self ActivityRecord) IsExchangePending() bool {
 
 func (self ActivityRecord) IsBlockchainPending() bool {
 	switch self.Action {
-	case "deposit", "withdraw":
-		return self.MiningStatus == "" || self.MiningStatus == "submitted"
-	case "set_rates":
+	case "withdraw", "deposit", "set_rates":
 		return self.MiningStatus == "" || self.MiningStatus == "submitted"
 	}
 	return true
@@ -128,7 +128,10 @@ func (self ActivityRecord) IsBlockchainPending() bool {
 
 func (self ActivityRecord) IsPending() bool {
 	switch self.Action {
-	case "deposit", "withdraw":
+	case "withdraw":
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "submitted" ||
+			self.MiningStatus == "" || self.MiningStatus == "submitted") && self.MiningStatus != "failed"
+	case "deposit":
 		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending" ||
 			self.MiningStatus == "" || self.MiningStatus == "submitted") && self.MiningStatus != "failed"
 	case "trade":
