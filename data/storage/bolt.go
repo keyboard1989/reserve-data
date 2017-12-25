@@ -336,6 +336,14 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 	self.db.Update(func(tx *bolt.Tx) error {
 		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
 		idBytes, _ := id.MarshalText()
+		dataJson, err := json.Marshal(activity)
+		if err != nil {
+			return err
+		}
+		err = pb.Put(idBytes, dataJson)
+		if err != nil {
+			return err
+		}
 		if !activity.IsPending() {
 			err = pb.Delete(idBytes)
 			if err != nil {
@@ -343,7 +351,6 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 			}
 		}
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
-		dataJson, err := json.Marshal(activity)
 		if err != nil {
 			return err
 		}
