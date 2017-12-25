@@ -100,10 +100,10 @@ func (self *RamStorage) GetPendingActivities() ([]common.ActivityRecord, error) 
 	return self.activity.GetPendingRecords()
 }
 
-func (self *RamStorage) IsNewBittrexDeposit(id uint64) bool {
-	return self.bittrex.IsNewDeposit(id)
+func (self *RamStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID) bool {
+	return self.bittrex.IsNewDeposit(id, actID)
 }
 
-func (self *RamStorage) RegisterBittrexDeposit(id uint64) error {
-	return self.bittrex.RegisterDeposit(id)
+func (self *RamStorage) RegisterBittrexDeposit(id uint64, actID common.ActivityID) error {
+	return self.bittrex.RegisterDeposit(id, actID)
 }

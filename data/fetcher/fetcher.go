@@ -139,7 +139,7 @@ func (self *Fetcher) FetchBalanceFromBlockchain(timepoint uint64) (map[string]co
 func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {
 	result := map[common.ActivityID]common.ActivityStatus{}
 	for _, activity := range pendings {
-		if activity.Action == "set_rates" || activity.Action == "deposit" || activity.Action == "withdraw" {
+		if activity.IsBlockchainPending() && (activity.Action == "set_rates" || activity.Action == "deposit" || activity.Action == "withdraw") {
 			tx := ethereum.HexToHash(activity.Result["tx"].(string))
 			if tx.Big().IsInt64() && tx.Big().Int64() == 0 {
 				continue
@@ -200,34 +200,46 @@ func (self *Fetcher) PersistSnapshot(
 	pendingActivities := []common.ActivityRecord{}
 	for _, activity := range pendings {
 		status, _ := estatuses.Load(activity.ID)
-		activityStatus := status.(common.ActivityStatus)
-		if activityStatus.Error == nil {
-			activity.ExchangeStatus = activityStatus.ExchangeStatus
-			if activity.Result["tx"].(string) == "" {
-				activity.Result["tx"] = activityStatus.Tx
+		var activityStatus common.ActivityStatus
+		if status != nil {
+			activityStatus := status.(common.ActivityStatus)
+			log.Printf("In PersistSnapshot: exchange activity status for %+v: %+v", activity.ID, activityStatus)
+			if activityStatus.Error == nil {
+				if activity.IsExchangePending() {
+					activity.ExchangeStatus = activityStatus.ExchangeStatus
+				}
+				if activity.Result["tx"] != nil && activity.Result["tx"].(string) == "" {
+					activity.Result["tx"] = activityStatus.Tx
+				}
+			} else {
+				snapshot.Valid = false
+				snapshot.Error = activityStatus.Error.Error()
 			}
-		} else {
-			snapshot.Valid = false
-			snapshot.Error = activityStatus.Error.Error()
 		}
 		status, _ = bstatuses.Load(activity.ID)
-		activityStatus = status.(common.ActivityStatus)
-		if activityStatus.Error == nil {
-			activity.MiningStatus = activityStatus.MiningStatus
-		} else {
-			snapshot.Valid = false
-			snapshot.Error = activityStatus.Error.Error()
-		}
-		if activity.IsPending() {
-			pendingActivities = append(pendingActivities, activity)
-		} else {
-			err := self.storage.UpdateActivity(activity.ID, activity)
-			if err != nil {
+		if status != nil {
+			activityStatus = status.(common.ActivityStatus)
+			log.Printf("In PersistSnapshot: blockchain activity status for %+v: %+v", activity.ID, activityStatus)
+			if activityStatus.Error == nil {
+				if activity.IsBlockchainPending() {
+					activity.MiningStatus = activityStatus.MiningStatus
+				}
+			} else {
 				snapshot.Valid = false
-				snapshot.Error = err.Error()
+				snapshot.Error = activityStatus.Error.Error()
 			}
 		}
+		log.Printf("Aggregate statuses, final activity: %+v", activity)
+		if activity.IsPending() {
+			pendingActivities = append(pendingActivities, activity)
+		}
+		err := self.storage.UpdateActivity(activity.ID, activity)
+		if err != nil {
+			snapshot.Valid = false
+			snapshot.Error = err.Error()
+		}
 	}
+	// note: only update status when it's pending status
 	snapshot.ExchangeBalances = allEBalances
 	snapshot.ReserveBalances = bbalances
 	snapshot.PendingActivities = pendingActivities
@@ -271,16 +283,18 @@ func (self *Fetcher) FetchAuthDataFromExchange(
 func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []common.ActivityRecord, timepoint uint64) map[common.ActivityID]common.ActivityStatus {
 	result := map[common.ActivityID]common.ActivityStatus{}
 	for _, activity := range pendings {
-		if activity.Destination == string(exchange.ID()) {
+		if activity.IsExchangePending() && activity.Destination == string(exchange.ID()) {
 			var err error
 			var status string
-			tx := activity.Result["tx"].(string)
+			var tx string
 			id := activity.ID
 			if activity.Action == "trade" {
 				status, err = exchange.OrderStatus(id, timepoint)
 			} else if activity.Action == "deposit" {
 				status, err = exchange.DepositStatus(id, timepoint)
+				log.Printf("Got deposit status for %v: (%s), error(%v)", activity, status, err)
 			} else if activity.Action == "withdraw" {
+				tx = activity.Result["tx"].(string)
 				status, tx, err = exchange.WithdrawStatus(id, timepoint)
 			} else {
 				continue

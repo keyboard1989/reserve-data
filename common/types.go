@@ -106,15 +106,35 @@ type ActivityRecord struct {
 	Timestamp      Timestamp
 }
 
+func (self ActivityRecord) IsExchangePending() bool {
+	switch self.Action {
+	case "deposit", "withdraw":
+		return self.ExchangeStatus == "" || self.ExchangeStatus == "pending"
+	case "trade":
+		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
+	}
+	return true
+}
+
+func (self ActivityRecord) IsBlockchainPending() bool {
+	switch self.Action {
+	case "deposit", "withdraw":
+		return self.MiningStatus == "" || self.MiningStatus == "submitted"
+	case "set_rates":
+		return self.MiningStatus == "" || self.MiningStatus == "submitted"
+	}
+	return true
+}
+
 func (self ActivityRecord) IsPending() bool {
 	switch self.Action {
 	case "deposit", "withdraw":
 		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending" ||
-			self.MiningStatus == "" || self.MiningStatus == "pending")
+			self.MiningStatus == "" || self.MiningStatus == "submitted")
 	case "trade":
-		return self.ExchangeStatus == "" || self.ExchangeStatus == "pending"
+		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
 	case "set_rates":
-		return self.MiningStatus == "" || self.MiningStatus == "pending"
+		return self.MiningStatus == "" || self.MiningStatus == "submitted"
 	}
 	return true
 }

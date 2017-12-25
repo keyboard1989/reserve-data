@@ -110,8 +110,8 @@ func (self *Bittrex) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 			if deposit.Currency == currency &&
 				deposit.Amount-amount < EPSILON &&
 				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond) &&
-				self.storage.IsNewBittrexDeposit(deposit.Id) {
-				self.storage.RegisterBittrexDeposit(deposit.Id)
+				self.storage.IsNewBittrexDeposit(deposit.Id, id) {
+				self.storage.RegisterBittrexDeposit(deposit.Id, id)
 				return "done", nil
 			}
 		}

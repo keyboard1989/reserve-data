@@ -352,12 +352,12 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 	return err
 }
 
-func (self *BoltStorage) IsNewBittrexDeposit(id uint64) bool {
+func (self *BoltStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID) bool {
 	res := true
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
 		v := b.Get(uint64ToBytes(id))
-		if v != nil {
+		if v != nil && string(v) != actID.String() {
 			res = false
 		}
 		return nil
@@ -365,11 +365,12 @@ func (self *BoltStorage) IsNewBittrexDeposit(id uint64) bool {
 	return res
 }
 
-func (self *BoltStorage) RegisterBittrexDeposit(id uint64) error {
+func (self *BoltStorage) RegisterBittrexDeposit(id uint64, actID common.ActivityID) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
-		err = b.Put(uint64ToBytes(id), []byte{1})
+		actIDBytes, _ := actID.MarshalText()
+		err = b.Put(uint64ToBytes(id), actIDBytes)
 		return nil
 	})
 	return err
