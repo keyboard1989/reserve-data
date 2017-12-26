@@ -57,8 +57,35 @@ func (self *Fetcher) fetchingFromExchanges() {
 	}
 }
 
-func (self *Fetcher) fetchingFromExchangesUsingSocket() {
+func (self *Fetcher) fetchPriceFromExchangeUsingSocket(exchange Exchange, data *ConcurrentAllPriceData) {
+	for {
+		exdata, err := exchange.FetchPriceDataUsingSocket()
+		if err != nil {
+			log.Printf("Fetching data from %s failed: %v\n", exchange.Name(), err)
+		}
+		for pair, exchangeData := range exdata {
+			// data.SetOnePrice(exchange.ID(), pair, exchangeData)
+			data.UpdateOnePrice(exchange.ID(), pair, exchangeData)
 
+			timepoint := common.GetTimepoint()
+			err := self.storage.StorePrice(data.GetData(), timepoint)
+			if err != nil {
+				log.Printf("Storing data failed: %s\n", err)
+			}
+		}
+	}
+}
+
+func (self *Fetcher) fetchAllPricesUsingSocket() {
+	data := NewConcurrentAllPriceData()
+	// start fetching
+	for _, exchange := range self.exchanges {
+		go self.fetchPriceFromExchangeUsingSocket(exchange, data)
+	}
+}
+
+func (self *Fetcher) fetchingFromExchangesUsingSocket() {
+	go self.fetchAllPricesUsingSocket()
 }
 
 func (self *Fetcher) fetchingFromBlockchain() {

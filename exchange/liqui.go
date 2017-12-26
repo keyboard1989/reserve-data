@@ -10,6 +10,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	uuid "github.com/satori/go.uuid"
 )
 
 const (
@@ -204,6 +205,12 @@ func (self *Liqui) FetchPriceData(timepoint uint64) (map[common.TokenPairID]comm
 	return result, err
 }
 
+func (self *Liqui) FetchPriceDataUsingSocket() (map[common.TokenPairID]common.ExchangePrice, error) {
+	// Liqui not support for socket
+	result := map[common.TokenPairID]common.ExchangePrice{}
+	return result, nil
+}
+
 func (self *Liqui) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	timestamp := id.Timepoint
 	if timepoint-timestamp/uint64(time.Millisecond) > DEPOSIT_WAITING_TIME {
@@ -264,6 +271,6 @@ func NewLiqui(interf LiquiInterface) *Liqui {
 			common.MustCreateTokenPair("KNC", "ETH"),
 		},
 		map[string]ethereum.Address{},
-		"http"
+		"http",
 	}
 }

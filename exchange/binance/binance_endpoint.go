@@ -367,7 +367,7 @@ func (self *BinanceEndpoint) GetListenKey(timepoint uint64) (exchange.Binalisten
 func (self *BinanceEndpoint) SocketFetchOnePairData(
 	pair common.TokenPair,
 	data *sync.Map,
-	dataChannel chan exchange.Orderbook) {
+	exchangePriceChan chan *sync.Map) {
 
 	URL := self.interf.SocketPublicEndpoint() + strings.ToLower(pair.Base.ID) + strings.ToLower(pair.Quote.ID) + "@depth"
 
@@ -378,6 +378,7 @@ func (self *BinanceEndpoint) SocketFetchOnePairData(
 		log.Printf("Cannot connect with socket %s\n", error)
 		return
 	}
+	dataChannel := make(chan exchange.Orderbook)
 	result := common.ExchangePrice{}
 	result.Valid = true
 	result.Timestamp = common.GetTimestamp()
@@ -395,6 +396,7 @@ func (self *BinanceEndpoint) SocketFetchOnePairData(
 	}()
 	for {
 		self.StoreOrderBookData(nil, pair, data, dataChannel, result)
+		exchangePriceChan <- data
 	}
 }
 

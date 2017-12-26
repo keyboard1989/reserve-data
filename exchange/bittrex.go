@@ -196,6 +196,12 @@ func (self *Bittrex) FetchPriceData(timepoint uint64) (map[common.TokenPairID]co
 	return result, nil
 }
 
+func (self *Bittrex) FetchPriceDataUsingSocket() (map[common.TokenPairID]common.ExchangePrice, error) {
+	// TODO: add support for socket later
+	result := map[common.TokenPairID]common.ExchangePrice{}
+	return result, nil
+}
+
 func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))

@@ -1,8 +1,10 @@
 package fetcher
 
 import (
-	"github.com/KyberNetwork/reserve-data/common"
+	"sort"
 	"sync"
+
+	"github.com/KyberNetwork/reserve-data/common"
 )
 
 type ConcurrentAllPriceData struct {
@@ -17,6 +19,30 @@ func NewConcurrentAllPriceData() *ConcurrentAllPriceData {
 	}
 }
 
+func (self *ConcurrentAllPriceData) UpdatePrice(
+	oldPrice []common.PriceEntry,
+	newPrice []common.PriceEntry) []common.PriceEntry {
+	for _, price := range newPrice {
+		if price.Quantity == 0 {
+			// find the rate
+			i := sort.Search(len(oldPrice), func(i int) bool { return oldPrice[i].Rate == price.Rate })
+			// if exist, remove it
+			if i < len(oldPrice) {
+				oldPrice = append(oldPrice[:i], oldPrice[i+1:]...)
+			}
+		} else {
+			// insert to the right place
+			i := sort.Search(len(oldPrice), func(i int) bool { return oldPrice[i].Rate >= price.Rate })
+			if i < len(oldPrice) && oldPrice[i].Rate == price.Rate {
+				oldPrice[i] = price
+			} else {
+				oldPrice = append(oldPrice[:i], append([]common.PriceEntry{price}, oldPrice[i:]...)...)
+			}
+		}
+	}
+	return oldPrice
+}
+
 func (self *ConcurrentAllPriceData) SetOnePrice(
 	exchange common.ExchangeID,
 	pair common.TokenPairID,
@@ -28,6 +54,22 @@ func (self *ConcurrentAllPriceData) SetOnePrice(
 		self.data[pair] = common.OnePrice{}
 	}
 	self.data[pair][exchange] = d
+}
+
+func (self *ConcurrentAllPriceData) UpdateOnePrice(
+	exchange common.ExchangeID,
+	pair common.TokenPairID,
+	d common.ExchangePrice) {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	_, exist := self.data[pair]
+	if !exist {
+		self.data[pair] = common.OnePrice{}
+	}
+	exchangePrice := self.data[pair][exchange]
+	exchangePrice.Bids = self.UpdatePrice(exchangePrice.Bids, d.Bids)
+	exchangePrice.Asks = self.UpdatePrice(exchangePrice.Asks, d.Asks)
+	self.data[pair][exchange] = exchangePrice
 }
 
 func (self *ConcurrentAllPriceData) GetData() map[common.TokenPairID]common.OnePrice {

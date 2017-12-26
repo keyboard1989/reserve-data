@@ -75,6 +75,12 @@ func (self *Bitfinex) FetchPriceData(timepoint uint64) (map[common.TokenPairID]c
 	return result, nil
 }
 
+func (self *Bitfinex) FetchPriceDataUsingSocket() (map[common.TokenPairID]common.ExchangePrice, error) {
+	// TODO: add support for socket later
+	result := map[common.TokenPairID]common.ExchangePrice{}
+	return result, nil
+}
+
 func (self *Bitfinex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
 	return result, nil
@@ -100,6 +106,6 @@ func NewBitfinex(interf BitfinexInterface) *Bitfinex {
 			"BAT": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
 			"KNC": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
 		},
-		"http"
+		"http",
 	}
 }
