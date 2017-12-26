@@ -16,7 +16,11 @@ type ExchangePool struct {
 	Exchanges map[common.ExchangeID]interface{}
 }
 
-func NewSimulationExchangePool(addressConfig common.AddressConfig, signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
+func NewSimulationExchangePool(
+	addressConfig common.AddressConfig,
+	signer *signer.FileSigner,
+	bittrexStorage exchange.BittrexStorage) *ExchangePool {
+
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
 	exparams := strings.Split(params, ",")

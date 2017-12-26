@@ -12,6 +12,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/getsentry/raven-go"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
 )
@@ -499,6 +500,7 @@ func NewHTTPServer(app reserve.ReserveData, core reserve.ReserveCore, host strin
 
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
+	r.Use(cors.Default())
 
 	return &HTTPServer{
 		app, core, host, r,
