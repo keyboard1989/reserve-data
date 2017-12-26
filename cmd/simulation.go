@@ -4,13 +4,8 @@ import (
 	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
-	"github.com/KyberNetwork/reserve-data/exchange"
-	// "github.com/KyberNetwork/reserve-data/exchange/binance"
-	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
-	// "github.com/KyberNetwork/reserve-data/exchange/liqui"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -34,9 +29,6 @@ func GetConfigForSimulation() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	// wrapperAddr := ethereum.HexToAddress("0x5aa7b0c53affef857523014ac6ce6c8d30bc68e6")
-	// reserveAddr := ethereum.HexToAddress("0x98990ee596d7c383a496f54c9e617ce7d2b3ed46")
-
 	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
 	if err != nil {
 		panic(err)
@@ -45,29 +37,9 @@ func GetConfigForSimulation() *Config {
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
-	fetcherExchanges := []fetcher.Exchange{}
-	// liqui := exchange.NewRealLiqui(fileSigner)
-	// liqui := exchange.NewLiqui(liqui.NewSimulatedLiquiEndpoint(fileSigner))
-	// for tokenID, addr := range addressConfig.Exchanges["liqui"] {
-	// 	liqui.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
-	// }
-	// binance := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(fileSigner))
-	// for tokenID, addr := range addressConfig.Exchanges["binance"] {
-	// 	binance.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
-	// }
-	bittrex := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(fileSigner), storage)
-	for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
-		bittrex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
-	}
-
-	// fetcherExchanges = append(fetcherExchanges, liqui)
-	// fetcherExchanges = append(fetcherExchanges, binance)
-	fetcherExchanges = append(fetcherExchanges, bittrex)
-
-	exchanges := []common.Exchange{}
-	// exchanges = append(exchanges, liqui)
-	// exchanges = append(exchanges, binance)
-	exchanges = append(exchanges, bittrex)
+	exchangePool := NewSimulationExchangePool(
+		addressConfig, fileSigner, storage,
+	)
 
 	// endpoint := "http://localhost:8545"
 	// endpoint := "https://kovan.kyber.network"
@@ -78,8 +50,8 @@ func GetConfigForSimulation() *Config {
 		DataStorage:      storage,
 		FetcherStorage:   storage,
 		FetcherRunner:    fetcherRunner,
-		FetcherExchanges: fetcherExchanges,
-		Exchanges:        exchanges,
+		FetcherExchanges: exchangePool.FetcherExchanges(),
+		Exchanges:        exchangePool.CoreExchanges(),
 		BlockchainSigner: fileSigner,
 		EthereumEndpoint: endpoint,
 		SupportedTokens:  tokens,
