@@ -58,7 +58,7 @@ func (self ReserveCore) Trade(
 		}
 	}
 	uid := timebasedID(id)
-	go self.activityStorage.Record(
+	self.activityStorage.Record(
 		"trade",
 		uid,
 		string(exchange.ID()),
@@ -117,7 +117,7 @@ func (self ReserveCore) Deposit(
 	}
 	amountFloat := common.BigToFloat(amount, token.Decimal)
 	uid := timebasedID(tx.Hex() + "|" + token.ID + "|" + strconv.FormatFloat(amountFloat, 'f', -1, 64))
-	go self.activityStorage.Record(
+	self.activityStorage.Record(
 		"deposit",
 		uid,
 		string(exchange.ID()),
@@ -160,7 +160,7 @@ func (self ReserveCore) Withdraw(
 		status = "submitted"
 	}
 	uid := timebasedID(id)
-	go self.activityStorage.Record(
+	self.activityStorage.Record(
 		"withdraw",
 		uid,
 		string(exchange.ID()),
@@ -219,7 +219,7 @@ func (self ReserveCore) SetRates(
 		status = "submitted"
 	}
 	uid := timebasedID(tx.Hex())
-	go self.activityStorage.Record(
+	self.activityStorage.Record(
 		"set_rates",
 		uid,
 		"blockchain",
