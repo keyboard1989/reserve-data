@@ -135,8 +135,8 @@ func (self ReserveCore) Deposit(
 		timepoint,
 	)
 	log.Printf(
-		"Core ----------> Deposit to %s: token: %s, amount: %d, timestamp: %d ==> Result: tx: %s, error: %s",
-		exchange.ID(), token.ID, amount.Uint64(), timepoint, tx.Hex(), err,
+		"Core ----------> Deposit to %s: token: %s, amount: %s, timestamp: %d ==> Result: tx: %s, error: %s",
+		exchange.ID(), token.ID, amount.Text(10), timepoint, tx.Hex(), err,
 	)
 	return uid, err
 }
@@ -181,8 +181,8 @@ func (self ReserveCore) Withdraw(
 		timepoint,
 	)
 	log.Printf(
-		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: id: %s, error: %s",
-		exchange.ID(), token.ID, amount.Uint64(), timepoint, id, err,
+		"Core ----------> Withdraw from %s: token: %s, amount: %s, timestamp: %d ==> Result: id: %s, error: %s",
+		exchange.ID(), token.ID, amount.Text(10), timepoint, id, err,
 	)
 	return uid, err
 }
