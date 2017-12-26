@@ -11,11 +11,8 @@ type ReserveData interface {
 	GetAllPrices(timestamp uint64) (common.AllPriceResponse, error)
 	GetOnePrice(id common.TokenPairID, timestamp uint64) (common.OnePriceResponse, error)
 
-	CurrentBalanceVersion(timestamp uint64) (common.Version, error)
-	GetAllBalances(timestamp uint64) (common.AllBalanceResponse, error)
-
-	CurrentEBalanceVersion(timestamp uint64) (common.Version, error)
-	GetAllEBalances(timestamp uint64) (common.AllEBalanceResponse, error)
+	CurrentAuthDataVersion(timestamp uint64) (common.Version, error)
+	GetAuthData(timestamp uint64) (common.AuthDataResponse, error)
 
 	CurrentRateVersion(timestamp uint64) (common.Version, error)
 	GetAllRates(timestamp uint64) (common.AllRateResponse, error)

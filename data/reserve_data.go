@@ -47,50 +47,34 @@ func (self ReserveData) GetOnePrice(pairID common.TokenPairID, timepoint uint64)
 	}
 }
 
-func (self ReserveData) CurrentEBalanceVersion(timepoint uint64) (common.Version, error) {
-	return self.storage.CurrentEBalanceVersion(timepoint)
+func (self ReserveData) CurrentAuthDataVersion(timepoint uint64) (common.Version, error) {
+	return self.storage.CurrentAuthDataVersion(timepoint)
 }
 
-func (self ReserveData) GetAllEBalances(timepoint uint64) (common.AllEBalanceResponse, error) {
+func (self ReserveData) GetAuthData(timepoint uint64) (common.AuthDataResponse, error) {
 	timestamp := common.GetTimestamp()
-	version, err := self.storage.CurrentEBalanceVersion(timepoint)
+	version, err := self.storage.CurrentAuthDataVersion(timepoint)
 	if err != nil {
-		return common.AllEBalanceResponse{}, err
+		return common.AuthDataResponse{}, err
 	} else {
-		result := common.AllEBalanceResponse{}
-		data, err := self.storage.GetAllEBalances(version)
+		result := common.AuthDataResponse{}
+		data, err := self.storage.GetAuthData(version)
 		returnTime := common.GetTimestamp()
 		result.Version = version
 		result.Timestamp = timestamp
 		result.ReturnTime = returnTime
-		result.Data = data
-		return result, err
-	}
-}
-
-func (self ReserveData) CurrentBalanceVersion(timepoint uint64) (common.Version, error) {
-	return self.storage.CurrentBalanceVersion(timepoint)
-}
-
-func (self ReserveData) GetAllBalances(timepoint uint64) (common.AllBalanceResponse, error) {
-	timestamp := common.GetTimestamp()
-	version, err := self.storage.CurrentBalanceVersion(timepoint)
-	if err != nil {
-		return common.AllBalanceResponse{}, err
-	} else {
-		result := common.AllBalanceResponse{}
-		balances, err := self.storage.GetAllBalances(version)
-		returnTime := common.GetTimestamp()
-		result.Version = version
-		result.Timestamp = timestamp
-		result.ReturnTime = returnTime
-		data := map[string]common.BalanceResponse{}
-		for tokenID, balance := range balances {
-			data[tokenID] = balance.ToBalanceResponse(
+		result.Data.Valid = data.Valid
+		result.Data.Error = data.Error
+		result.Data.Timestamp = data.Timestamp
+		result.Data.ReturnTime = data.ReturnTime
+		result.Data.ExchangeBalances = data.ExchangeBalances
+		result.Data.PendingActivities = data.PendingActivities
+		result.Data.ReserveBalances = map[string]common.BalanceResponse{}
+		for tokenID, balance := range data.ReserveBalances {
+			result.Data.ReserveBalances[tokenID] = balance.ToBalanceResponse(
 				common.MustGetToken(tokenID).Decimal,
 			)
 		}
-		result.Data = data
 		return result, err
 	}
 }

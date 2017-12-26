@@ -115,8 +115,8 @@ func (self *Bittrex) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 			if deposit.Currency == currency &&
 				deposit.Amount-amount < EPSILON &&
 				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond) &&
-				self.storage.IsNewBittrexDeposit(deposit.Id) {
-				self.storage.RegisterBittrexDeposit(deposit.Id)
+				self.storage.IsNewBittrexDeposit(deposit.Id, id) {
+				self.storage.RegisterBittrexDeposit(deposit.Id, id)
 				return "done", nil
 			}
 		}
@@ -138,30 +138,30 @@ func (self *Bittrex) CancelOrder(id common.ActivityID) error {
 	}
 }
 
-func (self *Bittrex) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, error) {
+func (self *Bittrex) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
 	idParts := strings.Split(id.EID, "|")
 	if len(idParts) != 2 {
 		// here, the exchange id part in id is malformed
 		// 1. because analytic didn't pass original ID
 		// 2. id is not constructed correctly in a form of uuid + "|" + token
-		return "", errors.New("Invalid deposit id")
+		return "", "", errors.New("Invalid withdraw id")
 	}
 	uuid := idParts[0]
 	currency := idParts[1]
 	histories, err := self.interf.WithdrawHistory(currency, timepoint)
 	if err != nil {
-		return "", err
+		return "", "", err
 	} else {
 		for _, withdraw := range histories.Result {
 			if withdraw.PaymentUuid == uuid {
 				if withdraw.PendingPayment {
-					return "", nil
+					return "", withdraw.TxId, nil
 				} else {
-					return "done", nil
+					return "done", withdraw.TxId, nil
 				}
 			}
 		}
-		return "", errors.New("Withdraw with uuid " + uuid + " of currency " + currency + " is not found on bittrex")
+		return "", "", errors.New("Withdraw with uuid " + uuid + " of currency " + currency + " is not found on bittrex")
 	}
 }
 

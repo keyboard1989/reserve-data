@@ -303,3 +303,7 @@ func NewSimulatedBittrexEndpoint(signer Signer) *BittrexEndpoint {
 func NewDevBittrexEndpoint(signer Signer) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, NewDevInterface()}
 }
+
+func NewKovanBittrexEndpoint(signer Signer) *BittrexEndpoint {
+	return &BittrexEndpoint{signer, NewKovanInterface()}
+}

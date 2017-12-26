@@ -12,6 +12,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/getsentry/raven-go"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
 )
@@ -100,30 +101,9 @@ func (self *HTTPServer) Price(c *gin.Context) {
 	}
 }
 
-func (self *HTTPServer) AllBalances(c *gin.Context) {
-	log.Printf("Getting all balances \n")
-	data, err := self.app.GetAllBalances(getTimePoint(c, true))
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
-		)
-	} else {
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"success":   true,
-				"version":   data.Version,
-				"timestamp": data.Timestamp,
-				"data":      data.Data,
-			},
-		)
-	}
-}
-
-func (self *HTTPServer) AllEBalances(c *gin.Context) {
-	log.Printf("Getting all balances \n")
-	data, err := self.app.GetAllEBalances(getTimePoint(c, true))
+func (self *HTTPServer) AuthData(c *gin.Context) {
+	log.Printf("Getting current auth data snapshot \n")
+	data, err := self.app.GetAuthData(getTimePoint(c, true))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -444,25 +424,6 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 	)
 }
 
-func (self *HTTPServer) GetPendingActivities(c *gin.Context) {
-	log.Printf("Getting all activity records \n")
-	data, err := self.app.GetPendingActivities()
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
-		)
-	} else {
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"success": true,
-				"data":    data,
-			},
-		)
-	}
-}
-
 func (self *HTTPServer) GetActivities(c *gin.Context) {
 	log.Printf("Getting all activity records \n")
 	data, err := self.app.GetRecords()
@@ -499,11 +460,29 @@ func (self *HTTPServer) StopFetcher(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
+	log.Printf("Getting all immediate pending activity records \n")
+	data, err := self.app.GetPendingActivities()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
-	self.r.GET("/balances", self.AllBalances)
-	self.r.GET("/ebalances", self.AllEBalances)
+	self.r.GET("/authdata", self.AuthData)
 	self.r.POST("/cancelorder/:exchangeid", self.CancelOrder)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
@@ -511,7 +490,7 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/setrates", self.SetRate)
 	self.r.GET("/getrates", self.GetRate)
 	self.r.GET("/activities", self.GetActivities)
-	self.r.GET("/pending-activities", self.GetPendingActivities)
+	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
 
 	self.r.Run(self.host)
 }
@@ -521,6 +500,7 @@ func NewHTTPServer(app reserve.ReserveData, core reserve.ReserveCore, host strin
 
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
+	r.Use(cors.Default())
 
 	return &HTTPServer{
 		app, core, host, r,

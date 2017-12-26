@@ -37,9 +37,9 @@ func getTimePoint(c *gin.Context) uint64 {
 	}
 }
 
-func (self *HttpRunnerServer) etick(c *gin.Context) {
+func (self *HttpRunnerServer) otick(c *gin.Context) {
 	timepoint := getTimePoint(c)
-	self.runner.eticker <- common.TimepointToTime(timepoint)
+	self.runner.oticker <- common.TimepointToTime(timepoint)
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -48,9 +48,9 @@ func (self *HttpRunnerServer) etick(c *gin.Context) {
 	)
 }
 
-func (self *HttpRunnerServer) btick(c *gin.Context) {
+func (self *HttpRunnerServer) atick(c *gin.Context) {
 	timepoint := getTimePoint(c)
-	self.runner.bticker <- common.TimepointToTime(timepoint)
+	self.runner.aticker <- common.TimepointToTime(timepoint)
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -60,8 +60,8 @@ func (self *HttpRunnerServer) btick(c *gin.Context) {
 }
 
 func (self *HttpRunnerServer) init() {
-	self.r.GET("/etick", self.etick)
-	self.r.GET("/btick", self.btick)
+	self.r.GET("/otick", self.otick)
+	self.r.GET("/atick", self.atick)
 }
 
 func (self *HttpRunnerServer) Start() error {

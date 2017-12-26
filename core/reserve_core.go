@@ -58,7 +58,7 @@ func (self ReserveCore) Trade(
 		}
 	}
 	uid := timebasedID(id)
-	go self.activityStorage.Record(
+	self.activityStorage.Record(
 		"trade",
 		uid,
 		string(exchange.ID()),
@@ -78,6 +78,7 @@ func (self ReserveCore) Trade(
 			"error":     err,
 		},
 		status,
+		"",
 		timepoint,
 	)
 	log.Printf(
@@ -116,7 +117,7 @@ func (self ReserveCore) Deposit(
 	}
 	amountFloat := common.BigToFloat(amount, token.Decimal)
 	uid := timebasedID(tx.Hex() + "|" + token.ID + "|" + strconv.FormatFloat(amountFloat, 'f', -1, 64))
-	go self.activityStorage.Record(
+	self.activityStorage.Record(
 		"deposit",
 		uid,
 		string(exchange.ID()),
@@ -129,12 +130,13 @@ func (self ReserveCore) Deposit(
 			"tx":    tx.Hex(),
 			"error": err,
 		},
+		"",
 		status,
 		timepoint,
 	)
 	log.Printf(
-		"Core ----------> Deposit to %s: token: %s, amount: %d, timestamp: %d ==> Result: tx: %s, error: %s",
-		exchange.ID(), token.ID, amount.Uint64(), timepoint, tx.Hex(), err,
+		"Core ----------> Deposit to %s: token: %s, amount: %s, timestamp: %d ==> Result: tx: %s, error: %s",
+		exchange.ID(), token.ID, amount.Text(10), timepoint, tx.Hex(), err,
 	)
 	return uid, err
 }
@@ -158,7 +160,7 @@ func (self ReserveCore) Withdraw(
 		status = "submitted"
 	}
 	uid := timebasedID(id)
-	go self.activityStorage.Record(
+	self.activityStorage.Record(
 		"withdraw",
 		uid,
 		string(exchange.ID()),
@@ -170,13 +172,17 @@ func (self ReserveCore) Withdraw(
 		}, map[string]interface{}{
 			"error": err,
 			"id":    id,
+			// this field will be updated with real tx when data fetcher can fetch it
+			// from exchanges
+			"tx": "",
 		},
 		status,
+		"",
 		timepoint,
 	)
 	log.Printf(
-		"Core ----------> Withdraw from %s: token: %s, amount: %d, timestamp: %d ==> Result: id: %s, error: %s",
-		exchange.ID(), token.ID, amount.Uint64(), timepoint, id, err,
+		"Core ----------> Withdraw from %s: token: %s, amount: %s, timestamp: %d ==> Result: id: %s, error: %s",
+		exchange.ID(), token.ID, amount.Text(10), timepoint, id, err,
 	)
 	return uid, err
 }
@@ -213,7 +219,7 @@ func (self ReserveCore) SetRates(
 		status = "submitted"
 	}
 	uid := timebasedID(tx.Hex())
-	go self.activityStorage.Record(
+	self.activityStorage.Record(
 		"set_rates",
 		uid,
 		"blockchain",
@@ -226,6 +232,7 @@ func (self ReserveCore) SetRates(
 			"tx":    tx.Hex(),
 			"error": err,
 		},
+		"",
 		status,
 		common.GetTimepoint(),
 	)
