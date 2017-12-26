@@ -210,14 +210,15 @@ func (self *Liqui) DepositStatus(id common.ActivityID, timepoint uint64) (string
 	return "", errors.New("Not implemented yet")
 }
 
-func (self *Liqui) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, error) {
+// Liqui should not work properly because of lack of txid
+func (self *Liqui) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
 	timestamp := id.Timepoint
 	if timepoint-timestamp/uint64(time.Millisecond) > WITHDRAW_WAITING_TIME {
-		return "done", nil
+		return "done", "", nil
 	} else {
-		return "", nil
+		return "", "", nil
 	}
-	return "", errors.New("Not implemented yet")
+	return "", "", errors.New("Not implemented yet")
 }
 
 func (self *Liqui) OrderStatus(id common.ActivityID, timepoint uint64) (string, error) {

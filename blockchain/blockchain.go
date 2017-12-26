@@ -29,6 +29,9 @@ func (self *Blockchain) AddToken(t common.Token) {
 func (self *Blockchain) IsMined(tx ethereum.Hash) (bool, error) {
 	option := context.Background()
 	receipt, err := self.client.TransactionReceipt(option, tx)
+	if receipt != nil {
+		err = nil
+	}
 	return receipt != nil, err
 }
 

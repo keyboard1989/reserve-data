@@ -96,13 +96,57 @@ func NewActivityID(t uint64, id string) ActivityID {
 }
 
 type ActivityRecord struct {
-	Action      string
-	ID          ActivityID
-	Destination string
-	Params      map[string]interface{}
-	Result      map[string]interface{}
-	Status      string
-	Timestamp   Timestamp
+	Action         string
+	ID             ActivityID
+	Destination    string
+	Params         map[string]interface{}
+	Result         map[string]interface{}
+	ExchangeStatus string
+	MiningStatus   string
+	Timestamp      Timestamp
+}
+
+func (self ActivityRecord) IsExchangePending() bool {
+	switch self.Action {
+	case "withdraw":
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "submitted") && self.MiningStatus != "failed"
+	case "deposit":
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending") && self.MiningStatus != "failed"
+	case "trade":
+		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
+	}
+	return true
+}
+
+func (self ActivityRecord) IsBlockchainPending() bool {
+	switch self.Action {
+	case "withdraw", "deposit", "set_rates":
+		return self.MiningStatus == "" || self.MiningStatus == "submitted"
+	}
+	return true
+}
+
+func (self ActivityRecord) IsPending() bool {
+	switch self.Action {
+	case "withdraw":
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "submitted" ||
+			self.MiningStatus == "" || self.MiningStatus == "submitted") && self.MiningStatus != "failed"
+	case "deposit":
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending" ||
+			self.MiningStatus == "" || self.MiningStatus == "submitted") && self.MiningStatus != "failed"
+	case "trade":
+		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
+	case "set_rates":
+		return self.MiningStatus == "" || self.MiningStatus == "submitted"
+	}
+	return true
+}
+
+type ActivityStatus struct {
+	ExchangeStatus string
+	Tx             string
+	MiningStatus   string
+	Error          error
 }
 
 type PriceEntry struct {
@@ -242,6 +286,31 @@ type AllEBalanceResponse struct {
 	Timestamp  Timestamp
 	ReturnTime Timestamp
 	Data       map[ExchangeID]EBalanceEntry
+}
+
+type AuthDataSnapshot struct {
+	Valid             bool
+	Error             string
+	Timestamp         Timestamp
+	ReturnTime        Timestamp
+	ExchangeBalances  map[ExchangeID]EBalanceEntry
+	ReserveBalances   map[string]BalanceEntry
+	PendingActivities []ActivityRecord
+}
+
+type AuthDataResponse struct {
+	Version    Version
+	Timestamp  Timestamp
+	ReturnTime Timestamp
+	Data       struct {
+		Valid             bool
+		Error             string
+		Timestamp         Timestamp
+		ReturnTime        Timestamp
+		ExchangeBalances  map[ExchangeID]EBalanceEntry
+		ReserveBalances   map[string]BalanceResponse
+		PendingActivities []ActivityRecord
+	}
 }
 
 type RateEntry struct {

@@ -6,10 +6,9 @@ import (
 
 type Storage interface {
 	StorePrice(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error
-	StoreBalance(data map[string]common.BalanceEntry, timepoint uint64) error
-	StoreEBalance(data map[common.ExchangeID]common.EBalanceEntry, timepoint uint64) error
 	StoreRate(data common.AllRateEntry, timepoint uint64) error
+	StoreAuthSnapshot(data *common.AuthDataSnapshot, timepoint uint64) error
 
 	GetPendingActivities() ([]common.ActivityRecord, error)
-	UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error
+	UpdateActivity(id common.ActivityID, act common.ActivityRecord) error
 }

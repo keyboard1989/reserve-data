@@ -41,7 +41,8 @@ func (self *RamActivityStorage) StoreNewData(
 	id common.ActivityID,
 	destination string,
 	params map[string]interface{}, result map[string]interface{},
-	status string,
+	estatus string,
+	mstatus string,
 	timepoint uint64) error {
 
 	self.mu.Lock()
@@ -49,22 +50,23 @@ func (self *RamActivityStorage) StoreNewData(
 	version := self.version + 1
 	self.version = version
 	record := common.ActivityRecord{
-		Action:      action,
-		ID:          id,
-		Destination: destination,
-		Params:      params,
-		Result:      result,
-		Status:      status,
-		Timestamp:   common.Timestamp(strconv.FormatUint(timepoint, 10)),
+		Action:         action,
+		ID:             id,
+		Destination:    destination,
+		Params:         params,
+		Result:         result,
+		ExchangeStatus: estatus,
+		MiningStatus:   mstatus,
+		Timestamp:      common.Timestamp(strconv.FormatUint(timepoint, 10)),
 	}
 	self.records.PushBack(&record)
-	if status == "submitted" {
+	if record.IsPending() {
 		self.pendingRecords.PushBack(&record)
 	}
 	return nil
 }
 
-func (self *RamActivityStorage) UpdateActivityStatus(action string, id common.ActivityID, destination string, status string) error {
+func (self *RamActivityStorage) UpdateActivity(id common.ActivityID, activity common.ActivityRecord) error {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
 	ele := self.pendingRecords.Back()
@@ -73,11 +75,14 @@ func (self *RamActivityStorage) UpdateActivityStatus(action string, id common.Ac
 		if ele == nil {
 			break
 		} else {
-			activity := ele.Value.(*common.ActivityRecord)
-			if activity.Action == action && activity.ID == id && activity.Destination == destination {
+			oldAct := ele.Value.(*common.ActivityRecord)
+			if oldAct.ID == id {
 				updated = true
-				activity.Status = status
-				self.pendingRecords.Remove(ele)
+				oldAct.ExchangeStatus = activity.ExchangeStatus
+				oldAct.MiningStatus = activity.MiningStatus
+				if !oldAct.IsPending() {
+					self.pendingRecords.Remove(ele)
+				}
 			}
 			ele = ele.Prev()
 		}
