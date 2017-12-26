@@ -13,10 +13,11 @@ import (
 	"strings"
 	"time"
 
+	"sync"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"sync"
 )
 
 const EPSILON float64 = 0.0000000001 // 10e-10

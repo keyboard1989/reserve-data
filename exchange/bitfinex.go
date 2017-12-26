@@ -9,9 +9,10 @@ import (
 )
 
 type Bitfinex struct {
-	interf    BitfinexInterface
-	pairs     []common.TokenPair
-	addresses map[string]ethereum.Address
+	interf      BitfinexInterface
+	pairs       []common.TokenPair
+	addresses   map[string]ethereum.Address
+	databusType string
 }
 
 func (self *Bitfinex) MarshalText() (text []byte, err error) {
@@ -31,6 +32,10 @@ func (self *Bitfinex) UpdateAllDepositAddresses(address string) {
 
 func (self *Bitfinex) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
+}
+
+func (self *Bitfinex) UpdateFetcherDatabusType(databusType string) {
+	self.databusType = databusType
 }
 
 func (self *Bitfinex) ID() common.ExchangeID {
@@ -95,5 +100,6 @@ func NewBitfinex(interf BitfinexInterface) *Bitfinex {
 			"BAT": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
 			"KNC": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
 		},
+		"http"
 	}
 }

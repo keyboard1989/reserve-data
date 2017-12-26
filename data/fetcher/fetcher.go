@@ -57,6 +57,10 @@ func (self *Fetcher) fetchingFromExchanges() {
 	}
 }
 
+func (self *Fetcher) fetchingFromExchangesUsingSocket() {
+
+}
+
 func (self *Fetcher) fetchingFromBlockchain() {
 	for {
 		t := <-self.runner.GetBlockchainTicker()
@@ -72,6 +76,7 @@ func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
 	log.Printf("Fetcher runner is running...")
+	go self.fetchingFromExchangesUsingSocket()
 	go self.fetchingFromExchanges()
 	go self.fetchingFromBlockchain()
 	return nil

@@ -88,13 +88,28 @@ func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]com
 	dataChannel := make(chan Orderbook)
 	for _, pair := range pairs {
 		wait.Add(1)
-		if self.databusType == "socket" {
-			go self.interf.SocketFetchOnePairData(&wait, pair, &data, dataChannel)
-		} else {
+		if self.databusType == "http" {
 			go self.interf.FetchOnePairData(&wait, pair, &data, timepoint)
 		}
 	}
 	wait.Wait()
+	result := map[common.TokenPairID]common.ExchangePrice{}
+	data.Range(func(key, value interface{}) bool {
+		result[key.(common.TokenPairID)] = value.(common.ExchangePrice)
+		return true
+	})
+	return result, nil
+}
+
+func (self Binance) FetchPriceDataUsingSocket() (map[common.TokenPairID]common.ExchangePrice, error) {
+	data := sync.Map{}
+	pairs := self.pairs
+	dataChannel := make(chan Orderbook)
+	for _, pair := range pairs {
+		if self.databusType == "socket" {
+			go self.interf.SocketFetchOnePairData(&wait, pair, &data, dataChannel)
+		}
+	}
 	result := map[common.TokenPairID]common.ExchangePrice{}
 	data.Range(func(key, value interface{}) bool {
 		result[key.(common.TokenPairID)] = value.(common.ExchangePrice)

@@ -10,7 +10,6 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/satori/go.uuid"
 )
 
 const (
@@ -19,9 +18,10 @@ const (
 )
 
 type Liqui struct {
-	interf    LiquiInterface
-	pairs     []common.TokenPair
-	addresses map[string]ethereum.Address
+	interf      LiquiInterface
+	pairs       []common.TokenPair
+	addresses   map[string]ethereum.Address
+	databusType string
 }
 
 func (self *Liqui) MarshalText() (text []byte, err error) {
@@ -41,6 +41,10 @@ func (self *Liqui) UpdateAllDepositAddresses(address string) {
 
 func (self *Liqui) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
+}
+
+func (self *Liqui) UpdateFetcherDatabusType(databusType string) {
+	self.databusType = databusType
 }
 
 func (self *Liqui) ID() common.ExchangeID {
@@ -260,5 +264,6 @@ func NewLiqui(interf LiquiInterface) *Liqui {
 			common.MustCreateTokenPair("KNC", "ETH"),
 		},
 		map[string]ethereum.Address{},
+		"http"
 	}
 }

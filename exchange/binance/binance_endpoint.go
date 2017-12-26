@@ -81,42 +81,42 @@ func (self *BinanceEndpoint) StoreOrderBookData(
 	wg *sync.WaitGroup,
 	pair common.TokenPair,
 	data *sync.Map,
-	dataChannel chan exchange.Orderbook) {
+	dataChannel chan exchange.Orderbook,
+	result common.ExchangePrice) {
 
-	defer wg.Done()
-	orderBook := <-dataChannel
-	bids := orderBook.GetBids()
-	asks := orderBook.GetAsks()
-
-	log.Printf("Get response from socket: %s\n", orderBook)
-
-	result := common.ExchangePrice{}
-	result.Timestamp = common.GetTimestamp()
-	result.ReturnTime = common.GetTimestamp()
-	result.Valid = true
-	for _, buy := range bids {
-		quantity, _ := strconv.ParseFloat(buy[1], 64)
-		rate, _ := strconv.ParseFloat(buy[0], 64)
-		result.Bids = append(
-			result.Bids,
-			common.PriceEntry{
-				quantity,
-				rate,
-			},
-		)
+	if wg != nil {
+		defer wg.Done()
 	}
-	for _, sell := range asks {
-		quantity, _ := strconv.ParseFloat(sell[1], 64)
-		rate, _ := strconv.ParseFloat(sell[0], 64)
-		result.Asks = append(
-			result.Asks,
-			common.PriceEntry{
-				quantity,
-				rate,
-			},
-		)
+	if result.Valid {
+		orderBook := <-dataChannel
+		result.ReturnTime = common.GetTimestamp()
+		bids := orderBook.GetBids()
+		asks := orderBook.GetAsks()
+
+		for _, buy := range bids {
+			quantity, _ := strconv.ParseFloat(buy[1], 64)
+			rate, _ := strconv.ParseFloat(buy[0], 64)
+			result.Bids = append(
+				result.Bids,
+				common.PriceEntry{
+					quantity,
+					rate,
+				},
+			)
+		}
+		for _, sell := range asks {
+			quantity, _ := strconv.ParseFloat(sell[1], 64)
+			rate, _ := strconv.ParseFloat(sell[0], 64)
+			result.Asks = append(
+				result.Asks,
+				common.PriceEntry{
+					quantity,
+					rate,
+				},
+			)
+		}
+		log.Printf("Data to store on storage: %s\n", result)
 	}
-	log.Printf("Data to store on storage: %s\n", result)
 	data.Store(pair.PairID(), result)
 }
 
@@ -126,7 +126,6 @@ func (self *BinanceEndpoint) FetchOnePairData(
 	data *sync.Map,
 	timepoint uint64) {
 
-	defer wg.Done()
 	result := common.ExchangePrice{}
 
 	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
@@ -145,6 +144,7 @@ func (self *BinanceEndpoint) FetchOnePairData(
 
 	returnTime := common.GetTimestamp()
 	result.ReturnTime = returnTime
+	dataChannel := make(chan exchange.Orderbook)
 
 	if err != nil {
 		result.Valid = false
@@ -156,31 +156,12 @@ func (self *BinanceEndpoint) FetchOnePairData(
 			result.Valid = false
 			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
 		} else {
-			for _, buy := range resp_data.Bids {
-				quantity, _ := strconv.ParseFloat(buy[1], 64)
-				rate, _ := strconv.ParseFloat(buy[0], 64)
-				result.Bids = append(
-					result.Bids,
-					common.PriceEntry{
-						quantity,
-						rate,
-					},
-				)
-			}
-			for _, sell := range resp_data.Asks {
-				quantity, _ := strconv.ParseFloat(sell[1], 64)
-				rate, _ := strconv.ParseFloat(sell[0], 64)
-				result.Asks = append(
-					result.Asks,
-					common.PriceEntry{
-						quantity,
-						rate,
-					},
-				)
-			}
+			go func() {
+				dataChannel <- resp_data
+			}()
 		}
 	}
-	data.Store(pair.PairID(), result)
+	self.StoreOrderBookData(wg, pair, data, dataChannel, result)
 }
 
 // Relevant params:
@@ -384,7 +365,6 @@ func (self *BinanceEndpoint) GetListenKey(timepoint uint64) (exchange.Binalisten
 
 // SocketFetchOnePairData fetch one pair data from socket
 func (self *BinanceEndpoint) SocketFetchOnePairData(
-	wg *sync.WaitGroup,
 	pair common.TokenPair,
 	data *sync.Map,
 	dataChannel chan exchange.Orderbook) {
@@ -398,6 +378,9 @@ func (self *BinanceEndpoint) SocketFetchOnePairData(
 		log.Printf("Cannot connect with socket %s\n", error)
 		return
 	}
+	result := common.ExchangePrice{}
+	result.Valid = true
+	result.Timestamp = common.GetTimestamp()
 	go func() {
 		for {
 			res := exchange.Binasocketresp{}
@@ -410,7 +393,9 @@ func (self *BinanceEndpoint) SocketFetchOnePairData(
 			dataChannel <- res
 		}
 	}()
-	self.StoreOrderBookData(wg, pair, data, dataChannel)
+	for {
+		self.StoreOrderBookData(nil, pair, data, dataChannel, result)
+	}
 }
 
 func (self *BinanceEndpoint) SocketFetchAggTrade(

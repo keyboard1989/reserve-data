@@ -19,7 +19,8 @@ type BinanceInterface interface {
 		wg *sync.WaitGroup,
 		pair common.TokenPair,
 		data *sync.Map,
-		dataChannel chan Orderbook)
+		dataChannel chan Orderbook,
+		result common.ExchangePrice)
 
 	SocketFetchOnePairData(
 		wg *sync.WaitGroup,

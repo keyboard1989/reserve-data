@@ -17,10 +17,11 @@ import (
 const EPSILON float64 = 0.000000001
 
 type Bittrex struct {
-	interf    BittrexInterface
-	pairs     []common.TokenPair
-	addresses map[string]ethereum.Address
-	storage   BittrexStorage
+	interf      BittrexInterface
+	pairs       []common.TokenPair
+	addresses   map[string]ethereum.Address
+	storage     BittrexStorage
+	databusType string
 }
 
 func (self *Bittrex) MarshalText() (text []byte, err error) {
@@ -40,6 +41,10 @@ func (self *Bittrex) UpdateAllDepositAddresses(address string) {
 
 func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
+}
+
+func (self *Bittrex) UpdateFetcherDatabusType(databusType string) {
+	self.databusType = databusType
 }
 
 func (self *Bittrex) ID() common.ExchangeID {
@@ -238,5 +243,6 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 		},
 		map[string]ethereum.Address{},
 		storage,
+		"http",
 	}
 }
