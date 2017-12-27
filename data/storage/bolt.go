@@ -133,7 +133,7 @@ func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, Bucket string) error {
 	c := b.Cursor()
 	k, _ := c.First()
 	if k == nil {
-		err.New(fmt.Printf("There no version in %s", Bucket))
+		err = errors.New(fmt.Sprintf("There no version in %s", Bucket))
 		return err
 	}
 	err = b.Delete([]byte(k))
@@ -243,11 +243,14 @@ func (self *BoltStorage) StorePrice(data map[common.TokenPairID]common.OnePrice,
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(PRICE_BUCKET))
+
+		// remove outdated data from bucket
 		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
 		for self.GetNumberOfVersion(tx, PRICE_BUCKET) >= MAX_NUMBER_VERSION {
 			self.PruneOutdatedData(tx, PRICE_BUCKET)
-			log.Printf("After prune number version: %i\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
+			log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
 		}
+
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err
