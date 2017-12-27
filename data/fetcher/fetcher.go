@@ -45,8 +45,8 @@ func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
 	log.Printf("Fetcher runner is running...")
-	// go self.RunOrderbookSocketFetcher()
-	go self.RunOrderbookFetcher()
+	go self.RunOrderbookSocketFetcher()
+	// go self.RunOrderbookFetcher()
 	go self.RunAuthDataFetcher()
 	return nil
 }

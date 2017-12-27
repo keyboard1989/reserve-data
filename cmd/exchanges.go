@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"os"
 	"strings"
 
@@ -47,6 +48,7 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
 	exparams := strings.Split(params, ",")
+	log.Println(exparams)
 	for _, exparam := range exparams {
 		switch exparam {
 		case "bittrex":
@@ -60,6 +62,7 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 			}
+			bin.UpdateFetcherDatabusType("socket")
 			exchanges[bin.ID()] = bin
 		}
 	}

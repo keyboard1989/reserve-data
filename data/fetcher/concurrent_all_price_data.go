@@ -67,6 +67,10 @@ func (self *ConcurrentAllPriceData) UpdateOnePrice(
 		self.data[pair] = common.OnePrice{}
 	}
 	exchangePrice := self.data[pair][exchange]
+	exchangePrice.Valid = d.Valid
+	exchangePrice.Timestamp = d.Timestamp
+	exchangePrice.ReturnTime = d.ReturnTime
+	exchangePrice.Error = d.Error
 	exchangePrice.Bids = self.UpdatePrice(exchangePrice.Bids, d.Bids)
 	exchangePrice.Asks = self.UpdatePrice(exchangePrice.Asks, d.Asks)
 	self.data[pair][exchange] = exchangePrice
