@@ -37,54 +37,6 @@ func (self *Fetcher) AddExchange(exchange Exchange) {
 	self.exchanges = append(self.exchanges, exchange)
 }
 
-func (self *Fetcher) fetchingFromExchanges() {
-	for {
-		log.Printf("waiting for signal from runner for exchange ticker")
-		t := <-self.runner.GetExchangeTicker()
-		log.Printf("got signal in exchange ticker with timestamp %d", common.TimeToTimepoint(t))
-		self.fetchAllFromExchanges(common.TimeToTimepoint(t))
-		log.Printf("fetched data from exchanges")
-	}
-}
-
-func (self *Fetcher) fetchPriceFromExchangeUsingSocket(exchange Exchange, data *ConcurrentAllPriceData) {
-	for {
-		exdata, err := exchange.FetchPriceDataUsingSocket()
-		if err != nil {
-			log.Printf("Fetching data from %s failed: %v\n", exchange.Name(), err)
-		}
-		for pair, exchangeData := range exdata {
-			// data.SetOnePrice(exchange.ID(), pair, exchangeData)
-			data.UpdateOnePrice(exchange.ID(), pair, exchangeData)
-
-			timepoint := common.GetTimepoint()
-			err := self.storage.StorePrice(data.GetData(), timepoint)
-			if err != nil {
-				log.Printf("Storing data failed: %s\n", err)
-			}
-		}
-	}
-}
-
-func (self *Fetcher) fetchAllPricesUsingSocket() {
-	data := NewConcurrentAllPriceData()
-	// start fetching
-	for _, exchange := range self.exchanges {
-		go self.fetchPriceFromExchangeUsingSocket(exchange, data)
-	}
-}
-
-func (self *Fetcher) fetchingFromExchangesUsingSocket() {
-	go self.fetchAllPricesUsingSocket()
-}
-
-func (self *Fetcher) fetchingFromBlockchain() {
-	for {
-		t := <-self.runner.GetBlockchainTicker()
-		self.fetchAllFromBlockchain(common.TimeToTimepoint(t))
-	}
-}
-
 func (self *Fetcher) Stop() error {
 	return self.runner.Stop()
 }
@@ -93,9 +45,9 @@ func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
 	log.Printf("Fetcher runner is running...")
-	go self.fetchingFromExchangesUsingSocket()
-	go self.fetchingFromExchanges()
-	go self.fetchingFromBlockchain()
+	// go self.RunOrderbookSocketFetcher()
+	go self.RunOrderbookFetcher()
+	go self.RunAuthDataFetcher()
 	return nil
 }
 
@@ -391,4 +343,35 @@ func (self *Fetcher) fetchPriceFromExchange(wg *sync.WaitGroup, exchange Exchang
 	for pair, exchangeData := range exdata {
 		data.SetOnePrice(exchange.ID(), pair, exchangeData)
 	}
+}
+
+func (self *Fetcher) fetchPriceFromExchangeUsingSocket(exchange Exchange, data *ConcurrentAllPriceData) {
+	for {
+		exdata, err := exchange.FetchPriceDataUsingSocket()
+		if err != nil {
+			log.Printf("Fetching data from %s failed: %v\n", exchange.Name(), err)
+		}
+		for pair, exchangeData := range exdata {
+			// data.SetOnePrice(exchange.ID(), pair, exchangeData)
+			data.UpdateOnePrice(exchange.ID(), pair, exchangeData)
+
+			timepoint := common.GetTimepoint()
+			err := self.storage.StorePrice(data.GetData(), timepoint)
+			if err != nil {
+				log.Printf("Storing data failed: %s\n", err)
+			}
+		}
+	}
+}
+
+func (self *Fetcher) fetcOrderbookUsingSocket() {
+	data := NewConcurrentAllPriceData()
+	// start fetching
+	for _, exchange := range self.exchanges {
+		go self.fetchPriceFromExchangeUsingSocket(exchange, data)
+	}
+}
+
+func (self *Fetcher) RunOrderbookSocketFetcher() {
+	go self.fetcOrderbookUsingSocket()
 }
