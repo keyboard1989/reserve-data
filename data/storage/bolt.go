@@ -134,7 +134,7 @@ func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	for self.GetNumberOfVersion(tx, bucket) >= MAX_NUMBER_VERSION {
 		k, _ := c.First()
 		if k == nil {
-			err = errors.New(fmt.Sprintf("There no version in %s", Bucket))
+			err = errors.New(fmt.Sprintf("There no version in %s", bucket))
 			return err
 		}
 		err = b.Delete([]byte(k))
