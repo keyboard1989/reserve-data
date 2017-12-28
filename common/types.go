@@ -109,9 +109,11 @@ type ActivityRecord struct {
 func (self ActivityRecord) IsExchangePending() bool {
 	switch self.Action {
 	case "withdraw":
-		return (self.ExchangeStatus == "" || self.ExchangeStatus == "submitted") && self.MiningStatus != "failed"
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "submitted") &&
+			self.MiningStatus != "failed"
 	case "deposit":
-		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending") && self.MiningStatus != "failed"
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending") &&
+			self.MiningStatus != "failed"
 	case "trade":
 		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
 	}
@@ -121,7 +123,7 @@ func (self ActivityRecord) IsExchangePending() bool {
 func (self ActivityRecord) IsBlockchainPending() bool {
 	switch self.Action {
 	case "withdraw", "deposit", "set_rates":
-		return self.MiningStatus == "" || self.MiningStatus == "submitted"
+		return (self.MiningStatus == "" || self.MiningStatus == "submitted") && self.ExchangeStatus != "failed"
 	}
 	return true
 }
@@ -130,14 +132,18 @@ func (self ActivityRecord) IsPending() bool {
 	switch self.Action {
 	case "withdraw":
 		return (self.ExchangeStatus == "" || self.ExchangeStatus == "submitted" ||
-			self.MiningStatus == "" || self.MiningStatus == "submitted") && self.MiningStatus != "failed"
+			self.MiningStatus == "" || self.MiningStatus == "submitted") &&
+			self.MiningStatus != "failed" && self.ExchangeStatus != "failed"
 	case "deposit":
 		return (self.ExchangeStatus == "" || self.ExchangeStatus == "pending" ||
-			self.MiningStatus == "" || self.MiningStatus == "submitted") && self.MiningStatus != "failed"
+			self.MiningStatus == "" || self.MiningStatus == "submitted") &&
+			self.MiningStatus != "failed" && self.ExchangeStatus != "failed"
 	case "trade":
-		return self.ExchangeStatus == "" || self.ExchangeStatus == "submitted"
+		return (self.ExchangeStatus == "" || self.ExchangeStatus == "submitted") &&
+			self.ExchangeStatus != "failed"
 	case "set_rates":
-		return self.MiningStatus == "" || self.MiningStatus == "submitted"
+		return (self.MiningStatus == "" || self.MiningStatus == "submitted") &&
+			self.ExchangeStatus != "failed"
 	}
 	return true
 }
