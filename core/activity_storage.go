@@ -14,4 +14,6 @@ type ActivityStorage interface {
 		estatus string,
 		mstatus string,
 		timepoint uint64) error
+	HasPendingDeposit(
+		token common.Token, exchange common.Exchange) bool
 }

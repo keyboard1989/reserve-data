@@ -382,3 +382,20 @@ func (self *BoltStorage) RegisterBittrexDeposit(id uint64, actID common.Activity
 	})
 	return err
 }
+
+func (self *BoltStorage) HasPendingDeposit(token common.Token, exchange common.Exchange) bool {
+	result := false
+	self.db.View(func(tx *bolt.Tx) error {
+		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
+		c := pb.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			record := common.ActivityRecord{}
+			json.Unmarshal(v, &record)
+			if record.Action == "deposit" && record.Params["token"].(string) == token.ID && record.Destination == string(exchange.ID()) {
+				result = true
+			}
+		}
+		return nil
+	})
+	return result
+}
