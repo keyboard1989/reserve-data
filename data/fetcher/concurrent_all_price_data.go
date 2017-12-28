@@ -7,6 +7,10 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
+const (
+	LIMIT_PRICE_NUMBER int = 50
+)
+
 type ConcurrentAllPriceData struct {
 	mu   sync.RWMutex
 	data map[common.TokenPairID]common.OnePrice
@@ -33,9 +37,15 @@ func (self *ConcurrentAllPriceData) UpdatePrice(
 		} else {
 			// insert to the right place
 			i := sort.Search(len(oldPrice), func(i int) bool { return oldPrice[i].Rate >= price.Rate })
-			if i < len(oldPrice) && oldPrice[i].Rate == price.Rate {
-				oldPrice[i] = price
-			} else {
+			if i < len(oldPrice) {
+				if oldPrice[i].Rate == price.Rate {
+					oldPrice[i] = price
+				} else if len(oldPrice) == LIMIT_PRICE_NUMBER {
+					n := len(oldPrice)
+					oldPrice = append(oldPrice[:n], oldPrice[n+1:]...)
+					oldPrice = append(oldPrice[:i], append([]common.PriceEntry{price}, oldPrice[i:]...)...)
+				}
+			} else if len(oldPrice) < LIMIT_PRICE_NUMBER {
 				oldPrice = append(oldPrice[:i], append([]common.PriceEntry{price}, oldPrice[i:]...)...)
 			}
 		}

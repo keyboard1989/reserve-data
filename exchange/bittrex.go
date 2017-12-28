@@ -51,6 +51,10 @@ func (self *Bittrex) ID() common.ExchangeID {
 	return common.ExchangeID("bittrex")
 }
 
+func (self *Bittrex) DatabusType() string {
+	return self.databusType
+}
+
 func (self *Bittrex) TokenPairs() []common.TokenPair {
 	return self.pairs
 }
@@ -196,10 +200,8 @@ func (self *Bittrex) FetchPriceData(timepoint uint64) (map[common.TokenPairID]co
 	return result, nil
 }
 
-func (self *Bittrex) FetchPriceDataUsingSocket() (map[common.TokenPairID]common.ExchangePrice, error) {
+func (self *Bittrex) FetchPriceDataUsingSocket(exchangePriceChan chan *sync.Map) {
 	// TODO: add support for socket later
-	result := map[common.TokenPairID]common.ExchangePrice{}
-	return result, nil
 }
 
 func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {

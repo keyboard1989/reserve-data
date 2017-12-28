@@ -42,6 +42,10 @@ func (self *Bitfinex) ID() common.ExchangeID {
 	return common.ExchangeID("bitfinex")
 }
 
+func (self *Bitfinex) DatabusType() string {
+	return self.databusType
+}
+
 func (self *Bitfinex) TokenPairs() []common.TokenPair {
 	return self.pairs
 }
