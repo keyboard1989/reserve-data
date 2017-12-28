@@ -115,7 +115,7 @@ func (self *RamActivityStorage) HasPendingDeposit(token common.Token, exchange c
 			break
 		} else {
 			activity := ele.Value.(*common.ActivityRecord)
-			if activity.Action == "deposit" && activity.Params["token"].(string) == token.ID && activity.Destination == string(exchange.ID()) {
+			if activity.Action == "deposit" && activity.Params["token"].(common.Token) == token && activity.Destination == string(exchange.ID()) {
 				return true
 			}
 			ele = ele.Prev()
