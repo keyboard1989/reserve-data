@@ -116,9 +116,9 @@ func (self *BoltStorage) CurrentPriceVersion(timepoint uint64) (common.Version, 
 }
 
 // GetNumberOfVersion return number of version storing in a bucket
-func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, Bucket string) int {
+func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, bucket string) int {
 	result := 0
-	b := tx.Bucket([]byte(Bucket))
+	b := tx.Bucket([]byte(bucket))
 	c := b.Cursor()
 	for k, _ := c.First(); k != nil; k, _ = c.Next() {
 		result++
@@ -127,18 +127,20 @@ func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, Bucket string) int {
 }
 
 // PruneOutdatedData Remove first version out of database
-func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, Bucket string) error {
+func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	var err error
-	b := tx.Bucket([]byte(Bucket))
+	b := tx.Bucket([]byte(bucket))
 	c := b.Cursor()
-	k, _ := c.First()
-	if k == nil {
-		err = errors.New(fmt.Sprintf("There no version in %s", Bucket))
-		return err
-	}
-	err = b.Delete([]byte(k))
-	if err != nil {
-		panic(err)
+	for self.GetNumberOfVersion(tx, bucket) >= MAX_NUMBER_VERSION {
+		k, _ := c.First()
+		if k == nil {
+			err = errors.New(fmt.Sprintf("There no version in %s", Bucket))
+			return err
+		}
+		err = b.Delete([]byte(k))
+		if err != nil {
+			panic(err)
+		}
 	}
 	return err
 }
@@ -246,10 +248,8 @@ func (self *BoltStorage) StorePrice(data map[common.TokenPairID]common.OnePrice,
 
 		// remove outdated data from bucket
 		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
-		for self.GetNumberOfVersion(tx, PRICE_BUCKET) >= MAX_NUMBER_VERSION {
-			self.PruneOutdatedData(tx, PRICE_BUCKET)
-			log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
-		}
+		self.PruneOutdatedData(tx, PRICE_BUCKET)
+		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
 
 		dataJson, err = json.Marshal(data)
 		if err != nil {
