@@ -40,19 +40,23 @@ func GetConfigForDev() *Config {
 		addressConfig, fileSigner, storage,
 	)
 
+	hmac512auth := fileSigner
+
 	endpoint := "https://kovan.infura.io"
 
 	return &Config{
-		ActivityStorage:  storage,
-		DataStorage:      storage,
-		FetcherStorage:   storage,
-		FetcherRunner:    fetcherRunner,
-		FetcherExchanges: exchangePool.FetcherExchanges(),
-		Exchanges:        exchangePool.CoreExchanges(),
-		BlockchainSigner: fileSigner,
-		EthereumEndpoint: endpoint,
-		SupportedTokens:  tokens,
-		WrapperAddress:   wrapperAddr,
-		ReserveAddress:   reserveAddr,
+		ActivityStorage:      storage,
+		DataStorage:          storage,
+		FetcherStorage:       storage,
+		FetcherRunner:        fetcherRunner,
+		FetcherExchanges:     exchangePool.FetcherExchanges(),
+		Exchanges:            exchangePool.CoreExchanges(),
+		BlockchainSigner:     fileSigner,
+		EnableAuthentication: true,
+		AuthEngine:           hmac512auth,
+		EthereumEndpoint:     endpoint,
+		SupportedTokens:      tokens,
+		WrapperAddress:       wrapperAddr,
+		ReserveAddress:       reserveAddr,
 	}
 }
