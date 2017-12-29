@@ -3,13 +3,15 @@ package exchange
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	"sync"
 
+	"math/big"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 type Binance struct {
@@ -35,6 +37,28 @@ func (self *Binance) UpdateAllDepositAddresses(address string) {
 
 func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
+}
+
+func (self *Binance) UpdatePrecision(pair *common.TokenPair, symbols []BinanceSymbolPrecision) {
+	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
+	for _, symbol := range symbols {
+		if symbol.Symbol == pairName {
+			pair.Precision.Amount = symbol.BaseAssetPrecision
+			pair.Precision.Price = symbol.QuotePrecision
+		}
+	}
+}
+
+func (self *Binance) UpdatePairsPrecision() {
+	exchangeInfo, err := self.interf.GetExchangeInfo()
+	if err == nil {
+		symbols := exchangeInfo.Symbols
+		for index, _ := range self.pairs {
+			self.UpdatePrecision(&self.pairs[index], symbols)
+		}
+	} else {
+		log.Printf("Get exchange info failed: %s\n", err)
+	}
 }
 
 func (self *Binance) ID() common.ExchangeID {

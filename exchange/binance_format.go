@@ -25,6 +25,16 @@ type Binainfo struct {
 	} `json:"balances`
 }
 
+type BinanceSymbolPrecision struct {
+	Symbol             string `json:"symbol"`
+	BaseAssetPrecision int    `json:"baseAssetPrecision"`
+	QuotePrecision     int    `json:"quotePrecision"`
+}
+
+type BinanceExchangeInfo struct {
+	Symbols []BinanceSymbolPrecision
+}
+
 type Binatrade struct {
 	Symbol        string `json:"symbol"`
 	OrderID       uint64 `json:"orderId"`
