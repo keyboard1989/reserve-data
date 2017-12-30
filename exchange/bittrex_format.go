@@ -21,6 +21,16 @@ type Bittinfo struct {
 	Error string `json:"message"`
 }
 
+type BittPairInfo struct {
+	Base      string  `json:"BaseCurrency"`
+	Quote     string  `json:"MarketCurrency"`
+	MinAmount float32 `json:"MinTradeSize"`
+}
+
+type BittExchangeInfo struct {
+	Pairs []BittPairInfo `json:"result"`
+}
+
 type Bittwithdraw struct {
 	Success bool              `json:"success"`
 	Result  map[string]string `json:"result"`
