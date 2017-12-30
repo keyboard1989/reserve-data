@@ -233,7 +233,7 @@ func (self *HTTPServer) GetRate(c *gin.Context) {
 }
 
 func (self *HTTPServer) SetRate(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"sources", "dests", "rates", "expires"})
+	postForm, ok := self.Authenticated(c, []string{"sources", "dests", "rates", "expiries"})
 	if !ok {
 		return
 	}
