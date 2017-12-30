@@ -106,6 +106,9 @@ func (self ReserveCore) Deposit(
 	if !supported {
 		tx = ethereum.Hash{}
 		err = errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
+	} else if self.activityStorage.HasPendingDeposit(token, exchange) {
+		tx = ethereum.Hash{}
+		err = errors.New(fmt.Sprintf("There is a pending %s deposit to %s currently, please try again", token.ID, exchange.ID()))
 	} else {
 		tx, err = self.blockchain.Send(token, amount, address)
 	}

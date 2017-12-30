@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -19,6 +20,7 @@ const (
 	AUTH_DATA_BUCKET        string = "auth_data"
 	PENDING_ACTIVITY_BUCKET string = "pending_activities"
 	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
+	MAX_NUMBER_VERSION      int    = 4
 )
 
 type BoltStorage struct {
@@ -111,6 +113,36 @@ func (self *BoltStorage) CurrentPriceVersion(timepoint uint64) (common.Version, 
 		return nil
 	})
 	return common.Version(result), err
+}
+
+// GetNumberOfVersion return number of version storing in a bucket
+func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, bucket string) int {
+	result := 0
+	b := tx.Bucket([]byte(bucket))
+	c := b.Cursor()
+	for k, _ := c.First(); k != nil; k, _ = c.Next() {
+		result++
+	}
+	return result
+}
+
+// PruneOutdatedData Remove first version out of database
+func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
+	var err error
+	b := tx.Bucket([]byte(bucket))
+	c := b.Cursor()
+	for self.GetNumberOfVersion(tx, bucket) >= MAX_NUMBER_VERSION {
+		k, _ := c.First()
+		if k == nil {
+			err = errors.New(fmt.Sprintf("There no version in %s", bucket))
+			return err
+		}
+		err = b.Delete([]byte(k))
+		if err != nil {
+			panic(err)
+		}
+	}
+	return err
 }
 
 func (self *BoltStorage) GetAllPrices(version common.Version) (map[common.TokenPairID]common.OnePrice, error) {
@@ -213,6 +245,12 @@ func (self *BoltStorage) StorePrice(data map[common.TokenPairID]common.OnePrice,
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(PRICE_BUCKET))
+
+		// remove outdated data from bucket
+		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
+		self.PruneOutdatedData(tx, PRICE_BUCKET)
+		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
+
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err
@@ -381,4 +419,21 @@ func (self *BoltStorage) RegisterBittrexDeposit(id uint64, actID common.Activity
 		return nil
 	})
 	return err
+}
+
+func (self *BoltStorage) HasPendingDeposit(token common.Token, exchange common.Exchange) bool {
+	result := false
+	self.db.View(func(tx *bolt.Tx) error {
+		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
+		c := pb.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			record := common.ActivityRecord{}
+			json.Unmarshal(v, &record)
+			if record.Action == "deposit" && record.Params["token"].(string) == token.ID && record.Destination == string(exchange.ID()) {
+				result = true
+			}
+		}
+		return nil
+	})
+	return result
 }

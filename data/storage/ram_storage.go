@@ -107,3 +107,7 @@ func (self *RamStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID) 
 func (self *RamStorage) RegisterBittrexDeposit(id uint64, actID common.ActivityID) error {
 	return self.bittrex.RegisterDeposit(id, actID)
 }
+
+func (self *RamStorage) HasPendingDeposit(token common.Token, exchange common.Exchange) bool {
+	return self.activity.HasPendingDeposit(token, exchange)
+}

@@ -14,13 +14,15 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+type tradingFee map[string]float32
+
 type fundingFee struct {
 	withdraw map[string]float32
 	deposit  map[string]float32
 }
 
 type exchangeFees struct {
-	trading map[string]float32
+	trading tradingFee
 	funding fundingFee
 }
 
@@ -58,10 +60,6 @@ func (self *Binance) UpdatePrecision(pair *common.TokenPair, symbols []BinanceSy
 			pair.Precision.Price = symbol.QuotePrecision
 		}
 	}
-}
-
-func (self *Binance) UpdateLimits(pair *common.TokenPair, symbols []BinanceSymbolPrecision) {
-
 }
 
 func (self *Binance) UpdatePairsPrecision() {
@@ -271,7 +269,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 		},
 		map[string]ethereum.Address{},
 		exchangeFees{
-			map[string]float32{
+			tradingFee{
 				"taker": 0.001,
 				"maker": 0.001,
 			},

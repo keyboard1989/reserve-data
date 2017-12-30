@@ -22,3 +22,4 @@ cmd/cmd
 cmd/core.db
 cmd/log.log
 cmd/parity.pid
+data/storage/test_bolt.db

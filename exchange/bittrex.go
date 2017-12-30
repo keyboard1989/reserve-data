@@ -14,7 +14,7 @@ import (
 	"math/big"
 )
 
-const EPSILON float64 = 0.000000001
+const EPSILON float64 = 0.00000001
 
 type Bittrex struct {
 	interf    BittrexInterface

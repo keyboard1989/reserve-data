@@ -105,3 +105,21 @@ func (self *RamActivityStorage) GetPendingRecords() ([]common.ActivityRecord, er
 	defer self.mu.RUnlock()
 	return activitiesFromList(self.pendingRecords), nil
 }
+
+func (self *RamActivityStorage) HasPendingDeposit(token common.Token, exchange common.Exchange) bool {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	ele := self.pendingRecords.Back()
+	for {
+		if ele == nil {
+			break
+		} else {
+			activity := ele.Value.(*common.ActivityRecord)
+			if activity.Action == "deposit" && activity.Params["token"].(common.Token) == token && activity.Destination == string(exchange.ID()) {
+				return true
+			}
+			ele = ele.Prev()
+		}
+	}
+	return false
+}
