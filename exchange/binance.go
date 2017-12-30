@@ -14,10 +14,21 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+type fundingFee struct {
+	withdraw map[string]float32
+	deposit  map[string]float32
+}
+
+type exchangeFees struct {
+	trading map[string]float32
+	funding fundingFee
+}
+
 type Binance struct {
 	interf    BinanceInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
+	fees      exchangeFees
 }
 
 func (self *Binance) MarshalText() (text []byte, err error) {
@@ -47,6 +58,10 @@ func (self *Binance) UpdatePrecision(pair *common.TokenPair, symbols []BinanceSy
 			pair.Precision.Price = symbol.QuotePrecision
 		}
 	}
+}
+
+func (self *Binance) UpdateLimits(pair *common.TokenPair, symbols []BinanceSymbolPrecision) {
+
 }
 
 func (self *Binance) UpdatePairsPrecision() {
@@ -255,5 +270,30 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("LINK", "ETH"),
 		},
 		map[string]ethereum.Address{},
+		exchangeFees{
+			map[string]float32{
+				"taker": 0.001,
+				"maker": 0.001,
+			},
+			fundingFee{
+				map[string]float32{
+					"ETH":  0.005,
+					"EOS":  2.0,
+					"MCO":  0.15,
+					"OMG":  0.1,
+					"KNC":  1.0,
+					"FUN":  50.0,
+					"LINK": 5.0},
+				map[string]float32{
+					"ETH":  0,
+					"EOS":  0,
+					"MCO":  0,
+					"OMG":  0,
+					"KNC":  0,
+					"FUN":  0,
+					"LINK": 0,
+				},
+			},
+		},
 	}
 }
