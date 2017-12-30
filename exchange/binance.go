@@ -52,12 +52,24 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
 }
 
-func (self *Binance) UpdatePrecision(pair *common.TokenPair, symbols []BinanceSymbolPrecision) {
+func (self *Binance) UpdatePrecisionLimit(pair *common.TokenPair, symbols []BinanceSymbol) {
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		if symbol.Symbol == pairName {
+			//update precision
 			pair.Precision.Amount = symbol.BaseAssetPrecision
 			pair.Precision.Price = symbol.QuotePrecision
+			// update limit
+			for _, filter := range symbol.Filters {
+				minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 32)
+				pair.AmountLimit.Min = float32(minQuantity)
+				maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 32)
+				pair.AmountLimit.Max = float32(maxQuantity)
+				minPrice, _ := strconv.ParseFloat(filter.MinPrice, 32)
+				pair.PriceLimit.Min = float32(minPrice)
+				maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 32)
+				pair.PriceLimit.Max = float32(maxPrice)
+			}
 		}
 	}
 }
@@ -67,7 +79,7 @@ func (self *Binance) UpdatePairsPrecision() {
 	if err == nil {
 		symbols := exchangeInfo.Symbols
 		for index, _ := range self.pairs {
-			self.UpdatePrecision(&self.pairs[index], symbols)
+			self.UpdatePrecisionLimit(&self.pairs[index], symbols)
 		}
 	} else {
 		log.Printf("Get exchange info failed: %s\n", err)
