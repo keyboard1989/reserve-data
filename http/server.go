@@ -144,13 +144,13 @@ func (self *HTTPServer) GetRate(c *gin.Context) {
 }
 
 func (self *HTTPServer) SetRate(c *gin.Context) {
-	sources := c.PostForm("sources")
-	dests := c.PostForm("dests")
-	rates := c.PostForm("rates")
-	blocks := c.PostForm("expiries")
-	sourceTokens := []common.Token{}
-	for _, source := range strings.Split(sources, "-") {
-		token, err := common.GetToken(source)
+	tokenAddrs := c.PostForm("tokens")
+	buys := c.PostForm("buys")
+	sells := c.PostForm("sells")
+	block := c.PostForm("block")
+	tokens := []common.Token{}
+	for _, tok := range strings.Split(tokenAddrs, "-") {
+		token, err := common.GetToken(tok)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -158,24 +158,11 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 			)
 			return
 		} else {
-			sourceTokens = append(sourceTokens, token)
+			tokens = append(tokens, token)
 		}
 	}
-	destTokens := []common.Token{}
-	for _, dest := range strings.Split(dests, "-") {
-		token, err := common.GetToken(dest)
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": err.Error()},
-			)
-			return
-		} else {
-			destTokens = append(destTokens, token)
-		}
-	}
-	bigRates := []*big.Int{}
-	for _, rate := range strings.Split(rates, "-") {
+	bigBuys := []*big.Int{}
+	for _, rate := range strings.Split(buys, "-") {
 		r, err := hexutil.DecodeBig(rate)
 		if err != nil {
 			c.JSON(
@@ -183,22 +170,30 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 				gin.H{"success": false, "reason": err.Error()},
 			)
 		} else {
-			bigRates = append(bigRates, r)
+			bigBuys = append(bigBuys, r)
 		}
 	}
-	expiryBlocks := []*big.Int{}
-	for _, expiry := range strings.Split(blocks, "-") {
-		r, err := hexutil.DecodeBig(expiry)
+	bigSells := []*big.Int{}
+	for _, rate := range strings.Split(sells, "-") {
+		r, err := hexutil.DecodeBig(rate)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
 				gin.H{"success": false, "reason": err.Error()},
 			)
 		} else {
-			expiryBlocks = append(expiryBlocks, r)
+			bigSells = append(bigSells, r)
 		}
 	}
-	id, err := self.core.SetRates(sourceTokens, destTokens, bigRates, expiryBlocks)
+	intBlock, err := strconv.ParseInt(block, 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	id, err := self.core.SetRates(tokens, bigBuys, bigSells, big.NewInt(intBlock))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

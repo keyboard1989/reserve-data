@@ -24,6 +24,7 @@ type Config struct {
 	SupportedTokens []common.Token
 
 	WrapperAddress ethereum.Address
+	PricingAddress ethereum.Address
 	ReserveAddress ethereum.Address
 }
 

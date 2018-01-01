@@ -191,29 +191,24 @@ func (self ReserveCore) Withdraw(
 }
 
 func (self ReserveCore) SetRates(
-	sources []common.Token,
-	dests []common.Token,
-	rates []*big.Int,
-	expiryBlocks []*big.Int) (common.ActivityID, error) {
+	tokens []common.Token,
+	buys []*big.Int,
+	sells []*big.Int,
+	block *big.Int) (common.ActivityID, error) {
 
-	lensources := len(sources)
-	lendests := len(dests)
-	lenrates := len(rates)
-	lenblocks := len(expiryBlocks)
+	lentokens := len(tokens)
+	lenbuys := len(buys)
+	lensells := len(sells)
 	tx := ethereum.Hash{}
 	var err error
-	if lensources != lendests || lensources != lenrates || lensources != lenblocks {
-		err = errors.New("Sources, dests, rates and expiryBlocks must have the same length")
+	if lentokens != lenbuys || lentokens != lensells {
+		err = errors.New("Tokens, buys and sells must have the same length")
 	} else {
-		sourceAddrs := []ethereum.Address{}
-		for _, source := range sources {
-			sourceAddrs = append(sourceAddrs, ethereum.HexToAddress(source.Address))
+		tokenAddrs := []ethereum.Address{}
+		for _, token := range tokens {
+			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(token.Address))
 		}
-		destAddrs := []ethereum.Address{}
-		for _, dest := range dests {
-			destAddrs = append(destAddrs, ethereum.HexToAddress(dest.Address))
-		}
-		tx, err = self.blockchain.SetRates(sourceAddrs, destAddrs, rates, expiryBlocks)
+		tx, err = self.blockchain.SetRates(tokenAddrs, buys, sells, block)
 	}
 	var status string
 	if err != nil {
@@ -227,10 +222,10 @@ func (self ReserveCore) SetRates(
 		uid,
 		"blockchain",
 		map[string]interface{}{
-			"sources":      sources,
-			"dests":        dests,
-			"rates":        rates,
-			"expiryBlocks": expiryBlocks,
+			"tokens": tokens,
+			"buys":   buys,
+			"sells":  sells,
+			"block":  block,
 		}, map[string]interface{}{
 			"tx":    tx.Hex(),
 			"error": err,

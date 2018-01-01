@@ -17,6 +17,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 func loadTimestamp(path string) []uint64 {
@@ -79,17 +80,20 @@ func main() {
 	for _, ex := range config.FetcherExchanges {
 		fetcher.AddExchange(ex)
 	}
-	infura, err := ethclient.Dial(config.EthereumEndpoint)
+	client, err := rpc.Dial(config.EthereumEndpoint)
 	if err != nil {
 		panic(err)
 	}
+	infura := ethclient.NewClient(client)
 
 	// nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
 	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
 
 	bc, err := blockchain.NewBlockchain(
+		client,
 		infura,
 		config.WrapperAddress,
+		config.PricingAddress,
 		config.ReserveAddress,
 		config.BlockchainSigner,
 		nonceCorpus,
@@ -97,8 +101,9 @@ func main() {
 	for _, token := range config.SupportedTokens {
 		bc.AddToken(token)
 	}
+	err = bc.LoadAndSetTokenIndices()
 	if err != nil {
-		fmt.Printf("Can't connect to infura: %s\n", err)
+		fmt.Printf("Can't load and set token indices: %s\n", err)
 	} else {
 		fetcher.SetBlockchain(bc)
 		app := data.NewReserveData(

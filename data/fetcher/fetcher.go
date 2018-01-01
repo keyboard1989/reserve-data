@@ -47,7 +47,30 @@ func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is running...")
 	go self.RunOrderbookFetcher()
 	go self.RunAuthDataFetcher()
+	go self.RunRateFetcher()
 	return nil
+}
+
+func (self *Fetcher) RunRateFetcher() {
+	for {
+		log.Printf("waiting for signal from runner rate channel")
+		t := <-self.runner.GetRateTicker()
+		log.Printf("got signal in rate channel with timestamp %d", common.TimeToTimepoint(t))
+		self.FetchRate(common.TimeToTimepoint(t))
+		log.Printf("fetched rates from blockchain")
+	}
+}
+
+func (self *Fetcher) FetchRate(timepoint uint64) {
+	data, err := self.blockchain.FetchRates(timepoint)
+	if err != nil {
+		log.Printf("Fetching rates from blockchain failed: %s\n", err)
+	}
+	err = self.storage.StoreRate(data, timepoint)
+	// fmt.Printf("balance data: %v\n", data)
+	if err != nil {
+		log.Printf("Storing rates failed: %s\n", err)
+	}
 }
 
 func (self *Fetcher) RunAuthDataFetcher() {
@@ -67,6 +90,7 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 		ExchangeBalances:  map[common.ExchangeID]common.EBalanceEntry{},
 		ReserveBalances:   map[string]common.BalanceEntry{},
 		PendingActivities: []common.ActivityRecord{},
+		Block:             0,
 	}
 	bbalances := map[string]common.BalanceEntry{}
 	ebalances := sync.Map{}
@@ -85,8 +109,10 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 			pendings, timepoint)
 	}
 	wait.Wait()
+	var block uint64
 	self.FetchAuthDataFromBlockchain(
-		bbalances, &bstatuses, pendings, timepoint)
+		bbalances, &bstatuses, pendings, &block, timepoint)
+	snapshot.Block = block
 	snapshot.ReturnTime = common.GetTimestamp()
 	err = self.PersistSnapshot(
 		&ebalances, bbalances, &estatuses, &bstatuses,
@@ -101,6 +127,7 @@ func (self *Fetcher) FetchAuthDataFromBlockchain(
 	allBalances map[string]common.BalanceEntry,
 	allStatuses *sync.Map,
 	pendings []common.ActivityRecord,
+	block *uint64,
 	timepoint uint64) {
 	// we apply double check strategy to mitigate race condition on exchange side like this:
 	// 1. Get list of pending activity status (A)
@@ -112,6 +139,11 @@ func (self *Fetcher) FetchAuthDataFromBlockchain(
 	var err error
 	for {
 		preStatuses := self.FetchStatusFromBlockchain(pendings)
+		*block, err = self.blockchain.CurrentBlock()
+		if err != nil {
+			log.Printf("Fetching current block failed: %v\n", err)
+			break
+		}
 		balances, err = self.FetchBalanceFromBlockchain(timepoint)
 		if err != nil {
 			log.Printf("Fetching blockchain balances failed: %v\n", err)

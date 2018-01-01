@@ -19,6 +19,7 @@ func GetConfigForMainnet() *Config {
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -32,7 +33,7 @@ func GetConfigForMainnet() *Config {
 
 	storage := storage.NewRamStorage()
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second)
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
@@ -55,6 +56,7 @@ func GetConfigForMainnet() *Config {
 		EthereumEndpoint: endpoint,
 		SupportedTokens:  tokens,
 		WrapperAddress:   wrapperAddr,
+		PricingAddress:   pricingAddr,
 		ReserveAddress:   reserveAddr,
 	}
 }

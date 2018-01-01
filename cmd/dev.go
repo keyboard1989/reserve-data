@@ -12,13 +12,14 @@ import (
 )
 
 func GetConfigForDev() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -32,7 +33,7 @@ func GetConfigForDev() *Config {
 
 	storage := storage.NewRamStorage()
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second)
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
@@ -40,7 +41,7 @@ func GetConfigForDev() *Config {
 		addressConfig, fileSigner, storage,
 	)
 
-	endpoint := "https://kovan.infura.io"
+	endpoint := "https://ropsten.infura.io"
 
 	return &Config{
 		ActivityStorage:  storage,
@@ -53,6 +54,7 @@ func GetConfigForDev() *Config {
 		EthereumEndpoint: endpoint,
 		SupportedTokens:  tokens,
 		WrapperAddress:   wrapperAddr,
+		PricingAddress:   pricingAddr,
 		ReserveAddress:   reserveAddr,
 	}
 }

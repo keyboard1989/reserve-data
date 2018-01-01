@@ -18,6 +18,7 @@ func GetConfigForKovan() *Config {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
+	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
 
 	common.SupportedTokens = map[string]common.Token{}
@@ -31,7 +32,7 @@ func GetConfigForKovan() *Config {
 	}
 
 	storage := storage.NewRamStorage()
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second)
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
@@ -54,6 +55,7 @@ func GetConfigForKovan() *Config {
 		EthereumEndpoint: endpoint,
 		SupportedTokens:  tokens,
 		WrapperAddress:   wrapperAddr,
+		PricingAddress:   pricingAddr,
 		ReserveAddress:   reserveAddr,
 	}
 }

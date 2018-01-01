@@ -69,6 +69,7 @@ func (self ReserveData) GetAuthData(timepoint uint64) (common.AuthDataResponse, 
 		result.Data.ReturnTime = data.ReturnTime
 		result.Data.ExchangeBalances = data.ExchangeBalances
 		result.Data.PendingActivities = data.PendingActivities
+		result.Data.Block = data.Block
 		result.Data.ReserveBalances = map[string]common.BalanceResponse{}
 		for tokenID, balance := range data.ReserveBalances {
 			result.Data.ReserveBalances[tokenID] = balance.ToBalanceResponse(
@@ -95,16 +96,18 @@ func (self ReserveData) GetAllRates(timepoint uint64) (common.AllRateResponse, e
 		result.Version = version
 		result.Timestamp = timestamp
 		result.ReturnTime = returnTime
-		data := map[common.TokenPairID]common.RateResponse{}
-		for tokenPairID, rate := range rates.Data {
-			data[tokenPairID] = common.RateResponse{
+		data := map[string]common.RateResponse{}
+		for tokenID, rate := range rates.Data {
+			data[tokenID] = common.RateResponse{
 				Valid:       rates.Valid,
 				Error:       rates.Error,
 				Timestamp:   rates.Timestamp,
 				ReturnTime:  rates.ReturnTime,
-				Rate:        common.BigToFloat(rate.Rate, 18),
-				ExpiryBlock: rate.ExpiryBlock.Int64(),
-				Balance:     common.BigToFloat(rate.Balance, 18),
+				BaseBuy:     common.BigToFloat(rate.BaseBuy, 18),
+				CompactBuy:  rate.CompactBuy,
+				BaseSell:    common.BigToFloat(rate.BaseSell, 18),
+				CompactSell: rate.CompactSell,
+				Block:       rate.Block,
 			}
 		}
 		result.Data = data

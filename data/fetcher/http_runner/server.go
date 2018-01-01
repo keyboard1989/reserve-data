@@ -59,9 +59,21 @@ func (self *HttpRunnerServer) atick(c *gin.Context) {
 	)
 }
 
+func (self *HttpRunnerServer) rtick(c *gin.Context) {
+	timepoint := getTimePoint(c)
+	self.runner.rticker <- common.TimepointToTime(timepoint)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 func (self *HttpRunnerServer) init() {
 	self.r.GET("/otick", self.otick)
 	self.r.GET("/atick", self.atick)
+	self.r.GET("/rtick", self.rtick)
 }
 
 func (self *HttpRunnerServer) Start() error {
