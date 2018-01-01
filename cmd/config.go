@@ -6,6 +6,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
+	"github.com/KyberNetwork/reserve-data/http"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -18,6 +19,9 @@ type Config struct {
 	FetcherExchanges []fetcher.Exchange
 	Exchanges        []common.Exchange
 	BlockchainSigner blockchain.Signer
+
+	EnableAuthentication bool
+	AuthEngine           http.Authentication
 
 	EthereumEndpoint string
 

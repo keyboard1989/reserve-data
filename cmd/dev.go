@@ -43,18 +43,22 @@ func GetConfigForDev() *Config {
 
 	endpoint := "https://ropsten.infura.io"
 
+	hmac512auth := fileSigner
+
 	return &Config{
-		ActivityStorage:  storage,
-		DataStorage:      storage,
-		FetcherStorage:   storage,
-		FetcherRunner:    fetcherRunner,
-		FetcherExchanges: exchangePool.FetcherExchanges(),
-		Exchanges:        exchangePool.CoreExchanges(),
-		BlockchainSigner: fileSigner,
-		EthereumEndpoint: endpoint,
-		SupportedTokens:  tokens,
-		WrapperAddress:   wrapperAddr,
-		PricingAddress:   pricingAddr,
-		ReserveAddress:   reserveAddr,
+		ActivityStorage:      storage,
+		DataStorage:          storage,
+		FetcherStorage:       storage,
+		FetcherRunner:        fetcherRunner,
+		FetcherExchanges:     exchangePool.FetcherExchanges(),
+		Exchanges:            exchangePool.CoreExchanges(),
+		BlockchainSigner:     fileSigner,
+		EnableAuthentication: true,
+		AuthEngine:           hmac512auth,
+		EthereumEndpoint:     endpoint,
+		SupportedTokens:      tokens,
+		WrapperAddress:       wrapperAddr,
+		PricingAddress:       pricingAddr,
+		ReserveAddress:       reserveAddr,
 	}
 }
