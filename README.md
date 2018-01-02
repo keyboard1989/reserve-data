@@ -40,7 +40,7 @@ curl -X GET "http://localhost:8000/authdata"
 ```
 response:
 ```
-{"data":{"Valid":true,"Error":"","Timestamp":"1514114408227","ReturnTime":"1514114408810","ExchangeBalances":{"bittrex":{"Valid":true,"Error":"","Timestamp":"1514114408226","ReturnTime":"1514114408461","AvailableBalance":{"ETH":0.10704306,"OMG":2.97381136},"LockedBalance":{"ETH":0,"OMG":0},"DepositBalance":{"ETH":0,"OMG":0}}},"ReserveBalances":{"ADX":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"BAT":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"CVC":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"DGD":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"EOS":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"ETH":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":360169992138038352},"FUN":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"GNT":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"KNC":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"LINK":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"MCO":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"OMG":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":23818094310417195708},"PAY":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0}},"PendingActivities":[]},"success":true,"timestamp":"1514114409088","version":39}
+{"data":{"Valid":true,"Error":"","Timestamp":"1514114408227","ReturnTime":"1514114408810","ExchangeBalances":{"bittrex":{"Valid":true,"Error":"","Timestamp":"1514114408226","ReturnTime":"1514114408461","AvailableBalance":{"ETH":0.10704306,"OMG":2.97381136},"LockedBalance":{"ETH":0,"OMG":0},"DepositBalance":{"ETH":0,"OMG":0}}},"ReserveBalances":{"ADX":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"BAT":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"CVC":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"DGD":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"EOS":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"ETH":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":360169992138038352},"FUN":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"GNT":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"KNC":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"LINK":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"MCO":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0},"OMG":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":23818094310417195708},"PAY":{"Valid":true,"Error":"","Timestamp":"1514114408461","ReturnTime":"1514114408799","Balance":0}},"PendingActivities":[]},"block": 2345678, "success":true,"timestamp":"1514114409088","version":39}
 ```
 
 ### Deposit to exchanges (signing required)
@@ -101,30 +101,21 @@ Where `hash` is the transaction hash
 <host>:8000/setrates
 POST request
 Form params:
-  - sources: string, represent all base token IDs separated by "-", eg: "ETH-ETH"
-  - dests: string, represent all quote token IDs separated by "-", eg: "KNC-EOS"
-  - rates: string, represent all the rates in little endian hex string, rates are separated by "-", eg: "0x5-0x7"
-  - expiries: string, represent all the expiry blocks in little endian hex string, they are separated by "-", eg: "0x989680-0x989680"
+  - tokens: string, not including "ETH", represent all base token IDs separated by "-", eg: "ETH-ETH"
+  - buys: string, represent all the buy (end users to buy tokens by ether) prices in little endian hex string, rates are separated by "-", eg: "0x5-0x7"
+  - sells: string, represent all the sell (end users to sell tokens to ether) prices in little endian hex string, rates are separated by "-", eg: "0x5-0x7"
+  - block: number, in base 10, the block that prices are calculated on, eg: "3245876" means the prices are calculated from data at the time of block 3245876
 ```
 eg:
 ```
 curl -X POST \
   http://localhost:8000/setrates \
   -H 'content-type: multipart/form-data' \
-  -F sources=ETH-ETH \
-  -F dests=KNC-EOS \
-  -F rates=0x5-0x7 \
-  -F expiries=0x989680-0x989680
+  -F tokens=KNC-EOS \
+  -F buys=0x5-0x7 \
+  -F sells=0x5-0x7 \
+  -F block=2342353
 ```
-Response:
-
-```json
-{
-    "hash": "0x8004f8613b9944fc73c59b7a70b0a491c9d190e7d3703488423855ac8dada239",
-    "success": true
-}
-```
-Where `hash` is the transaction hash
 
 ### Trade (signing required)
 ```
