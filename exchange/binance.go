@@ -14,23 +14,12 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-type tradingFee map[string]float32
-
-type fundingFee struct {
-	withdraw map[string]float32
-	deposit  map[string]float32
-}
-
-type exchangeFees struct {
-	trading tradingFee
-	funding fundingFee
-}
-
 type Binance struct {
-	interf    BinanceInterface
-	pairs     []common.TokenPair
-	addresses map[string]ethereum.Address
-	fees      exchangeFees
+	interf       BinanceInterface
+	pairs        []common.TokenPair
+	addresses    map[string]ethereum.Address
+	exchangeInfo common.ExchangeInfo
+	fees         common.ExchangeFees
 }
 
 func (self *Binance) MarshalText() (text []byte, err error) {
@@ -52,24 +41,36 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
 }
 
-func (self *Binance) UpdatePrecisionLimit(pair *common.TokenPair, symbols []BinanceSymbol) {
+func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		if symbol.Symbol == pairName {
 			//update precision
-			pair.Precision.Amount = symbol.BaseAssetPrecision
-			pair.Precision.Price = symbol.QuotePrecision
+			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
+			exchangePrecisionLimit.Precision.Amount = symbol.BaseAssetPrecision
+			exchangePrecisionLimit.Precision.Price = symbol.QuotePrecision
 			// update limit
 			for _, filter := range symbol.Filters {
-				minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 32)
-				pair.AmountLimit.Min = float32(minQuantity)
-				maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 32)
-				pair.AmountLimit.Max = float32(maxQuantity)
-				minPrice, _ := strconv.ParseFloat(filter.MinPrice, 32)
-				pair.PriceLimit.Min = float32(minPrice)
-				maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 32)
-				pair.PriceLimit.Max = float32(maxPrice)
+				if filter.FilterType == "LOT_SIZE" {
+					// update amount min
+					minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 32)
+					exchangePrecisionLimit.AmountLimit.Min = float32(minQuantity)
+					// update amount max
+					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 32)
+					exchangePrecisionLimit.AmountLimit.Max = float32(maxQuantity)
+				}
+
+				if filter.FilterType == "PRICE_FILTER" {
+					// update price min
+					minPrice, _ := strconv.ParseFloat(filter.MinPrice, 32)
+					exchangePrecisionLimit.PriceLimit.Min = float32(minPrice)
+					// update price max
+					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 32)
+					exchangePrecisionLimit.PriceLimit.Max = float32(maxPrice)
+				}
 			}
+			self.exchangeInfo[pair.PairID()] = exchangePrecisionLimit
+			break
 		}
 	}
 }
@@ -78,21 +79,16 @@ func (self *Binance) UpdatePairsPrecision() {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err == nil {
 		symbols := exchangeInfo.Symbols
-		for index, _ := range self.pairs {
-			self.UpdatePrecisionLimit(&self.pairs[index], symbols)
+		for _, pair := range self.pairs {
+			self.UpdatePrecisionLimit(pair, symbols)
 		}
 	} else {
 		log.Printf("Get exchange info failed: %s\n", err)
 	}
 }
 
-func (self *Binance) GetFee(pair string) common.TokenPair {
-	for _, data := range self.pairs {
-		if strings.ToUpper(data.Base.ID+data.Quote.ID) == strings.ToUpper(pair) {
-			return data
-		}
-	}
-	return common.TokenPair{}
+func (self *Binance) GetFee(pair string) common.ExchangeFees {
+	return self.fees
 }
 
 func (self *Binance) ID() common.ExchangeID {
@@ -289,12 +285,13 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("LINK", "ETH"),
 		},
 		map[string]ethereum.Address{},
-		exchangeFees{
-			tradingFee{
+		common.ExchangeInfo{},
+		common.InitiateExchangeFee(
+			common.TradingFee{
 				"taker": 0.001,
 				"maker": 0.001,
 			},
-			fundingFee{
+			common.InitiateFundingFee(
 				map[string]float32{
 					"ETH":  0.005,
 					"EOS":  2.0,
@@ -312,7 +309,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 					"FUN":  0,
 					"LINK": 0,
 				},
-			},
-		},
+			),
+		),
 	}
 }

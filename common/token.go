@@ -38,12 +38,17 @@ func (self Token) IsETH() bool {
 	return self.ID == "ETH"
 }
 
-type TokenPair struct {
-	Base        Token
-	Quote       Token
+type ExchangePrecisionLimit struct {
 	Precision   TokenPairPrecision
 	AmountLimit TokenPairAmountLimit
 	PriceLimit  TokenPairPriceLimit
+}
+
+type ExchangeInfo map[TokenPairID]ExchangePrecisionLimit
+
+type TokenPair struct {
+	Base  Token
+	Quote Token
 }
 
 func (self *TokenPair) PairID() TokenPairID {
@@ -53,13 +58,10 @@ func (self *TokenPair) PairID() TokenPairID {
 func NewTokenPair(base, quote string) (TokenPair, error) {
 	bToken, err1 := GetToken(base)
 	qToken, err2 := GetToken(quote)
-	tokenPairPrecision := TokenPairPrecision{0, 0}
-	tokenPairAmountLimit := TokenPairAmountLimit{0, 0}
-	tokenPairPriceLimit := TokenPairPriceLimit{0, 0}
 	if err1 != nil || err2 != nil {
 		return TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
 	} else {
-		return TokenPair{bToken, qToken, tokenPairPrecision, tokenPairAmountLimit, tokenPairPriceLimit}, nil
+		return TokenPair{bToken, qToken}, nil
 	}
 }
 

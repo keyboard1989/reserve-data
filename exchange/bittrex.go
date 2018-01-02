@@ -18,11 +18,12 @@ import (
 const EPSILON float64 = 0.00000001
 
 type Bittrex struct {
-	interf    BittrexInterface
-	pairs     []common.TokenPair
-	addresses map[string]ethereum.Address
-	storage   BittrexStorage
-	fees      exchangeFees
+	interf       BittrexInterface
+	pairs        []common.TokenPair
+	addresses    map[string]ethereum.Address
+	storage      BittrexStorage
+	exchangeInfo common.ExchangeInfo
+	fees         common.ExchangeFees
 }
 
 func (self *Bittrex) MarshalText() (text []byte, err error) {
@@ -34,13 +35,8 @@ func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
-func (self *Bittrex) GetFee(pair string) common.TokenPair {
-	for _, data := range self.pairs {
-		if strings.ToUpper(data.Base.ID+data.Quote.ID) == strings.ToUpper(pair) {
-			return data
-		}
-	}
-	return common.TokenPair{}
+func (self *Bittrex) GetFee(pair string) common.ExchangeFees {
+	return self.fees
 }
 
 func (self *Bittrex) UpdateAllDepositAddresses(address string) {
@@ -53,16 +49,19 @@ func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
 }
 
-func (self *Bittrex) UpdatePrecisionLimit(pair *common.TokenPair, symbols []BittPairInfo) {
+func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		symbolName := symbol.Base + symbol.Quote
 		if symbolName == pairName {
+			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
 			//update precision
-			pair.Precision.Amount = 8
-			pair.Precision.Price = 8
+			exchangePrecisionLimit.Precision.Amount = 8
+			exchangePrecisionLimit.Precision.Price = 8
 			// update limit
-			pair.AmountLimit.Min = symbol.MinAmount
+			exchangePrecisionLimit.AmountLimit.Min = symbol.MinAmount
+			self.exchangeInfo[pair.PairID()] = exchangePrecisionLimit
+			break
 		}
 	}
 }
@@ -71,8 +70,8 @@ func (self *Bittrex) UpdatePairsPrecision() {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err == nil {
 		symbols := exchangeInfo.Pairs
-		for index, _ := range self.pairs {
-			self.UpdatePrecisionLimit(&self.pairs[index], symbols)
+		for _, pair := range self.pairs {
+			self.UpdatePrecisionLimit(pair, symbols)
 		}
 	} else {
 		log.Printf("Get exchange info failed: %s\n", err)
@@ -275,12 +274,13 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 		},
 		map[string]ethereum.Address{},
 		storage,
-		exchangeFees{
-			tradingFee{
+		common.ExchangeInfo{},
+		common.InitiateExchangeFee(
+			common.TradingFee{
 				"taker": 0.0025,
 				"maker": 0.0025,
 			},
-			fundingFee{
+			common.InitiateFundingFee(
 				map[string]float32{
 					"BTC":  0.001,
 					"LTC":  0.01,
@@ -304,7 +304,7 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 					"DASH": 0,
 					"POT":  0,
 				},
-			},
-		},
+			),
+		),
 	}
 }

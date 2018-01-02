@@ -39,6 +39,32 @@ func TimepointToTime(t uint64) time.Time {
 	return time.Unix(0, int64(t)*int64(time.Millisecond))
 }
 
+type TradingFee map[string]float32
+
+type FundingFee struct {
+	withdraw map[string]float32
+	deposit  map[string]float32
+}
+
+type ExchangeFees struct {
+	trading TradingFee
+	funding FundingFee
+}
+
+func InitiateExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {
+	return ExchangeFees{
+		trading: tradingFee,
+		funding: fundingFee,
+	}
+}
+
+func InitiateFundingFee(withdraw map[string]float32, deposit map[string]float32) FundingFee {
+	return FundingFee{
+		withdraw,
+		deposit,
+	}
+}
+
 type TokenPairID string
 
 func NewTokenPairID(base, quote string) TokenPairID {
