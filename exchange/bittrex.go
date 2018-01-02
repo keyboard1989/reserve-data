@@ -34,6 +34,15 @@ func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
+func (self *Bittrex) GetFee(pair string) common.TokenPair {
+	for _, data := range self.pairs {
+		if strings.ToUpper(data.Base.ID+data.Quote.ID) == strings.ToUpper(pair) {
+			return data
+		}
+	}
+	return common.TokenPair{}
+}
+
 func (self *Bittrex) UpdateAllDepositAddresses(address string) {
 	for k, _ := range self.addresses {
 		self.addresses[k] = ethereum.HexToAddress(address)

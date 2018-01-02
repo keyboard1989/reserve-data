@@ -22,8 +22,8 @@ type Bittinfo struct {
 }
 
 type BittPairInfo struct {
-	Base      string  `json:"BaseCurrency"`
-	Quote     string  `json:"MarketCurrency"`
+	Base      string  `json:"MarketCurrency"`
+	Quote     string  `json:"BaseCurrency"`
 	MinAmount float32 `json:"MinTradeSize"`
 }
 
