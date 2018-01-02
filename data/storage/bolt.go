@@ -145,8 +145,8 @@ func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	return err
 }
 
-func (self *BoltStorage) GetAllPrices(version common.Version) (map[common.TokenPairID]common.OnePrice, error) {
-	result := map[common.TokenPairID]common.OnePrice{}
+func (self *BoltStorage) GetAllPrices(version common.Version) (common.AllPriceEntry, error) {
+	result := common.AllPriceEntry{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PRICE_BUCKET))
@@ -240,7 +240,7 @@ func (self *BoltStorage) GetAllRates(version common.Version) (common.AllRateEntr
 	return result, err
 }
 
-func (self *BoltStorage) StorePrice(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error {
+func (self *BoltStorage) StorePrice(data common.AllPriceEntry, timepoint uint64) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte

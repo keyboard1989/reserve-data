@@ -33,7 +33,7 @@ func GetConfigForDev() *Config {
 
 	storage := storage.NewRamStorage()
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second)
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
@@ -53,7 +53,7 @@ func GetConfigForDev() *Config {
 		FetcherExchanges:     exchangePool.FetcherExchanges(),
 		Exchanges:            exchangePool.CoreExchanges(),
 		BlockchainSigner:     fileSigner,
-		EnableAuthentication: true,
+		EnableAuthentication: false,
 		AuthEngine:           hmac512auth,
 		EthereumEndpoint:     endpoint,
 		SupportedTokens:      tokens,

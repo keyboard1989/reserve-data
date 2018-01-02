@@ -149,6 +149,7 @@ func (self *HTTPServer) AllPrices(c *gin.Context) {
 				"version":   data.Version,
 				"timestamp": data.Timestamp,
 				"data":      data.Data,
+				"block":     data.Block,
 			},
 		)
 	}

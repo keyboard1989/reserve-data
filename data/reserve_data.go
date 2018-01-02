@@ -25,7 +25,8 @@ func (self ReserveData) GetAllPrices(timepoint uint64) (common.AllPriceResponse,
 		result.Version = version
 		result.Timestamp = timestamp
 		result.ReturnTime = returnTime
-		result.Data = data
+		result.Data = data.Data
+		result.Block = data.Block
 		return result, err
 	}
 }

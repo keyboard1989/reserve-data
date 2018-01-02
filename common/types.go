@@ -160,11 +160,17 @@ type PriceEntry struct {
 	Rate     float64
 }
 
+type AllPriceEntry struct {
+	Block uint64
+	Data  map[TokenPairID]OnePrice
+}
+
 type AllPriceResponse struct {
 	Version    Version
 	Timestamp  Timestamp
 	ReturnTime Timestamp
 	Data       map[TokenPairID]OnePrice
+	Block      uint64
 }
 
 type OnePriceResponse struct {
@@ -172,6 +178,7 @@ type OnePriceResponse struct {
 	Timestamp  Timestamp
 	ReturnTime Timestamp
 	Data       OnePrice
+	Block      uint64
 }
 
 type OnePrice map[ExchangeID]ExchangePrice
