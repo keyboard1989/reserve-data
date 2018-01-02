@@ -86,6 +86,15 @@ func (self *Binance) UpdatePairsPrecision() {
 	}
 }
 
+func (self *Binance) GetFee(pair string) common.TokenPair {
+	for _, data := range self.pairs {
+		if strings.ToUpper(data.Base.ID+data.Quote.ID) == strings.ToUpper(pair) {
+			return data
+		}
+	}
+	return common.TokenPair{}
+}
+
 func (self *Binance) ID() common.ExchangeID {
 	return common.ExchangeID("binance")
 }
