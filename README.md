@@ -181,6 +181,51 @@ GET request
 GET request
 ```
 
+### Store processed data (signing required)
+```
+<host>:8000/metrics
+POST request
+form params:
+  - timestamp: uint64, unix millisecond
+  - data: string, in format of <token>_afpmid_spread|<token>_afpmid_spread|..., eg. OMG_0.4_5|KNC_1_2
+```
+
+### Get processed data (signing required)
+```
+<host>:8000/metrics
+GET request
+url params:
+  - tokens: string, list of tokens to get data about, in format of <token_id>_<token_id>..., eg. OMG_DGD_KNC
+  - from: uint64, unix millisecond
+  - to: uint64, unix millisecond
+```
+
+response:
+```
+{
+    "data": {
+        "DGD": [
+            {
+                "Timestamp": 19,
+                "AfpMid": 4,
+                "Spread": 5
+            }
+        ],
+        "OMG": [
+            {
+                "Timestamp": 19,
+                "AfpMid": 0.9,
+                "Spread": 1
+            }
+        ]
+    },
+    "returnTime": 1514966512560,
+    "success": true,
+    "timestamp": 1514966512549
+}
+```
+Returned data will only include datas that have timestamp in range of `[from, to]`
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 
