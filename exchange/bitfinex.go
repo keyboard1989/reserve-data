@@ -9,11 +9,9 @@ import (
 )
 
 type Bitfinex struct {
-	interf       BitfinexInterface
-	pairs        []common.TokenPair
-	addresses    map[string]ethereum.Address
-	exchangeInfo common.ExchangeInfo
-	fees         common.ExchangeFees
+	interf    BitfinexInterface
+	pairs     []common.TokenPair
+	addresses map[string]ethereum.Address
 }
 
 func (self *Bitfinex) MarshalText() (text []byte, err error) {
@@ -33,10 +31,6 @@ func (self *Bitfinex) UpdateAllDepositAddresses(address string) {
 
 func (self *Bitfinex) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
-}
-
-func (self *Bitfinex) UpdatePairsPrecision() {
-	exchangeInfo, err := self.interf.GetExchangeInfo()
 }
 
 func (self *Bitfinex) ID() common.ExchangeID {

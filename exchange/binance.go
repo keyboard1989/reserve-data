@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"strconv"
 	"strings"
 	"sync"
-
-	"math/big"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -42,9 +41,12 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 }
 
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
+	mux := sync.Mutex{}
+	mux.Lock()
+	defer mux.Unlock()
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
-		if symbol.Symbol == pairName {
+		if symbol.Symbol == strings.ToUpper(pairName) {
 			//update precision
 			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
 			exchangePrecisionLimit.Precision.Amount = symbol.BaseAssetPrecision
@@ -286,12 +288,12 @@ func NewBinance(interf BinanceInterface) *Binance {
 		},
 		map[string]ethereum.Address{},
 		common.ExchangeInfo{},
-		common.InitiateExchangeFee(
+		common.NewExchangeFee(
 			common.TradingFee{
 				"taker": 0.001,
 				"maker": 0.001,
 			},
-			common.InitiateFundingFee(
+			common.NewFundingFee(
 				map[string]float32{
 					"ETH":  0.005,
 					"EOS":  2.0,

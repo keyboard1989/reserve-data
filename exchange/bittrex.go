@@ -2,7 +2,9 @@ package exchange
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"math/big"
 	"strconv"
 	"strings"
 	"sync"
@@ -10,9 +12,6 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
-
-	"fmt"
-	"math/big"
 )
 
 const EPSILON float64 = 0.00000001
@@ -50,9 +49,12 @@ func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
 }
 
 func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {
+	mux := sync.Mutex{}
+	mux.Lock()
+	defer mux.Unlock()
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
-		symbolName := symbol.Base + symbol.Quote
+		symbolName := strings.ToUpper(symbol.Base) + strings.ToUpper(symbol.Quote)
 		if symbolName == pairName {
 			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
 			//update precision
@@ -275,12 +277,12 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 		map[string]ethereum.Address{},
 		storage,
 		common.ExchangeInfo{},
-		common.InitiateExchangeFee(
+		common.NewExchangeFee(
 			common.TradingFee{
 				"taker": 0.0025,
 				"maker": 0.0025,
 			},
-			common.InitiateFundingFee(
+			common.NewFundingFee(
 				map[string]float32{
 					"BTC":  0.001,
 					"LTC":  0.01,

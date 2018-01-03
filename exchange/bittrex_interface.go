@@ -2,7 +2,6 @@ package exchange
 
 import (
 	"math/big"
-
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"

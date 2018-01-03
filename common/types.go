@@ -51,14 +51,14 @@ type ExchangeFees struct {
 	funding FundingFee
 }
 
-func InitiateExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {
+func NewExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {
 	return ExchangeFees{
 		trading: tradingFee,
 		funding: fundingFee,
 	}
 }
 
-func InitiateFundingFee(withdraw map[string]float32, deposit map[string]float32) FundingFee {
+func NewFundingFee(withdraw map[string]float32, deposit map[string]float32) FundingFee {
 	return FundingFee{
 		withdraw,
 		deposit,
