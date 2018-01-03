@@ -14,7 +14,7 @@ import (
 )
 
 // PricingABI is the input ABI used to generate the binding from.
-const PricingABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"alerter\",\"type\":\"address\"}],\"name\":\"removeAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"currentBlockNumber\",\"type\":\"uint256\"},{\"name\":\"buy\",\"type\":\"bool\"},{\"name\":\"qty\",\"type\":\"uint256\"}],\"name\":\"getPrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"operators\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"reserve\",\"type\":\"address\"}],\"name\":\"setReserveAddress\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"disableTokenTrade\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"x\",\"type\":\"int256\"}],\"name\":\"abs\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"enableTokenTrade\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"buyAmount\",\"type\":\"int256\"},{\"name\":\"priceUpdateBlock\",\"type\":\"uint256\"},{\"name\":\"currentBlock\",\"type\":\"uint256\"}],\"name\":\"recoredImbalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"tokens\",\"type\":\"address[]\"},{\"name\":\"baseBuy\",\"type\":\"uint256[]\"},{\"name\":\"baseSell\",\"type\":\"uint256[]\"},{\"name\":\"buy\",\"type\":\"bytes14[]\"},{\"name\":\"sell\",\"type\":\"bytes14[]\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"indices\",\"type\":\"uint256[]\"}],\"name\":\"setBasePrice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"pendingAdmin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getOperators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"alertersGroup\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"SLIDING_WINDOW_SIZE\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAlerter\",\"type\":\"address\"}],\"name\":\"addAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getPriceUpdateBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numTokensInCurrentCompactData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"priceUpdateBlock\",\"type\":\"uint256\"},{\"name\":\"currentBlock\",\"type\":\"uint256\"}],\"name\":\"getImbalance\",\"outputs\":[{\"name\":\"totalImbalance\",\"type\":\"int256\"},{\"name\":\"currentBlockImbalance\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"buy\",\"type\":\"bytes14[]\"},{\"name\":\"sell\",\"type\":\"bytes14[]\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"indices\",\"type\":\"uint256[]\"}],\"name\":\"setCompactData\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"priceUpdateBlock\",\"type\":\"uint256\"},{\"name\":\"currentBlock\",\"type\":\"uint256\"}],\"name\":\"getImbalanceSincePriceUpdate\",\"outputs\":[{\"name\":\"buyImbalance\",\"type\":\"int256\"},{\"name\":\"currentBlockImbalance\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setValidPriceDurationInBlocks\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"transferAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"claimAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getAlerters\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"xBuy\",\"type\":\"int256[]\"},{\"name\":\"yBuy\",\"type\":\"int256[]\"},{\"name\":\"xSell\",\"type\":\"int256[]\"},{\"name\":\"ySell\",\"type\":\"int256[]\"}],\"name\":\"setQtyStepFunction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"price\",\"type\":\"uint256\"},{\"name\":\"bps\",\"type\":\"int256\"}],\"name\":\"addBps\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"buy\",\"type\":\"bool\"}],\"name\":\"getBasicPrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOperator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reserveContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getMaxTotalImbalance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getMaxPerBlockImbalance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"xBuy\",\"type\":\"int256[]\"},{\"name\":\"yBuy\",\"type\":\"int256[]\"},{\"name\":\"xSell\",\"type\":\"int256[]\"},{\"name\":\"ySell\",\"type\":\"int256[]\"}],\"name\":\"setImbalanceStepFunction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"minimalRecordResolution\",\"type\":\"uint256\"},{\"name\":\"maxPerBlockImbalance\",\"type\":\"uint256\"},{\"name\":\"maxTotalImbalance\",\"type\":\"uint256\"}],\"name\":\"setTokenControlInfo\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"NUM_TOKENS_IN_COMPACT_DATA\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"}],\"name\":\"alerters\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"addToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getCompactData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes1\"},{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getTokenControlInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"name\":\"getImbalanceInRange\",\"outputs\":[{\"name\":\"buyImbalance\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"admin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"operatorsGroup\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_admin\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"minimalRecordResolution\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"maxPerBlockImbalance\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"maxTotalImbalance\",\"type\":\"uint256\"}],\"name\":\"SetTokenControlInfo\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"pendingAdmin\",\"type\":\"address\"}],\"name\":\"TransferAdmin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAdmin\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"previousAdmin\",\"type\":\"address\"}],\"name\":\"ClaimAdmin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAlerter\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"AddAlerter\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newOperator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"AddOperator\",\"type\":\"event\"}]"
+const PricingABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"alerter\",\"type\":\"address\"}],\"name\":\"removeAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"currentBlockNumber\",\"type\":\"uint256\"},{\"name\":\"buy\",\"type\":\"bool\"},{\"name\":\"qty\",\"type\":\"uint256\"}],\"name\":\"getPrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"reserve\",\"type\":\"address\"}],\"name\":\"setReserveAddress\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"disableTokenTrade\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"enableTokenTrade\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"buyAmount\",\"type\":\"int256\"},{\"name\":\"priceUpdateBlock\",\"type\":\"uint256\"},{\"name\":\"currentBlock\",\"type\":\"uint256\"}],\"name\":\"recoredImbalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"tokens\",\"type\":\"address[]\"},{\"name\":\"baseBuy\",\"type\":\"uint256[]\"},{\"name\":\"baseSell\",\"type\":\"uint256[]\"},{\"name\":\"buy\",\"type\":\"bytes14[]\"},{\"name\":\"sell\",\"type\":\"bytes14[]\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"indices\",\"type\":\"uint256[]\"}],\"name\":\"setBasePrice\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"pendingAdmin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"alertersGroup\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"withdrawToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAlerter\",\"type\":\"address\"}],\"name\":\"addAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getPriceUpdateBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numTokensInCurrentCompactData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validPriceDurationInBlocks\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"buy\",\"type\":\"bytes14[]\"},{\"name\":\"sell\",\"type\":\"bytes14[]\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"indices\",\"type\":\"uint256[]\"}],\"name\":\"setCompactData\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setValidPriceDurationInBlocks\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"transferAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"claimAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"xBuy\",\"type\":\"int256[]\"},{\"name\":\"yBuy\",\"type\":\"int256[]\"},{\"name\":\"xSell\",\"type\":\"int256[]\"},{\"name\":\"ySell\",\"type\":\"int256[]\"}],\"name\":\"setQtyStepFunction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"buy\",\"type\":\"bool\"}],\"name\":\"getBasicPrice\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOperator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reserveContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"xBuy\",\"type\":\"int256[]\"},{\"name\":\"yBuy\",\"type\":\"int256[]\"},{\"name\":\"xSell\",\"type\":\"int256[]\"},{\"name\":\"ySell\",\"type\":\"int256[]\"}],\"name\":\"setImbalanceStepFunction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"minimalRecordResolution\",\"type\":\"uint256\"},{\"name\":\"maxPerBlockImbalance\",\"type\":\"uint256\"},{\"name\":\"maxTotalImbalance\",\"type\":\"uint256\"}],\"name\":\"setTokenControlInfo\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"withdrawEther\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"addToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getCompactData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes1\"},{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getTokenControlInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"admin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"operatorsGroup\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_admin\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"WithdrawToken\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"WithdrawEther\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"pendingAdmin\",\"type\":\"address\"}],\"name\":\"TransferAdmin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAdmin\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"previousAdmin\",\"type\":\"address\"}],\"name\":\"ClaimAdmin\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAlerter\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"AddAlerter\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newOperator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"AddOperator\",\"type\":\"event\"}]"
 
 // Pricing is an auto generated Go binding around an Ethereum contract.
 type Pricing struct {
@@ -143,110 +143,6 @@ func (_Pricing *PricingTransactorRaw) Transact(opts *bind.TransactOpts, method s
 	return _Pricing.Contract.contract.Transact(opts, method, params...)
 }
 
-// NUM_TOKENS_IN_COMPACT_DATA is a free data retrieval call binding the contract method 0xc5c0bbbb.
-//
-// Solidity: function NUM_TOKENS_IN_COMPACT_DATA() constant returns(uint256)
-func (_Pricing *PricingCaller) NUM_TOKENS_IN_COMPACT_DATA(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "NUM_TOKENS_IN_COMPACT_DATA")
-	return *ret0, err
-}
-
-// NUM_TOKENS_IN_COMPACT_DATA is a free data retrieval call binding the contract method 0xc5c0bbbb.
-//
-// Solidity: function NUM_TOKENS_IN_COMPACT_DATA() constant returns(uint256)
-func (_Pricing *PricingSession) NUM_TOKENS_IN_COMPACT_DATA() (*big.Int, error) {
-	return _Pricing.Contract.NUM_TOKENS_IN_COMPACT_DATA(&_Pricing.CallOpts)
-}
-
-// NUM_TOKENS_IN_COMPACT_DATA is a free data retrieval call binding the contract method 0xc5c0bbbb.
-//
-// Solidity: function NUM_TOKENS_IN_COMPACT_DATA() constant returns(uint256)
-func (_Pricing *PricingCallerSession) NUM_TOKENS_IN_COMPACT_DATA() (*big.Int, error) {
-	return _Pricing.Contract.NUM_TOKENS_IN_COMPACT_DATA(&_Pricing.CallOpts)
-}
-
-// SLIDING_WINDOW_SIZE is a free data retrieval call binding the contract method 0x3d3aabab.
-//
-// Solidity: function SLIDING_WINDOW_SIZE() constant returns(uint256)
-func (_Pricing *PricingCaller) SLIDING_WINDOW_SIZE(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "SLIDING_WINDOW_SIZE")
-	return *ret0, err
-}
-
-// SLIDING_WINDOW_SIZE is a free data retrieval call binding the contract method 0x3d3aabab.
-//
-// Solidity: function SLIDING_WINDOW_SIZE() constant returns(uint256)
-func (_Pricing *PricingSession) SLIDING_WINDOW_SIZE() (*big.Int, error) {
-	return _Pricing.Contract.SLIDING_WINDOW_SIZE(&_Pricing.CallOpts)
-}
-
-// SLIDING_WINDOW_SIZE is a free data retrieval call binding the contract method 0x3d3aabab.
-//
-// Solidity: function SLIDING_WINDOW_SIZE() constant returns(uint256)
-func (_Pricing *PricingCallerSession) SLIDING_WINDOW_SIZE() (*big.Int, error) {
-	return _Pricing.Contract.SLIDING_WINDOW_SIZE(&_Pricing.CallOpts)
-}
-
-// Abs is a free data retrieval call binding the contract method 0x1b5ac4b5.
-//
-// Solidity: function abs(x int256) constant returns(uint256)
-func (_Pricing *PricingCaller) Abs(opts *bind.CallOpts, x *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "abs", x)
-	return *ret0, err
-}
-
-// Abs is a free data retrieval call binding the contract method 0x1b5ac4b5.
-//
-// Solidity: function abs(x int256) constant returns(uint256)
-func (_Pricing *PricingSession) Abs(x *big.Int) (*big.Int, error) {
-	return _Pricing.Contract.Abs(&_Pricing.CallOpts, x)
-}
-
-// Abs is a free data retrieval call binding the contract method 0x1b5ac4b5.
-//
-// Solidity: function abs(x int256) constant returns(uint256)
-func (_Pricing *PricingCallerSession) Abs(x *big.Int) (*big.Int, error) {
-	return _Pricing.Contract.Abs(&_Pricing.CallOpts, x)
-}
-
-// AddBps is a free data retrieval call binding the contract method 0x82b0862f.
-//
-// Solidity: function addBps(price uint256, bps int256) constant returns(uint256)
-func (_Pricing *PricingCaller) AddBps(opts *bind.CallOpts, price *big.Int, bps *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "addBps", price, bps)
-	return *ret0, err
-}
-
-// AddBps is a free data retrieval call binding the contract method 0x82b0862f.
-//
-// Solidity: function addBps(price uint256, bps int256) constant returns(uint256)
-func (_Pricing *PricingSession) AddBps(price *big.Int, bps *big.Int) (*big.Int, error) {
-	return _Pricing.Contract.AddBps(&_Pricing.CallOpts, price, bps)
-}
-
-// AddBps is a free data retrieval call binding the contract method 0x82b0862f.
-//
-// Solidity: function addBps(price uint256, bps int256) constant returns(uint256)
-func (_Pricing *PricingCallerSession) AddBps(price *big.Int, bps *big.Int) (*big.Int, error) {
-	return _Pricing.Contract.AddBps(&_Pricing.CallOpts, price, bps)
-}
-
 // Admin is a free data retrieval call binding the contract method 0xf851a440.
 //
 // Solidity: function admin() constant returns(address)
@@ -273,32 +169,6 @@ func (_Pricing *PricingCallerSession) Admin() (common.Address, error) {
 	return _Pricing.Contract.Admin(&_Pricing.CallOpts)
 }
 
-// Alerters is a free data retrieval call binding the contract method 0xd00ae3d5.
-//
-// Solidity: function alerters( address) constant returns(bool)
-func (_Pricing *PricingCaller) Alerters(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "alerters", arg0)
-	return *ret0, err
-}
-
-// Alerters is a free data retrieval call binding the contract method 0xd00ae3d5.
-//
-// Solidity: function alerters( address) constant returns(bool)
-func (_Pricing *PricingSession) Alerters(arg0 common.Address) (bool, error) {
-	return _Pricing.Contract.Alerters(&_Pricing.CallOpts, arg0)
-}
-
-// Alerters is a free data retrieval call binding the contract method 0xd00ae3d5.
-//
-// Solidity: function alerters( address) constant returns(bool)
-func (_Pricing *PricingCallerSession) Alerters(arg0 common.Address) (bool, error) {
-	return _Pricing.Contract.Alerters(&_Pricing.CallOpts, arg0)
-}
-
 // AlertersGroup is a free data retrieval call binding the contract method 0x3a7a1081.
 //
 // Solidity: function alertersGroup( uint256) constant returns(address)
@@ -323,32 +193,6 @@ func (_Pricing *PricingSession) AlertersGroup(arg0 *big.Int) (common.Address, er
 // Solidity: function alertersGroup( uint256) constant returns(address)
 func (_Pricing *PricingCallerSession) AlertersGroup(arg0 *big.Int) (common.Address, error) {
 	return _Pricing.Contract.AlertersGroup(&_Pricing.CallOpts, arg0)
-}
-
-// GetAlerters is a free data retrieval call binding the contract method 0x7c423f54.
-//
-// Solidity: function getAlerters() constant returns(address[])
-func (_Pricing *PricingCaller) GetAlerters(opts *bind.CallOpts) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "getAlerters")
-	return *ret0, err
-}
-
-// GetAlerters is a free data retrieval call binding the contract method 0x7c423f54.
-//
-// Solidity: function getAlerters() constant returns(address[])
-func (_Pricing *PricingSession) GetAlerters() ([]common.Address, error) {
-	return _Pricing.Contract.GetAlerters(&_Pricing.CallOpts)
-}
-
-// GetAlerters is a free data retrieval call binding the contract method 0x7c423f54.
-//
-// Solidity: function getAlerters() constant returns(address[])
-func (_Pricing *PricingCallerSession) GetAlerters() ([]common.Address, error) {
-	return _Pricing.Contract.GetAlerters(&_Pricing.CallOpts)
 }
 
 // GetBasicPrice is a free data retrieval call binding the contract method 0x9306fce5.
@@ -409,182 +253,6 @@ func (_Pricing *PricingSession) GetCompactData(token common.Address) (*big.Int, 
 // Solidity: function getCompactData(token address) constant returns(uint256, uint256, bytes1, bytes1)
 func (_Pricing *PricingCallerSession) GetCompactData(token common.Address) (*big.Int, *big.Int, [1]byte, [1]byte, error) {
 	return _Pricing.Contract.GetCompactData(&_Pricing.CallOpts, token)
-}
-
-// GetImbalance is a free data retrieval call binding the contract method 0x61ddf2e4.
-//
-// Solidity: function getImbalance(token address, priceUpdateBlock uint256, currentBlock uint256) constant returns(totalImbalance int256, currentBlockImbalance int256)
-func (_Pricing *PricingCaller) GetImbalance(opts *bind.CallOpts, token common.Address, priceUpdateBlock *big.Int, currentBlock *big.Int) (struct {
-	TotalImbalance        *big.Int
-	CurrentBlockImbalance *big.Int
-}, error) {
-	ret := new(struct {
-		TotalImbalance        *big.Int
-		CurrentBlockImbalance *big.Int
-	})
-	out := ret
-	err := _Pricing.contract.Call(opts, out, "getImbalance", token, priceUpdateBlock, currentBlock)
-	return *ret, err
-}
-
-// GetImbalance is a free data retrieval call binding the contract method 0x61ddf2e4.
-//
-// Solidity: function getImbalance(token address, priceUpdateBlock uint256, currentBlock uint256) constant returns(totalImbalance int256, currentBlockImbalance int256)
-func (_Pricing *PricingSession) GetImbalance(token common.Address, priceUpdateBlock *big.Int, currentBlock *big.Int) (struct {
-	TotalImbalance        *big.Int
-	CurrentBlockImbalance *big.Int
-}, error) {
-	return _Pricing.Contract.GetImbalance(&_Pricing.CallOpts, token, priceUpdateBlock, currentBlock)
-}
-
-// GetImbalance is a free data retrieval call binding the contract method 0x61ddf2e4.
-//
-// Solidity: function getImbalance(token address, priceUpdateBlock uint256, currentBlock uint256) constant returns(totalImbalance int256, currentBlockImbalance int256)
-func (_Pricing *PricingCallerSession) GetImbalance(token common.Address, priceUpdateBlock *big.Int, currentBlock *big.Int) (struct {
-	TotalImbalance        *big.Int
-	CurrentBlockImbalance *big.Int
-}, error) {
-	return _Pricing.Contract.GetImbalance(&_Pricing.CallOpts, token, priceUpdateBlock, currentBlock)
-}
-
-// GetImbalanceInRange is a free data retrieval call binding the contract method 0xec4e67a4.
-//
-// Solidity: function getImbalanceInRange(token address, startBlock uint256, endBlock uint256) constant returns(buyImbalance int256)
-func (_Pricing *PricingCaller) GetImbalanceInRange(opts *bind.CallOpts, token common.Address, startBlock *big.Int, endBlock *big.Int) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "getImbalanceInRange", token, startBlock, endBlock)
-	return *ret0, err
-}
-
-// GetImbalanceInRange is a free data retrieval call binding the contract method 0xec4e67a4.
-//
-// Solidity: function getImbalanceInRange(token address, startBlock uint256, endBlock uint256) constant returns(buyImbalance int256)
-func (_Pricing *PricingSession) GetImbalanceInRange(token common.Address, startBlock *big.Int, endBlock *big.Int) (*big.Int, error) {
-	return _Pricing.Contract.GetImbalanceInRange(&_Pricing.CallOpts, token, startBlock, endBlock)
-}
-
-// GetImbalanceInRange is a free data retrieval call binding the contract method 0xec4e67a4.
-//
-// Solidity: function getImbalanceInRange(token address, startBlock uint256, endBlock uint256) constant returns(buyImbalance int256)
-func (_Pricing *PricingCallerSession) GetImbalanceInRange(token common.Address, startBlock *big.Int, endBlock *big.Int) (*big.Int, error) {
-	return _Pricing.Contract.GetImbalanceInRange(&_Pricing.CallOpts, token, startBlock, endBlock)
-}
-
-// GetImbalanceSincePriceUpdate is a free data retrieval call binding the contract method 0x7388aae4.
-//
-// Solidity: function getImbalanceSincePriceUpdate(token address, priceUpdateBlock uint256, currentBlock uint256) constant returns(buyImbalance int256, currentBlockImbalance int256)
-func (_Pricing *PricingCaller) GetImbalanceSincePriceUpdate(opts *bind.CallOpts, token common.Address, priceUpdateBlock *big.Int, currentBlock *big.Int) (struct {
-	BuyImbalance          *big.Int
-	CurrentBlockImbalance *big.Int
-}, error) {
-	ret := new(struct {
-		BuyImbalance          *big.Int
-		CurrentBlockImbalance *big.Int
-	})
-	out := ret
-	err := _Pricing.contract.Call(opts, out, "getImbalanceSincePriceUpdate", token, priceUpdateBlock, currentBlock)
-	return *ret, err
-}
-
-// GetImbalanceSincePriceUpdate is a free data retrieval call binding the contract method 0x7388aae4.
-//
-// Solidity: function getImbalanceSincePriceUpdate(token address, priceUpdateBlock uint256, currentBlock uint256) constant returns(buyImbalance int256, currentBlockImbalance int256)
-func (_Pricing *PricingSession) GetImbalanceSincePriceUpdate(token common.Address, priceUpdateBlock *big.Int, currentBlock *big.Int) (struct {
-	BuyImbalance          *big.Int
-	CurrentBlockImbalance *big.Int
-}, error) {
-	return _Pricing.Contract.GetImbalanceSincePriceUpdate(&_Pricing.CallOpts, token, priceUpdateBlock, currentBlock)
-}
-
-// GetImbalanceSincePriceUpdate is a free data retrieval call binding the contract method 0x7388aae4.
-//
-// Solidity: function getImbalanceSincePriceUpdate(token address, priceUpdateBlock uint256, currentBlock uint256) constant returns(buyImbalance int256, currentBlockImbalance int256)
-func (_Pricing *PricingCallerSession) GetImbalanceSincePriceUpdate(token common.Address, priceUpdateBlock *big.Int, currentBlock *big.Int) (struct {
-	BuyImbalance          *big.Int
-	CurrentBlockImbalance *big.Int
-}, error) {
-	return _Pricing.Contract.GetImbalanceSincePriceUpdate(&_Pricing.CallOpts, token, priceUpdateBlock, currentBlock)
-}
-
-// GetMaxPerBlockImbalance is a free data retrieval call binding the contract method 0xbc3333c1.
-//
-// Solidity: function getMaxPerBlockImbalance(token address) constant returns(uint256)
-func (_Pricing *PricingCaller) GetMaxPerBlockImbalance(opts *bind.CallOpts, token common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "getMaxPerBlockImbalance", token)
-	return *ret0, err
-}
-
-// GetMaxPerBlockImbalance is a free data retrieval call binding the contract method 0xbc3333c1.
-//
-// Solidity: function getMaxPerBlockImbalance(token address) constant returns(uint256)
-func (_Pricing *PricingSession) GetMaxPerBlockImbalance(token common.Address) (*big.Int, error) {
-	return _Pricing.Contract.GetMaxPerBlockImbalance(&_Pricing.CallOpts, token)
-}
-
-// GetMaxPerBlockImbalance is a free data retrieval call binding the contract method 0xbc3333c1.
-//
-// Solidity: function getMaxPerBlockImbalance(token address) constant returns(uint256)
-func (_Pricing *PricingCallerSession) GetMaxPerBlockImbalance(token common.Address) (*big.Int, error) {
-	return _Pricing.Contract.GetMaxPerBlockImbalance(&_Pricing.CallOpts, token)
-}
-
-// GetMaxTotalImbalance is a free data retrieval call binding the contract method 0xb469c2e6.
-//
-// Solidity: function getMaxTotalImbalance(token address) constant returns(uint256)
-func (_Pricing *PricingCaller) GetMaxTotalImbalance(opts *bind.CallOpts, token common.Address) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "getMaxTotalImbalance", token)
-	return *ret0, err
-}
-
-// GetMaxTotalImbalance is a free data retrieval call binding the contract method 0xb469c2e6.
-//
-// Solidity: function getMaxTotalImbalance(token address) constant returns(uint256)
-func (_Pricing *PricingSession) GetMaxTotalImbalance(token common.Address) (*big.Int, error) {
-	return _Pricing.Contract.GetMaxTotalImbalance(&_Pricing.CallOpts, token)
-}
-
-// GetMaxTotalImbalance is a free data retrieval call binding the contract method 0xb469c2e6.
-//
-// Solidity: function getMaxTotalImbalance(token address) constant returns(uint256)
-func (_Pricing *PricingCallerSession) GetMaxTotalImbalance(token common.Address) (*big.Int, error) {
-	return _Pricing.Contract.GetMaxTotalImbalance(&_Pricing.CallOpts, token)
-}
-
-// GetOperators is a free data retrieval call binding the contract method 0x27a099d8.
-//
-// Solidity: function getOperators() constant returns(address[])
-func (_Pricing *PricingCaller) GetOperators(opts *bind.CallOpts) ([]common.Address, error) {
-	var (
-		ret0 = new([]common.Address)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "getOperators")
-	return *ret0, err
-}
-
-// GetOperators is a free data retrieval call binding the contract method 0x27a099d8.
-//
-// Solidity: function getOperators() constant returns(address[])
-func (_Pricing *PricingSession) GetOperators() ([]common.Address, error) {
-	return _Pricing.Contract.GetOperators(&_Pricing.CallOpts)
-}
-
-// GetOperators is a free data retrieval call binding the contract method 0x27a099d8.
-//
-// Solidity: function getOperators() constant returns(address[])
-func (_Pricing *PricingCallerSession) GetOperators() ([]common.Address, error) {
-	return _Pricing.Contract.GetOperators(&_Pricing.CallOpts)
 }
 
 // GetPrice is a free data retrieval call binding the contract method 0x13e2fdd3.
@@ -697,32 +365,6 @@ func (_Pricing *PricingCallerSession) NumTokensInCurrentCompactData() (*big.Int,
 	return _Pricing.Contract.NumTokensInCurrentCompactData(&_Pricing.CallOpts)
 }
 
-// Operators is a free data retrieval call binding the contract method 0x13e7c9d8.
-//
-// Solidity: function operators( address) constant returns(bool)
-func (_Pricing *PricingCaller) Operators(opts *bind.CallOpts, arg0 common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Pricing.contract.Call(opts, out, "operators", arg0)
-	return *ret0, err
-}
-
-// Operators is a free data retrieval call binding the contract method 0x13e7c9d8.
-//
-// Solidity: function operators( address) constant returns(bool)
-func (_Pricing *PricingSession) Operators(arg0 common.Address) (bool, error) {
-	return _Pricing.Contract.Operators(&_Pricing.CallOpts, arg0)
-}
-
-// Operators is a free data retrieval call binding the contract method 0x13e7c9d8.
-//
-// Solidity: function operators( address) constant returns(bool)
-func (_Pricing *PricingCallerSession) Operators(arg0 common.Address) (bool, error) {
-	return _Pricing.Contract.Operators(&_Pricing.CallOpts, arg0)
-}
-
 // OperatorsGroup is a free data retrieval call binding the contract method 0xfc5bf0f2.
 //
 // Solidity: function operatorsGroup( uint256) constant returns(address)
@@ -799,6 +441,32 @@ func (_Pricing *PricingSession) ReserveContract() (common.Address, error) {
 // Solidity: function reserveContract() constant returns(address)
 func (_Pricing *PricingCallerSession) ReserveContract() (common.Address, error) {
 	return _Pricing.Contract.ReserveContract(&_Pricing.CallOpts)
+}
+
+// ValidPriceDurationInBlocks is a free data retrieval call binding the contract method 0x5b125641.
+//
+// Solidity: function validPriceDurationInBlocks() constant returns(uint256)
+func (_Pricing *PricingCaller) ValidPriceDurationInBlocks(opts *bind.CallOpts) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Pricing.contract.Call(opts, out, "validPriceDurationInBlocks")
+	return *ret0, err
+}
+
+// ValidPriceDurationInBlocks is a free data retrieval call binding the contract method 0x5b125641.
+//
+// Solidity: function validPriceDurationInBlocks() constant returns(uint256)
+func (_Pricing *PricingSession) ValidPriceDurationInBlocks() (*big.Int, error) {
+	return _Pricing.Contract.ValidPriceDurationInBlocks(&_Pricing.CallOpts)
+}
+
+// ValidPriceDurationInBlocks is a free data retrieval call binding the contract method 0x5b125641.
+//
+// Solidity: function validPriceDurationInBlocks() constant returns(uint256)
+func (_Pricing *PricingCallerSession) ValidPriceDurationInBlocks() (*big.Int, error) {
+	return _Pricing.Contract.ValidPriceDurationInBlocks(&_Pricing.CallOpts)
 }
 
 // AddAlerter is a paid mutator transaction binding the contract method 0x408ee7fe.
@@ -1156,4 +824,46 @@ func (_Pricing *PricingSession) TransferAdmin(newAdmin common.Address) (*types.T
 // Solidity: function transferAdmin(newAdmin address) returns()
 func (_Pricing *PricingTransactorSession) TransferAdmin(newAdmin common.Address) (*types.Transaction, error) {
 	return _Pricing.Contract.TransferAdmin(&_Pricing.TransactOpts, newAdmin)
+}
+
+// WithdrawEther is a paid mutator transaction binding the contract method 0xce56c454.
+//
+// Solidity: function withdrawEther(amount uint256, sendTo address) returns()
+func (_Pricing *PricingTransactor) WithdrawEther(opts *bind.TransactOpts, amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _Pricing.contract.Transact(opts, "withdrawEther", amount, sendTo)
+}
+
+// WithdrawEther is a paid mutator transaction binding the contract method 0xce56c454.
+//
+// Solidity: function withdrawEther(amount uint256, sendTo address) returns()
+func (_Pricing *PricingSession) WithdrawEther(amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _Pricing.Contract.WithdrawEther(&_Pricing.TransactOpts, amount, sendTo)
+}
+
+// WithdrawEther is a paid mutator transaction binding the contract method 0xce56c454.
+//
+// Solidity: function withdrawEther(amount uint256, sendTo address) returns()
+func (_Pricing *PricingTransactorSession) WithdrawEther(amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _Pricing.Contract.WithdrawEther(&_Pricing.TransactOpts, amount, sendTo)
+}
+
+// WithdrawToken is a paid mutator transaction binding the contract method 0x3ccdbb28.
+//
+// Solidity: function withdrawToken(token address, amount uint256, sendTo address) returns()
+func (_Pricing *PricingTransactor) WithdrawToken(opts *bind.TransactOpts, token common.Address, amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _Pricing.contract.Transact(opts, "withdrawToken", token, amount, sendTo)
+}
+
+// WithdrawToken is a paid mutator transaction binding the contract method 0x3ccdbb28.
+//
+// Solidity: function withdrawToken(token address, amount uint256, sendTo address) returns()
+func (_Pricing *PricingSession) WithdrawToken(token common.Address, amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _Pricing.Contract.WithdrawToken(&_Pricing.TransactOpts, token, amount, sendTo)
+}
+
+// WithdrawToken is a paid mutator transaction binding the contract method 0x3ccdbb28.
+//
+// Solidity: function withdrawToken(token address, amount uint256, sendTo address) returns()
+func (_Pricing *PricingTransactorSession) WithdrawToken(token common.Address, amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _Pricing.Contract.WithdrawToken(&_Pricing.TransactOpts, token, amount, sendTo)
 }
