@@ -52,6 +52,13 @@ type ExchangeInfo struct {
 	data map[TokenPairID]ExchangePrecisionLimit
 }
 
+func NewExchangeInfo() *ExchangeInfo {
+	return &ExchangeInfo{
+		mu:   sync.RWMutex{},
+		data: map[TokenPairID]ExchangePrecisionLimit{},
+	}
+}
+
 func (self *ExchangeInfo) Update(pair TokenPairID, data ExchangePrecisionLimit) {
 	self.mu.Lock()
 	defer self.mu.Unlock()

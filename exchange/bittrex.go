@@ -277,7 +277,7 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 		},
 		map[string]ethereum.Address{},
 		storage,
-		&common.ExchangeInfo{},
+		common.NewExchangeInfo(),
 		common.NewExchangeFee(
 			common.TradingFee{
 				"taker": 0.0025,

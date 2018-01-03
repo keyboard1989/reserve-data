@@ -288,7 +288,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("LINK", "ETH"),
 		},
 		map[string]ethereum.Address{},
-		&common.ExchangeInfo{},
+		common.NewExchangeInfo(),
 		common.NewExchangeFee(
 			common.TradingFee{
 				"taker": 0.001,
