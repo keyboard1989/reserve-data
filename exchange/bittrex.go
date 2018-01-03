@@ -50,8 +50,6 @@ func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
 
 func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {
 	mux := sync.Mutex{}
-	mux.Lock()
-	defer mux.Unlock()
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		symbolName := strings.ToUpper(symbol.Base) + strings.ToUpper(symbol.Quote)
@@ -62,7 +60,9 @@ func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittP
 			exchangePrecisionLimit.Precision.Price = 8
 			// update limit
 			exchangePrecisionLimit.AmountLimit.Min = symbol.MinAmount
+			mux.Lock()
 			self.exchangeInfo[pair.PairID()] = exchangePrecisionLimit
+			mux.Unlock()
 			break
 		}
 	}

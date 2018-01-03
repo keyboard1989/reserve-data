@@ -42,8 +42,6 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
 	mux := sync.Mutex{}
-	mux.Lock()
-	defer mux.Unlock()
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		if symbol.Symbol == strings.ToUpper(pairName) {
@@ -71,7 +69,9 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					exchangePrecisionLimit.PriceLimit.Max = float32(maxPrice)
 				}
 			}
+			mux.Lock()
 			self.exchangeInfo[pair.PairID()] = exchangePrecisionLimit
+			mux.Unlock()
 			break
 		}
 	}
