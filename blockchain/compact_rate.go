@@ -60,11 +60,8 @@ func BuildCompactBulk(newBuys, newSells map[ethereum.Address]byte, indices map[s
 	indexResults := []*big.Int{}
 	buyBulks := map[uint64]*bulk{}
 	sellBulks := map[uint64]*bulk{}
-	fmt.Printf("indices: %+v\n", indices)
 	for addr, buyCompact := range newBuys {
-		fmt.Printf("address: %s\n", addr.Hex())
 		index := indices[addr.Hex()]
-		fmt.Printf("index: %s\n", index)
 		_, exist := buyBulks[index.BulkIndex]
 		if !exist {
 			buyBulks[index.BulkIndex] = &bulk{}
@@ -76,7 +73,6 @@ func BuildCompactBulk(newBuys, newSells map[ethereum.Address]byte, indices map[s
 		b.data[index.IndexInBulk] = newSells[addr]
 	}
 	for index, buy := range buyBulks {
-		fmt.Printf("index: %d\n", index)
 		buyResults = append(buyResults, buy.data)
 		sellResults = append(sellResults, sellBulks[index].data)
 		indexResults = append(indexResults, big.NewInt(int64(index)))

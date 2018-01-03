@@ -41,10 +41,10 @@ func (self testBlockchain) Send(
 }
 
 func (self testBlockchain) SetRates(
-	sources []ethereum.Address,
-	dests []ethereum.Address,
-	rates []*big.Int,
-	expiryBlocks []*big.Int) (ethereum.Hash, error) {
+	tokens []ethereum.Address,
+	buys []*big.Int,
+	sells []*big.Int,
+	block *big.Int) (ethereum.Hash, error) {
 	return ethereum.Hash{}, nil
 }
 

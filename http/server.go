@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/KyberNetwork/reserve-data"
+	"github.com/KyberNetwork/reserve-data/metric"
 	"log"
 	"math/big"
 	"net/http"
@@ -21,6 +22,7 @@ import (
 type HTTPServer struct {
 	app         reserve.ReserveData
 	core        reserve.ReserveCore
+	metric      metric.MetricStorage
 	host        string
 	authEnabled bool
 	auth        Authentication
@@ -598,6 +600,136 @@ func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) Metrics(c *gin.Context) {
+	response := metric.MetricResponse{
+		Timestamp: common.GetTimepoint(),
+	}
+	log.Printf("Getting metrics")
+	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"})
+	if !ok {
+		return
+	}
+	tokenParam := postForm.Get("tokens")
+	fromParam := postForm.Get("from")
+	toParam := postForm.Get("to")
+	tokens := []common.Token{}
+	for _, tok := range strings.Split(tokenParam, "-") {
+		token, err := common.GetToken(tok)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		} else {
+			tokens = append(tokens, token)
+		}
+	}
+	from, err := strconv.ParseUint(fromParam, 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	to, err := strconv.ParseUint(toParam, 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	data, err := self.metric.GetMetric(tokens, from, to)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	response.ReturnTime = common.GetTimepoint()
+	response.Data = data
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success":    true,
+			"timestamp":  response.Timestamp,
+			"returnTime": response.ReturnTime,
+			"data":       response.Data,
+		},
+	)
+}
+
+func (self *HTTPServer) StoreMetrics(c *gin.Context) {
+	log.Printf("Storing metrics")
+	postForm, ok := self.Authenticated(c, []string{"timestamp", "data"})
+	if !ok {
+		return
+	}
+	timestampParam := postForm.Get("timestamp")
+	dataParam := postForm.Get("data")
+
+	timestamp, err := strconv.ParseUint(timestampParam, 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	metricEntry := metric.MetricEntry{}
+	metricEntry.Timestamp = timestamp
+	metricEntry.Data = map[string]metric.TokenMetric{}
+	// data must be in form of <token>_afpmid_spread|<token>_afpmid_spread|...
+	for _, tokenData := range strings.Split(dataParam, "|") {
+		parts := strings.Split(tokenData, "_")
+		if len(parts) != 3 {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "submitted data is not in correct format"},
+			)
+			return
+		}
+		token := parts[0]
+		afpmidStr := parts[1]
+		spreadStr := parts[2]
+
+		afpmid, err := strconv.ParseFloat(afpmidStr, 64)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Afp mid " + afpmidStr + " is not float64"},
+			)
+			return
+		}
+		spread, err := strconv.ParseFloat(spreadStr, 64)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Spread " + spreadStr + " is not float64"},
+			)
+			return
+		}
+		metricEntry.Data[token] = metric.TokenMetric{
+			AfpMid: afpmid,
+			Spread: spread,
+		}
+	}
+
+	err = self.metric.StoreMetric(&metricEntry, common.GetTimepoint())
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -606,6 +738,9 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/authdata", self.AuthData)
 	self.r.GET("/activities", self.GetActivities)
 	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
+
+	self.r.GET("/metrics", self.Metrics)
+	self.r.POST("/metrics", self.StoreMetrics)
 
 	self.r.POST("/cancelorder/:exchangeid", self.CancelOrder)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
@@ -619,6 +754,7 @@ func (self *HTTPServer) Run() {
 func NewHTTPServer(
 	app reserve.ReserveData,
 	core reserve.ReserveCore,
+	metric metric.MetricStorage,
 	host string,
 	enableAuth bool,
 	authEngine Authentication) *HTTPServer {
@@ -629,6 +765,6 @@ func NewHTTPServer(
 	r.Use(cors.Default())
 
 	return &HTTPServer{
-		app, core, host, enableAuth, authEngine, r,
+		app, core, metric, host, enableAuth, authEngine, r,
 	}
 }

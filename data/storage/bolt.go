@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/boltdb/bolt"
 )
 
@@ -20,7 +22,8 @@ const (
 	AUTH_DATA_BUCKET        string = "auth_data"
 	PENDING_ACTIVITY_BUCKET string = "pending_activities"
 	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
-	MAX_NUMBER_VERSION      int    = 4
+	METRIC_BUCKET           string = "metrics"
+	MAX_NUMBER_VERSION      int    = 1000
 )
 
 type BoltStorage struct {
@@ -62,6 +65,10 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 			return err
 		}
 		_, err = tx.CreateBucket([]byte(AUTH_DATA_BUCKET))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucket([]byte(METRIC_BUCKET))
 		if err != nil {
 			return err
 		}
@@ -436,4 +443,64 @@ func (self *BoltStorage) HasPendingDeposit(token common.Token, exchange common.E
 		return nil
 	})
 	return result
+}
+
+func (self *BoltStorage) StoreMetric(data *metric.MetricEntry, timepoint uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(METRIC_BUCKET))
+		self.PruneOutdatedData(tx, METRIC_BUCKET)
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		idByte := uint64ToBytes(data.Timestamp)
+		err = b.Put(idByte, dataJson)
+		return err
+	})
+	return err
+}
+
+func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint64) (map[string]metric.MetricList, error) {
+	imResult := map[string]*metric.MetricList{}
+	for _, tok := range tokens {
+		imResult[tok.ID] = &metric.MetricList{}
+	}
+
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(METRIC_BUCKET))
+		c := b.Cursor()
+		// Our time range spans the 90's decade.
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
+
+		// Iterate over the 90's.
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			data := metric.MetricEntry{}
+			err = json.Unmarshal(v, &data)
+			if err != nil {
+				return err
+			}
+			for tok, m := range data.Data {
+				metricList, found := imResult[tok]
+				if found {
+					*metricList = append(*metricList, metric.TokenMetricResponse{
+						Timestamp: data.Timestamp,
+						AfpMid:    m.AfpMid,
+						Spread:    m.Spread,
+					})
+					log.Printf("token: %s, metricList: %+v", tok, metricList)
+				}
+			}
+			log.Printf("result: %+v", imResult)
+		}
+		return nil
+	})
+	result := map[string]metric.MetricList{}
+	for k, v := range imResult {
+		result[k] = *v
+	}
+	return result, err
 }

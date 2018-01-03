@@ -50,6 +50,7 @@ func GetConfigForSimulation() *Config {
 		ActivityStorage:  storage,
 		DataStorage:      storage,
 		FetcherStorage:   storage,
+		MetricStorage:    storage,
 		FetcherRunner:    fetcherRunner,
 		FetcherExchanges: exchangePool.FetcherExchanges(),
 		Exchanges:        exchangePool.CoreExchanges(),
