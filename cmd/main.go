@@ -113,7 +113,9 @@ func main() {
 		app.Run()
 		core := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
 		server := http.NewHTTPServer(
-			app, core, ":8000",
+			app, core,
+			config.MetricStorage,
+			":8000",
 			config.EnableAuthentication,
 			config.AuthEngine,
 		)

@@ -133,12 +133,29 @@ func TestBuildCompactBulk(t *testing.T) {
 		big.NewInt(3),
 		big.NewInt(9),
 	}
+
+	expectedBuys1 := [][14]byte{
+		[14]byte{0, 0, 0, 0, 0, 24, 25, 0, 0, 0, 0, 0, 0, 0},
+		[14]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 23, 0, 0, 0, 0},
+	}
+	expectedSells1 := [][14]byte{
+		[14]byte{0, 0, 0, 0, 0, 27, 28, 0, 0, 0, 0, 0, 0, 0},
+		[14]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 26, 0, 0, 0, 0},
+	}
+	expectedIndices1 := []*big.Int{
+		big.NewInt(9),
+		big.NewInt(3),
+	}
 	if !reflect.DeepEqual(expectedBuys, buyBulk) ||
 		!reflect.DeepEqual(expectedSells, sellBulk) ||
 		!reflect.DeepEqual(expectedIndices, indices) {
-		t.Fatalf("Expected buys(%+v), sells(%+v), indices(%+v), got buys(%+v), sells(%+v), indices(%+v)",
-			expectedBuys, expectedSells, expectedIndices,
-			buyBulk, sellBulk, indices,
-		)
+		if !reflect.DeepEqual(expectedBuys1, buyBulk) ||
+			!reflect.DeepEqual(expectedSells1, sellBulk) ||
+			!reflect.DeepEqual(expectedIndices1, indices) {
+			t.Fatalf("Expected buys(%+v), sells(%+v), indices(%+v), got buys(%+v), sells(%+v), indices(%+v)",
+				expectedBuys, expectedSells, expectedIndices,
+				buyBulk, sellBulk, indices,
+			)
+		}
 	}
 }

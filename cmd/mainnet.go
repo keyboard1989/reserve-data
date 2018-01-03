@@ -31,7 +31,10 @@ func GetConfigForMainnet() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage := storage.NewRamStorage()
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
+	if err != nil {
+		panic(err)
+	}
 
 	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second)
 
@@ -49,6 +52,7 @@ func GetConfigForMainnet() *Config {
 		ActivityStorage:      storage,
 		DataStorage:          storage,
 		FetcherStorage:       storage,
+		MetricStorage:        storage,
 		FetcherRunner:        fetcherRunner,
 		FetcherExchanges:     exchangePool.FetcherExchanges(),
 		Exchanges:            exchangePool.CoreExchanges(),
