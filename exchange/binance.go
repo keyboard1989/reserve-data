@@ -17,7 +17,7 @@ type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
 	addresses    map[string]ethereum.Address
-	exchangeInfo common.ExchangeInfo
+	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 }
 
@@ -41,7 +41,6 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 }
 
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
-	mux := sync.Mutex{}
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		if symbol.Symbol == strings.ToUpper(pairName) {
@@ -69,9 +68,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					exchangePrecisionLimit.PriceLimit.Max = float32(maxPrice)
 				}
 			}
-			mux.Lock()
-			self.exchangeInfo[pair.PairID()] = exchangePrecisionLimit
-			mux.Unlock()
+			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
 			break
 		}
 	}
@@ -79,14 +76,18 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 
 func (self *Binance) UpdatePairsPrecision() {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
-	if err == nil {
+	if err != nil {
+		log.Printf("Get exchange info failed: %s\n", err)
+	} else {
 		symbols := exchangeInfo.Symbols
 		for _, pair := range self.pairs {
 			self.UpdatePrecisionLimit(pair, symbols)
 		}
-	} else {
-		log.Printf("Get exchange info failed: %s\n", err)
 	}
+}
+
+func (self *Binance) GetExchangeInfo(pair common.TokenPairID) common.ExchangePrecisionLimit {
+	return self.exchangeInfo.Get(pair)
 }
 
 func (self *Binance) GetFee(pair string) common.ExchangeFees {
@@ -287,7 +288,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("LINK", "ETH"),
 		},
 		map[string]ethereum.Address{},
-		common.ExchangeInfo{},
+		&common.ExchangeInfo{},
 		common.NewExchangeFee(
 			common.TradingFee{
 				"taker": 0.001,

@@ -12,21 +12,6 @@ type Token struct {
 	Decimal int64
 }
 
-type TokenPairPrecision struct {
-	Amount int
-	Price  int
-}
-
-type TokenPairAmountLimit struct {
-	Min float32
-	Max float32
-}
-
-type TokenPairPriceLimit struct {
-	Min float32
-	Max float32
-}
-
 func (self Token) MarshalText() (text []byte, err error) {
 	// return []byte(fmt.Sprintf(
 	// 	"%s-%s", self.ID, self.Address,
@@ -37,14 +22,6 @@ func (self Token) MarshalText() (text []byte, err error) {
 func (self Token) IsETH() bool {
 	return self.ID == "ETH"
 }
-
-type ExchangePrecisionLimit struct {
-	Precision   TokenPairPrecision
-	AmountLimit TokenPairAmountLimit
-	PriceLimit  TokenPairPriceLimit
-}
-
-type ExchangeInfo map[TokenPairID]ExchangePrecisionLimit
 
 type TokenPair struct {
 	Base  Token

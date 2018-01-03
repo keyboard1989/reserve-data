@@ -21,7 +21,7 @@ type Bittrex struct {
 	pairs        []common.TokenPair
 	addresses    map[string]ethereum.Address
 	storage      BittrexStorage
-	exchangeInfo common.ExchangeInfo
+	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 }
 
@@ -49,7 +49,6 @@ func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
 }
 
 func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {
-	mux := sync.Mutex{}
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		symbolName := strings.ToUpper(symbol.Base) + strings.ToUpper(symbol.Quote)
@@ -60,12 +59,14 @@ func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittP
 			exchangePrecisionLimit.Precision.Price = 8
 			// update limit
 			exchangePrecisionLimit.AmountLimit.Min = symbol.MinAmount
-			mux.Lock()
-			self.exchangeInfo[pair.PairID()] = exchangePrecisionLimit
-			mux.Unlock()
+			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
 			break
 		}
 	}
+}
+
+func (self *Bittrex) GetExchangeInfo(pair common.TokenPairID) common.ExchangePrecisionLimit {
+	return self.exchangeInfo.Get(pair)
 }
 
 func (self *Bittrex) UpdatePairsPrecision() {
@@ -276,7 +277,7 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 		},
 		map[string]ethereum.Address{},
 		storage,
-		common.ExchangeInfo{},
+		&common.ExchangeInfo{},
 		common.NewExchangeFee(
 			common.TradingFee{
 				"taker": 0.0025,

@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -37,6 +38,45 @@ func TimeToTimepoint(t time.Time) uint64 {
 
 func TimepointToTime(t uint64) time.Time {
 	return time.Unix(0, int64(t)*int64(time.Millisecond))
+}
+
+type ExchangePrecisionLimit struct {
+	Precision   TokenPairPrecision
+	AmountLimit TokenPairAmountLimit
+	PriceLimit  TokenPairPriceLimit
+}
+
+// ExchangeInfo is written and read concurrently
+type ExchangeInfo struct {
+	mu   sync.RWMutex
+	data map[TokenPairID]ExchangePrecisionLimit
+}
+
+func (self *ExchangeInfo) Update(pair TokenPairID, data ExchangePrecisionLimit) {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	self.data[pair] = data
+}
+
+func (self *ExchangeInfo) Get(pair TokenPairID) ExchangePrecisionLimit {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	return self.data[pair]
+}
+
+type TokenPairPrecision struct {
+	Amount int
+	Price  int
+}
+
+type TokenPairAmountLimit struct {
+	Min float32
+	Max float32
+}
+
+type TokenPairPriceLimit struct {
+	Min float32
+	Max float32
 }
 
 type TradingFee map[string]float32
