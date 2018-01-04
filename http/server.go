@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -510,6 +511,72 @@ func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetPairInfo(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	base := c.Param("base")
+	quote := c.Param("quote")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	pair, err := common.NewTokenPair(base, quote)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	pairInfo, err := exchange.GetExchangeInfo(pair.PairID())
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": pairInfo},
+	)
+	return
+}
+
+func (self *HTTPServer) GetExchangeFee(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	fee := exchange.GetFee()
+	// sfee := fmt.Sprintf("%+v\n", fee)
+	// panic("fahslfha")
+	jfee, err := json.Marshal(fee)
+	log.Println("aAAAAAAAAA", err)
+	log.Println("aAAAAAAAAA", jfee)
+	if err != nil {
+		serr := fmt.Sprintf("%+v\n", err)
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": true, "reason": serr},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": fee},
+	)
+	return
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -523,6 +590,8 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/activities", self.GetActivities)
 	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
 	self.r.GET("/exchangeinfo/:exchangeid", self.GetExchangeInfo)
+	self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
+	self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
 
 	self.r.Run(self.host)
 }

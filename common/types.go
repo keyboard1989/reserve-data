@@ -1,8 +1,10 @@
 package common
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	"strconv"
 	"strings"
@@ -65,10 +67,14 @@ func (self *ExchangeInfo) Update(pair TokenPairID, data ExchangePrecisionLimit) 
 	self.data[pair] = data
 }
 
-func (self *ExchangeInfo) Get(pair TokenPairID) ExchangePrecisionLimit {
+func (self *ExchangeInfo) Get(pair TokenPairID) (ExchangePrecisionLimit, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
-	return self.data[pair]
+	if info, exist := self.data[pair]; exist {
+		return info, nil
+	} else {
+		return info, errors.New("Token pair is not existed")
+	}
 }
 
 func (self *ExchangeInfo) GetData() map[TokenPairID]ExchangePrecisionLimit {
@@ -102,6 +108,14 @@ type FundingFee struct {
 type ExchangeFees struct {
 	trading TradingFee
 	funding FundingFee
+}
+
+func (self *ExchangeFees) MarshalJSON() ([]byte, error) {
+	log.Println("Aflghflsgdhflasgdfalsgdflsagdflgadflgdfasldfgha")
+	return json.Marshal(map[string]interface{}{
+		"trading": self.trading,
+		"funding": self.funding,
+	})
 }
 
 func NewExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {

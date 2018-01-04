@@ -34,7 +34,7 @@ func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
-func (self *Bittrex) GetFee(pair string) common.ExchangeFees {
+func (self *Bittrex) GetFee() common.ExchangeFees {
 	return self.fees
 }
 
@@ -65,8 +65,9 @@ func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittP
 	}
 }
 
-func (self *Bittrex) GetExchangeInfo(pair common.TokenPairID) common.ExchangePrecisionLimit {
-	return self.exchangeInfo.Get(pair)
+func (self *Bittrex) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
+	pairInfo, err := self.exchangeInfo.Get(pair)
+	return pairInfo, err
 }
 
 func (self *Bittrex) GetInfo() (*common.ExchangeInfo, error) {

@@ -90,11 +90,12 @@ func (self *Binance) GetInfo() (*common.ExchangeInfo, error) {
 	return self.exchangeInfo, nil
 }
 
-func (self *Binance) GetExchangeInfo(pair common.TokenPairID) common.ExchangePrecisionLimit {
-	return self.exchangeInfo.Get(pair)
+func (self *Binance) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
+	data, err := self.exchangeInfo.Get(pair)
+	return data, err
 }
 
-func (self *Binance) GetFee(pair string) common.ExchangeFees {
+func (self *Binance) GetFee() common.ExchangeFees {
 	return self.fees
 }
 

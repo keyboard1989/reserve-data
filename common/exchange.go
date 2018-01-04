@@ -16,6 +16,8 @@ type Exchange interface {
 	CancelOrder(id ActivityID) error
 	MarshalText() (text []byte, err error)
 	GetInfo() (*ExchangeInfo, error)
+	GetExchangeInfo(TokenPairID) (ExchangePrecisionLimit, error)
+	GetFee() ExchangeFees
 }
 
 var SupportedExchanges = map[ExchangeID]Exchange{}
