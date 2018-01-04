@@ -15,7 +15,7 @@ type exchange map[string]string
 
 type AddressConfig struct {
 	Tokens    map[string]token    `json:"tokens"`
-	Exchanges map[string]exchange `json:"exchangesDeposit"`
+	Exchanges map[string]exchange `json:"exchanges"`
 	Bank      string              `json:"bank"`
 	Reserve   string              `json:"reserve"`
 	Network   string              `json:"network"`
