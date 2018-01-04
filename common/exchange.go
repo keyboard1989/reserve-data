@@ -15,6 +15,9 @@ type Exchange interface {
 	Trade(tradeType string, base Token, quote Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error)
 	CancelOrder(id ActivityID) error
 	MarshalText() (text []byte, err error)
+	GetInfo() (ExchangeInfo, error)
+	GetExchangeInfo(TokenPairID) (ExchangePrecisionLimit, error)
+	GetFee() ExchangeFees
 }
 
 var SupportedExchanges = map[ExchangeID]Exchange{}

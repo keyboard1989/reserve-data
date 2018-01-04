@@ -3,19 +3,22 @@ package exchange
 import (
 	"errors"
 	"fmt"
+	"log"
+	"math/big"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"math/big"
 )
 
 type Binance struct {
-	interf    BinanceInterface
-	pairs     []common.TokenPair
-	addresses map[string]ethereum.Address
+	interf       BinanceInterface
+	pairs        []common.TokenPair
+	addresses    map[string]ethereum.Address
+	exchangeInfo *common.ExchangeInfo
+	fees         common.ExchangeFees
 }
 
 func (self *Binance) MarshalText() (text []byte, err error) {
@@ -35,6 +38,65 @@ func (self *Binance) UpdateAllDepositAddresses(address string) {
 
 func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
+}
+
+func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
+	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
+	for _, symbol := range symbols {
+		if symbol.Symbol == strings.ToUpper(pairName) {
+			//update precision
+			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
+			exchangePrecisionLimit.Precision.Amount = symbol.BaseAssetPrecision
+			exchangePrecisionLimit.Precision.Price = symbol.QuotePrecision
+			// update limit
+			for _, filter := range symbol.Filters {
+				if filter.FilterType == "LOT_SIZE" {
+					// update amount min
+					minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 32)
+					exchangePrecisionLimit.AmountLimit.Min = float32(minQuantity)
+					// update amount max
+					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 32)
+					exchangePrecisionLimit.AmountLimit.Max = float32(maxQuantity)
+				}
+
+				if filter.FilterType == "PRICE_FILTER" {
+					// update price min
+					minPrice, _ := strconv.ParseFloat(filter.MinPrice, 32)
+					exchangePrecisionLimit.PriceLimit.Min = float32(minPrice)
+					// update price max
+					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 32)
+					exchangePrecisionLimit.PriceLimit.Max = float32(maxPrice)
+				}
+			}
+			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
+			break
+		}
+	}
+}
+
+func (self *Binance) UpdatePairsPrecision() {
+	exchangeInfo, err := self.interf.GetExchangeInfo()
+	if err != nil {
+		log.Printf("Get exchange info failed: %s\n", err)
+	} else {
+		symbols := exchangeInfo.Symbols
+		for _, pair := range self.pairs {
+			self.UpdatePrecisionLimit(pair, symbols)
+		}
+	}
+}
+
+func (self *Binance) GetInfo() (common.ExchangeInfo, error) {
+	return *self.exchangeInfo, nil
+}
+
+func (self *Binance) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
+	data, err := self.exchangeInfo.Get(pair)
+	return data, err
+}
+
+func (self *Binance) GetFee() common.ExchangeFees {
+	return self.fees
 }
 
 func (self *Binance) ID() common.ExchangeID {
@@ -231,5 +293,31 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("LINK", "ETH"),
 		},
 		map[string]ethereum.Address{},
+		common.NewExchangeInfo(),
+		common.NewExchangeFee(
+			common.TradingFee{
+				"taker": 0.001,
+				"maker": 0.001,
+			},
+			common.NewFundingFee(
+				map[string]float32{
+					"ETH":  0.005,
+					"EOS":  2.0,
+					"MCO":  0.15,
+					"OMG":  0.1,
+					"KNC":  1.0,
+					"FUN":  50.0,
+					"LINK": 5.0},
+				map[string]float32{
+					"ETH":  0,
+					"EOS":  0,
+					"MCO":  0,
+					"OMG":  0,
+					"KNC":  0,
+					"FUN":  0,
+					"LINK": 0,
+				},
+			),
+		),
 	}
 }

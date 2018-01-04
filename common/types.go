@@ -6,6 +6,7 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -37,6 +38,88 @@ func TimeToTimepoint(t time.Time) uint64 {
 
 func TimepointToTime(t uint64) time.Time {
 	return time.Unix(0, int64(t)*int64(time.Millisecond))
+}
+
+type ExchangePrecisionLimit struct {
+	Precision   TokenPairPrecision
+	AmountLimit TokenPairAmountLimit
+	PriceLimit  TokenPairPriceLimit
+}
+
+// ExchangeInfo is written and read concurrently
+type ExchangeInfo struct {
+	mu   sync.RWMutex
+	data map[TokenPairID]ExchangePrecisionLimit
+}
+
+func NewExchangeInfo() *ExchangeInfo {
+	return &ExchangeInfo{
+		mu:   sync.RWMutex{},
+		data: map[TokenPairID]ExchangePrecisionLimit{},
+	}
+}
+
+func (self *ExchangeInfo) Update(pair TokenPairID, data ExchangePrecisionLimit) {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	self.data[pair] = data
+}
+
+func (self *ExchangeInfo) Get(pair TokenPairID) (ExchangePrecisionLimit, error) {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	if info, exist := self.data[pair]; exist {
+		return info, nil
+	} else {
+		return info, errors.New("Token pair is not existed")
+	}
+}
+
+func (self *ExchangeInfo) GetData() map[TokenPairID]ExchangePrecisionLimit {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	return self.data
+}
+
+type TokenPairPrecision struct {
+	Amount int
+	Price  int
+}
+
+type TokenPairAmountLimit struct {
+	Min float32
+	Max float32
+}
+
+type TokenPairPriceLimit struct {
+	Min float32
+	Max float32
+}
+
+type TradingFee map[string]float32
+
+type FundingFee struct {
+	Withdraw map[string]float32
+	Deposit  map[string]float32
+}
+
+type ExchangeFees struct {
+	Trading TradingFee
+	Funding FundingFee
+}
+
+func NewExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {
+	return ExchangeFees{
+		Trading: tradingFee,
+		Funding: fundingFee,
+	}
+}
+
+func NewFundingFee(withdraw map[string]float32, deposit map[string]float32) FundingFee {
+	return FundingFee{
+		withdraw,
+		deposit,
+	}
 }
 
 type TokenPairID string

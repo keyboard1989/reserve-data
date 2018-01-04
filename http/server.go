@@ -2,8 +2,6 @@ package http
 
 import (
 	"fmt"
-	"github.com/KyberNetwork/reserve-data"
-	"github.com/KyberNetwork/reserve-data/metric"
 	"log"
 	"math/big"
 	"net/http"
@@ -11,9 +9,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/getsentry/raven-go"
+	raven "github.com/getsentry/raven-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
@@ -730,6 +730,89 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
+	log.Println("Get exchange info")
+	exchangeParam := c.Param("exchangeid")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	exchangeInfo, err := exchange.GetInfo()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    exchangeInfo.GetData(),
+		},
+	)
+}
+
+func (self *HTTPServer) GetPairInfo(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	base := c.Param("base")
+	quote := c.Param("quote")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	pair, err := common.NewTokenPair(base, quote)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	pairInfo, err := exchange.GetExchangeInfo(pair.PairID())
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": pairInfo},
+	)
+	return
+}
+
+func (self *HTTPServer) GetExchangeFee(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	fee := exchange.GetFee()
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": fee},
+	)
+	return
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -747,6 +830,9 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
 	self.r.POST("/trade/:exchangeid", self.Trade)
 	self.r.POST("/setrates", self.SetRate)
+	self.r.GET("/exchangeinfo/:exchangeid", self.GetExchangeInfo)
+	self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
+	self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
 
 	self.r.Run(self.host)
 }

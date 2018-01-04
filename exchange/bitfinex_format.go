@@ -11,6 +11,13 @@ type Bitfinfo struct {
 	Error   string `json:"error"`
 }
 
+type BitExchangeInfo struct {
+	Pairs []struct {
+		Pair           string `json:"pair"`
+		PricePrecision int    `json:"price_precision"`
+	}
+}
+
 type Bitfwithdraw struct {
 	Success int `json:"success"`
 	Return  map[string]interface{}
