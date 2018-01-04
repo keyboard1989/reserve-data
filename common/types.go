@@ -1,10 +1,8 @@
 package common
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math/big"
 	"strconv"
 	"strings"
@@ -101,27 +99,19 @@ type TokenPairPriceLimit struct {
 type TradingFee map[string]float32
 
 type FundingFee struct {
-	withdraw map[string]float32
-	deposit  map[string]float32
+	Withdraw map[string]float32
+	Deposit  map[string]float32
 }
 
 type ExchangeFees struct {
-	trading TradingFee
-	funding FundingFee
-}
-
-func (self *ExchangeFees) MarshalJSON() ([]byte, error) {
-	log.Println("Aflghflsgdhflasgdfalsgdflsagdflgadflgdfasldfgha")
-	return json.Marshal(map[string]interface{}{
-		"trading": self.trading,
-		"funding": self.funding,
-	})
+	Trading TradingFee
+	Funding FundingFee
 }
 
 func NewExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {
 	return ExchangeFees{
-		trading: tradingFee,
-		funding: fundingFee,
+		Trading: tradingFee,
+		Funding: fundingFee,
 	}
 }
 

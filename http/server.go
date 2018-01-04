@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -557,19 +556,6 @@ func (self *HTTPServer) GetExchangeFee(c *gin.Context) {
 		return
 	}
 	fee := exchange.GetFee()
-	// sfee := fmt.Sprintf("%+v\n", fee)
-	// panic("fahslfha")
-	jfee, err := json.Marshal(fee)
-	log.Println("aAAAAAAAAA", err)
-	log.Println("aAAAAAAAAA", jfee)
-	if err != nil {
-		serr := fmt.Sprintf("%+v\n", err)
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": true, "reason": serr},
-		)
-		return
-	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{"success": true, "data": fee},
