@@ -18,6 +18,7 @@ func GetConfigForSimulation() *Config {
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -49,6 +50,7 @@ func GetConfigForSimulation() *Config {
 		ActivityStorage:  storage,
 		DataStorage:      storage,
 		FetcherStorage:   storage,
+		MetricStorage:    storage,
 		FetcherRunner:    fetcherRunner,
 		FetcherExchanges: exchangePool.FetcherExchanges(),
 		Exchanges:        exchangePool.CoreExchanges(),
@@ -56,6 +58,7 @@ func GetConfigForSimulation() *Config {
 		EthereumEndpoint: endpoint,
 		SupportedTokens:  tokens,
 		WrapperAddress:   wrapperAddr,
+		PricingAddress:   pricingAddr,
 		ReserveAddress:   reserveAddr,
 	}
 }

@@ -12,13 +12,14 @@ import (
 )
 
 func GetConfigForDev() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -30,9 +31,12 @@ func GetConfigForDev() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage := storage.NewRamStorage()
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
+	if err != nil {
+		panic(err)
+	}
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second)
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
@@ -40,19 +44,25 @@ func GetConfigForDev() *Config {
 		addressConfig, fileSigner, storage,
 	)
 
-	endpoint := "https://kovan.infura.io"
+	endpoint := "https://ropsten.infura.io"
+
+	hmac512auth := fileSigner
 
 	return &Config{
-		ActivityStorage:  storage,
-		DataStorage:      storage,
-		FetcherStorage:   storage,
-		FetcherRunner:    fetcherRunner,
-		FetcherExchanges: exchangePool.FetcherExchanges(),
-		Exchanges:        exchangePool.CoreExchanges(),
-		BlockchainSigner: fileSigner,
-		EthereumEndpoint: endpoint,
-		SupportedTokens:  tokens,
-		WrapperAddress:   wrapperAddr,
-		ReserveAddress:   reserveAddr,
+		ActivityStorage:      storage,
+		DataStorage:          storage,
+		FetcherStorage:       storage,
+		MetricStorage:        storage,
+		FetcherRunner:        fetcherRunner,
+		FetcherExchanges:     exchangePool.FetcherExchanges(),
+		Exchanges:            exchangePool.CoreExchanges(),
+		BlockchainSigner:     fileSigner,
+		EnableAuthentication: false,
+		AuthEngine:           hmac512auth,
+		EthereumEndpoint:     endpoint,
+		SupportedTokens:      tokens,
+		WrapperAddress:       wrapperAddr,
+		PricingAddress:       pricingAddr,
+		ReserveAddress:       reserveAddr,
 	}
 }

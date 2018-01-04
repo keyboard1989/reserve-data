@@ -19,6 +19,7 @@ func GetConfigForMainnet() *Config {
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -30,9 +31,12 @@ func GetConfigForMainnet() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage := storage.NewRamStorage()
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
+	if err != nil {
+		panic(err)
+	}
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second)
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
@@ -40,21 +44,25 @@ func GetConfigForMainnet() *Config {
 		addressConfig, fileSigner, storage,
 	)
 
-	// endpoint := "http://localhost:8545"
-	// endpoint := "https://kovan.kyber.network"
+	hmac512auth := fileSigner
+
 	endpoint := "https://mainnet.infura.io"
 
 	return &Config{
-		ActivityStorage:  storage,
-		DataStorage:      storage,
-		FetcherStorage:   storage,
-		FetcherRunner:    fetcherRunner,
-		FetcherExchanges: exchangePool.FetcherExchanges(),
-		Exchanges:        exchangePool.CoreExchanges(),
-		BlockchainSigner: fileSigner,
-		EthereumEndpoint: endpoint,
-		SupportedTokens:  tokens,
-		WrapperAddress:   wrapperAddr,
-		ReserveAddress:   reserveAddr,
+		ActivityStorage:      storage,
+		DataStorage:          storage,
+		FetcherStorage:       storage,
+		MetricStorage:        storage,
+		FetcherRunner:        fetcherRunner,
+		FetcherExchanges:     exchangePool.FetcherExchanges(),
+		Exchanges:            exchangePool.CoreExchanges(),
+		BlockchainSigner:     fileSigner,
+		EnableAuthentication: true,
+		AuthEngine:           hmac512auth,
+		EthereumEndpoint:     endpoint,
+		SupportedTokens:      tokens,
+		WrapperAddress:       wrapperAddr,
+		PricingAddress:       pricingAddr,
+		ReserveAddress:       reserveAddr,
 	}
 }

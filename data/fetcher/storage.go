@@ -5,7 +5,7 @@ import (
 )
 
 type Storage interface {
-	StorePrice(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error
+	StorePrice(data common.AllPriceEntry, timepoint uint64) error
 	StoreRate(data common.AllRateEntry, timepoint uint64) error
 	StoreAuthSnapshot(data *common.AuthDataSnapshot, timepoint uint64) error
 

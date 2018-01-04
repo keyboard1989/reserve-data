@@ -243,11 +243,17 @@ type PriceEntry struct {
 	Rate     float64
 }
 
+type AllPriceEntry struct {
+	Block uint64
+	Data  map[TokenPairID]OnePrice
+}
+
 type AllPriceResponse struct {
 	Version    Version
 	Timestamp  Timestamp
 	ReturnTime Timestamp
 	Data       map[TokenPairID]OnePrice
+	Block      uint64
 }
 
 type OnePriceResponse struct {
@@ -255,6 +261,7 @@ type OnePriceResponse struct {
 	Timestamp  Timestamp
 	ReturnTime Timestamp
 	Data       OnePrice
+	Block      uint64
 }
 
 type OnePrice map[ExchangeID]ExchangePrice
@@ -385,6 +392,7 @@ type AuthDataSnapshot struct {
 	ExchangeBalances  map[ExchangeID]EBalanceEntry
 	ReserveBalances   map[string]BalanceEntry
 	PendingActivities []ActivityRecord
+	Block             uint64
 }
 
 type AuthDataResponse struct {
@@ -399,13 +407,16 @@ type AuthDataResponse struct {
 		ExchangeBalances  map[ExchangeID]EBalanceEntry
 		ReserveBalances   map[string]BalanceResponse
 		PendingActivities []ActivityRecord
+		Block             uint64
 	}
 }
 
 type RateEntry struct {
-	Rate        *big.Int
-	ExpiryBlock *big.Int
-	Balance     *big.Int
+	BaseBuy     *big.Int
+	CompactBuy  int8
+	BaseSell    *big.Int
+	CompactSell int8
+	Block       uint64
 }
 
 type RateResponse struct {
@@ -413,9 +424,12 @@ type RateResponse struct {
 	Error       string
 	Timestamp   Timestamp
 	ReturnTime  Timestamp
+	BaseBuy     float64
+	CompactBuy  int8
+	BaseSell    float64
+	CompactSell int8
 	Rate        float64
-	ExpiryBlock int64
-	Balance     float64
+	Block       uint64
 }
 
 type AllRateEntry struct {
@@ -423,7 +437,7 @@ type AllRateEntry struct {
 	Error      string
 	Timestamp  Timestamp
 	ReturnTime Timestamp
-	Data       map[TokenPairID]RateEntry
+	Data       map[string]RateEntry
 }
 
 type AllRateResponse struct {
@@ -432,5 +446,5 @@ type AllRateResponse struct {
 	Error      string
 	Timestamp  Timestamp
 	ReturnTime Timestamp
-	Data       map[TokenPairID]RateResponse
+	Data       map[string]RateResponse
 }

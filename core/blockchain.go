@@ -13,8 +13,8 @@ type Blockchain interface {
 		amount *big.Int,
 		address ethereum.Address) (ethereum.Hash, error)
 	SetRates(
-		sources []ethereum.Address,
-		dests []ethereum.Address,
-		rates []*big.Int,
-		expiryBlocks []*big.Int) (ethereum.Hash, error)
+		tokens []ethereum.Address,
+		buys []*big.Int,
+		sells []*big.Int,
+		block *big.Int) (ethereum.Hash, error)
 }
