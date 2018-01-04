@@ -86,8 +86,8 @@ func (self *Binance) UpdatePairsPrecision() {
 	}
 }
 
-func (self *Binance) GetInfo() (*common.ExchangeInfo, error) {
-	return self.exchangeInfo, nil
+func (self *Binance) GetInfo() (common.ExchangeInfo, error) {
+	return *self.exchangeInfo, nil
 }
 
 func (self *Binance) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
