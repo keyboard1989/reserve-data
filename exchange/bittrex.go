@@ -69,6 +69,10 @@ func (self *Bittrex) GetExchangeInfo(pair common.TokenPairID) common.ExchangePre
 	return self.exchangeInfo.Get(pair)
 }
 
+func (self *Bittrex) GetInfo() (*common.ExchangeInfo, error) {
+	return self.exchangeInfo, nil
+}
+
 func (self *Bittrex) UpdatePairsPrecision() {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err == nil {

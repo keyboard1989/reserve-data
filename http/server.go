@@ -2,16 +2,17 @@ package http
 
 import (
 	"fmt"
-	"github.com/KyberNetwork/reserve-data"
 	"log"
 	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"github.com/KyberNetwork/reserve-data"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/getsentry/raven-go"
+	raven "github.com/getsentry/raven-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
@@ -479,6 +480,36 @@ func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
+	log.Println("Get exchange info")
+	exchangeParam := c.Param("exchangeid")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	exchangeInfo, err := exchange.GetInfo()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    exchangeInfo.GetData(),
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -491,6 +522,7 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/getrates", self.GetRate)
 	self.r.GET("/activities", self.GetActivities)
 	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
+	self.r.GET("/exchangeinfo/:exchangeid", self.GetExchangeInfo)
 
 	self.r.Run(self.host)
 }

@@ -71,6 +71,12 @@ func (self *ExchangeInfo) Get(pair TokenPairID) ExchangePrecisionLimit {
 	return self.data[pair]
 }
 
+func (self *ExchangeInfo) GetData() map[TokenPairID]ExchangePrecisionLimit {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	return self.data
+}
+
 type TokenPairPrecision struct {
 	Amount int
 	Price  int
