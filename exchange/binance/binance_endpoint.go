@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -76,18 +75,8 @@ func (self *BinanceEndpoint) GetResponse(
 	}
 }
 
-func (self *BinanceEndpoint) FetchOnePairData(
-	wg *sync.WaitGroup,
-	pair common.TokenPair,
-	data *sync.Map,
-	timepoint uint64) {
-
-	defer wg.Done()
-	result := common.ExchangePrice{}
-
-	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
-	result.Timestamp = timestamp
-	result.Valid = true
+func (self *BinanceEndpoint) GetDepthOnePair(
+	pair common.TokenPair, timepoint uint64) (exchange.Binaresp, error) {
 
 	resp_body, err := self.GetResponse(
 		"GET", self.interf.PublicEndpoint()+"/api/v1/depth",
@@ -99,44 +88,13 @@ func (self *BinanceEndpoint) FetchOnePairData(
 		timepoint,
 	)
 
-	returnTime := common.GetTimestamp()
-	result.ReturnTime = returnTime
-
+	resp_data := exchange.Binaresp{}
 	if err != nil {
-		result.Valid = false
-		result.Error = err.Error()
+		return resp_data, err
 	} else {
-		resp_data := exchange.Binaresp{}
 		json.Unmarshal(resp_body, &resp_data)
-		if resp_data.Code != 0 || resp_data.Msg != "" {
-			result.Valid = false
-			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
-		} else {
-			for _, buy := range resp_data.Bids {
-				quantity, _ := strconv.ParseFloat(buy[1], 64)
-				rate, _ := strconv.ParseFloat(buy[0], 64)
-				result.Bids = append(
-					result.Bids,
-					common.PriceEntry{
-						quantity,
-						rate,
-					},
-				)
-			}
-			for _, sell := range resp_data.Asks {
-				quantity, _ := strconv.ParseFloat(sell[1], 64)
-				rate, _ := strconv.ParseFloat(sell[0], 64)
-				result.Asks = append(
-					result.Asks,
-					common.PriceEntry{
-						quantity,
-						rate,
-					},
-				)
-			}
-		}
+		return resp_data, nil
 	}
-	data.Store(pair.PairID(), result)
 }
 
 // Relevant params:
@@ -325,12 +283,8 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 }
 
 func (self *BinanceEndpoint) OpenOrdersForOnePair(
-	wg *sync.WaitGroup,
-	pair common.TokenPair,
-	data *sync.Map,
-	timepoint uint64) {
+	pair common.TokenPair, timepoint uint64) (exchange.Binaorders, error) {
 
-	defer wg.Done()
 	result := exchange.Binaorders{}
 	resp_body, err := self.GetResponse(
 		"GET",
@@ -341,32 +295,11 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 		true,
 		timepoint,
 	)
-	if err == nil {
-		json.Unmarshal(resp_body, &result)
-		orders := []common.Order{}
-		for _, order := range result {
-			price, _ := strconv.ParseFloat(order.Price, 64)
-			orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
-			executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
-			orders = append(orders, common.Order{
-				ID:          fmt.Sprintf("%s_%s%s", order.OrderId, strings.ToUpper(pair.Base.ID), strings.ToUpper(pair.Quote.ID)),
-				Base:        strings.ToUpper(pair.Base.ID),
-				Quote:       strings.ToUpper(pair.Quote.ID),
-				OrderId:     fmt.Sprintf("%d", order.OrderId),
-				Price:       price,
-				OrigQty:     orgQty,
-				ExecutedQty: executedQty,
-				TimeInForce: order.TimeInForce,
-				Type:        order.Type,
-				Side:        order.Side,
-				StopPrice:   order.StopPrice,
-				IcebergQty:  order.IcebergQty,
-				Time:        order.Time,
-			})
-		}
-		data.Store(pair.PairID(), orders)
+	if err != nil {
+		return result, err
 	} else {
-		log.Printf("Unsuccessful response from Binance: %s", err)
+		json.Unmarshal(resp_body, &result)
+		return result, nil
 	}
 }
 

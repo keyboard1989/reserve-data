@@ -2,24 +2,15 @@ package exchange
 
 import (
 	"math/big"
-	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type BinanceInterface interface {
-	FetchOnePairData(
-		wg *sync.WaitGroup,
-		pair common.TokenPair,
-		data *sync.Map,
-		timepoint uint64)
+	GetDepthOnePair(pair common.TokenPair, timepoint uint64) (Binaresp, error)
 
-	OpenOrdersForOnePair(
-		wg *sync.WaitGroup,
-		pair common.TokenPair,
-		data *sync.Map,
-		timepoint uint64)
+	OpenOrdersForOnePair(pair common.TokenPair, timepoint uint64) (Binaorders, error)
 
 	GetInfo(timepoint uint64) (Binainfo, error)
 
