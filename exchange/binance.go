@@ -13,6 +13,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+const BINANCE_EPSILON float64 = 0.0000000001 // 10e-10
+
 type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
@@ -111,8 +113,32 @@ func (self *Binance) Name() string {
 	return "binance"
 }
 
+func (self *Binance) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+	result, err := self.interf.OrderStatus(symbol, id, timepoint)
+	if err != nil {
+		return 0, 0, false, err
+	} else {
+		done, _ := strconv.ParseFloat(result.ExecutedQty, 64)
+		total, _ := strconv.ParseFloat(result.OrigQty, 64)
+		return done, total - done, total-done < BINANCE_EPSILON, nil
+	}
+}
+
 func (self *Binance) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
-	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
+	result, err := self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
+	symbol := base.ID + quote.ID
+
+	if err != nil {
+		return "", 0, 0, false, err
+	} else {
+		done, remaining, finished, err := self.QueryOrder(
+			base.ID+quote.ID,
+			result.OrderID,
+			timepoint+20,
+		)
+		id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
+		return id, done, remaining, finished, err
+	}
 }
 
 func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {

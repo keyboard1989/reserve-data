@@ -18,8 +18,6 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-const EPSILON float64 = 0.0000000001 // 10e-10
-
 type BinanceEndpoint struct {
 	signer Signer
 	interf Interface
@@ -107,7 +105,7 @@ func (self *BinanceEndpoint) GetDepthOnePair(
 //
 // In this version, we only support LIMIT order which means only buy/sell with acceptable price,
 // and GTC time in force which means that the order will be active until it's implicitly canceled
-func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (string, float64, float64, bool, error) {
+func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (exchange.Binatrade, error) {
 	result := exchange.Binatrade{}
 	symbol := base.ID + quote.ID
 	orderType := "LIMIT"
@@ -128,19 +126,11 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 		true,
 		timepoint,
 	)
-
 	if err != nil {
-		log.Printf("Error: %s", err)
-		return "", 0, 0, false, err
+		return result, err
 	} else {
 		json.Unmarshal(resp_body, &result)
-		done, remaining, finished, err := self.QueryOrder(
-			base.ID+quote.ID,
-			result.OrderID,
-			timepoint+20,
-		)
-		id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
-		return id, done, remaining, finished, err
+		return result, nil
 	}
 }
 
@@ -228,17 +218,6 @@ func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64, timepoint uin
 		}
 	}
 	return result, err
-}
-
-func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
-	result, err := self.OrderStatus(symbol, id, timepoint)
-	if err != nil {
-		return 0, 0, false, err
-	} else {
-		done, _ := strconv.ParseFloat(result.ExecutedQty, 64)
-		total, _ := strconv.ParseFloat(result.OrigQty, 64)
-		return done, total - done, total-done < EPSILON, nil
-	}
 }
 
 func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
