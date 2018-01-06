@@ -247,7 +247,7 @@ form params:
 <host>:8000/metrics
 GET request
 url params:
-  - tokens: string, list of tokens to get data about, in format of <token_id>_<token_id>..., eg. OMG_DGD_KNC
+  - tokens: string, list of tokens to get data about, in format of <token_id>-<token_id>..., eg. OMG_DGD_KNC
   - from: uint64, unix millisecond
   - to: uint64, unix millisecond
 ```
