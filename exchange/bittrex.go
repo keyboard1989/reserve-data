@@ -14,7 +14,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-const EPSILON float64 = 0.00000001
+const BITTREX_EPSILON float64 = 0.00000001
 
 type Bittrex struct {
 	interf       BittrexInterface
@@ -98,8 +98,32 @@ func (self *Bittrex) Name() string {
 	return "bittrex"
 }
 
+func (self *Bittrex) QueryOrder(uuid string, timepoint uint64) (float64, float64, bool, error) {
+	result, err := self.interf.OrderStatus(uuid, timepoint)
+	if err != nil {
+		return 0, 0, false, err
+	} else {
+		remaining := result.Result.QuantityRemaining
+		done := result.Result.Quantity - remaining
+		return done, remaining, remaining < BITTREX_EPSILON, nil
+	}
+}
+
 func (self *Bittrex) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (string, float64, float64, bool, error) {
-	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
+	result, err := self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
+
+	if err != nil {
+		return "", 0, 0, false, errors.New("Trade rejected by Bittrex")
+	} else {
+		if result.Success {
+			uuid := result.Result["uuid"]
+			done, remaining, finished, err := self.QueryOrder(
+				uuid, timepoint+20)
+			return uuid, done, remaining, finished, err
+		} else {
+			return "", 0, 0, false, errors.New(result.Error)
+		}
+	}
 }
 
 func (self *Bittrex) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
@@ -152,7 +176,7 @@ func (self *Bittrex) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 	} else {
 		for _, deposit := range histories.Result {
 			if deposit.Currency == currency &&
-				deposit.Amount-amount < EPSILON &&
+				deposit.Amount-amount < BITTREX_EPSILON &&
 				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond) &&
 				self.storage.IsNewBittrexDeposit(deposit.Id, id) {
 				self.storage.RegisterBittrexDeposit(deposit.Id, id)
@@ -218,13 +242,52 @@ func (self *Bittrex) OrderStatus(id common.ActivityID, timepoint uint64) (string
 	}
 }
 
+func (self *Bittrex) FetchOnePairData(wq *sync.WaitGroup, pair common.TokenPair, data *sync.Map, timepoint uint64) {
+	defer wq.Done()
+	result := common.ExchangePrice{}
+	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
+	result.Valid = true
+	onePairData, err := self.interf.FetchOnePairData(pair, timepoint)
+	returnTime := common.GetTimestamp()
+	result.ReturnTime = returnTime
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
+		if !onePairData.Success {
+			result.Valid = false
+			result.Error = onePairData.Msg
+		} else {
+			for _, buy := range onePairData.Result["buy"] {
+				result.Bids = append(
+					result.Bids,
+					common.PriceEntry{
+						buy["Quantity"],
+						buy["Rate"],
+					},
+				)
+			}
+			for _, sell := range onePairData.Result["sell"] {
+				result.Asks = append(
+					result.Asks,
+					common.PriceEntry{
+						sell["Quantity"],
+						sell["Rate"],
+					},
+				)
+			}
+		}
+	}
+	data.Store(pair.PairID(), result)
+}
+
 func (self *Bittrex) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
 	pairs := self.pairs
 	for _, pair := range pairs {
 		wait.Add(1)
-		go self.interf.FetchOnePairData(&wait, pair, &data, timepoint)
+		go self.FetchOnePairData(&wait, pair, &data, timepoint)
 	}
 	wait.Wait()
 	result := map[common.TokenPairID]common.ExchangePrice{}

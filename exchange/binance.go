@@ -13,6 +13,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+const BINANCE_EPSILON float64 = 0.0000000001 // 10e-10
+
 type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
@@ -111,8 +113,32 @@ func (self *Binance) Name() string {
 	return "binance"
 }
 
+func (self *Binance) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
+	result, err := self.interf.OrderStatus(symbol, id, timepoint)
+	if err != nil {
+		return 0, 0, false, err
+	} else {
+		done, _ := strconv.ParseFloat(result.ExecutedQty, 64)
+		total, _ := strconv.ParseFloat(result.OrigQty, 64)
+		return done, total - done, total-done < BINANCE_EPSILON, nil
+	}
+}
+
 func (self *Binance) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
-	return self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
+	result, err := self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
+	symbol := base.ID + quote.ID
+
+	if err != nil {
+		return "", 0, 0, false, err
+	} else {
+		done, remaining, finished, err := self.QueryOrder(
+			base.ID+quote.ID,
+			result.OrderID,
+			timepoint+20,
+		)
+		id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
+		return id, done, remaining, finished, err
+	}
 }
 
 func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
@@ -137,13 +163,63 @@ func (self *Binance) CancelOrder(id common.ActivityID) error {
 	return nil
 }
 
-func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
+func (self *Binance) FetchOnePairData(
+	wg *sync.WaitGroup,
+	pair common.TokenPair,
+	data *sync.Map,
+	timepoint uint64) {
+
+	defer wg.Done()
+	result := common.ExchangePrice{}
+
+	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
+	result.Timestamp = timestamp
+	result.Valid = true
+	resp_data, err := self.interf.GetDepthOnePair(pair, timepoint)
+	returnTime := common.GetTimestamp()
+	result.ReturnTime = returnTime
+	if err != nil {
+		result.Valid = false
+		result.Error = err.Error()
+	} else {
+		if resp_data.Code != 0 || resp_data.Msg != "" {
+			result.Valid = false
+			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
+		} else {
+			for _, buy := range resp_data.Bids {
+				quantity, _ := strconv.ParseFloat(buy[1], 64)
+				rate, _ := strconv.ParseFloat(buy[0], 64)
+				result.Bids = append(
+					result.Bids,
+					common.PriceEntry{
+						quantity,
+						rate,
+					},
+				)
+			}
+			for _, sell := range resp_data.Asks {
+				quantity, _ := strconv.ParseFloat(sell[1], 64)
+				rate, _ := strconv.ParseFloat(sell[0], 64)
+				result.Asks = append(
+					result.Asks,
+					common.PriceEntry{
+						quantity,
+						rate,
+					},
+				)
+			}
+		}
+	}
+	data.Store(pair.PairID(), result)
+}
+
+func (self *Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
 	pairs := self.pairs
 	for _, pair := range pairs {
 		wait.Add(1)
-		go self.interf.FetchOnePairData(&wait, pair, &data, timepoint)
+		go self.FetchOnePairData(&wait, pair, &data, timepoint)
 	}
 	wait.Wait()
 	result := map[common.TokenPairID]common.ExchangePrice{}
@@ -152,6 +228,44 @@ func (self Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]com
 		return true
 	})
 	return result, nil
+}
+
+func (self *Binance) OpenOrdersForOnePair(
+	wg *sync.WaitGroup,
+	pair common.TokenPair,
+	data *sync.Map,
+	timepoint uint64) {
+
+	defer wg.Done()
+
+	result, err := self.interf.OpenOrdersForOnePair(pair, timepoint)
+
+	if err == nil {
+		orders := []common.Order{}
+		for _, order := range result {
+			price, _ := strconv.ParseFloat(order.Price, 64)
+			orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
+			executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
+			orders = append(orders, common.Order{
+				ID:          fmt.Sprintf("%s_%s%s", order.OrderId, strings.ToUpper(pair.Base.ID), strings.ToUpper(pair.Quote.ID)),
+				Base:        strings.ToUpper(pair.Base.ID),
+				Quote:       strings.ToUpper(pair.Quote.ID),
+				OrderId:     fmt.Sprintf("%d", order.OrderId),
+				Price:       price,
+				OrigQty:     orgQty,
+				ExecutedQty: executedQty,
+				TimeInForce: order.TimeInForce,
+				Type:        order.Type,
+				Side:        order.Side,
+				StopPrice:   order.StopPrice,
+				IcebergQty:  order.IcebergQty,
+				Time:        order.Time,
+			})
+		}
+		data.Store(pair.PairID(), orders)
+	} else {
+		log.Printf("Unsuccessful response from Binance: %s", err)
+	}
 }
 
 func (self *Binance) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
@@ -165,7 +279,7 @@ func (self *Binance) FetchOrderData(timepoint uint64) (common.OrderEntry, error)
 	pairs := self.pairs
 	for _, pair := range pairs {
 		wait.Add(1)
-		go self.interf.OpenOrdersForOnePair(&wait, pair, &data, timepoint)
+		go self.OpenOrdersForOnePair(&wait, pair, &data, timepoint)
 	}
 	wait.Wait()
 
