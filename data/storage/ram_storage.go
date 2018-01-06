@@ -44,7 +44,7 @@ func (self *RamStorage) CurrentRateVersion(timepoint uint64) (common.Version, er
 	return common.Version(version), err
 }
 
-func (self *RamStorage) GetAllPrices(version common.Version) (map[common.TokenPairID]common.OnePrice, error) {
+func (self *RamStorage) GetAllPrices(version common.Version) (common.AllPriceEntry, error) {
 	return self.price.GetAllPrices(int64(version))
 }
 
@@ -60,7 +60,7 @@ func (self *RamStorage) GetAllRates(version common.Version) (common.AllRateEntry
 	return self.rate.GetRates(int64(version))
 }
 
-func (self *RamStorage) StorePrice(data map[common.TokenPairID]common.OnePrice, timepoint uint64) error {
+func (self *RamStorage) StorePrice(data common.AllPriceEntry, timepoint uint64) error {
 	return self.price.StoreNewData(data, timepoint)
 }
 

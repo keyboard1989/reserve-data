@@ -2,7 +2,6 @@ package bittrex
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -16,10 +15,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"sync"
 )
-
-const EPSILON float64 = 0.0000000001 // 10e-10
 
 type BittrexEndpoint struct {
 	signer Signer
@@ -83,11 +79,25 @@ func (self *BittrexEndpoint) GetResponse(
 	}
 }
 
-func (self *BittrexEndpoint) FetchOnePairData(wq *sync.WaitGroup, pair common.TokenPair, data *sync.Map, timepoint uint64) {
-	defer wq.Done()
-	result := common.ExchangePrice{}
-	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
-	result.Valid = true
+func (self *BittrexEndpoint) GetExchangeInfo() (exchange.BittExchangeInfo, error) {
+	result := exchange.BittExchangeInfo{}
+	timepoint := common.GetTimepoint()
+	resp_body, err := self.GetResponse(
+		addPath(self.interf.PublicEndpoint(timepoint), "getmarkets"),
+		map[string]string{},
+		false,
+		timepoint,
+	)
+	if err == nil {
+		err = json.Unmarshal(resp_body, &result)
+	}
+	return result, err
+}
+
+func (self *BittrexEndpoint) FetchOnePairData(
+	pair common.TokenPair, timepoint uint64) (exchange.Bittresp, error) {
+
+	data := exchange.Bittresp{}
 	resp_body, err := self.GetResponse(
 		addPath(self.interf.PublicEndpoint(timepoint), "getorderbook"),
 		map[string]string{
@@ -97,43 +107,21 @@ func (self *BittrexEndpoint) FetchOnePairData(wq *sync.WaitGroup, pair common.To
 		false,
 		timepoint,
 	)
-	returnTime := common.GetTimestamp()
-	result.ReturnTime = returnTime
 
 	if err != nil {
-		result.Valid = false
-		result.Error = err.Error()
+		return data, err
 	} else {
-		data := exchange.Bittresp{}
 		json.Unmarshal(resp_body, &data)
-		if !data.Success {
-			result.Valid = false
-			result.Error = data.Msg
-		} else {
-			for _, buy := range data.Result["buy"] {
-				result.Bids = append(
-					result.Bids,
-					common.PriceEntry{
-						buy["Quantity"],
-						buy["Rate"],
-					},
-				)
-			}
-			for _, sell := range data.Result["sell"] {
-				result.Asks = append(
-					result.Asks,
-					common.PriceEntry{
-						sell["Quantity"],
-						sell["Rate"],
-					},
-				)
-			}
-		}
+		return data, nil
 	}
-	data.Store(pair.PairID(), result)
 }
 
-func (self *BittrexEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (string, float64, float64, bool, error) {
+func (self *BittrexEndpoint) Trade(
+	tradeType string,
+	base, quote common.Token,
+	rate, amount float64,
+	timepoint uint64) (exchange.Bitttrade, error) {
+
 	result := exchange.Bitttrade{}
 	var url string
 	if tradeType == "sell" {
@@ -150,21 +138,10 @@ func (self *BittrexEndpoint) Trade(tradeType string, base, quote common.Token, r
 		url, params, true, timepoint)
 
 	if err != nil {
-		return "", 0, 0, false, errors.New("Trade rejected by Bittrex")
+		return result, err
 	} else {
-		err = json.Unmarshal(resp_body, &result)
-		if err != nil {
-			return "", 0, 0, false, err
-		} else {
-			if result.Success {
-				uuid := result.Result["uuid"]
-				done, remaining, finished, err := self.QueryOrder(
-					uuid, timepoint+20)
-				return uuid, done, remaining, finished, err
-			} else {
-				return "", 0, 0, false, errors.New(result.Error)
-			}
-		}
+		json.Unmarshal(resp_body, &result)
+		return result, nil
 	}
 }
 
@@ -183,17 +160,6 @@ func (self *BittrexEndpoint) OrderStatus(uuid string, timepoint uint64) (exchang
 	} else {
 		err = json.Unmarshal(resp_body, &result)
 		return result, err
-	}
-}
-
-func (self *BittrexEndpoint) QueryOrder(uuid string, timepoint uint64) (float64, float64, bool, error) {
-	result, err := self.OrderStatus(uuid, timepoint)
-	if err != nil {
-		return 0, 0, false, err
-	} else {
-		remaining := result.Result.QuantityRemaining
-		done := result.Result.Quantity - remaining
-		return done, remaining, remaining < EPSILON, nil
 	}
 }
 

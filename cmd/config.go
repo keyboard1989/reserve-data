@@ -7,6 +7,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/http"
+	"github.com/KyberNetwork/reserve-data/metric"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -14,6 +15,7 @@ type Config struct {
 	ActivityStorage core.ActivityStorage
 	DataStorage     data.Storage
 	FetcherStorage  fetcher.Storage
+	MetricStorage   metric.MetricStorage
 
 	FetcherRunner    fetcher.FetcherRunner
 	FetcherExchanges []fetcher.Exchange
@@ -28,6 +30,7 @@ type Config struct {
 	SupportedTokens []common.Token
 
 	WrapperAddress ethereum.Address
+	PricingAddress ethereum.Address
 	ReserveAddress ethereum.Address
 }
 

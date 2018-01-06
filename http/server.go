@@ -2,7 +2,6 @@ package http
 
 import (
 	"fmt"
-	"github.com/KyberNetwork/reserve-data"
 	"log"
 	"math/big"
 	"net/http"
@@ -10,9 +9,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/getsentry/raven-go"
+	raven "github.com/getsentry/raven-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
@@ -21,6 +22,7 @@ import (
 type HTTPServer struct {
 	app         reserve.ReserveData
 	core        reserve.ReserveCore
+	metric      metric.MetricStorage
 	host        string
 	authEnabled bool
 	auth        Authentication
@@ -149,6 +151,7 @@ func (self *HTTPServer) AllPrices(c *gin.Context) {
 				"version":   data.Version,
 				"timestamp": data.Timestamp,
 				"data":      data.Data,
+				"block":     data.Block,
 			},
 		)
 	}
@@ -233,18 +236,17 @@ func (self *HTTPServer) GetRate(c *gin.Context) {
 }
 
 func (self *HTTPServer) SetRate(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"sources", "dests", "rates", "expiries"})
+	postForm, ok := self.Authenticated(c, []string{"tokens", "buys", "sells", "block"})
 	if !ok {
 		return
 	}
-
-	sources := postForm.Get("sources")
-	dests := postForm.Get("dests")
-	rates := postForm.Get("rates")
-	blocks := postForm.Get("expiries")
-	sourceTokens := []common.Token{}
-	for _, source := range strings.Split(sources, "-") {
-		token, err := common.GetToken(source)
+	tokenAddrs := postForm.Get("tokens")
+	buys := postForm.Get("buys")
+	sells := postForm.Get("sells")
+	block := postForm.Get("block")
+	tokens := []common.Token{}
+	for _, tok := range strings.Split(tokenAddrs, "-") {
+		token, err := common.GetToken(tok)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -252,24 +254,11 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 			)
 			return
 		} else {
-			sourceTokens = append(sourceTokens, token)
+			tokens = append(tokens, token)
 		}
 	}
-	destTokens := []common.Token{}
-	for _, dest := range strings.Split(dests, "-") {
-		token, err := common.GetToken(dest)
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": err.Error()},
-			)
-			return
-		} else {
-			destTokens = append(destTokens, token)
-		}
-	}
-	bigRates := []*big.Int{}
-	for _, rate := range strings.Split(rates, "-") {
+	bigBuys := []*big.Int{}
+	for _, rate := range strings.Split(buys, "-") {
 		r, err := hexutil.DecodeBig(rate)
 		if err != nil {
 			c.JSON(
@@ -277,22 +266,30 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 				gin.H{"success": false, "reason": err.Error()},
 			)
 		} else {
-			bigRates = append(bigRates, r)
+			bigBuys = append(bigBuys, r)
 		}
 	}
-	expiryBlocks := []*big.Int{}
-	for _, expiry := range strings.Split(blocks, "-") {
-		r, err := hexutil.DecodeBig(expiry)
+	bigSells := []*big.Int{}
+	for _, rate := range strings.Split(sells, "-") {
+		r, err := hexutil.DecodeBig(rate)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
 				gin.H{"success": false, "reason": err.Error()},
 			)
 		} else {
-			expiryBlocks = append(expiryBlocks, r)
+			bigSells = append(bigSells, r)
 		}
 	}
-	id, err := self.core.SetRates(sourceTokens, destTokens, bigRates, expiryBlocks)
+	intBlock, err := strconv.ParseInt(block, 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	id, err := self.core.SetRates(tokens, bigBuys, bigSells, big.NewInt(intBlock))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -603,6 +600,219 @@ func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) Metrics(c *gin.Context) {
+	response := metric.MetricResponse{
+		Timestamp: common.GetTimepoint(),
+	}
+	log.Printf("Getting metrics")
+	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"})
+	if !ok {
+		return
+	}
+	tokenParam := postForm.Get("tokens")
+	fromParam := postForm.Get("from")
+	toParam := postForm.Get("to")
+	tokens := []common.Token{}
+	for _, tok := range strings.Split(tokenParam, "-") {
+		token, err := common.GetToken(tok)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		} else {
+			tokens = append(tokens, token)
+		}
+	}
+	from, err := strconv.ParseUint(fromParam, 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	to, err := strconv.ParseUint(toParam, 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	data, err := self.metric.GetMetric(tokens, from, to)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	response.ReturnTime = common.GetTimepoint()
+	response.Data = data
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success":    true,
+			"timestamp":  response.Timestamp,
+			"returnTime": response.ReturnTime,
+			"data":       response.Data,
+		},
+	)
+}
+
+func (self *HTTPServer) StoreMetrics(c *gin.Context) {
+	log.Printf("Storing metrics")
+	postForm, ok := self.Authenticated(c, []string{"timestamp", "data"})
+	if !ok {
+		return
+	}
+	timestampParam := postForm.Get("timestamp")
+	dataParam := postForm.Get("data")
+
+	timestamp, err := strconv.ParseUint(timestampParam, 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	metricEntry := metric.MetricEntry{}
+	metricEntry.Timestamp = timestamp
+	metricEntry.Data = map[string]metric.TokenMetric{}
+	// data must be in form of <token>_afpmid_spread|<token>_afpmid_spread|...
+	for _, tokenData := range strings.Split(dataParam, "|") {
+		parts := strings.Split(tokenData, "_")
+		if len(parts) != 3 {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "submitted data is not in correct format"},
+			)
+			return
+		}
+		token := parts[0]
+		afpmidStr := parts[1]
+		spreadStr := parts[2]
+
+		afpmid, err := strconv.ParseFloat(afpmidStr, 64)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Afp mid " + afpmidStr + " is not float64"},
+			)
+			return
+		}
+		spread, err := strconv.ParseFloat(spreadStr, 64)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Spread " + spreadStr + " is not float64"},
+			)
+			return
+		}
+		metricEntry.Data[token] = metric.TokenMetric{
+			AfpMid: afpmid,
+			Spread: spread,
+		}
+	}
+
+	err = self.metric.StoreMetric(&metricEntry, common.GetTimepoint())
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+			},
+		)
+	}
+}
+
+func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
+	log.Println("Get exchange info")
+	exchangeParam := c.Param("exchangeid")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	exchangeInfo, err := exchange.GetInfo()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    exchangeInfo.GetData(),
+		},
+	)
+}
+
+func (self *HTTPServer) GetPairInfo(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	base := c.Param("base")
+	quote := c.Param("quote")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	pair, err := common.NewTokenPair(base, quote)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	pairInfo, err := exchange.GetExchangeInfo(pair.PairID())
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": pairInfo},
+	)
+	return
+}
+
+func (self *HTTPServer) GetExchangeFee(c *gin.Context) {
+	exchangeParam := c.Param("exchangeid")
+	exchange, err := common.GetExchange(exchangeParam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	fee := exchange.GetFee()
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": fee},
+	)
+	return
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -612,11 +822,17 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/activities", self.GetActivities)
 	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
 
+	self.r.GET("/metrics", self.Metrics)
+	self.r.POST("/metrics", self.StoreMetrics)
+
 	self.r.POST("/cancelorder/:exchangeid", self.CancelOrder)
 	self.r.POST("/deposit/:exchangeid", self.Deposit)
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
 	self.r.POST("/trade/:exchangeid", self.Trade)
 	self.r.POST("/setrates", self.SetRate)
+	self.r.GET("/exchangeinfo/:exchangeid", self.GetExchangeInfo)
+	self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
+	self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
 
 	self.r.Run(self.host)
 }
@@ -624,6 +840,7 @@ func (self *HTTPServer) Run() {
 func NewHTTPServer(
 	app reserve.ReserveData,
 	core reserve.ReserveCore,
+	metric metric.MetricStorage,
 	host string,
 	enableAuth bool,
 	authEngine Authentication) *HTTPServer {
@@ -634,6 +851,6 @@ func NewHTTPServer(
 	r.Use(cors.Default())
 
 	return &HTTPServer{
-		app, core, host, enableAuth, authEngine, r,
+		app, core, metric, host, enableAuth, authEngine, r,
 	}
 }

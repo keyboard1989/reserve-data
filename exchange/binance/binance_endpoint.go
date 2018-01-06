@@ -11,15 +11,12 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
-
-const EPSILON float64 = 0.0000000001 // 10e-10
 
 type BinanceEndpoint struct {
 	signer Signer
@@ -76,18 +73,8 @@ func (self *BinanceEndpoint) GetResponse(
 	}
 }
 
-func (self *BinanceEndpoint) FetchOnePairData(
-	wg *sync.WaitGroup,
-	pair common.TokenPair,
-	data *sync.Map,
-	timepoint uint64) {
-
-	defer wg.Done()
-	result := common.ExchangePrice{}
-
-	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
-	result.Timestamp = timestamp
-	result.Valid = true
+func (self *BinanceEndpoint) GetDepthOnePair(
+	pair common.TokenPair, timepoint uint64) (exchange.Binaresp, error) {
 
 	resp_body, err := self.GetResponse(
 		"GET", self.interf.PublicEndpoint()+"/api/v1/depth",
@@ -99,44 +86,13 @@ func (self *BinanceEndpoint) FetchOnePairData(
 		timepoint,
 	)
 
-	returnTime := common.GetTimestamp()
-	result.ReturnTime = returnTime
-
+	resp_data := exchange.Binaresp{}
 	if err != nil {
-		result.Valid = false
-		result.Error = err.Error()
+		return resp_data, err
 	} else {
-		resp_data := exchange.Binaresp{}
 		json.Unmarshal(resp_body, &resp_data)
-		if resp_data.Code != 0 || resp_data.Msg != "" {
-			result.Valid = false
-			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
-		} else {
-			for _, buy := range resp_data.Bids {
-				quantity, _ := strconv.ParseFloat(buy[1], 64)
-				rate, _ := strconv.ParseFloat(buy[0], 64)
-				result.Bids = append(
-					result.Bids,
-					common.PriceEntry{
-						quantity,
-						rate,
-					},
-				)
-			}
-			for _, sell := range resp_data.Asks {
-				quantity, _ := strconv.ParseFloat(sell[1], 64)
-				rate, _ := strconv.ParseFloat(sell[0], 64)
-				result.Asks = append(
-					result.Asks,
-					common.PriceEntry{
-						quantity,
-						rate,
-					},
-				)
-			}
-		}
+		return resp_data, nil
 	}
-	data.Store(pair.PairID(), result)
 }
 
 // Relevant params:
@@ -149,7 +105,7 @@ func (self *BinanceEndpoint) FetchOnePairData(
 //
 // In this version, we only support LIMIT order which means only buy/sell with acceptable price,
 // and GTC time in force which means that the order will be active until it's implicitly canceled
-func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (string, float64, float64, bool, error) {
+func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (exchange.Binatrade, error) {
 	result := exchange.Binatrade{}
 	symbol := base.ID + quote.ID
 	orderType := "LIMIT"
@@ -170,19 +126,11 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 		true,
 		timepoint,
 	)
-
 	if err != nil {
-		log.Printf("Error: %s", err)
-		return "", 0, 0, false, err
+		return result, err
 	} else {
 		json.Unmarshal(resp_body, &result)
-		done, remaining, finished, err := self.QueryOrder(
-			base.ID+quote.ID,
-			result.OrderID,
-			timepoint+20,
-		)
-		id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
-		return id, done, remaining, finished, err
+		return result, nil
 	}
 }
 
@@ -272,17 +220,6 @@ func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64, timepoint uin
 	return result, err
 }
 
-func (self *BinanceEndpoint) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
-	result, err := self.OrderStatus(symbol, id, timepoint)
-	if err != nil {
-		return 0, 0, false, err
-	} else {
-		done, _ := strconv.ParseFloat(result.ExecutedQty, 64)
-		total, _ := strconv.ParseFloat(result.OrigQty, 64)
-		return done, total - done, total-done < EPSILON, nil
-	}
-}
-
 func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
 	result := exchange.Binawithdraw{}
 	resp_body, err := self.GetResponse(
@@ -325,12 +262,8 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 }
 
 func (self *BinanceEndpoint) OpenOrdersForOnePair(
-	wg *sync.WaitGroup,
-	pair common.TokenPair,
-	data *sync.Map,
-	timepoint uint64) {
+	pair common.TokenPair, timepoint uint64) (exchange.Binaorders, error) {
 
-	defer wg.Done()
 	result := exchange.Binaorders{}
 	resp_body, err := self.GetResponse(
 		"GET",
@@ -341,32 +274,11 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 		true,
 		timepoint,
 	)
-	if err == nil {
-		json.Unmarshal(resp_body, &result)
-		orders := []common.Order{}
-		for _, order := range result {
-			price, _ := strconv.ParseFloat(order.Price, 64)
-			orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
-			executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
-			orders = append(orders, common.Order{
-				ID:          fmt.Sprintf("%s_%s%s", order.OrderId, strings.ToUpper(pair.Base.ID), strings.ToUpper(pair.Quote.ID)),
-				Base:        strings.ToUpper(pair.Base.ID),
-				Quote:       strings.ToUpper(pair.Quote.ID),
-				OrderId:     fmt.Sprintf("%d", order.OrderId),
-				Price:       price,
-				OrigQty:     orgQty,
-				ExecutedQty: executedQty,
-				TimeInForce: order.TimeInForce,
-				Type:        order.Type,
-				Side:        order.Side,
-				StopPrice:   order.StopPrice,
-				IcebergQty:  order.IcebergQty,
-				Time:        order.Time,
-			})
-		}
-		data.Store(pair.PairID(), orders)
+	if err != nil {
+		return result, err
 	} else {
-		log.Printf("Unsuccessful response from Binance: %s", err)
+		json.Unmarshal(resp_body, &result)
+		return result, nil
 	}
 }
 
@@ -387,6 +299,22 @@ func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepos
 		if !result.Success {
 			err = errors.New(result.Msg)
 		}
+	}
+	return result, err
+}
+
+func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, error) {
+	result := exchange.BinanceExchangeInfo{}
+	timepoint := common.GetTimepoint()
+	resp_body, err := self.GetResponse(
+		"GET",
+		self.interf.PublicEndpoint()+"/api/v1/exchangeInfo",
+		map[string]string{},
+		false,
+		timepoint,
+	)
+	if err == nil {
+		err = json.Unmarshal(resp_body, &result)
 	}
 	return result, err
 }

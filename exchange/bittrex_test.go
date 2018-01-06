@@ -55,11 +55,11 @@ type testBittrexStorage struct {
 	IsNew bool
 }
 
-func (self *testBittrexStorage) IsNewBittrexDeposit(id uint64) bool {
+func (self *testBittrexStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID) bool {
 	return self.IsNew
 }
 
-func (self *testBittrexStorage) RegisterBittrexDeposit(id uint64) error {
+func (self *testBittrexStorage) RegisterBittrexDeposit(id uint64, actID common.ActivityID) error {
 	self.IsNew = false
 	return nil
 }

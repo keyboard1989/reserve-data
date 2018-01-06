@@ -50,5 +50,5 @@ type ReserveCore interface {
 	CancelOrder(id common.ActivityID, exchange common.Exchange) error
 
 	// blockchain related action
-	SetRates(sources []common.Token, dests []common.Token, rates []*big.Int, expiryBlocks []*big.Int) (common.ActivityID, error)
+	SetRates(tokens []common.Token, buys, sells []*big.Int, block *big.Int) (common.ActivityID, error)
 }

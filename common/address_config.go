@@ -20,6 +20,7 @@ type AddressConfig struct {
 	Reserve   string              `json:"reserve"`
 	Network   string              `json:"network"`
 	Wrapper   string              `json:"wrapper"`
+	Pricing   string              `json:"pricing"`
 }
 
 func GetAddressConfigFromFile(path string) (AddressConfig, error) {

@@ -11,7 +11,13 @@ type HttpRunner struct {
 	port    int
 	oticker chan time.Time
 	aticker chan time.Time
+	rticker chan time.Time
+	bticker chan time.Time
 	server  *HttpRunnerServer
+}
+
+func (self *HttpRunner) GetBlockTicker() <-chan time.Time {
+	return self.bticker
 }
 
 func (self *HttpRunner) GetOrderbookTicker() <-chan time.Time {
@@ -20,6 +26,10 @@ func (self *HttpRunner) GetOrderbookTicker() <-chan time.Time {
 
 func (self *HttpRunner) GetAuthDataTicker() <-chan time.Time {
 	return self.aticker
+}
+
+func (self *HttpRunner) GetRateTicker() <-chan time.Time {
+	return self.rticker
 }
 
 func (self *HttpRunner) Start() error {
@@ -50,10 +60,14 @@ func (self *HttpRunner) Stop() error {
 func NewHttpRunner(port int) *HttpRunner {
 	ochan := make(chan time.Time)
 	achan := make(chan time.Time)
+	rchan := make(chan time.Time)
+	bchan := make(chan time.Time)
 	runner := HttpRunner{
 		port,
 		ochan,
 		achan,
+		rchan,
+		bchan,
 		nil,
 	}
 	runner.Start()

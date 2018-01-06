@@ -5,13 +5,15 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"sync"
 )
 
 type BittrexInterface interface {
-	FetchOnePairData(wq *sync.WaitGroup, pair common.TokenPair, data *sync.Map, timepoint uint64)
+	FetchOnePairData(
+		pair common.TokenPair, timepoint uint64) (Bittresp, error)
 
 	GetInfo(timepoint uint64) (Bittinfo, error)
+
+	GetExchangeInfo() (BittExchangeInfo, error)
 
 	Withdraw(
 		token common.Token,
@@ -23,7 +25,7 @@ type BittrexInterface interface {
 		tradeType string,
 		base, quote common.Token,
 		rate, amount float64,
-		timepoint uint64) (id string, done float64, remaining float64, finished bool, err error)
+		timepoint uint64) (Bitttrade, error)
 
 	CancelOrder(uuid string, timepoint uint64) (Bittcancelorder, error)
 
