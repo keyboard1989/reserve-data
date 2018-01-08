@@ -2,12 +2,14 @@ package signer
 
 import (
 	"crypto/hmac"
+	"crypto/md5"
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/json"
 	"io/ioutil"
 	"math/big"
 	"os"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -23,6 +25,8 @@ type FileSigner struct {
 	BittrexSecret  string `json:"bittrex_secret"`
 	BitfinexKey    string `json:"bitfinex_key"`
 	BitfinexSecret string `json:"bitfinex_secret"`
+	OkexKey        string `json:"okex_key"`
+	OkexSecret     string `jsong:"okex_secret"`
 	Keystore       string `json:"keystore_path"`
 	Passphrase     string `json:"passphrase"`
 	KNSecret       string `json:"kn_secret"`
@@ -57,6 +61,10 @@ func (self FileSigner) GetBinanceKey() string {
 	return self.BinanceKey
 }
 
+func (self FileSigner) GetOkexKey() string {
+	return self.OkexKey
+}
+
 func (self FileSigner) KNSign(msg string) string {
 	mac := hmac.New(sha512.New, []byte(self.KNSecret))
 	mac.Write([]byte(msg))
@@ -86,6 +94,13 @@ func (self FileSigner) BinanceSign(msg string) string {
 	mac.Write([]byte(msg))
 	result := ethereum.Bytes2Hex(mac.Sum(nil))
 	return result
+}
+
+func (self FileSigner) OkexSign(msg string) string {
+	md := md5.New()
+	md.Write([]byte(msg + "&secret=" + self.OkexSecret))
+	result := ethereum.Bytes2Hex(md.Sum(nil))
+	return strings.ToUpper(result)
 }
 
 func NewFileSigner(file string) *FileSigner {

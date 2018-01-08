@@ -9,6 +9,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
+	"github.com/KyberNetwork/reserve-data/exchange/okex"
 	"github.com/KyberNetwork/reserve-data/signer"
 )
 
@@ -63,6 +64,13 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			}
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
+		case "okex":
+			okex := exchange.NewOkex(okex.NewDevOkexEndpoint(signer))
+			for tokenID, addr := range addressConfig.Exchanges["okex"] {
+				okex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+			}
+			// okex.UpdatePairPrecision()
+			exchanges[okex.ID()] = okex
 		}
 	}
 	return &ExchangePool{exchanges}
