@@ -63,6 +63,21 @@ response:
   {"data":{"EOS-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}},"FUN-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-8,"Max":100000}},"KNC-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-7,"Max":100000}},"LINK-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-8,"Max":100000}},"MCO-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}},"OMG-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}}},"success":true}
 ```
 
+### Get fee for transaction on all exchanges
+
+```
+<host>:8000/exchangefees
+```
+
+eg:
+```
+curl -X GET "http://13.229.54.28:8000/exchangefees"
+```
+response:
+```
+  {"data":[{"binance":{"Trading":{"maker":0.001,"taker":0.001},"Funding":{"Withdraw":{"EOS":2,"ETH":0.005,"FUN":50,"KNC":1,"LINK":5,"MCO":0.15,"OMG":0.1},"Deposit":{"EOS":0,"ETH":0,"FUN":0,"KNC":0,"LINK":0,"MCO":0,"OMG":0}}}},{"bittrex":{"Trading":{"maker":0.0025,"taker":0.0025},"Funding":{"Withdraw":{"BTC":0.001,"DASH":0.002,"DOGE":2,"FTC":0.2,"LTC":0.01,"NXT":2,"POT":0.002,"PPC":0.02,"RDD":2,"VTC":0.02},"Deposit":{"BTC":0,"DASH":0,"DOGE":0,"FTC":0,"LTC":0,"NXT":0,"POT":0,"PPC":0,"RDD":0,"VTC":0}}}}],"success":true}
+```
+
 ### Get fee for transaction on an exchange
 
 ```

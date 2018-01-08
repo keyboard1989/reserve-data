@@ -813,6 +813,23 @@ func (self *HTTPServer) GetExchangeFee(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetFee(c *gin.Context) {
+	var data []map[string]common.ExchangeFees
+	var exchangeFee map[string]common.ExchangeFees
+	for _, exchange := range common.SupportedExchanges {
+		fee := exchange.GetFee()
+		exchangeFee = map[string]common.ExchangeFees{
+			string(exchange.ID()): fee,
+		}
+		data = append(data, exchangeFee)
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": data},
+	)
+	return
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -832,6 +849,7 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/setrates", self.SetRate)
 	self.r.GET("/exchangeinfo/:exchangeid", self.GetExchangeInfo)
 	self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
+	self.r.GET("/exchangefees", self.GetFee)
 	self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
 
 	self.r.Run(self.host)
