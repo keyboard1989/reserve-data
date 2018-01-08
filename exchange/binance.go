@@ -415,13 +415,14 @@ func NewBinance(interf BinanceInterface) *Binance {
 			},
 			common.NewFundingFee(
 				map[string]float32{
-					"ETH":  0.005,
-					"EOS":  2.0,
-					"MCO":  0.15,
-					"OMG":  0.1,
-					"KNC":  1.0,
-					"FUN":  50.0,
-					"LINK": 5.0},
+					"ETH":  0.01,
+					"EOS":  0.7,
+					"MCO":  0.3,
+					"OMG":  0.3,
+					"KNC":  2.0,
+					"FUN":  80.0,
+					"LINK": 10.0,
+				},
 				map[string]float32{
 					"ETH":  0,
 					"EOS":  0,
