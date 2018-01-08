@@ -31,12 +31,14 @@ func NewSimulationExchangePool(
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 			}
+			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(signer))
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 			}
+			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		}
 	}
@@ -79,12 +81,14 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 			}
+			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewRopstenBinanceEndpoint(signer))
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 			}
+			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		}
 	}
@@ -102,12 +106,14 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 			}
+			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewRealBinanceEndpoint(signer))
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 			}
+			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		}
 	}
