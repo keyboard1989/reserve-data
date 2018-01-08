@@ -95,6 +95,21 @@ response:
   {"data":{"Trading":{"maker":0.001,"taker":0.001},"Funding":{"Withdraw":{"EOS":2,"ETH":0.005,"FUN":50,"KNC":1,"LINK":5,"MCO":0.15,"OMG":0.1},"Deposit":{"EOS":0,"ETH":0,"FUN":0,"KNC":0,"LINK":0,"MCO":0,"OMG":0}}},"success":true}
 ```
 
+### Get token rates from blockchain
+
+```
+<host>:8000/getrates
+```
+
+eg:
+```
+curl -X GET "http://13.229.54.28:8000/getrates"
+```
+response:
+```
+  {"data":{"ADX":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":371.0142432353458,"CompactBuy":0,"BaseSell":0.002538305711940429,"CompactSell":0,"Rate":0,"Block":2420849},"BAT":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":1656.6398539506304,"CompactBuy":0,"BaseSell":0.0005684685,"CompactSell":0,"Rate":0,"Block":2420849},"CVC":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":1051.2127184124374,"CompactBuy":-1,"BaseSell":0.00089586775,"CompactSell":1,"Rate":0,"Block":2420849},"DGD":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":5.662106994812361,"CompactBuy":0,"BaseSell":0.16632458088099816,"CompactSell":0,"Rate":0,"Block":2420849},"EOS":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":121.11698932232625,"CompactBuy":-15,"BaseSell":0.007775519999999998,"CompactSell":15,"Rate":0,"Block":2420849},"ETH":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":0,"CompactBuy":30,"BaseSell":0,"CompactSell":-29,"Rate":0,"Block":2420849},"FUN":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":6805.131583093689,"CompactBuy":33,"BaseSell":0.000138387856475128,"CompactSell":-32,"Rate":0,"Block":2420849},"GNT":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":1055.0281030473377,"CompactBuy":-74,"BaseSell":0.0010113802,"CompactSell":-47,"Rate":0,"Block":2420849},"KNC":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":229.65128829779712,"CompactBuy":89,"BaseSell":0.004100772,"CompactSell":-82,"Rate":0,"Block":2420849},"LINK":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":844.2527577938458,"CompactBuy":101,"BaseSell":0.0011154806,"CompactSell":-91,"Rate":0,"Block":2420849},"MCO":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":63.99319226272073,"CompactBuy":21,"BaseSell":0.014716371218820246,"CompactSell":-20,"Rate":0,"Block":2420849},"OMG":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":44.45707162223901,"CompactBuy":30,"BaseSell":0.021183301968644246,"CompactSell":-29,"Rate":0,"Block":2420849},"PAY":{"Valid":true,"Error":"","Timestamp":"1515412582435","ReturnTime":"1515412582710","BaseBuy":295.08854913901575,"CompactBuy":-13,"BaseSell":0.003191406699999999,"CompactSell":13,"Rate":0,"Block":2420849}},"success":true,"timestamp":"1515412583215","version":1515412582435}
+```
+
 
 ### Get exchange balances, reserve balances, pending activities at once (signing required)
 ```
