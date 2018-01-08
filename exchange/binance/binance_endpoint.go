@@ -331,8 +331,8 @@ func NewSimulatedBinanceEndpoint(signer Signer) *BinanceEndpoint {
 	return &BinanceEndpoint{signer, NewSimulatedInterface()}
 }
 
-func NewKovanBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewKovanInterface()}
+func NewRopstenBinanceEndpoint(signer Signer) *BinanceEndpoint {
+	return &BinanceEndpoint{signer, NewRopstenInterface()}
 }
 
 func NewDevBinanceEndpoint(signer Signer) *BinanceEndpoint {

@@ -269,6 +269,6 @@ func NewDevBittrexEndpoint(signer Signer) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, NewDevInterface()}
 }
 
-func NewKovanBittrexEndpoint(signer Signer) *BittrexEndpoint {
-	return &BittrexEndpoint{signer, NewKovanInterface()}
+func NewRopstenBittrexEndpoint(signer Signer) *BittrexEndpoint {
+	return &BittrexEndpoint{signer, NewRopstenInterface()}
 }

@@ -81,9 +81,9 @@ func NewDevInterface() *DevInterface {
 	return &DevInterface{}
 }
 
-type KovanInterface struct{}
+type RopstenInterface struct{}
 
-func (self *KovanInterface) baseurl() string {
+func (self *RopstenInterface) baseurl() string {
 	baseurl := "http://127.0.0.1"
 	if len(os.Args) > 1 {
 		baseurl = os.Args[1]
@@ -91,19 +91,19 @@ func (self *KovanInterface) baseurl() string {
 	return baseurl + ":5300"
 }
 
-func (self *KovanInterface) PublicEndpoint(timepoint uint64) string {
+func (self *RopstenInterface) PublicEndpoint(timepoint uint64) string {
 	// ignore timepoint because timepoint is only relevant in simulation
 	return "https://bittrex.com/api/" + apiVersion + "/public"
 }
 
-func (self *KovanInterface) MarketEndpoint(timepoint uint64) string {
+func (self *RopstenInterface) MarketEndpoint(timepoint uint64) string {
 	return fmt.Sprintf("%s/api/%s/market?timestamp=%d", self.baseurl(), apiVersion, timepoint)
 }
 
-func (self *KovanInterface) AccountEndpoint(timepoint uint64) string {
+func (self *RopstenInterface) AccountEndpoint(timepoint uint64) string {
 	return fmt.Sprintf("%s/api/%s/account?timestamp=%d", self.baseurl(), apiVersion, timepoint)
 }
 
-func NewKovanInterface() *KovanInterface {
-	return &KovanInterface{}
+func NewRopstenInterface() *RopstenInterface {
+	return &RopstenInterface{}
 }

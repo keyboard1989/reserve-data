@@ -45,9 +45,9 @@ func NewSimulatedInterface() *SimulatedInterface {
 	return &SimulatedInterface{}
 }
 
-type KovanInterface struct{}
+type RopstenInterface struct{}
 
-func (self *KovanInterface) baseurl() string {
+func (self *RopstenInterface) baseurl() string {
 	baseurl := "127.0.0.1"
 	if len(os.Args) > 1 {
 		baseurl = os.Args[1]
@@ -55,16 +55,16 @@ func (self *KovanInterface) baseurl() string {
 	return baseurl + ":5100"
 }
 
-func (self *KovanInterface) PublicEndpoint() string {
+func (self *RopstenInterface) PublicEndpoint() string {
 	return "https://www.binance.com"
 }
 
-func (self *KovanInterface) AuthenticatedEndpoint() string {
+func (self *RopstenInterface) AuthenticatedEndpoint() string {
 	return self.baseurl()
 }
 
-func NewKovanInterface() *KovanInterface {
-	return &KovanInterface{}
+func NewRopstenInterface() *RopstenInterface {
+	return &RopstenInterface{}
 }
 
 type DevInterface struct{}

@@ -12,8 +12,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetConfigForKovan() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
+func GetConfigForRopsten() *Config {
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
@@ -39,13 +39,13 @@ func GetConfigForKovan() *Config {
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
-	exchangePool := NewKovanExchangePool(
+	exchangePool := NewRopstenExchangePool(
 		addressConfig, fileSigner, storage,
 	)
 
 	// endpoint := "http://localhost:8545"
-	// endpoint := "https://kovan.kyber.network"
-	endpoint := "https://kovan.infura.io"
+	// endpoint := "https://ropsten.kyber.network"
+	endpoint := "https://ropsten.infura.io"
 
 	return &Config{
 		ActivityStorage:  storage,
