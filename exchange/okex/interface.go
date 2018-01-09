@@ -12,11 +12,11 @@ type Interface interface {
 type RealInterface struct{}
 
 func (self *RealInterface) PublicEnpoint() string {
-	return "https://www.okex.com/api/v1/"
+	return "https://www.okex.com"
 }
 
 func (self *RealInterface) AuthenticatedEndpoint() string {
-	return "https://www.okex.com/api/v1/"
+	return "https://www.okex.com"
 }
 
 func NewRealInterface() *RealInterface {
@@ -34,7 +34,7 @@ func (self *SimulatedInterface) baseurl() string {
 }
 
 func (self *SimulatedInterface) PublicEnpoint() string {
-	return "https://www.okex.com/api/v1/"
+	return "https://www.okex.com"
 }
 
 func (self *SimulatedInterface) AuthenticatedEndpoint() string {
@@ -56,7 +56,7 @@ func (self *KovanInterface) baseurl() string {
 }
 
 func (self *KovanInterface) PublicEnpoint() string {
-	return "https://www.okex.com/api/v1/"
+	return "https://www.okex.com"
 }
 
 func (self *KovanInterface) AuthenticatedEndpoint() string {
@@ -70,11 +70,11 @@ func NewKovanInterface() *KovanInterface {
 type DevInterface struct{}
 
 func (self *DevInterface) PublicEnpoint() string {
-	return "https://www.okex.com/api/v1/"
+	return "https://www.okex.com"
 }
 
 func (self *DevInterface) AuthenticatedEndpoint() string {
-	return "https://www.okex.com/api/v1/"
+	return "https://www.okex.com"
 }
 
 func NewDevInterface() *DevInterface {

@@ -69,7 +69,7 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			for tokenID, addr := range addressConfig.Exchanges["okex"] {
 				okex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
 			}
-			// okex.UpdatePairPrecision()
+			okex.UpdatePairsPrecision()
 			exchanges[okex.ID()] = okex
 		}
 	}

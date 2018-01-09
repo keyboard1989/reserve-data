@@ -2,15 +2,19 @@ package okex
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/big"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type OkexEndpoint struct {
@@ -22,7 +26,7 @@ func (self *OkexEndpoint) fillRequest(req *http.Request, signNeeded bool, timepo
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	}
-	req.Header.Add("Acceept", "application/json")
+	req.Header.Add("Accept", "application/json")
 }
 
 func (self *OkexEndpoint) GetResponse(
@@ -93,6 +97,127 @@ func (self *OkexEndpoint) GetExchangeInfo() (exchange.OkexInfo, error) {
 		json.Unmarshal(resp_body, &result)
 		return result, nil
 	}
+}
+
+func (self *OkexEndpoint) Trade(base, quote common.Token, rate, amount float64, timepoint uint64) (exchange.OkexTrade, error) {
+	result := exchange.OkexTrade{}
+	symbol := fmt.Sprintf("%s_%s", base.ID, quote.ID)
+	orderType := "limit"
+	params := map[string]string{
+		"amount":  strconv.FormatFloat(amount, 'f', -1, 64),
+		"api_key": "", //TODO:
+		"symbol":  symbol,
+		"type":    orderType,
+	}
+	if orderType == "limit" {
+		params["price"] = strconv.FormatFloat(rate, 'f', -1, 64)
+	}
+	resp_body, err := self.GetResponse(
+		"POST",
+		self.interf.AuthenticatedEndpoint()+"/api/v1/trade.do",
+		params,
+		true,
+		timepoint,
+	)
+	if err != nil {
+		return result, err
+	} else {
+		json.Unmarshal(resp_body, &result)
+		return result, nil
+	}
+}
+
+func (self *OkexEndpoint) CancelOrder(symbol string, id uint64, timepoint uint64) (exchange.OkexCancel, error) {
+	result := exchange.OkexCancel{}
+	resp_body, err := self.GetResponse(
+		"GET",
+		self.interf.AuthenticatedEndpoint()+"/api/v1/cancel_order.do",
+		map[string]string{
+			"api_key":  "", //TODO:
+			"symbol":   symbol,
+			"order_id": fmt.Sprintf("%d", id),
+		},
+		true,
+		timepoint,
+	)
+	if err != nil {
+		return result, err
+	} else {
+		json.Unmarshal(resp_body, &result)
+		if result.Result == false {
+			return result, errors.New(fmt.Sprintf("Order %d cancel failed", id))
+		} else {
+			return result, nil
+		}
+	}
+}
+
+func (self *OkexEndpoint) OrderStatus(symbol string, id uint64, timepoint uint64) (exchange.OkexOrderStatus, error) {
+	result := exchange.OkexOrderStatus{}
+	resp_body, err := self.GetResponse(
+		"POST",
+		self.interf.AuthenticatedEndpoint()+"/api/v1/order_info.do",
+		map[string]string{
+			"api_key":  "", //TODO:
+			"symbol":   symbol,
+			"order_id": fmt.Sprintf("%d", id),
+		},
+		true,
+		timepoint,
+	)
+	if err != nil {
+		return result, err
+	} else {
+		json.Unmarshal(resp_body, &result)
+		if result.Result == false {
+			return result, errors.New(fmt.Sprintf("Get order status failed: %d\n", id))
+		} else {
+			return result, nil
+		}
+	}
+}
+
+func (self *OkexEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
+	result := exchange.Binawithdraw{}
+	resp_body, err := self.GetResponse(
+		"POST",
+		self.interf.AuthenticatedEndpoint()+"/wapi/v3/withdraw.html",
+		map[string]string{
+			"asset":   token.ID,
+			"address": address.Hex(),
+			"name":    "reserve",
+			"amount":  strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
+		},
+		true,
+		timepoint,
+	)
+	if err == nil {
+		json.Unmarshal(resp_body, &result)
+		if result.Success == false {
+			return "", errors.New(result.Message)
+		}
+		return result.ID, nil
+	} else {
+		log.Printf("Error: %v", err)
+		return "", errors.New("withdraw rejected by Binnace")
+	}
+}
+
+func (self *OkexEndpoint) GetInfo(timepoint uint64) (exchange.OkexAccountInfo, error) {
+	result := exchange.OkexAccountInfo{}
+	resp_body, err := self.GetResponse(
+		"POST",
+		self.interf.AuthenticatedEndpoint()+"/api/v1/userinfo.do",
+		map[string]string{
+			"api_key": "", // TODO:
+		},
+		true,
+		timepoint,
+	)
+	if err == nil {
+		json.Unmarshal(resp_body, &result)
+	}
+	return result, err
 }
 
 func NewOkexEndpoint(signer Signer, interf Interface) *OkexEndpoint {
