@@ -23,3 +23,6 @@ cmd/core.db
 cmd/log.log
 cmd/parity.pid
 data/storage/test_bolt.db
+cmd/faucet/config.json
+cmd/faucet/faucet
+cmd/faucet/faucet_wallet
