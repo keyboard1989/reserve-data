@@ -85,7 +85,7 @@ func (self *FaucetServer) Claim(c *gin.Context) {
 func (self *FaucetServer) Run() {
 	self.r.POST("/claim-eth", self.Claim)
 	go self.app.Run()
-	self.r.Run(":8891")
+	self.r.Run(":8888")
 }
 
 func main() {

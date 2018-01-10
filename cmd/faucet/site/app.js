@@ -18,7 +18,7 @@ $(document).ready(function () {
 
 function getBalance(address){
   $.ajax({
-    url: "http://ropsten.etherscan.io/api?module=account&action=balance&address="+address+"&tag=latest",
+    url: "https://ropsten.etherscan.io/api?module=account&action=balance&address="+address+"&tag=latest",
     type:"GET",
     success: function (response) {
       var balance = response.result
@@ -32,7 +32,7 @@ function getBalance(address){
 function submitAddress(address) {
   console.log(address)
   $.ajax({
-    url: "http://52.77.19.90:8891/claim-eth",
+    url: "https://faucet-backend.kyber.network/claim-eth",
     type:"POST",
     data: { address: address },
     success: function (response) {
