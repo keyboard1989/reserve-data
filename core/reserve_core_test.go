@@ -29,6 +29,15 @@ func (self testExchange) CancelOrder(id common.ActivityID) error {
 func (self testExchange) MarshalText() (text []byte, err error) {
 	return []byte("bittrex"), nil
 }
+func (self testExchange) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
+	return common.ExchangePrecisionLimit{}, nil
+}
+func (self testExchange) GetFee() common.ExchangeFees {
+	return common.ExchangeFees{}
+}
+func (self testExchange) GetInfo() (common.ExchangeInfo, error) {
+	return common.ExchangeInfo{}, nil
+}
 
 type testBlockchain struct {
 }
