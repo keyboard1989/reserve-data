@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/big"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -22,30 +23,38 @@ type OkexEndpoint struct {
 	interf Interface
 }
 
-func (self *OkexEndpoint) fillRequest(req *http.Request, signNeeded bool, timepoint uint64) {
+func (self *OkexEndpoint) fillRequest(req *http.Request, signNeeded bool, params map[string]string, timepoint uint64) {
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
 		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	}
-	req.Header.Add("Accept", "application/json")
 }
 
 func (self *OkexEndpoint) GetResponse(
-	method string, url string,
+	method string, query_url string,
 	params map[string]string, signNeeded bool, timepoint uint64) ([]byte, error) {
 
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
-
-	req, _ := http.NewRequest(method, url, nil)
-	req.Header.Add("Accept", "application/json")
-
-	q := req.URL.Query()
-	for k, v := range params {
-		q.Add(k, v)
+	form_value := url.Values{}
+	if signNeeded {
+		var msg []string
+		for k, v := range params {
+			msg = append(msg, fmt.Sprintf("%s=%s", k, v))
+			form_value.Add(k, v)
+		}
+		form_value.Add("sign", self.signer.OkexSign(strings.Join(msg, "&")))
 	}
+	req, _ := http.NewRequest(method, query_url, strings.NewReader(form_value.Encode()))
+	req.Header.Add("Accept", "application/json")
+	q := req.URL.Query()
+	if !signNeeded {
+		for k, v := range params {
+			q.Add(k, v)
+		}
+	}
+	self.fillRequest(req, signNeeded, params, timepoint)
 	req.URL.RawQuery = q.Encode()
-	self.fillRequest(req, signNeeded, timepoint)
 	var err error
 	var resp_body []byte
 	log.Printf("request to Okex: %s\n", req.URL)
@@ -105,7 +114,7 @@ func (self *OkexEndpoint) Trade(base, quote common.Token, rate, amount float64, 
 	orderType := "limit"
 	params := map[string]string{
 		"amount":  strconv.FormatFloat(amount, 'f', -1, 64),
-		"api_key": "", //TODO:
+		"api_key": self.signer.GetOkexKey(),
 		"symbol":  symbol,
 		"type":    orderType,
 	}
@@ -133,7 +142,7 @@ func (self *OkexEndpoint) CancelOrder(symbol string, id uint64, timepoint uint64
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/api/v1/cancel_order.do",
 		map[string]string{
-			"api_key":  "", //TODO:
+			"api_key":  self.signer.GetOkexKey(),
 			"symbol":   symbol,
 			"order_id": fmt.Sprintf("%d", id),
 		},
@@ -158,7 +167,7 @@ func (self *OkexEndpoint) OrderStatus(symbol string, id uint64, timepoint uint64
 		"POST",
 		self.interf.AuthenticatedEndpoint()+"/api/v1/order_info.do",
 		map[string]string{
-			"api_key":  "", //TODO:
+			"api_key":  self.signer.GetOkexKey(),
 			"symbol":   symbol,
 			"order_id": fmt.Sprintf("%d", id),
 		},
@@ -199,7 +208,7 @@ func (self *OkexEndpoint) Withdraw(token common.Token, amount *big.Int, address 
 		return result.ID, nil
 	} else {
 		log.Printf("Error: %v", err)
-		return "", errors.New("withdraw rejected by Binnace")
+		return "", errors.New("withdraw rejected by Okex")
 	}
 }
 
@@ -209,7 +218,7 @@ func (self *OkexEndpoint) GetInfo(timepoint uint64) (exchange.OkexAccountInfo, e
 		"POST",
 		self.interf.AuthenticatedEndpoint()+"/api/v1/userinfo.do",
 		map[string]string{
-			"api_key": "", // TODO:
+			"api_key": self.signer.GetOkexKey(),
 		},
 		true,
 		timepoint,

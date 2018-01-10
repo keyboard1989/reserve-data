@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"os"
@@ -26,7 +27,7 @@ type FileSigner struct {
 	BitfinexKey    string `json:"bitfinex_key"`
 	BitfinexSecret string `json:"bitfinex_secret"`
 	OkexKey        string `json:"okex_key"`
-	OkexSecret     string `jsong:"okex_secret"`
+	OkexSecret     string `json:"okex_secret"`
 	Keystore       string `json:"keystore_path"`
 	Passphrase     string `json:"passphrase"`
 	KNSecret       string `json:"kn_secret"`
@@ -98,8 +99,9 @@ func (self FileSigner) BinanceSign(msg string) string {
 
 func (self FileSigner) OkexSign(msg string) string {
 	md := md5.New()
-	md.Write([]byte(msg + "&secret=" + self.OkexSecret))
-	result := ethereum.Bytes2Hex(md.Sum(nil))
+	msg = msg + "&secret_key=" + self.OkexSecret
+	md.Write([]byte(msg))
+	result := fmt.Sprintf("%x", md.Sum(nil))
 	return strings.ToUpper(result)
 }
 
