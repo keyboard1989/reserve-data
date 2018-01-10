@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
+	"sync"
+	"time"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
 	raven "github.com/getsentry/raven-go"
@@ -13,11 +15,36 @@ import (
 )
 
 type FaucetServer struct {
-	r   *gin.Engine
-	app *FaucetApp
+	r         *gin.Engine
+	app       *FaucetApp
+	mu        sync.Mutex
+	lastVisit map[string]int64
+}
+
+func (self *FaucetServer) RateGuard(c *gin.Context) bool {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	ip := c.ClientIP()
+	last, found := self.lastVisit[ip]
+	cTime := time.Now().Unix()
+	if found {
+		if cTime-last < 2 {
+			// block by limitter
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "error": "Please try again after 2s, thanks."},
+			)
+			return false
+		}
+	}
+	self.lastVisit[ip] = cTime
+	return true
 }
 
 func (self *FaucetServer) Claim(c *gin.Context) {
+	if !self.RateGuard(c) {
+		return
+	}
 	addr := ethereum.HexToAddress(c.PostForm("address"))
 	if addr.Big().Cmp(big.NewInt(0)) == 0 {
 		c.JSON(
@@ -68,7 +95,7 @@ func main() {
 	r.Use(cors.Default())
 
 	server := &FaucetServer{
-		r, NewFaucetApp(),
+		r, NewFaucetApp(), sync.Mutex{}, map[string]int64{},
 	}
 
 	server.Run()
