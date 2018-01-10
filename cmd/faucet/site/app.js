@@ -32,7 +32,7 @@ function getBalance(address){
 function submitAddress(address) {
   console.log(address)
   $.ajax({
-    url: "http://localhost:8891/claim-eth",
+    url: "http://52.77.19.90:8891/claim-eth",
     type:"POST",
     data: { address: address },
     success: function (response) {
