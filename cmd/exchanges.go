@@ -10,6 +10,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
+	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/signer"
 )
 
@@ -85,6 +86,13 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
+		case "huobi":
+			huobi := exchange.NewHuobi(huobi.NewDevHuobiEndpoint(signer))
+			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
+				huobi.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+			}
+			huobi.UpdatePairsPrecision()
+			exchanges[huobi.ID()] = huobi
 		}
 	}
 	return &ExchangePool{exchanges}

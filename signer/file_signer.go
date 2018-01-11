@@ -23,6 +23,8 @@ type FileSigner struct {
 	BittrexSecret   string `json:"bittrex_secret"`
 	BitfinexKey     string `json:"bitfinex_key"`
 	BitfinexSecret  string `json:"bitfinex_secret"`
+	HuobiKey        string `json:"huobi_key"`
+	HuobiSecret     string `json:"huobi_secret"`
 	Keystore        string `json:"keystore_path"`
 	Passphrase      string `json:"passphrase"`
 	KeystoreD       string `json:"keystore_deposit_path"`
@@ -62,6 +64,22 @@ func (self FileSigner) GetBinanceKey() string {
 	return self.BinanceKey
 }
 
+func (self FileSigner) GetHuobiKey() string {
+	return self.HuobiKey
+}
+
+func (self FileSigner) KNSign(msg string) string {
+	mac := hmac.New(sha512.New, []byte(self.KNSecret))
+	mac.Write([]byte(msg))
+	return ethereum.Bytes2Hex(mac.Sum(nil))
+}
+
+func (self FileSigner) KNReadonlySign(msg string) string {
+	mac := hmac.New(sha512.New, []byte(self.KNReadOnly))
+	mac.Write([]byte(msg))
+	return ethereum.Bytes2Hex(mac.Sum(nil))
+}
+
 func (self FileSigner) LiquiSign(msg string) string {
 	mac := hmac.New(sha512.New, []byte(self.LiquiSecret))
 	mac.Write([]byte(msg))
@@ -82,6 +100,13 @@ func (self FileSigner) BittrexSign(msg string) string {
 
 func (self FileSigner) BinanceSign(msg string) string {
 	mac := hmac.New(sha256.New, []byte(self.BinanceSecret))
+	mac.Write([]byte(msg))
+	result := ethereum.Bytes2Hex(mac.Sum(nil))
+	return result
+}
+
+func (self FileSigner) HuobiSign(msg string) string {
+	mac := hmac.New(sha256.New, []byte(self.HuobiSecret))
 	mac.Write([]byte(msg))
 	result := ethereum.Bytes2Hex(mac.Sum(nil))
 	return result
