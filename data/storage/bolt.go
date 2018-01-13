@@ -343,11 +343,9 @@ func formatTimepointToActivityID(timepoint uint64, id []byte) []byte {
 	if timepoint == 0 {
 		return id
 	} else {
-		var b [64]byte
-		temp := make([]byte, 64)
-		binary.BigEndian.PutUint64(temp, timepoint)
-		copy(b[0:], temp)
-		return b[:]
+		activityID := common.NewActivityID(timepoint, "")
+		byteID := activityID.ToBytes()
+		return byteID[:]
 	}
 }
 
