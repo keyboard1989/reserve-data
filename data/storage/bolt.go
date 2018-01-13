@@ -472,11 +472,9 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(METRIC_BUCKET))
 		c := b.Cursor()
-		// Our time range spans the 90's decade.
 		min := uint64ToBytes(fromTime)
 		max := uint64ToBytes(toTime)
 
-		// Iterate over the 90's.
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			data := metric.MetricEntry{}
 			err = json.Unmarshal(v, &data)
@@ -491,10 +489,8 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 						AfpMid:    m.AfpMid,
 						Spread:    m.Spread,
 					})
-					log.Printf("token: %s, metricList: %+v", tok, metricList)
 				}
 			}
-			log.Printf("result: %+v", imResult)
 		}
 		return nil
 	})

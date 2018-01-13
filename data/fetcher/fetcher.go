@@ -48,18 +48,29 @@ func (self *Fetcher) Run() error {
 	go self.RunOrderbookFetcher()
 	go self.RunAuthDataFetcher()
 	go self.RunRateFetcher()
-	go self.RunBlockFetcher()
+	go self.RunBlockAndLogFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
 }
 
-func (self *Fetcher) RunBlockFetcher() {
+func (self *Fetcher) RunBlockAndLogFetcher() {
 	for {
 		log.Printf("waiting for signal from block channel")
 		t := <-self.runner.GetBlockTicker()
 		log.Printf("got signal in block channel with timestamp %d", common.TimeToTimepoint(t))
-		self.FetchCurrentBlock(common.TimeToTimepoint(t))
+		timepoint := common.TimeToTimepoint(t)
+		self.FetchCurrentBlock(timepoint)
 		log.Printf("fetched block from blockchain")
+		lastBlock := self.storage.LastBlock()
+		self.FetchLogs(lastBlock+1, timepoint)
+	}
+}
+
+func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) {
+	logs, err := self.blockchain.GetLogs(fromBlock, timepoint)
+	if err != nil {
+		log.Printf("fetching logs data from block %d failed, error: %v", fromBlock, err)
+	} else {
 	}
 }
 

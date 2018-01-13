@@ -3,6 +3,7 @@ package fetcher
 import (
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type Blockchain interface {
@@ -10,4 +11,5 @@ type Blockchain interface {
 	FetchRates(timepoint uint64) (common.AllRateEntry, error)
 	IsMined(tx ethereum.Hash) (bool, error)
 	CurrentBlock() (uint64, error)
+	GetLogs(fromBlock uint64, timepoint uint64) ([]types.Log, error)
 }
