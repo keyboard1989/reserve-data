@@ -169,7 +169,7 @@ func (self *BoltStorage) GetAllPrices(version common.Version) (common.AllPriceEn
 }
 
 func (self *BoltStorage) GetOnePrice(pair common.TokenPairID, version common.Version) (common.OnePrice, error) {
-	result := map[common.TokenPairID]common.OnePrice{}
+	result := common.AllPriceEntry{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PRICE_BUCKET))
@@ -184,7 +184,7 @@ func (self *BoltStorage) GetOnePrice(pair common.TokenPairID, version common.Ver
 	if err != nil {
 		return common.OnePrice{}, err
 	} else {
-		pair, exist := result[pair]
+		pair, exist := result.Data[pair]
 		if exist {
 			return pair, nil
 		} else {
