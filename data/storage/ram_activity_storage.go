@@ -3,6 +3,7 @@ package storage
 import (
 	"container/list"
 	"errors"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -94,10 +95,33 @@ func (self *RamActivityStorage) UpdateActivity(id common.ActivityID, activity co
 	}
 }
 
-func (self *RamActivityStorage) GetAllRecords() ([]common.ActivityRecord, error) {
+func (self *RamActivityStorage) GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
-	return activitiesFromList(self.records), nil
+	allRecords := activitiesFromList(self.records)
+	toIndex := sort.Search(len(allRecords), func(i int) bool {
+		timepoint := allRecords[i].ID.Timepoint
+		return timepoint <= fromTime
+	})
+	fromIndex := sort.Search(len(allRecords), func(i int) bool {
+		timepoint := allRecords[i].ID.Timepoint
+		return timepoint <= toTime
+	})
+	from := 0
+	to := len(allRecords)
+	if toTime != 0 {
+		from = fromIndex
+	}
+	if fromTime != 0 {
+		timePoint := allRecords[toIndex].ID.Timepoint
+		if timePoint == fromTime {
+			to = toIndex + 1
+		} else {
+			to = toIndex
+		}
+	}
+	result := allRecords[from:to]
+	return result, nil
 }
 
 func (self *RamActivityStorage) GetPendingRecords() ([]common.ActivityRecord, error) {

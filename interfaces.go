@@ -1,8 +1,9 @@
 package reserve
 
 import (
-	"github.com/KyberNetwork/reserve-data/common"
 	"math/big"
+
+	"github.com/KyberNetwork/reserve-data/common"
 )
 
 // all of the functions must support concurrency
@@ -17,7 +18,7 @@ type ReserveData interface {
 	CurrentRateVersion(timestamp uint64) (common.Version, error)
 	GetAllRates(timestamp uint64) (common.AllRateResponse, error)
 
-	GetRecords() ([]common.ActivityRecord, error)
+	GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error)
 	GetPendingActivities() ([]common.ActivityRecord, error)
 
 	Run() error

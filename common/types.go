@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/big"
@@ -133,6 +134,15 @@ type ExchangeID string
 type ActivityID struct {
 	Timepoint uint64
 	EID       string
+}
+
+func (self ActivityID) ToBytes() [64]byte {
+	var b [64]byte
+	temp := make([]byte, 64)
+	binary.BigEndian.PutUint64(temp, self.Timepoint)
+	temp = append(temp, []byte(self.EID)...)
+	copy(b[0:], temp)
+	return b
 }
 
 func (self ActivityID) MarshalText() ([]byte, error) {
