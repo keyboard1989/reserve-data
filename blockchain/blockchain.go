@@ -167,9 +167,9 @@ func (self *Blockchain) FetchRates(timepoint uint64) (common.AllRateEntry, error
 
 func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int) (*big.Int, error) {
 	if priceType == "buy" {
-		return self.pricing.GetPrice(nil, token, block, true, qty)
+		return self.pricing.GetRate(nil, token, block, true, qty)
 	} else {
-		return self.pricing.GetPrice(nil, token, block, false, qty)
+		return self.pricing.GetRate(nil, token, block, false, qty)
 	}
 }
 
@@ -219,7 +219,7 @@ func (self *Blockchain) SetRates(
 		var tx *types.Transaction
 		if len(baseTokens) > 0 {
 			// set base tx
-			tx, err = self.pricing.SetBasePrice(
+			tx, err = self.pricing.SetBaseRate(
 				opts, baseTokens, newBBuys, newBSells,
 				buys, sells, block, indices)
 			log.Printf("Setting base rates: tx(%s), err(%v) with baseTokens(%+v), basebuys(%+v), basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",

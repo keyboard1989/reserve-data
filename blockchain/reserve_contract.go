@@ -14,7 +14,7 @@ import (
 )
 
 // ReserveContractABI is the input ABI used to generate the binding from.
-const ReserveContractABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"sourceToken\",\"type\":\"address\"},{\"name\":\"sourceAmount\",\"type\":\"uint256\"},{\"name\":\"destToken\",\"type\":\"address\"},{\"name\":\"destAddress\",\"type\":\"address\"},{\"name\":\"validate\",\"type\":\"bool\"}],\"name\":\"trade\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"ETH_TOKEN_ADDRESS\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"depositToken\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"source\",\"type\":\"address\"},{\"name\":\"dest\",\"type\":\"address\"}],\"name\":\"getPairInfo\",\"outputs\":[{\"name\":\"rate\",\"type\":\"uint256\"},{\"name\":\"expBlock\",\"type\":\"uint256\"},{\"name\":\"balance\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"destination\",\"type\":\"address\"}],\"name\":\"withdraw\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"depositEther\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"kyberNetwork\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"enable\",\"type\":\"bool\"}],\"name\":\"enableTrade\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"tradeEnabled\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"sources\",\"type\":\"address[]\"},{\"name\":\"dests\",\"type\":\"address[]\"},{\"name\":\"conversionRates\",\"type\":\"uint256[]\"},{\"name\":\"expiryBlocks\",\"type\":\"uint256[]\"},{\"name\":\"validate\",\"type\":\"bool\"}],\"name\":\"setRate\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reserveOwner\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getBalance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_kyberNetwork\",\"type\":\"address\"},{\"name\":\"_reserveOwner\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"origin\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"error\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"errorInfo\",\"type\":\"uint256\"}],\"name\":\"ErrorReport\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"origin\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"source\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"sourceAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"destToken\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"destAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"destAddress\",\"type\":\"address\"}],\"name\":\"DoTrade\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"source\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"dest\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"rate\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"expiryBlock\",\"type\":\"uint256\"}],\"name\":\"SetRate\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"enable\",\"type\":\"bool\"}],\"name\":\"EnableTrade\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"DepositToken\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"destination\",\"type\":\"address\"}],\"name\":\"Withdraw\",\"type\":\"event\"}]"
+const ReserveContractABI = "[{\"constant\":false,\"inputs\":[],\"name\":\"enableTrade\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"alerter\",\"type\":\"address\"}],\"name\":\"removeAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"pendingAdmin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getOperators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"withdrawToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAlerter\",\"type\":\"address\"}],\"name\":\"addAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"sanityRatesContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"addr\",\"type\":\"address\"},{\"name\":\"approve\",\"type\":\"bool\"}],\"name\":\"approveWithdrawAddress\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"destination\",\"type\":\"address\"}],\"name\":\"withdraw\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"disableTrade\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"sourceToken\",\"type\":\"address\"},{\"name\":\"sourceAmount\",\"type\":\"uint256\"},{\"name\":\"destToken\",\"type\":\"address\"},{\"name\":\"destAddress\",\"type\":\"address\"},{\"name\":\"conversionRate\",\"type\":\"uint256\"},{\"name\":\"validate\",\"type\":\"bool\"}],\"name\":\"trade\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"transferAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"claimAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getAlerters\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"source\",\"type\":\"address\"},{\"name\":\"dest\",\"type\":\"address\"},{\"name\":\"srcQty\",\"type\":\"uint256\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"}],\"name\":\"getConversionRate\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"ratesContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOperator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"source\",\"type\":\"address\"},{\"name\":\"dest\",\"type\":\"address\"},{\"name\":\"dstQty\",\"type\":\"uint256\"},{\"name\":\"rate\",\"type\":\"uint256\"}],\"name\":\"getSrcQty\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"_kyberNetwork\",\"type\":\"address\"},{\"name\":\"_rates\",\"type\":\"address\"},{\"name\":\"_sanityRates\",\"type\":\"address\"}],\"name\":\"setContracts\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"kyberNetwork\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"withdrawEther\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getDecimals\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"tradeEnabled\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"bytes32\"}],\"name\":\"approvedWithdrawAddresses\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"admin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getBalance\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"source\",\"type\":\"address\"},{\"name\":\"dest\",\"type\":\"address\"},{\"name\":\"srcQty\",\"type\":\"uint256\"},{\"name\":\"rate\",\"type\":\"uint256\"}],\"name\":\"getDestQty\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_kyberNetwork\",\"type\":\"address\"},{\"name\":\"_ratesContract\",\"type\":\"address\"},{\"name\":\"_admin\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"payable\":true,\"stateMutability\":\"payable\",\"type\":\"fallback\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"}],\"name\":\"DepositToken\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"origin\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"source\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"sourceAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"destToken\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"destAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"destAddress\",\"type\":\"address\"}],\"name\":\"TradeExecute\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"enable\",\"type\":\"bool\"}],\"name\":\"TradeEnabled\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"addr\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"approve\",\"type\":\"bool\"}],\"name\":\"WithdrawAddressApproved\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"destination\",\"type\":\"address\"}],\"name\":\"WithdrawFunds\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"TokenWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"EtherWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"pendingAdmin\",\"type\":\"address\"}],\"name\":\"TransferAdminPending\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAdmin\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"previousAdmin\",\"type\":\"address\"}],\"name\":\"AdminClaimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAlerter\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"AlerterAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newOperator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"}]"
 
 // ReserveContract is an auto generated Go binding around an Ethereum contract.
 type ReserveContract struct {
@@ -143,30 +143,82 @@ func (_ReserveContract *ReserveContractTransactorRaw) Transact(opts *bind.Transa
 	return _ReserveContract.Contract.contract.Transact(opts, method, params...)
 }
 
-// ETH_TOKEN_ADDRESS is a free data retrieval call binding the contract method 0x1878d1f1.
+// Admin is a free data retrieval call binding the contract method 0xf851a440.
 //
-// Solidity: function ETH_TOKEN_ADDRESS() constant returns(address)
-func (_ReserveContract *ReserveContractCaller) ETH_TOKEN_ADDRESS(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function admin() constant returns(address)
+func (_ReserveContract *ReserveContractCaller) Admin(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
 	)
 	out := ret0
-	err := _ReserveContract.contract.Call(opts, out, "ETH_TOKEN_ADDRESS")
+	err := _ReserveContract.contract.Call(opts, out, "admin")
 	return *ret0, err
 }
 
-// ETH_TOKEN_ADDRESS is a free data retrieval call binding the contract method 0x1878d1f1.
+// Admin is a free data retrieval call binding the contract method 0xf851a440.
 //
-// Solidity: function ETH_TOKEN_ADDRESS() constant returns(address)
-func (_ReserveContract *ReserveContractSession) ETH_TOKEN_ADDRESS() (common.Address, error) {
-	return _ReserveContract.Contract.ETH_TOKEN_ADDRESS(&_ReserveContract.CallOpts)
+// Solidity: function admin() constant returns(address)
+func (_ReserveContract *ReserveContractSession) Admin() (common.Address, error) {
+	return _ReserveContract.Contract.Admin(&_ReserveContract.CallOpts)
 }
 
-// ETH_TOKEN_ADDRESS is a free data retrieval call binding the contract method 0x1878d1f1.
+// Admin is a free data retrieval call binding the contract method 0xf851a440.
 //
-// Solidity: function ETH_TOKEN_ADDRESS() constant returns(address)
-func (_ReserveContract *ReserveContractCallerSession) ETH_TOKEN_ADDRESS() (common.Address, error) {
-	return _ReserveContract.Contract.ETH_TOKEN_ADDRESS(&_ReserveContract.CallOpts)
+// Solidity: function admin() constant returns(address)
+func (_ReserveContract *ReserveContractCallerSession) Admin() (common.Address, error) {
+	return _ReserveContract.Contract.Admin(&_ReserveContract.CallOpts)
+}
+
+// ApprovedWithdrawAddresses is a free data retrieval call binding the contract method 0xd7b7024d.
+//
+// Solidity: function approvedWithdrawAddresses( bytes32) constant returns(bool)
+func (_ReserveContract *ReserveContractCaller) ApprovedWithdrawAddresses(opts *bind.CallOpts, arg0 [32]byte) (bool, error) {
+	var (
+		ret0 = new(bool)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "approvedWithdrawAddresses", arg0)
+	return *ret0, err
+}
+
+// ApprovedWithdrawAddresses is a free data retrieval call binding the contract method 0xd7b7024d.
+//
+// Solidity: function approvedWithdrawAddresses( bytes32) constant returns(bool)
+func (_ReserveContract *ReserveContractSession) ApprovedWithdrawAddresses(arg0 [32]byte) (bool, error) {
+	return _ReserveContract.Contract.ApprovedWithdrawAddresses(&_ReserveContract.CallOpts, arg0)
+}
+
+// ApprovedWithdrawAddresses is a free data retrieval call binding the contract method 0xd7b7024d.
+//
+// Solidity: function approvedWithdrawAddresses( bytes32) constant returns(bool)
+func (_ReserveContract *ReserveContractCallerSession) ApprovedWithdrawAddresses(arg0 [32]byte) (bool, error) {
+	return _ReserveContract.Contract.ApprovedWithdrawAddresses(&_ReserveContract.CallOpts, arg0)
+}
+
+// GetAlerters is a free data retrieval call binding the contract method 0x7c423f54.
+//
+// Solidity: function getAlerters() constant returns(address[])
+func (_ReserveContract *ReserveContractCaller) GetAlerters(opts *bind.CallOpts) ([]common.Address, error) {
+	var (
+		ret0 = new([]common.Address)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "getAlerters")
+	return *ret0, err
+}
+
+// GetAlerters is a free data retrieval call binding the contract method 0x7c423f54.
+//
+// Solidity: function getAlerters() constant returns(address[])
+func (_ReserveContract *ReserveContractSession) GetAlerters() ([]common.Address, error) {
+	return _ReserveContract.Contract.GetAlerters(&_ReserveContract.CallOpts)
+}
+
+// GetAlerters is a free data retrieval call binding the contract method 0x7c423f54.
+//
+// Solidity: function getAlerters() constant returns(address[])
+func (_ReserveContract *ReserveContractCallerSession) GetAlerters() ([]common.Address, error) {
+	return _ReserveContract.Contract.GetAlerters(&_ReserveContract.CallOpts)
 }
 
 // GetBalance is a free data retrieval call binding the contract method 0xf8b2cb4f.
@@ -195,44 +247,134 @@ func (_ReserveContract *ReserveContractCallerSession) GetBalance(token common.Ad
 	return _ReserveContract.Contract.GetBalance(&_ReserveContract.CallOpts, token)
 }
 
-// GetPairInfo is a free data retrieval call binding the contract method 0x400f7a1e.
+// GetConversionRate is a free data retrieval call binding the contract method 0x7cd44272.
 //
-// Solidity: function getPairInfo(source address, dest address) constant returns(rate uint256, expBlock uint256, balance uint256)
-func (_ReserveContract *ReserveContractCaller) GetPairInfo(opts *bind.CallOpts, source common.Address, dest common.Address) (struct {
-	Rate     *big.Int
-	ExpBlock *big.Int
-	Balance  *big.Int
-}, error) {
-	ret := new(struct {
-		Rate     *big.Int
-		ExpBlock *big.Int
-		Balance  *big.Int
-	})
-	out := ret
-	err := _ReserveContract.contract.Call(opts, out, "getPairInfo", source, dest)
-	return *ret, err
+// Solidity: function getConversionRate(source address, dest address, srcQty uint256, blockNumber uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractCaller) GetConversionRate(opts *bind.CallOpts, source common.Address, dest common.Address, srcQty *big.Int, blockNumber *big.Int) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "getConversionRate", source, dest, srcQty, blockNumber)
+	return *ret0, err
 }
 
-// GetPairInfo is a free data retrieval call binding the contract method 0x400f7a1e.
+// GetConversionRate is a free data retrieval call binding the contract method 0x7cd44272.
 //
-// Solidity: function getPairInfo(source address, dest address) constant returns(rate uint256, expBlock uint256, balance uint256)
-func (_ReserveContract *ReserveContractSession) GetPairInfo(source common.Address, dest common.Address) (struct {
-	Rate     *big.Int
-	ExpBlock *big.Int
-	Balance  *big.Int
-}, error) {
-	return _ReserveContract.Contract.GetPairInfo(&_ReserveContract.CallOpts, source, dest)
+// Solidity: function getConversionRate(source address, dest address, srcQty uint256, blockNumber uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractSession) GetConversionRate(source common.Address, dest common.Address, srcQty *big.Int, blockNumber *big.Int) (*big.Int, error) {
+	return _ReserveContract.Contract.GetConversionRate(&_ReserveContract.CallOpts, source, dest, srcQty, blockNumber)
 }
 
-// GetPairInfo is a free data retrieval call binding the contract method 0x400f7a1e.
+// GetConversionRate is a free data retrieval call binding the contract method 0x7cd44272.
 //
-// Solidity: function getPairInfo(source address, dest address) constant returns(rate uint256, expBlock uint256, balance uint256)
-func (_ReserveContract *ReserveContractCallerSession) GetPairInfo(source common.Address, dest common.Address) (struct {
-	Rate     *big.Int
-	ExpBlock *big.Int
-	Balance  *big.Int
-}, error) {
-	return _ReserveContract.Contract.GetPairInfo(&_ReserveContract.CallOpts, source, dest)
+// Solidity: function getConversionRate(source address, dest address, srcQty uint256, blockNumber uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractCallerSession) GetConversionRate(source common.Address, dest common.Address, srcQty *big.Int, blockNumber *big.Int) (*big.Int, error) {
+	return _ReserveContract.Contract.GetConversionRate(&_ReserveContract.CallOpts, source, dest, srcQty, blockNumber)
+}
+
+// GetDecimals is a free data retrieval call binding the contract method 0xcf54aaa0.
+//
+// Solidity: function getDecimals(token address) constant returns(uint256)
+func (_ReserveContract *ReserveContractCaller) GetDecimals(opts *bind.CallOpts, token common.Address) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "getDecimals", token)
+	return *ret0, err
+}
+
+// GetDecimals is a free data retrieval call binding the contract method 0xcf54aaa0.
+//
+// Solidity: function getDecimals(token address) constant returns(uint256)
+func (_ReserveContract *ReserveContractSession) GetDecimals(token common.Address) (*big.Int, error) {
+	return _ReserveContract.Contract.GetDecimals(&_ReserveContract.CallOpts, token)
+}
+
+// GetDecimals is a free data retrieval call binding the contract method 0xcf54aaa0.
+//
+// Solidity: function getDecimals(token address) constant returns(uint256)
+func (_ReserveContract *ReserveContractCallerSession) GetDecimals(token common.Address) (*big.Int, error) {
+	return _ReserveContract.Contract.GetDecimals(&_ReserveContract.CallOpts, token)
+}
+
+// GetDestQty is a free data retrieval call binding the contract method 0xfa64dffa.
+//
+// Solidity: function getDestQty(source address, dest address, srcQty uint256, rate uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractCaller) GetDestQty(opts *bind.CallOpts, source common.Address, dest common.Address, srcQty *big.Int, rate *big.Int) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "getDestQty", source, dest, srcQty, rate)
+	return *ret0, err
+}
+
+// GetDestQty is a free data retrieval call binding the contract method 0xfa64dffa.
+//
+// Solidity: function getDestQty(source address, dest address, srcQty uint256, rate uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractSession) GetDestQty(source common.Address, dest common.Address, srcQty *big.Int, rate *big.Int) (*big.Int, error) {
+	return _ReserveContract.Contract.GetDestQty(&_ReserveContract.CallOpts, source, dest, srcQty, rate)
+}
+
+// GetDestQty is a free data retrieval call binding the contract method 0xfa64dffa.
+//
+// Solidity: function getDestQty(source address, dest address, srcQty uint256, rate uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractCallerSession) GetDestQty(source common.Address, dest common.Address, srcQty *big.Int, rate *big.Int) (*big.Int, error) {
+	return _ReserveContract.Contract.GetDestQty(&_ReserveContract.CallOpts, source, dest, srcQty, rate)
+}
+
+// GetOperators is a free data retrieval call binding the contract method 0x27a099d8.
+//
+// Solidity: function getOperators() constant returns(address[])
+func (_ReserveContract *ReserveContractCaller) GetOperators(opts *bind.CallOpts) ([]common.Address, error) {
+	var (
+		ret0 = new([]common.Address)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "getOperators")
+	return *ret0, err
+}
+
+// GetOperators is a free data retrieval call binding the contract method 0x27a099d8.
+//
+// Solidity: function getOperators() constant returns(address[])
+func (_ReserveContract *ReserveContractSession) GetOperators() ([]common.Address, error) {
+	return _ReserveContract.Contract.GetOperators(&_ReserveContract.CallOpts)
+}
+
+// GetOperators is a free data retrieval call binding the contract method 0x27a099d8.
+//
+// Solidity: function getOperators() constant returns(address[])
+func (_ReserveContract *ReserveContractCallerSession) GetOperators() ([]common.Address, error) {
+	return _ReserveContract.Contract.GetOperators(&_ReserveContract.CallOpts)
+}
+
+// GetSrcQty is a free data retrieval call binding the contract method 0xa7fca953.
+//
+// Solidity: function getSrcQty(source address, dest address, dstQty uint256, rate uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractCaller) GetSrcQty(opts *bind.CallOpts, source common.Address, dest common.Address, dstQty *big.Int, rate *big.Int) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "getSrcQty", source, dest, dstQty, rate)
+	return *ret0, err
+}
+
+// GetSrcQty is a free data retrieval call binding the contract method 0xa7fca953.
+//
+// Solidity: function getSrcQty(source address, dest address, dstQty uint256, rate uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractSession) GetSrcQty(source common.Address, dest common.Address, dstQty *big.Int, rate *big.Int) (*big.Int, error) {
+	return _ReserveContract.Contract.GetSrcQty(&_ReserveContract.CallOpts, source, dest, dstQty, rate)
+}
+
+// GetSrcQty is a free data retrieval call binding the contract method 0xa7fca953.
+//
+// Solidity: function getSrcQty(source address, dest address, dstQty uint256, rate uint256) constant returns(uint256)
+func (_ReserveContract *ReserveContractCallerSession) GetSrcQty(source common.Address, dest common.Address, dstQty *big.Int, rate *big.Int) (*big.Int, error) {
+	return _ReserveContract.Contract.GetSrcQty(&_ReserveContract.CallOpts, source, dest, dstQty, rate)
 }
 
 // KyberNetwork is a free data retrieval call binding the contract method 0xb78b842d.
@@ -261,30 +403,82 @@ func (_ReserveContract *ReserveContractCallerSession) KyberNetwork() (common.Add
 	return _ReserveContract.Contract.KyberNetwork(&_ReserveContract.CallOpts)
 }
 
-// ReserveOwner is a free data retrieval call binding the contract method 0xe61b6557.
+// PendingAdmin is a free data retrieval call binding the contract method 0x26782247.
 //
-// Solidity: function reserveOwner() constant returns(address)
-func (_ReserveContract *ReserveContractCaller) ReserveOwner(opts *bind.CallOpts) (common.Address, error) {
+// Solidity: function pendingAdmin() constant returns(address)
+func (_ReserveContract *ReserveContractCaller) PendingAdmin(opts *bind.CallOpts) (common.Address, error) {
 	var (
 		ret0 = new(common.Address)
 	)
 	out := ret0
-	err := _ReserveContract.contract.Call(opts, out, "reserveOwner")
+	err := _ReserveContract.contract.Call(opts, out, "pendingAdmin")
 	return *ret0, err
 }
 
-// ReserveOwner is a free data retrieval call binding the contract method 0xe61b6557.
+// PendingAdmin is a free data retrieval call binding the contract method 0x26782247.
 //
-// Solidity: function reserveOwner() constant returns(address)
-func (_ReserveContract *ReserveContractSession) ReserveOwner() (common.Address, error) {
-	return _ReserveContract.Contract.ReserveOwner(&_ReserveContract.CallOpts)
+// Solidity: function pendingAdmin() constant returns(address)
+func (_ReserveContract *ReserveContractSession) PendingAdmin() (common.Address, error) {
+	return _ReserveContract.Contract.PendingAdmin(&_ReserveContract.CallOpts)
 }
 
-// ReserveOwner is a free data retrieval call binding the contract method 0xe61b6557.
+// PendingAdmin is a free data retrieval call binding the contract method 0x26782247.
 //
-// Solidity: function reserveOwner() constant returns(address)
-func (_ReserveContract *ReserveContractCallerSession) ReserveOwner() (common.Address, error) {
-	return _ReserveContract.Contract.ReserveOwner(&_ReserveContract.CallOpts)
+// Solidity: function pendingAdmin() constant returns(address)
+func (_ReserveContract *ReserveContractCallerSession) PendingAdmin() (common.Address, error) {
+	return _ReserveContract.Contract.PendingAdmin(&_ReserveContract.CallOpts)
+}
+
+// RatesContract is a free data retrieval call binding the contract method 0x866673e8.
+//
+// Solidity: function ratesContract() constant returns(address)
+func (_ReserveContract *ReserveContractCaller) RatesContract(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "ratesContract")
+	return *ret0, err
+}
+
+// RatesContract is a free data retrieval call binding the contract method 0x866673e8.
+//
+// Solidity: function ratesContract() constant returns(address)
+func (_ReserveContract *ReserveContractSession) RatesContract() (common.Address, error) {
+	return _ReserveContract.Contract.RatesContract(&_ReserveContract.CallOpts)
+}
+
+// RatesContract is a free data retrieval call binding the contract method 0x866673e8.
+//
+// Solidity: function ratesContract() constant returns(address)
+func (_ReserveContract *ReserveContractCallerSession) RatesContract() (common.Address, error) {
+	return _ReserveContract.Contract.RatesContract(&_ReserveContract.CallOpts)
+}
+
+// SanityRatesContract is a free data retrieval call binding the contract method 0x47e6924f.
+//
+// Solidity: function sanityRatesContract() constant returns(address)
+func (_ReserveContract *ReserveContractCaller) SanityRatesContract(opts *bind.CallOpts) (common.Address, error) {
+	var (
+		ret0 = new(common.Address)
+	)
+	out := ret0
+	err := _ReserveContract.contract.Call(opts, out, "sanityRatesContract")
+	return *ret0, err
+}
+
+// SanityRatesContract is a free data retrieval call binding the contract method 0x47e6924f.
+//
+// Solidity: function sanityRatesContract() constant returns(address)
+func (_ReserveContract *ReserveContractSession) SanityRatesContract() (common.Address, error) {
+	return _ReserveContract.Contract.SanityRatesContract(&_ReserveContract.CallOpts)
+}
+
+// SanityRatesContract is a free data retrieval call binding the contract method 0x47e6924f.
+//
+// Solidity: function sanityRatesContract() constant returns(address)
+func (_ReserveContract *ReserveContractCallerSession) SanityRatesContract() (common.Address, error) {
+	return _ReserveContract.Contract.SanityRatesContract(&_ReserveContract.CallOpts)
 }
 
 // TradeEnabled is a free data retrieval call binding the contract method 0xd621e813.
@@ -313,109 +507,235 @@ func (_ReserveContract *ReserveContractCallerSession) TradeEnabled() (bool, erro
 	return _ReserveContract.Contract.TradeEnabled(&_ReserveContract.CallOpts)
 }
 
-// DepositEther is a paid mutator transaction binding the contract method 0x98ea5fca.
+// AddAlerter is a paid mutator transaction binding the contract method 0x408ee7fe.
 //
-// Solidity: function depositEther() returns(bool)
-func (_ReserveContract *ReserveContractTransactor) DepositEther(opts *bind.TransactOpts) (*types.Transaction, error) {
-	return _ReserveContract.contract.Transact(opts, "depositEther")
+// Solidity: function addAlerter(newAlerter address) returns()
+func (_ReserveContract *ReserveContractTransactor) AddAlerter(opts *bind.TransactOpts, newAlerter common.Address) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "addAlerter", newAlerter)
 }
 
-// DepositEther is a paid mutator transaction binding the contract method 0x98ea5fca.
+// AddAlerter is a paid mutator transaction binding the contract method 0x408ee7fe.
 //
-// Solidity: function depositEther() returns(bool)
-func (_ReserveContract *ReserveContractSession) DepositEther() (*types.Transaction, error) {
-	return _ReserveContract.Contract.DepositEther(&_ReserveContract.TransactOpts)
+// Solidity: function addAlerter(newAlerter address) returns()
+func (_ReserveContract *ReserveContractSession) AddAlerter(newAlerter common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.AddAlerter(&_ReserveContract.TransactOpts, newAlerter)
 }
 
-// DepositEther is a paid mutator transaction binding the contract method 0x98ea5fca.
+// AddAlerter is a paid mutator transaction binding the contract method 0x408ee7fe.
 //
-// Solidity: function depositEther() returns(bool)
-func (_ReserveContract *ReserveContractTransactorSession) DepositEther() (*types.Transaction, error) {
-	return _ReserveContract.Contract.DepositEther(&_ReserveContract.TransactOpts)
+// Solidity: function addAlerter(newAlerter address) returns()
+func (_ReserveContract *ReserveContractTransactorSession) AddAlerter(newAlerter common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.AddAlerter(&_ReserveContract.TransactOpts, newAlerter)
 }
 
-// DepositToken is a paid mutator transaction binding the contract method 0x338b5dea.
+// AddOperator is a paid mutator transaction binding the contract method 0x9870d7fe.
 //
-// Solidity: function depositToken(token address, amount uint256) returns(bool)
-func (_ReserveContract *ReserveContractTransactor) DepositToken(opts *bind.TransactOpts, token common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _ReserveContract.contract.Transact(opts, "depositToken", token, amount)
+// Solidity: function addOperator(newOperator address) returns()
+func (_ReserveContract *ReserveContractTransactor) AddOperator(opts *bind.TransactOpts, newOperator common.Address) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "addOperator", newOperator)
 }
 
-// DepositToken is a paid mutator transaction binding the contract method 0x338b5dea.
+// AddOperator is a paid mutator transaction binding the contract method 0x9870d7fe.
 //
-// Solidity: function depositToken(token address, amount uint256) returns(bool)
-func (_ReserveContract *ReserveContractSession) DepositToken(token common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _ReserveContract.Contract.DepositToken(&_ReserveContract.TransactOpts, token, amount)
+// Solidity: function addOperator(newOperator address) returns()
+func (_ReserveContract *ReserveContractSession) AddOperator(newOperator common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.AddOperator(&_ReserveContract.TransactOpts, newOperator)
 }
 
-// DepositToken is a paid mutator transaction binding the contract method 0x338b5dea.
+// AddOperator is a paid mutator transaction binding the contract method 0x9870d7fe.
 //
-// Solidity: function depositToken(token address, amount uint256) returns(bool)
-func (_ReserveContract *ReserveContractTransactorSession) DepositToken(token common.Address, amount *big.Int) (*types.Transaction, error) {
-	return _ReserveContract.Contract.DepositToken(&_ReserveContract.TransactOpts, token, amount)
+// Solidity: function addOperator(newOperator address) returns()
+func (_ReserveContract *ReserveContractTransactorSession) AddOperator(newOperator common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.AddOperator(&_ReserveContract.TransactOpts, newOperator)
 }
 
-// EnableTrade is a paid mutator transaction binding the contract method 0xc00f04d1.
+// ApproveWithdrawAddress is a paid mutator transaction binding the contract method 0x546dc71c.
 //
-// Solidity: function enableTrade(enable bool) returns(bool)
-func (_ReserveContract *ReserveContractTransactor) EnableTrade(opts *bind.TransactOpts, enable bool) (*types.Transaction, error) {
-	return _ReserveContract.contract.Transact(opts, "enableTrade", enable)
+// Solidity: function approveWithdrawAddress(token address, addr address, approve bool) returns()
+func (_ReserveContract *ReserveContractTransactor) ApproveWithdrawAddress(opts *bind.TransactOpts, token common.Address, addr common.Address, approve bool) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "approveWithdrawAddress", token, addr, approve)
 }
 
-// EnableTrade is a paid mutator transaction binding the contract method 0xc00f04d1.
+// ApproveWithdrawAddress is a paid mutator transaction binding the contract method 0x546dc71c.
 //
-// Solidity: function enableTrade(enable bool) returns(bool)
-func (_ReserveContract *ReserveContractSession) EnableTrade(enable bool) (*types.Transaction, error) {
-	return _ReserveContract.Contract.EnableTrade(&_ReserveContract.TransactOpts, enable)
+// Solidity: function approveWithdrawAddress(token address, addr address, approve bool) returns()
+func (_ReserveContract *ReserveContractSession) ApproveWithdrawAddress(token common.Address, addr common.Address, approve bool) (*types.Transaction, error) {
+	return _ReserveContract.Contract.ApproveWithdrawAddress(&_ReserveContract.TransactOpts, token, addr, approve)
 }
 
-// EnableTrade is a paid mutator transaction binding the contract method 0xc00f04d1.
+// ApproveWithdrawAddress is a paid mutator transaction binding the contract method 0x546dc71c.
 //
-// Solidity: function enableTrade(enable bool) returns(bool)
-func (_ReserveContract *ReserveContractTransactorSession) EnableTrade(enable bool) (*types.Transaction, error) {
-	return _ReserveContract.Contract.EnableTrade(&_ReserveContract.TransactOpts, enable)
+// Solidity: function approveWithdrawAddress(token address, addr address, approve bool) returns()
+func (_ReserveContract *ReserveContractTransactorSession) ApproveWithdrawAddress(token common.Address, addr common.Address, approve bool) (*types.Transaction, error) {
+	return _ReserveContract.Contract.ApproveWithdrawAddress(&_ReserveContract.TransactOpts, token, addr, approve)
 }
 
-// SetRate is a paid mutator transaction binding the contract method 0xda6dfea7.
+// ClaimAdmin is a paid mutator transaction binding the contract method 0x77f50f97.
 //
-// Solidity: function setRate(sources address[], dests address[], conversionRates uint256[], expiryBlocks uint256[], validate bool) returns(bool)
-func (_ReserveContract *ReserveContractTransactor) SetRate(opts *bind.TransactOpts, sources []common.Address, dests []common.Address, conversionRates []*big.Int, expiryBlocks []*big.Int, validate bool) (*types.Transaction, error) {
-	return _ReserveContract.contract.Transact(opts, "setRate", sources, dests, conversionRates, expiryBlocks, validate)
+// Solidity: function claimAdmin() returns()
+func (_ReserveContract *ReserveContractTransactor) ClaimAdmin(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "claimAdmin")
 }
 
-// SetRate is a paid mutator transaction binding the contract method 0xda6dfea7.
+// ClaimAdmin is a paid mutator transaction binding the contract method 0x77f50f97.
 //
-// Solidity: function setRate(sources address[], dests address[], conversionRates uint256[], expiryBlocks uint256[], validate bool) returns(bool)
-func (_ReserveContract *ReserveContractSession) SetRate(sources []common.Address, dests []common.Address, conversionRates []*big.Int, expiryBlocks []*big.Int, validate bool) (*types.Transaction, error) {
-	return _ReserveContract.Contract.SetRate(&_ReserveContract.TransactOpts, sources, dests, conversionRates, expiryBlocks, validate)
+// Solidity: function claimAdmin() returns()
+func (_ReserveContract *ReserveContractSession) ClaimAdmin() (*types.Transaction, error) {
+	return _ReserveContract.Contract.ClaimAdmin(&_ReserveContract.TransactOpts)
 }
 
-// SetRate is a paid mutator transaction binding the contract method 0xda6dfea7.
+// ClaimAdmin is a paid mutator transaction binding the contract method 0x77f50f97.
 //
-// Solidity: function setRate(sources address[], dests address[], conversionRates uint256[], expiryBlocks uint256[], validate bool) returns(bool)
-func (_ReserveContract *ReserveContractTransactorSession) SetRate(sources []common.Address, dests []common.Address, conversionRates []*big.Int, expiryBlocks []*big.Int, validate bool) (*types.Transaction, error) {
-	return _ReserveContract.Contract.SetRate(&_ReserveContract.TransactOpts, sources, dests, conversionRates, expiryBlocks, validate)
+// Solidity: function claimAdmin() returns()
+func (_ReserveContract *ReserveContractTransactorSession) ClaimAdmin() (*types.Transaction, error) {
+	return _ReserveContract.Contract.ClaimAdmin(&_ReserveContract.TransactOpts)
 }
 
-// Trade is a paid mutator transaction binding the contract method 0x0363b1e1.
+// DisableTrade is a paid mutator transaction binding the contract method 0x6940030f.
 //
-// Solidity: function trade(sourceToken address, sourceAmount uint256, destToken address, destAddress address, validate bool) returns(bool)
-func (_ReserveContract *ReserveContractTransactor) Trade(opts *bind.TransactOpts, sourceToken common.Address, sourceAmount *big.Int, destToken common.Address, destAddress common.Address, validate bool) (*types.Transaction, error) {
-	return _ReserveContract.contract.Transact(opts, "trade", sourceToken, sourceAmount, destToken, destAddress, validate)
+// Solidity: function disableTrade() returns(bool)
+func (_ReserveContract *ReserveContractTransactor) DisableTrade(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "disableTrade")
 }
 
-// Trade is a paid mutator transaction binding the contract method 0x0363b1e1.
+// DisableTrade is a paid mutator transaction binding the contract method 0x6940030f.
 //
-// Solidity: function trade(sourceToken address, sourceAmount uint256, destToken address, destAddress address, validate bool) returns(bool)
-func (_ReserveContract *ReserveContractSession) Trade(sourceToken common.Address, sourceAmount *big.Int, destToken common.Address, destAddress common.Address, validate bool) (*types.Transaction, error) {
-	return _ReserveContract.Contract.Trade(&_ReserveContract.TransactOpts, sourceToken, sourceAmount, destToken, destAddress, validate)
+// Solidity: function disableTrade() returns(bool)
+func (_ReserveContract *ReserveContractSession) DisableTrade() (*types.Transaction, error) {
+	return _ReserveContract.Contract.DisableTrade(&_ReserveContract.TransactOpts)
 }
 
-// Trade is a paid mutator transaction binding the contract method 0x0363b1e1.
+// DisableTrade is a paid mutator transaction binding the contract method 0x6940030f.
 //
-// Solidity: function trade(sourceToken address, sourceAmount uint256, destToken address, destAddress address, validate bool) returns(bool)
-func (_ReserveContract *ReserveContractTransactorSession) Trade(sourceToken common.Address, sourceAmount *big.Int, destToken common.Address, destAddress common.Address, validate bool) (*types.Transaction, error) {
-	return _ReserveContract.Contract.Trade(&_ReserveContract.TransactOpts, sourceToken, sourceAmount, destToken, destAddress, validate)
+// Solidity: function disableTrade() returns(bool)
+func (_ReserveContract *ReserveContractTransactorSession) DisableTrade() (*types.Transaction, error) {
+	return _ReserveContract.Contract.DisableTrade(&_ReserveContract.TransactOpts)
+}
+
+// EnableTrade is a paid mutator transaction binding the contract method 0x0099d386.
+//
+// Solidity: function enableTrade() returns(bool)
+func (_ReserveContract *ReserveContractTransactor) EnableTrade(opts *bind.TransactOpts) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "enableTrade")
+}
+
+// EnableTrade is a paid mutator transaction binding the contract method 0x0099d386.
+//
+// Solidity: function enableTrade() returns(bool)
+func (_ReserveContract *ReserveContractSession) EnableTrade() (*types.Transaction, error) {
+	return _ReserveContract.Contract.EnableTrade(&_ReserveContract.TransactOpts)
+}
+
+// EnableTrade is a paid mutator transaction binding the contract method 0x0099d386.
+//
+// Solidity: function enableTrade() returns(bool)
+func (_ReserveContract *ReserveContractTransactorSession) EnableTrade() (*types.Transaction, error) {
+	return _ReserveContract.Contract.EnableTrade(&_ReserveContract.TransactOpts)
+}
+
+// RemoveAlerter is a paid mutator transaction binding the contract method 0x01a12fd3.
+//
+// Solidity: function removeAlerter(alerter address) returns()
+func (_ReserveContract *ReserveContractTransactor) RemoveAlerter(opts *bind.TransactOpts, alerter common.Address) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "removeAlerter", alerter)
+}
+
+// RemoveAlerter is a paid mutator transaction binding the contract method 0x01a12fd3.
+//
+// Solidity: function removeAlerter(alerter address) returns()
+func (_ReserveContract *ReserveContractSession) RemoveAlerter(alerter common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.RemoveAlerter(&_ReserveContract.TransactOpts, alerter)
+}
+
+// RemoveAlerter is a paid mutator transaction binding the contract method 0x01a12fd3.
+//
+// Solidity: function removeAlerter(alerter address) returns()
+func (_ReserveContract *ReserveContractTransactorSession) RemoveAlerter(alerter common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.RemoveAlerter(&_ReserveContract.TransactOpts, alerter)
+}
+
+// RemoveOperator is a paid mutator transaction binding the contract method 0xac8a584a.
+//
+// Solidity: function removeOperator(operator address) returns()
+func (_ReserveContract *ReserveContractTransactor) RemoveOperator(opts *bind.TransactOpts, operator common.Address) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "removeOperator", operator)
+}
+
+// RemoveOperator is a paid mutator transaction binding the contract method 0xac8a584a.
+//
+// Solidity: function removeOperator(operator address) returns()
+func (_ReserveContract *ReserveContractSession) RemoveOperator(operator common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.RemoveOperator(&_ReserveContract.TransactOpts, operator)
+}
+
+// RemoveOperator is a paid mutator transaction binding the contract method 0xac8a584a.
+//
+// Solidity: function removeOperator(operator address) returns()
+func (_ReserveContract *ReserveContractTransactorSession) RemoveOperator(operator common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.RemoveOperator(&_ReserveContract.TransactOpts, operator)
+}
+
+// SetContracts is a paid mutator transaction binding the contract method 0xb3066d49.
+//
+// Solidity: function setContracts(_kyberNetwork address, _rates address, _sanityRates address) returns()
+func (_ReserveContract *ReserveContractTransactor) SetContracts(opts *bind.TransactOpts, _kyberNetwork common.Address, _rates common.Address, _sanityRates common.Address) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "setContracts", _kyberNetwork, _rates, _sanityRates)
+}
+
+// SetContracts is a paid mutator transaction binding the contract method 0xb3066d49.
+//
+// Solidity: function setContracts(_kyberNetwork address, _rates address, _sanityRates address) returns()
+func (_ReserveContract *ReserveContractSession) SetContracts(_kyberNetwork common.Address, _rates common.Address, _sanityRates common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.SetContracts(&_ReserveContract.TransactOpts, _kyberNetwork, _rates, _sanityRates)
+}
+
+// SetContracts is a paid mutator transaction binding the contract method 0xb3066d49.
+//
+// Solidity: function setContracts(_kyberNetwork address, _rates address, _sanityRates address) returns()
+func (_ReserveContract *ReserveContractTransactorSession) SetContracts(_kyberNetwork common.Address, _rates common.Address, _sanityRates common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.SetContracts(&_ReserveContract.TransactOpts, _kyberNetwork, _rates, _sanityRates)
+}
+
+// Trade is a paid mutator transaction binding the contract method 0x6cf69811.
+//
+// Solidity: function trade(sourceToken address, sourceAmount uint256, destToken address, destAddress address, conversionRate uint256, validate bool) returns(bool)
+func (_ReserveContract *ReserveContractTransactor) Trade(opts *bind.TransactOpts, sourceToken common.Address, sourceAmount *big.Int, destToken common.Address, destAddress common.Address, conversionRate *big.Int, validate bool) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "trade", sourceToken, sourceAmount, destToken, destAddress, conversionRate, validate)
+}
+
+// Trade is a paid mutator transaction binding the contract method 0x6cf69811.
+//
+// Solidity: function trade(sourceToken address, sourceAmount uint256, destToken address, destAddress address, conversionRate uint256, validate bool) returns(bool)
+func (_ReserveContract *ReserveContractSession) Trade(sourceToken common.Address, sourceAmount *big.Int, destToken common.Address, destAddress common.Address, conversionRate *big.Int, validate bool) (*types.Transaction, error) {
+	return _ReserveContract.Contract.Trade(&_ReserveContract.TransactOpts, sourceToken, sourceAmount, destToken, destAddress, conversionRate, validate)
+}
+
+// Trade is a paid mutator transaction binding the contract method 0x6cf69811.
+//
+// Solidity: function trade(sourceToken address, sourceAmount uint256, destToken address, destAddress address, conversionRate uint256, validate bool) returns(bool)
+func (_ReserveContract *ReserveContractTransactorSession) Trade(sourceToken common.Address, sourceAmount *big.Int, destToken common.Address, destAddress common.Address, conversionRate *big.Int, validate bool) (*types.Transaction, error) {
+	return _ReserveContract.Contract.Trade(&_ReserveContract.TransactOpts, sourceToken, sourceAmount, destToken, destAddress, conversionRate, validate)
+}
+
+// TransferAdmin is a paid mutator transaction binding the contract method 0x75829def.
+//
+// Solidity: function transferAdmin(newAdmin address) returns()
+func (_ReserveContract *ReserveContractTransactor) TransferAdmin(opts *bind.TransactOpts, newAdmin common.Address) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "transferAdmin", newAdmin)
+}
+
+// TransferAdmin is a paid mutator transaction binding the contract method 0x75829def.
+//
+// Solidity: function transferAdmin(newAdmin address) returns()
+func (_ReserveContract *ReserveContractSession) TransferAdmin(newAdmin common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.TransferAdmin(&_ReserveContract.TransactOpts, newAdmin)
+}
+
+// TransferAdmin is a paid mutator transaction binding the contract method 0x75829def.
+//
+// Solidity: function transferAdmin(newAdmin address) returns()
+func (_ReserveContract *ReserveContractTransactorSession) TransferAdmin(newAdmin common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.TransferAdmin(&_ReserveContract.TransactOpts, newAdmin)
 }
 
 // Withdraw is a paid mutator transaction binding the contract method 0x69328dec.
@@ -437,4 +757,46 @@ func (_ReserveContract *ReserveContractSession) Withdraw(token common.Address, a
 // Solidity: function withdraw(token address, amount uint256, destination address) returns(bool)
 func (_ReserveContract *ReserveContractTransactorSession) Withdraw(token common.Address, amount *big.Int, destination common.Address) (*types.Transaction, error) {
 	return _ReserveContract.Contract.Withdraw(&_ReserveContract.TransactOpts, token, amount, destination)
+}
+
+// WithdrawEther is a paid mutator transaction binding the contract method 0xce56c454.
+//
+// Solidity: function withdrawEther(amount uint256, sendTo address) returns()
+func (_ReserveContract *ReserveContractTransactor) WithdrawEther(opts *bind.TransactOpts, amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "withdrawEther", amount, sendTo)
+}
+
+// WithdrawEther is a paid mutator transaction binding the contract method 0xce56c454.
+//
+// Solidity: function withdrawEther(amount uint256, sendTo address) returns()
+func (_ReserveContract *ReserveContractSession) WithdrawEther(amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.WithdrawEther(&_ReserveContract.TransactOpts, amount, sendTo)
+}
+
+// WithdrawEther is a paid mutator transaction binding the contract method 0xce56c454.
+//
+// Solidity: function withdrawEther(amount uint256, sendTo address) returns()
+func (_ReserveContract *ReserveContractTransactorSession) WithdrawEther(amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.WithdrawEther(&_ReserveContract.TransactOpts, amount, sendTo)
+}
+
+// WithdrawToken is a paid mutator transaction binding the contract method 0x3ccdbb28.
+//
+// Solidity: function withdrawToken(token address, amount uint256, sendTo address) returns()
+func (_ReserveContract *ReserveContractTransactor) WithdrawToken(opts *bind.TransactOpts, token common.Address, amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _ReserveContract.contract.Transact(opts, "withdrawToken", token, amount, sendTo)
+}
+
+// WithdrawToken is a paid mutator transaction binding the contract method 0x3ccdbb28.
+//
+// Solidity: function withdrawToken(token address, amount uint256, sendTo address) returns()
+func (_ReserveContract *ReserveContractSession) WithdrawToken(token common.Address, amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.WithdrawToken(&_ReserveContract.TransactOpts, token, amount, sendTo)
+}
+
+// WithdrawToken is a paid mutator transaction binding the contract method 0x3ccdbb28.
+//
+// Solidity: function withdrawToken(token address, amount uint256, sendTo address) returns()
+func (_ReserveContract *ReserveContractTransactorSession) WithdrawToken(token common.Address, amount *big.Int, sendTo common.Address) (*types.Transaction, error) {
+	return _ReserveContract.Contract.WithdrawToken(&_ReserveContract.TransactOpts, token, amount, sendTo)
 }
