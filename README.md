@@ -1,5 +1,33 @@
 # Data fetcher for KyberNetwork reserve
 
+## Compile it
+
+```
+cd cmd && go build -v
+```
+a `cmd` executable file will be created in `cmd` module.
+
+## Run the reserve data
+
+1. You need to prepare a `config.json` file inside `cmd` module. The file is described in later section.
+2. You need to prepare a JSON keystore file inside `cmd` module. It is the keystore for the reserve owner.
+3. Make sure your working directory is `cmd`. Run `KYBER_EXCHANGES=binance,bittrex ./cmd` in dev mode.
+
+## Config file
+
+sample:
+```
+{
+  "binance_key": "your binance key",
+  "binance_secret": "your binance secret",
+  "bittrex_key": "bittrex key",
+  "bittrex_secret": "bittrex secret",
+  "kn_secret": "secret key for people to sign their requests to our apis. It is ignored in dev mode.",
+  "keystore_path": "path to the JSON keystore file, recommended to be absolute path",
+  "passphrase": "passphrase to unlock the JSON keystore"
+}
+```
+
 ## APIs
 
 ### Get prices for specific base-quote pair
