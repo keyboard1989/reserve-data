@@ -15,6 +15,6 @@ type Storage interface {
 	CurrentRateVersion(timepoint uint64) (common.Version, error)
 	GetAllRates(common.Version) (common.AllRateEntry, error)
 
-	GetAllRecords() ([]common.ActivityRecord, error)
+	GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error)
 	GetPendingActivities() ([]common.ActivityRecord, error)
 }

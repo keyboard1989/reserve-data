@@ -30,6 +30,8 @@ func GetConfigForSimulation() *Config {
 		tokens = append(tokens, tok)
 	}
 
+	// storage := storage.NewRamStorage()
+	// metricStorage := metric.NewRamMetricStorage()
 	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
 	if err != nil {
 		panic(err)
@@ -43,6 +45,7 @@ func GetConfigForSimulation() *Config {
 	)
 
 	// endpoint := "http://localhost:8545"
+	// endpoint := "https://kovan.infura.io"
 	// endpoint := "https://kovan.kyber.network"
 	endpoint := "http://blockchain:8545"
 

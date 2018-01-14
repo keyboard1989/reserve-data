@@ -116,8 +116,8 @@ func (self ReserveData) GetAllRates(timepoint uint64) (common.AllRateResponse, e
 	}
 }
 
-func (self ReserveData) GetRecords() ([]common.ActivityRecord, error) {
-	return self.storage.GetAllRecords()
+func (self ReserveData) GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
+	return self.storage.GetAllRecords(fromTime, toTime)
 }
 
 func (self ReserveData) GetPendingActivities() ([]common.ActivityRecord, error) {

@@ -92,8 +92,8 @@ func (self *RamStorage) Record(
 	)
 }
 
-func (self *RamStorage) GetAllRecords() ([]common.ActivityRecord, error) {
-	return self.activity.GetAllRecords()
+func (self *RamStorage) GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
+	return self.activity.GetAllRecords(fromTime, toTime)
 }
 
 func (self *RamStorage) GetPendingActivities() ([]common.ActivityRecord, error) {
