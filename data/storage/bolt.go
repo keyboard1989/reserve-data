@@ -169,7 +169,7 @@ func (self *BoltStorage) GetAllPrices(version common.Version) (common.AllPriceEn
 }
 
 func (self *BoltStorage) GetOnePrice(pair common.TokenPairID, version common.Version) (common.OnePrice, error) {
-	result := map[common.TokenPairID]common.OnePrice{}
+	result := common.AllPriceEntry{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PRICE_BUCKET))
@@ -184,7 +184,7 @@ func (self *BoltStorage) GetOnePrice(pair common.TokenPairID, version common.Ver
 	if err != nil {
 		return common.OnePrice{}, err
 	} else {
-		pair, exist := result[pair]
+		pair, exist := result.Data[pair]
 		if exist {
 			return pair, nil
 		} else {
@@ -324,33 +324,49 @@ func (self *BoltStorage) Record(
 		if err != nil {
 			return err
 		}
-		idByte, _ := id.MarshalText()
-		err = b.Put(idByte, dataJson)
+		// idByte, _ := id.MarshalText()
+		idByte := id.ToBytes()
+		err = b.Put(idByte[:], dataJson)
 		if err != nil {
 			return err
 		}
 		if record.IsPending() {
 			pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
-			err = pb.Put(idByte, dataJson)
+			err = pb.Put(idByte[:], dataJson)
 		}
 		return err
 	})
 	return err
 }
 
-func (self *BoltStorage) GetAllRecords() ([]common.ActivityRecord, error) {
+func formatTimepointToActivityID(timepoint uint64, id []byte) []byte {
+	if timepoint == 0 {
+		return id
+	} else {
+		activityID := common.NewActivityID(timepoint, "")
+		byteID := activityID.ToBytes()
+		return byteID[:]
+	}
+}
+
+func (self *BoltStorage) GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
 	result := []common.ActivityRecord{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
 		c := b.Cursor()
-		for k, v := c.First(); k != nil; k, v = c.Next() {
+		fkey, _ := c.First()
+		lkey, _ := c.Last()
+		min := formatTimepointToActivityID(fromTime, fkey)
+		max := formatTimepointToActivityID(toTime, lkey)
+
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.ActivityRecord{}
 			err = json.Unmarshal(v, &record)
 			if err != nil {
 				return err
 			}
-			result = append(result, record)
+			result = append([]common.ActivityRecord{record}, result...)
 		}
 		return nil
 	})
@@ -380,17 +396,18 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
-		idBytes, _ := id.MarshalText()
+		// idBytes, _ := id.MarshalText()
+		idBytes := id.ToBytes()
 		dataJson, err := json.Marshal(activity)
 		if err != nil {
 			return err
 		}
-		err = pb.Put(idBytes, dataJson)
+		err = pb.Put(idBytes[:], dataJson)
 		if err != nil {
 			return err
 		}
 		if !activity.IsPending() {
-			err = pb.Delete(idBytes)
+			err = pb.Delete(idBytes[:])
 			if err != nil {
 				return err
 			}
@@ -399,7 +416,7 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 		if err != nil {
 			return err
 		}
-		return b.Put(idBytes, dataJson)
+		return b.Put(idBytes[:], dataJson)
 	})
 	return err
 }
@@ -421,8 +438,9 @@ func (self *BoltStorage) RegisterBittrexDeposit(id uint64, actID common.Activity
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
-		actIDBytes, _ := actID.MarshalText()
-		err = b.Put(uint64ToBytes(id), actIDBytes)
+		// actIDBytes, _ := actID.MarshalText()
+		actIDBytes := actID.ToBytes()
+		err = b.Put(uint64ToBytes(id), actIDBytes[:])
 		return nil
 	})
 	return err
