@@ -18,5 +18,5 @@ type Storage interface {
 	GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error)
 	GetPendingActivities() ([]common.ActivityRecord, error)
 
-	GetTradeLogs(reserve ethereum.Address, fromTime uint64, toTime uint64) ([]common.TradeLog, error)
+	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
 }

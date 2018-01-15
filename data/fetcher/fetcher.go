@@ -45,9 +45,9 @@ func (self *Fetcher) Stop() error {
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
-	go self.RunOrderbookFetcher()
-	go self.RunAuthDataFetcher()
-	go self.RunRateFetcher()
+	// go self.RunOrderbookFetcher()
+	// go self.RunAuthDataFetcher()
+	// go self.RunRateFetcher()
 	go self.RunBlockAndLogFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
@@ -61,16 +61,34 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 		timepoint := common.TimeToTimepoint(t)
 		self.FetchCurrentBlock(timepoint)
 		log.Printf("fetched block from blockchain")
-		lastBlock := self.storage.LastBlock()
-		self.FetchLogs(lastBlock+1, timepoint)
+		lastBlock, err := self.storage.LastBlock()
+		if err == nil {
+			nextBlock := self.FetchLogs(lastBlock+1, timepoint)
+			self.storage.UpdateLogBlock(nextBlock, timepoint)
+		} else {
+			log.Printf("failed to get last fetched log block, err: %+v", err)
+		}
 	}
 }
 
-func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) {
+// return block number that we just fetched the logs
+func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
 	logs, err := self.blockchain.GetLogs(fromBlock, timepoint)
 	if err != nil {
 		log.Printf("fetching logs data from block %d failed, error: %v", fromBlock, err)
+		if fromBlock == 0 {
+			return 0
+		} else {
+			return fromBlock - 1
+		}
 	} else {
+		log.Printf("TODO: translating logs: %+v", logs)
+		log.Printf("TODO: get blocknumber of the latest log")
+		if len(logs) > 0 {
+			return logs[len(logs)-1].BlockNumber
+		} else {
+			return self.currentBlock
+		}
 	}
 }
 

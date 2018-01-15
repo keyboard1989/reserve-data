@@ -6,8 +6,10 @@ import (
 	"strconv"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	ether "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -27,6 +29,8 @@ type Blockchain struct {
 	reserve      *ReserveContract
 	rm           ethereum.Address
 	pricingAddr  ethereum.Address
+	burnerAddr   ethereum.Address
+	networkAddr  ethereum.Address
 	signer       Signer
 	tokens       []common.Token
 	tokenIndices map[string]tbindex
@@ -242,6 +246,53 @@ func (self *Blockchain) SetRates(
 	}
 }
 
+func toBlockNumArg(number *big.Int) string {
+	if number == nil {
+		return "latest"
+	}
+	return hexutil.EncodeBig(number)
+}
+
+func toFilterArg(q ether.FilterQuery) interface{} {
+	arg := map[string]interface{}{
+		"fromBlock": toBlockNumArg(q.FromBlock),
+		"toBlock":   toBlockNumArg(q.ToBlock),
+		"address":   q.Addresses,
+		"topics":    q.Topics,
+	}
+	if q.FromBlock == nil {
+		arg["fromBlock"] = "0x0"
+	}
+	return arg
+}
+
+func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]types.Log, error) {
+	result := []types.Log{}
+	param := ether.FilterQuery{
+		big.NewInt(int64(fromBlock)),
+		nil,
+		[]ethereum.Address{
+			self.networkAddr,
+			self.burnerAddr,
+		},
+		[][]ethereum.Hash{
+			[]ethereum.Hash{
+				// latest version
+				// ethereum.HexToHash("0xf838f6ddc89706878e3c3e698e9b5cbfbf2c0e3d3dcd0bd2e00f1ccf313e0185"),
+				// ethereum.HexToHash("0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"),
+				// ethereum.HexToHash("0x1849bd6a030a1bca28b83437fd3de96f3d27a5d172fa7e9c78e7b61468928a39"),
+				// ropsten version
+				ethereum.HexToHash("0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"),
+				ethereum.HexToHash("0x41fd227440c32bb7e3ed320d32a91ca013da28568e2f8573aa2d0bdf448ea09c"),
+				ethereum.HexToHash("0xec0d3e799aa270a144d7e3be084ccfc657450e33ecea1b1a4154c95cedaae5c3"),
+			},
+		},
+	}
+	err := self.rpcClient.Call(&result, "eth_getLogs", toFilterArg(param))
+	log.Printf("getting error parsing: %v", err)
+	return result, err
+}
+
 func (self *Blockchain) Send(
 	token common.Token,
 	amount *big.Int,
@@ -311,7 +362,7 @@ func (self *Blockchain) Send(
 func NewBlockchain(
 	client *rpc.Client,
 	ethereum *ethclient.Client,
-	wrapperAddr, pricingAddr, reserveAddr ethereum.Address,
+	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr ethereum.Address,
 	signer Signer, nonceCorpus NonceCorpus) (*Blockchain, error) {
 	wrapper, err := NewContractWrapper(wrapperAddr, ethereum)
 	if err != nil {
@@ -336,6 +387,8 @@ func NewBlockchain(
 		reserve:     reserve,
 		rm:          reserveAddr,
 		pricingAddr: pricingAddr,
+		burnerAddr:  burnerAddr,
+		networkAddr: networkAddr,
 		signer:      signer,
 		tokens:      []common.Token{},
 		nonce:       nonceCorpus,
