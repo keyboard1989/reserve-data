@@ -284,12 +284,37 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 }
 
 func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	// TODO: complete this deposit status
+	idParts := strings.Split(id.EID, "|")
+	txID := idParts[0]
+	deposits, err := self.interf.DepositHistory()
+	if err != nil && deposits.Status != "ok" {
+		return "", err
+	}
+	for _, deposit := range deposits.Data {
+		if deposit.TxHash == txID {
+			if deposit.State == "safe" {
+				return "done", nil
+			}
+			return "", nil
+		}
+	}
 	return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and activity ID are not consistently designed")
 }
 
 func (self *Huobi) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
-	// TODO: complete this withdraw status
+	withdrawID, _ := strconv.ParseUint(id.EID, 10, 64)
+	withdraws, err := self.interf.WithdrawHistory()
+	if err != nil {
+		return "", "", nil
+	}
+	for _, withdraw := range withdraws.Data {
+		if withdraw.ID == withdrawID {
+			if withdraw.State == "safe" {
+				return "done", strconv.FormatUint(withdraw.ID, 10), nil
+			}
+			return "", strconv.FormatUint(withdraw.ID, 10), nil
+		}
+	}
 	return "", "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from huobi and activity ID are not consistently designed")
 }
 

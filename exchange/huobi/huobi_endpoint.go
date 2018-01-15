@@ -26,9 +26,9 @@ type HuobiEndpoint struct {
 
 func (self *HuobiEndpoint) fillRequest(req *http.Request, signNeeded bool, timepoint uint64) {
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		// req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Add("Content-Type", "application/json")
 	}
-	req.Header.Add("Accept", "application/json")
 	if signNeeded {
 		q := req.URL.Query()
 		sig := url.Values{}
@@ -38,20 +38,23 @@ func (self *HuobiEndpoint) fillRequest(req *http.Request, signNeeded bool, timep
 		hostname := req.URL.Hostname()
 		path := req.URL.Path
 		payload := strings.Join([]string{method, hostname, path, auth}, "\n")
-
 		sig.Set("Signature", self.signer.HuobiSign(payload))
 		req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 	}
 }
 
 func (self *HuobiEndpoint) GetResponse(
-	method string, url string,
+	method string, req_url string,
 	params map[string]string, signNeeded bool, timepoint uint64) ([]byte, error) {
 
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
-	req, _ := http.NewRequest(method, url, nil)
+	req_body, _ := json.Marshal(params)
+	req, _ := http.NewRequest(method, req_url, nil)
+	if method == "POST" {
+		req.Body = ioutil.NopCloser(strings.NewReader(string(req_body)))
+	}
 	req.Header.Add("Accept", "application/json")
 
 	q := req.URL.Query()
@@ -127,18 +130,16 @@ func (self *HuobiEndpoint) GetDepthOnePair(
 
 func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (exchange.HuobiTrade, error) {
 	result := exchange.HuobiTrade{}
-	symbol := base.ID + quote.ID
+	symbol := strings.ToLower(base.ID) + strings.ToLower(quote.ID)
 	orderType := tradeType + "-limit"
 	accounts, _ := self.GetAccounts()
 	params := map[string]string{
-		"account_id": strconv.FormatUint(accounts.Data[0].ID, 10),
+		"account-id": strconv.FormatUint(accounts.Data[0].ID, 10),
 		"symbol":     symbol,
-		"side":       strings.ToUpper(tradeType),
+		"source":     "api",
 		"type":       orderType,
 		"amount":     strconv.FormatFloat(amount, 'f', -1, 64),
-	}
-	if orderType == "buy-limit" {
-		params["price"] = strconv.FormatFloat(rate, 'f', -1, 64)
+		"price":      strconv.FormatFloat(rate, 'f', -1, 64),
 	}
 	resp_body, err := self.GetResponse(
 		"POST",
@@ -151,19 +152,22 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 		return result, err
 	} else {
 		json.Unmarshal(resp_body, &result)
+		if result.Status != "ok" {
+			return result, errors.New(fmt.Sprintf("Create order failed: %s\n", result.Reason))
+		}
 		return result, nil
 	}
 }
 
-func (self *HuobiEndpoint) WithdrawHistory(startTime, endTime uint64) (exchange.HuobiWithdraw, error) {
-	result := exchange.HuobiWithdraw{}
+func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
+	result := exchange.HuobiWithdraws{}
 	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
-		self.interf.AuthenticatedEndpoint()+"/", // TODO: update later
+		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
 		map[string]string{
-			"startTime": fmt.Sprintf("%d", startTime),
-			"endTime":   fmt.Sprintf("%d", endTime),
+			"size":  "11",
+			"types": "withdraw-virtual",
 		},
 		true,
 		timepoint,
@@ -171,21 +175,21 @@ func (self *HuobiEndpoint) WithdrawHistory(startTime, endTime uint64) (exchange.
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
 		if result.Status != "ok" {
-			err = errors.New("Getting withdraw history from Huobi failed")
+			err = errors.New(result.Reason)
 		}
 	}
 	return result, err
 }
 
-func (self *HuobiEndpoint) DepositHistory(startTime, endTime uint64) (exchange.HuobiDeposit, error) {
-	result := exchange.HuobiDeposit{}
+func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
+	result := exchange.HuobiDeposits{}
 	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
-		self.interf.AuthenticatedEndpoint()+"/", // TODO: lack of api, update later
+		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
 		map[string]string{
-			"startTime": fmt.Sprintf("%d", startTime),
-			"endTime":   fmt.Sprintf("%d", endTime),
+			"size": "10",
+			"type": "deposit-virtual",
 		},
 		true,
 		timepoint,
@@ -193,7 +197,7 @@ func (self *HuobiEndpoint) DepositHistory(startTime, endTime uint64) (exchange.H
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
 		if result.Status != "ok" {
-			err = errors.New("Getting deposit history from Huobi failed")
+			err = errors.New(fmt.Sprintf("Getting deposit history from Huobi failed: %s\n", result.Reason))
 		}
 	}
 	return result, err
@@ -202,7 +206,7 @@ func (self *HuobiEndpoint) DepositHistory(startTime, endTime uint64) (exchange.H
 func (self *HuobiEndpoint) CancelOrder(symbol string, id uint64) (exchange.HuobiCancel, error) {
 	result := exchange.HuobiCancel{}
 	resp_body, err := self.GetResponse(
-		"DELETE",
+		"POST",
 		self.interf.AuthenticatedEndpoint()+"/v1/order/orders/"+strconv.FormatUint(id, 10)+"/submitcancel",
 		map[string]string{
 			"order-id": fmt.Sprintf("%d", id),
@@ -213,7 +217,7 @@ func (self *HuobiEndpoint) CancelOrder(symbol string, id uint64) (exchange.Huobi
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
 		if result.Status != "ok" {
-			err = errors.New("Canceling order from Huobi failed")
+			err = errors.New(fmt.Sprintf("Cancel order failed: %s\n", result.Reason))
 		}
 	}
 	return result, err
@@ -233,7 +237,7 @@ func (self *HuobiEndpoint) OrderStatus(symbol string, id uint64, timepoint uint6
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
 		if result.Status != "ok" {
-			err = errors.New("Get order form Huobi failed")
+			err = errors.New(fmt.Sprintf("Get order status failed: %s \n", result.Reason))
 		}
 	}
 	return result, err
@@ -245,9 +249,9 @@ func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		"POST",
 		self.interf.AuthenticatedEndpoint()+"/v1/dw/withdraw/api/create",
 		map[string]string{
-			"currency": token.ID,
 			"address":  address.Hex(),
 			"amount":   strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
+			"currency": token.ID,
 		},
 		true,
 		timepoint,
@@ -255,12 +259,12 @@ func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
 		if result.Status != "ok" {
-			return "", errors.New("Cannot withdraw from huobi")
+			return "", errors.New(fmt.Sprintf("Withdraw from Huobi failed: %s\n", result.Reason))
 		}
-		return string(result.WithdrawID), nil
+		return string(result.ID), nil
 	} else {
 		log.Printf("Error: %v", err)
-		return "", errors.New("withdraw rejected by Huobi")
+		return "", errors.New("Withdraw rejected by Huobi")
 	}
 }
 
@@ -306,17 +310,17 @@ func (self *HuobiEndpoint) GetDepositAddress(asset string) (exchange.HuobiDeposi
 	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
-		// TODO: this api have no damn documentation
-		// so need to figure it out how to use this
-		self.interf.AuthenticatedEndpoint()+"/dw/withdraw-virtual/addresses",
-		map[string]string{},
+		self.interf.AuthenticatedEndpoint()+"/dw/deposit-virtual/addresses",
+		map[string]string{
+			"currency": asset,
+		},
 		true,
 		timepoint,
 	)
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
 		if !result.Success {
-			err = errors.New(result.Msg)
+			err = errors.New(fmt.Sprintf("Get deposit address failed: %s\n", result.Reason))
 		}
 	}
 	return result, err

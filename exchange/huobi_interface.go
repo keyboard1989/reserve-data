@@ -32,10 +32,9 @@ type HuobiInterface interface {
 
 	CancelOrder(symbol string, id uint64) (HuobiCancel, error)
 
-	DepositHistory(startTime, endTime uint64) (HuobiDeposit, error)
+	DepositHistory() (HuobiDeposits, error)
 
-	WithdrawHistory(
-		startTime, endTime uint64) (HuobiWithdraw, error)
+	WithdrawHistory() (HuobiWithdraws, error)
 
 	OrderStatus(
 		symbol string, id uint64, timepoint uint64) (HuobiOrder, error)
