@@ -96,6 +96,7 @@ type HuobiOrder struct {
 		OrigQty     string `json:"amount"`
 		Price       string `json:"price"`
 		Type        string `json:"type"`
+		State       string `json:"state"`
 		ExecutedQty string `json:"field-amount"`
 	} `json:"data"`
 	Reason string `json:"err-msg"`

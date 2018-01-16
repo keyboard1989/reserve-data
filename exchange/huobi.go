@@ -331,7 +331,7 @@ func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	if err != nil {
 		return "", err
 	}
-	if order.Status == "pre-submitted" || order.Status == "submitting" || order.Status == "submitted" || order.Status == "partial-filled" || order.Status == "partial-canceled" {
+	if order.Data.State == "pre-submitted" || order.Data.State == "submitting" || order.Data.State == "submitted" || order.Data.State == "partial-filled" || order.Data.State == "partial-canceled" {
 		return "", nil
 	} else {
 		return "done", nil
