@@ -109,7 +109,6 @@ func (self FileSigner) BinanceSign(msg string) string {
 func (self FileSigner) HuobiSign(msg string) string {
 	mac := hmac.New(sha256.New, []byte(self.HuobiSecret))
 	mac.Write([]byte(msg))
-	// result := ethereum.Bytes2Hex(mac.Sum(nil))
 	result := base64.StdEncoding.EncodeToString(mac.Sum(nil))
 	return result
 }
