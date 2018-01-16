@@ -310,7 +310,7 @@ func (self *HuobiEndpoint) GetDepositAddress(asset string) (exchange.HuobiDeposi
 	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
-		self.interf.AuthenticatedEndpoint()+"/dw/deposit-virtual/addresses",
+		self.interf.AuthenticatedEndpoint()+"/v1/dw/deposit-virtual/addresses",
 		map[string]string{
 			"currency": asset,
 		},

@@ -18,6 +18,8 @@ type HuobiInterface interface {
 
 	GetExchangeInfo() (HuobiExchangeInfo, error)
 
+	GetDepositAddress(token string) (HuobiDepositAddress, error)
+
 	Withdraw(
 		token common.Token,
 		amount *big.Int,
