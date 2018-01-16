@@ -18,6 +18,8 @@ type BinanceInterface interface {
 
 	GetExchangeInfo() (BinanceExchangeInfo, error)
 
+	GetDepositAddress(tokenID string) (Binadepositaddress, error)
+
 	Withdraw(
 		token common.Token,
 		amount *big.Int,
