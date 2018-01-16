@@ -326,10 +326,13 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]common.Tr
 				tradeLog.BlockNumber = l.BlockNumber
 				tradeLog.TransactionHash = l.TxHash
 				tradeLog.TransactionIndex = l.TxIndex
-				tradeLog.Timestamp = InterpretTimestamp(
+				tradeLog.Timestamp, err = self.InterpretTimestamp(
 					tradeLog.BlockNumber,
 					tradeLog.TransactionIndex,
 				)
+				if err != nil {
+					return result, err
+				}
 			}
 			if len(l.Topics) == 0 {
 				log.Printf("Getting empty zero topic list. This shouldn't happen and is Ethereum responsibility.")
