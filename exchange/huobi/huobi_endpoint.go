@@ -251,7 +251,7 @@ func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		map[string]string{
 			"address":  address.Hex(),
 			"amount":   strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
-			"currency": token.ID,
+			"currency": strings.ToLower(token.ID),
 		},
 		true,
 		timepoint,
@@ -261,7 +261,7 @@ func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		if result.Status != "ok" {
 			return "", errors.New(fmt.Sprintf("Withdraw from Huobi failed: %s\n", result.Reason))
 		}
-		return string(result.ID), nil
+		return strconv.FormatUint(result.ID, 64), nil
 	} else {
 		log.Printf("Error: %v", err)
 		return "", errors.New("Withdraw rejected by Huobi")
