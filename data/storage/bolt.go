@@ -459,8 +459,8 @@ func (self *BoltStorage) RegisterBittrexDeposit(id uint64, actID common.Activity
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
 		// actIDBytes, _ := actID.MarshalText()
-		actIDBytes := actID.ToBytes()
-		err = b.Put(uint64ToBytes(id), actIDBytes[:])
+		actIDBytes, _ := actID.MarshalText()
+		err = b.Put(uint64ToBytes(id), actIDBytes)
 		return nil
 	})
 	return err
