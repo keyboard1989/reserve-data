@@ -561,6 +561,28 @@ func (self *HTTPServer) GetActivities(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) TradeLogs(c *gin.Context) {
+	log.Printf("Getting trade logs")
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+
+	data, err := self.app.GetTradeLogs(fromTime, toTime)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) StopFetcher(c *gin.Context) {
 	err := self.app.Stop()
 	if err != nil {
@@ -836,7 +858,7 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/authdata", self.AuthData)
 	self.r.GET("/activities", self.GetActivities)
 	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
-
+	self.r.GET("/tradelogs", self.TradeLogs)
 	self.r.GET("/metrics", self.Metrics)
 	self.r.POST("/metrics", self.StoreMetrics)
 

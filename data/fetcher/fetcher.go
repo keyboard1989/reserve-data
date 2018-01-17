@@ -45,9 +45,9 @@ func (self *Fetcher) Stop() error {
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
-	// go self.RunOrderbookFetcher()
-	// go self.RunAuthDataFetcher()
-	// go self.RunRateFetcher()
+	go self.RunOrderbookFetcher()
+	go self.RunAuthDataFetcher()
+	go self.RunRateFetcher()
 	go self.RunBlockAndLogFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
@@ -83,9 +83,9 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
 			return fromBlock - 1
 		}
 	} else {
-		log.Printf("Got logs: %+v", logs)
 		if len(logs) > 0 {
 			for _, l := range logs {
+				log.Printf("blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
 				err = self.storage.StoreTradeLog(l, timepoint)
 				if err != nil {
 					log.Printf("storing trade log failed, abort storing process and return latest stored log block number, err: %+v", err)

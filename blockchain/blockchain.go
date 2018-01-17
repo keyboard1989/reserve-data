@@ -338,7 +338,6 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]common.Tr
 				log.Printf("Getting empty zero topic list. This shouldn't happen and is Ethereum responsibility.")
 			} else {
 				topic := l.Topics[0]
-				log.Printf("Topic: %s", topic.Hex())
 				switch topic.Hex() {
 				case FeeToWalletEvent:
 					reserveAddr, walletAddr, walletFee := LogDataToFeeWalletParams(l.Data)
@@ -363,11 +362,7 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]common.Tr
 	if tradeLog != nil {
 		result = append(result, *tradeLog)
 	}
-	reverse := []common.TradeLog{}
-	for i := 0; i < len(result); i++ {
-		reverse = append(reverse, result[len(result)-i-1])
-	}
-	return reverse, nil
+	return result, nil
 }
 
 func (self *Blockchain) Send(

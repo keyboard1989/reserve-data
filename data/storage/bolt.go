@@ -32,6 +32,7 @@ type BoltStorage struct {
 	mu    sync.RWMutex
 	db    *bolt.DB
 	block uint64
+	index uint
 }
 
 func NewBoltStorage(path string) (*BoltStorage, error) {
@@ -82,11 +83,12 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		}
 		return nil
 	})
-	storage := &BoltStorage{sync.RWMutex{}, db, 0}
+	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
 	storage.db.View(func(tx *bolt.Tx) error {
-		block, err := storage.LoadLastLogBlock(tx)
+		block, index, err := storage.LoadLastLogIndex(tx)
 		if err == nil {
 			storage.block = block
+			storage.index = index
 		}
 		return err
 	})
@@ -536,16 +538,16 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 	return result, err
 }
 
-func (self *BoltStorage) LoadLastLogBlock(tx *bolt.Tx) (uint64, error) {
+func (self *BoltStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) {
 	b := tx.Bucket([]byte(LOG_BUCKET))
 	c := b.Cursor()
 	k, v := c.Last()
 	if k != nil {
 		record := common.TradeLog{}
 		json.Unmarshal(v, &record)
-		return record.BlockNumber, nil
+		return record.BlockNumber, record.TransactionIndex, nil
 	} else {
-		return 0, errors.New("Database is empty")
+		return 0, 0, errors.New("Database is empty")
 	}
 }
 
@@ -570,7 +572,6 @@ func (self *BoltStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 		c := b.Cursor()
 		min := uint64ToBytes(fromTime)
 		max := uint64ToBytes(toTime)
-
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.TradeLog{}
 			err = json.Unmarshal(v, &record)
@@ -589,15 +590,17 @@ func (self *BoltStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) e
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(LOG_BUCKET))
 		var dataJson []byte
-		block, berr := self.LoadLastLogBlock(tx)
-		if berr == nil && block >= stat.BlockNumber {
-			err = errors.New("Duplicated log (new block number is smaller or equal to latest block number)")
+		block, txindex, berr := self.LoadLastLogIndex(tx)
+		if berr == nil && (block > stat.BlockNumber || (block == stat.BlockNumber && txindex >= stat.TransactionIndex)) {
+			err = errors.New(
+				fmt.Sprintf("Duplicated log (new block number %s is smaller or equal to latest block number %s)", block, stat.BlockNumber))
 			return err
 		}
 		dataJson, err = json.Marshal(stat)
 		if err != nil {
 			return err
 		}
+		log.Printf("Storing log: %d", stat.Timestamp)
 		idByte := uint64ToBytes(stat.Timestamp)
 		err = b.Put(idByte, dataJson)
 		return err
