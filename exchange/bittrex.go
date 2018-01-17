@@ -175,6 +175,19 @@ func (self *Bittrex) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 		return "", err
 	} else {
 		for _, deposit := range histories.Result {
+			log.Printf("Bittrex deposit history check: %v %v %v %v",
+				deposit.Currency == currency,
+				deposit.Amount-amount < BITTREX_EPSILON,
+				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond),
+				self.storage.IsNewBittrexDeposit(deposit.Id, id),
+			)
+			log.Printf("deposit.Currency: %s", deposit.Currency)
+			log.Printf("currency: %s", currency)
+			log.Printf("deposit.Amount: %s", deposit.Amount)
+			log.Printf("amount: %s", amount)
+			log.Printf("deposit.LastUpdated: %s", bitttimestampToUint64(deposit.LastUpdated))
+			log.Printf("timestamp: %s", timestamp/uint64(time.Millisecond))
+			log.Printf("is new deposit: %s", self.storage.IsNewBittrexDeposit(deposit.Id, id))
 			if deposit.Currency == currency &&
 				deposit.Amount-amount < BITTREX_EPSILON &&
 				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond) &&
