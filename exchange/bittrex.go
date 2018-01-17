@@ -14,7 +14,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-const BITTREX_EPSILON float64 = 0.00000001
+const BITTREX_EPSILON float64 = 0.000001
 
 type Bittrex struct {
 	interf       BittrexInterface
