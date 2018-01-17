@@ -282,8 +282,11 @@ response:
 
 ### Get all activityes (signing required)
 ```
-<host>:8000/activites
+<host>:8000/activities
 GET request
+url params: 
+  fromTime: from timepoint - uint64, unix millisecond (optional if empty then get from first activity)
+  toTime: to timepoint - uint64, unix millisecond (optional if empty then get to last activity)
 ```
 ### Get immediate pending activities (signing required)
 ```
