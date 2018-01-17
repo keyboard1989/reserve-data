@@ -487,7 +487,6 @@ func (self *BoltStorage) StoreMetric(data *metric.MetricEntry, timepoint uint64)
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(METRIC_BUCKET))
-		self.PruneOutdatedData(tx, METRIC_BUCKET)
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err
