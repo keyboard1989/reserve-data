@@ -288,6 +288,7 @@ url params:
   fromTime: from timepoint - uint64, unix millisecond (optional if empty then get from first activity)
   toTime: to timepoint - uint64, unix millisecond (optional if empty then get to last activity)
 ```
+Note: `fromTime` and `toTime` shouldn't be included into signing message.
 ### Get immediate pending activities (signing required)
 ```
 <host>:8000/immediate-pending-activities
@@ -356,22 +357,15 @@ Example:
 ## Supported tokens
 
 1. eth (ETH)
-2. bat (BAT)
-3. civic (CVC)
-4. digix (DGD)
-5. eos (EOS)
-6. adex (ADX)
-7. funfair (FUN)
-8. golem (GNT)
-9. kybernetwork (KNC)
-10. link (LINK)
-11. monaco (MCO)
-12. omisego (OMG)
-13. tenx (PAY)
+2. eos (EOS)
+3. kybernetwork (KNC)
+4. omisego (OMG)
+5. salt (SALT)
+6. snt (STATUS)
 
 ## Supported exchanges
 
 1. Bittrex (bittrex)
 2. Binance (binance)
-3. Bitfinex (bitfinex)
-4. Liqui (liqui)
+3. Huobi (huobi) - on going
+4. Bitfinex (bitfinex) - on going
