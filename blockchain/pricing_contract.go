@@ -14,7 +14,7 @@ import (
 )
 
 // PricingABI is the input ABI used to generate the binding from.
-const PricingABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"alerter\",\"type\":\"address\"}],\"name\":\"removeAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"reserve\",\"type\":\"address\"}],\"name\":\"setReserveAddress\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"disableTokenTrade\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validRateDurationInBlocks\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"tokens\",\"type\":\"address[]\"},{\"name\":\"baseBuy\",\"type\":\"uint256[]\"},{\"name\":\"baseSell\",\"type\":\"uint256[]\"},{\"name\":\"buy\",\"type\":\"bytes14[]\"},{\"name\":\"sell\",\"type\":\"bytes14[]\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"indices\",\"type\":\"uint256[]\"}],\"name\":\"setBaseRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"enableTokenTrade\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"pendingAdmin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getOperators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"withdrawToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAlerter\",\"type\":\"address\"}],\"name\":\"addAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numTokensInCurrentCompactData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"buy\",\"type\":\"bytes14[]\"},{\"name\":\"sell\",\"type\":\"bytes14[]\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"indices\",\"type\":\"uint256[]\"}],\"name\":\"setCompactData\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setValidRateDurationInBlocks\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"transferAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"claimAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getAlerters\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getRateUpdateBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"xBuy\",\"type\":\"int256[]\"},{\"name\":\"yBuy\",\"type\":\"int256[]\"},{\"name\":\"xSell\",\"type\":\"int256[]\"},{\"name\":\"ySell\",\"type\":\"int256[]\"}],\"name\":\"setQtyStepFunction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOperator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reserveContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"currentBlockNumber\",\"type\":\"uint256\"},{\"name\":\"buy\",\"type\":\"bool\"},{\"name\":\"qty\",\"type\":\"uint256\"}],\"name\":\"getRate\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"xBuy\",\"type\":\"int256[]\"},{\"name\":\"yBuy\",\"type\":\"int256[]\"},{\"name\":\"xSell\",\"type\":\"int256[]\"},{\"name\":\"ySell\",\"type\":\"int256[]\"}],\"name\":\"setImbalanceStepFunction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"minimalRecordResolution\",\"type\":\"uint256\"},{\"name\":\"maxPerBlockImbalance\",\"type\":\"uint256\"},{\"name\":\"maxTotalImbalance\",\"type\":\"uint256\"}],\"name\":\"setTokenControlInfo\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"buyAmount\",\"type\":\"int256\"},{\"name\":\"rateUpdateBlock\",\"type\":\"uint256\"},{\"name\":\"currentBlock\",\"type\":\"uint256\"}],\"name\":\"recordImbalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"withdrawEther\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"buy\",\"type\":\"bool\"}],\"name\":\"getBasicRate\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"addToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getCompactData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes1\"},{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getTokenControlInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"admin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_admin\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"TokenWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"EtherWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"pendingAdmin\",\"type\":\"address\"}],\"name\":\"TransferAdminPending\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAdmin\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"previousAdmin\",\"type\":\"address\"}],\"name\":\"AdminClaimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAlerter\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"AlerterAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newOperator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"}]"
+const PricingABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"alerter\",\"type\":\"address\"}],\"name\":\"removeAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"reserve\",\"type\":\"address\"}],\"name\":\"setReserveAddress\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"disableTokenTrade\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validRateDurationInBlocks\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"tokens\",\"type\":\"address[]\"},{\"name\":\"baseBuy\",\"type\":\"uint256[]\"},{\"name\":\"baseSell\",\"type\":\"uint256[]\"},{\"name\":\"buy\",\"type\":\"bytes14[]\"},{\"name\":\"sell\",\"type\":\"bytes14[]\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"indices\",\"type\":\"uint256[]\"}],\"name\":\"setBaseRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"enableTokenTrade\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"pendingAdmin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getOperators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getListedTokens\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"withdrawToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAlerter\",\"type\":\"address\"}],\"name\":\"addAlerter\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"numTokensInCurrentCompactData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"command\",\"type\":\"uint256\"},{\"name\":\"param\",\"type\":\"uint256\"}],\"name\":\"getStepFunctionData\",\"outputs\":[{\"name\":\"\",\"type\":\"int256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"buy\",\"type\":\"bytes14[]\"},{\"name\":\"sell\",\"type\":\"bytes14[]\"},{\"name\":\"blockNumber\",\"type\":\"uint256\"},{\"name\":\"indices\",\"type\":\"uint256[]\"}],\"name\":\"setCompactData\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"duration\",\"type\":\"uint256\"}],\"name\":\"setValidRateDurationInBlocks\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getTokenBasicData\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"},{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newAdmin\",\"type\":\"address\"}],\"name\":\"transferAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"claimAdmin\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getAlerters\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getRateUpdateBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"xBuy\",\"type\":\"int256[]\"},{\"name\":\"yBuy\",\"type\":\"int256[]\"},{\"name\":\"xSell\",\"type\":\"int256[]\"},{\"name\":\"ySell\",\"type\":\"int256[]\"}],\"name\":\"setQtyStepFunction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"newOperator\",\"type\":\"address\"}],\"name\":\"addOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reserveContract\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"address\"},{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"tokenImbalanceData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"operator\",\"type\":\"address\"}],\"name\":\"removeOperator\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"currentBlockNumber\",\"type\":\"uint256\"},{\"name\":\"buy\",\"type\":\"bool\"},{\"name\":\"qty\",\"type\":\"uint256\"}],\"name\":\"getRate\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"xBuy\",\"type\":\"int256[]\"},{\"name\":\"yBuy\",\"type\":\"int256[]\"},{\"name\":\"xSell\",\"type\":\"int256[]\"},{\"name\":\"ySell\",\"type\":\"int256[]\"}],\"name\":\"setImbalanceStepFunction\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"minimalRecordResolution\",\"type\":\"uint256\"},{\"name\":\"maxPerBlockImbalance\",\"type\":\"uint256\"},{\"name\":\"maxTotalImbalance\",\"type\":\"uint256\"}],\"name\":\"setTokenControlInfo\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"buyAmount\",\"type\":\"int256\"},{\"name\":\"rateUpdateBlock\",\"type\":\"uint256\"},{\"name\":\"currentBlock\",\"type\":\"uint256\"}],\"name\":\"recordImbalance\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"amount\",\"type\":\"uint256\"},{\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"withdrawEther\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"},{\"name\":\"buy\",\"type\":\"bool\"}],\"name\":\"getBasicRate\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"addToken\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getCompactData\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"bytes1\"},{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"token\",\"type\":\"address\"}],\"name\":\"getTokenControlInfo\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"},{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"admin\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"name\":\"_admin\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"token\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"TokenWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"amount\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"sendTo\",\"type\":\"address\"}],\"name\":\"EtherWithdraw\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"pendingAdmin\",\"type\":\"address\"}],\"name\":\"TransferAdminPending\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAdmin\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"previousAdmin\",\"type\":\"address\"}],\"name\":\"AdminClaimed\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newAlerter\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"AlerterAdded\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"name\":\"newOperator\",\"type\":\"address\"},{\"indexed\":false,\"name\":\"isAdd\",\"type\":\"bool\"}],\"name\":\"OperatorAdded\",\"type\":\"event\"}]"
 
 // Pricing is an auto generated Go binding around an Ethereum contract.
 type Pricing struct {
@@ -255,6 +255,32 @@ func (_Pricing *PricingCallerSession) GetCompactData(token common.Address) (*big
 	return _Pricing.Contract.GetCompactData(&_Pricing.CallOpts, token)
 }
 
+// GetListedTokens is a free data retrieval call binding the contract method 0x2ba996a5.
+//
+// Solidity: function getListedTokens() constant returns(address[])
+func (_Pricing *PricingCaller) GetListedTokens(opts *bind.CallOpts) ([]common.Address, error) {
+	var (
+		ret0 = new([]common.Address)
+	)
+	out := ret0
+	err := _Pricing.contract.Call(opts, out, "getListedTokens")
+	return *ret0, err
+}
+
+// GetListedTokens is a free data retrieval call binding the contract method 0x2ba996a5.
+//
+// Solidity: function getListedTokens() constant returns(address[])
+func (_Pricing *PricingSession) GetListedTokens() ([]common.Address, error) {
+	return _Pricing.Contract.GetListedTokens(&_Pricing.CallOpts)
+}
+
+// GetListedTokens is a free data retrieval call binding the contract method 0x2ba996a5.
+//
+// Solidity: function getListedTokens() constant returns(address[])
+func (_Pricing *PricingCallerSession) GetListedTokens() ([]common.Address, error) {
+	return _Pricing.Contract.GetListedTokens(&_Pricing.CallOpts)
+}
+
 // GetOperators is a free data retrieval call binding the contract method 0x27a099d8.
 //
 // Solidity: function getOperators() constant returns(address[])
@@ -331,6 +357,62 @@ func (_Pricing *PricingSession) GetRateUpdateBlock(token common.Address) (*big.I
 // Solidity: function getRateUpdateBlock(token address) constant returns(uint256)
 func (_Pricing *PricingCallerSession) GetRateUpdateBlock(token common.Address) (*big.Int, error) {
 	return _Pricing.Contract.GetRateUpdateBlock(&_Pricing.CallOpts, token)
+}
+
+// GetStepFunctionData is a free data retrieval call binding the contract method 0x62674e93.
+//
+// Solidity: function getStepFunctionData(token address, command uint256, param uint256) constant returns(int256)
+func (_Pricing *PricingCaller) GetStepFunctionData(opts *bind.CallOpts, token common.Address, command *big.Int, param *big.Int) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Pricing.contract.Call(opts, out, "getStepFunctionData", token, command, param)
+	return *ret0, err
+}
+
+// GetStepFunctionData is a free data retrieval call binding the contract method 0x62674e93.
+//
+// Solidity: function getStepFunctionData(token address, command uint256, param uint256) constant returns(int256)
+func (_Pricing *PricingSession) GetStepFunctionData(token common.Address, command *big.Int, param *big.Int) (*big.Int, error) {
+	return _Pricing.Contract.GetStepFunctionData(&_Pricing.CallOpts, token, command, param)
+}
+
+// GetStepFunctionData is a free data retrieval call binding the contract method 0x62674e93.
+//
+// Solidity: function getStepFunctionData(token address, command uint256, param uint256) constant returns(int256)
+func (_Pricing *PricingCallerSession) GetStepFunctionData(token common.Address, command *big.Int, param *big.Int) (*big.Int, error) {
+	return _Pricing.Contract.GetStepFunctionData(&_Pricing.CallOpts, token, command, param)
+}
+
+// GetTokenBasicData is a free data retrieval call binding the contract method 0x721bba59.
+//
+// Solidity: function getTokenBasicData(token address) constant returns(bool, bool)
+func (_Pricing *PricingCaller) GetTokenBasicData(opts *bind.CallOpts, token common.Address) (bool, bool, error) {
+	var (
+		ret0 = new(bool)
+		ret1 = new(bool)
+	)
+	out := &[]interface{}{
+		ret0,
+		ret1,
+	}
+	err := _Pricing.contract.Call(opts, out, "getTokenBasicData", token)
+	return *ret0, *ret1, err
+}
+
+// GetTokenBasicData is a free data retrieval call binding the contract method 0x721bba59.
+//
+// Solidity: function getTokenBasicData(token address) constant returns(bool, bool)
+func (_Pricing *PricingSession) GetTokenBasicData(token common.Address) (bool, bool, error) {
+	return _Pricing.Contract.GetTokenBasicData(&_Pricing.CallOpts, token)
+}
+
+// GetTokenBasicData is a free data retrieval call binding the contract method 0x721bba59.
+//
+// Solidity: function getTokenBasicData(token address) constant returns(bool, bool)
+func (_Pricing *PricingCallerSession) GetTokenBasicData(token common.Address) (bool, bool, error) {
+	return _Pricing.Contract.GetTokenBasicData(&_Pricing.CallOpts, token)
 }
 
 // GetTokenControlInfo is a free data retrieval call binding the contract method 0xe7d4fd91.
@@ -441,6 +523,32 @@ func (_Pricing *PricingSession) ReserveContract() (common.Address, error) {
 // Solidity: function reserveContract() constant returns(address)
 func (_Pricing *PricingCallerSession) ReserveContract() (common.Address, error) {
 	return _Pricing.Contract.ReserveContract(&_Pricing.CallOpts)
+}
+
+// TokenImbalanceData is a free data retrieval call binding the contract method 0xa80c609e.
+//
+// Solidity: function tokenImbalanceData( address,  uint256) constant returns(uint256)
+func (_Pricing *PricingCaller) TokenImbalanceData(opts *bind.CallOpts, arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
+	var (
+		ret0 = new(*big.Int)
+	)
+	out := ret0
+	err := _Pricing.contract.Call(opts, out, "tokenImbalanceData", arg0, arg1)
+	return *ret0, err
+}
+
+// TokenImbalanceData is a free data retrieval call binding the contract method 0xa80c609e.
+//
+// Solidity: function tokenImbalanceData( address,  uint256) constant returns(uint256)
+func (_Pricing *PricingSession) TokenImbalanceData(arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
+	return _Pricing.Contract.TokenImbalanceData(&_Pricing.CallOpts, arg0, arg1)
+}
+
+// TokenImbalanceData is a free data retrieval call binding the contract method 0xa80c609e.
+//
+// Solidity: function tokenImbalanceData( address,  uint256) constant returns(uint256)
+func (_Pricing *PricingCallerSession) TokenImbalanceData(arg0 common.Address, arg1 *big.Int) (*big.Int, error) {
+	return _Pricing.Contract.TokenImbalanceData(&_Pricing.CallOpts, arg0, arg1)
 }
 
 // ValidRateDurationInBlocks is a free data retrieval call binding the contract method 0x16265694.

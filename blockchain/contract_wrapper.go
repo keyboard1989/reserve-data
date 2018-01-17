@@ -14,7 +14,7 @@ import (
 )
 
 // ContractWrapperABI is the input ABI used to generate the binding from.
-const ContractWrapperABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"x\",\"type\":\"bytes14\"},{\"name\":\"byteInd\",\"type\":\"uint256\"}],\"name\":\"getInt8FromByte\",\"outputs\":[{\"name\":\"\",\"type\":\"int8\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"reserve\",\"type\":\"address\"},{\"name\":\"tokens\",\"type\":\"address[]\"}],\"name\":\"getBalances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"ratesContract\",\"type\":\"address\"},{\"name\":\"tokenList\",\"type\":\"address[]\"}],\"name\":\"getTokenIndicies\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"x\",\"type\":\"bytes14\"},{\"name\":\"byteInd\",\"type\":\"uint256\"}],\"name\":\"getByteFromBytes14\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"network\",\"type\":\"address\"},{\"name\":\"sources\",\"type\":\"address[]\"},{\"name\":\"dests\",\"type\":\"address[]\"},{\"name\":\"qty\",\"type\":\"uint256[]\"}],\"name\":\"getExpectedRates\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"ratesContract\",\"type\":\"address\"},{\"name\":\"tokenList\",\"type\":\"address[]\"}],\"name\":\"getTokenRates\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"int8[]\"},{\"name\":\"\",\"type\":\"int8[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+const ContractWrapperABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"x\",\"type\":\"bytes14\"},{\"name\":\"byteInd\",\"type\":\"uint256\"}],\"name\":\"getInt8FromByte\",\"outputs\":[{\"name\":\"\",\"type\":\"int8\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"reserve\",\"type\":\"address\"},{\"name\":\"tokens\",\"type\":\"address[]\"}],\"name\":\"getBalances\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"ratesContract\",\"type\":\"address\"},{\"name\":\"tokenList\",\"type\":\"address[]\"}],\"name\":\"getTokenIndicies\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"x\",\"type\":\"bytes14\"},{\"name\":\"byteInd\",\"type\":\"uint256\"}],\"name\":\"getByteFromBytes14\",\"outputs\":[{\"name\":\"\",\"type\":\"bytes1\"}],\"payable\":false,\"stateMutability\":\"pure\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"network\",\"type\":\"address\"},{\"name\":\"srcs\",\"type\":\"address[]\"},{\"name\":\"dests\",\"type\":\"address[]\"},{\"name\":\"qty\",\"type\":\"uint256[]\"}],\"name\":\"getExpectedRates\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"ratesContract\",\"type\":\"address\"},{\"name\":\"tokenList\",\"type\":\"address[]\"}],\"name\":\"getTokenRates\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"uint256[]\"},{\"name\":\"\",\"type\":\"int8[]\"},{\"name\":\"\",\"type\":\"int8[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
 
 // ContractWrapper is an auto generated Go binding around an Ethereum contract.
 type ContractWrapper struct {
@@ -197,8 +197,8 @@ func (_ContractWrapper *ContractWrapperCallerSession) GetByteFromBytes14(x [14]b
 
 // GetExpectedRates is a free data retrieval call binding the contract method 0xf1838fe4.
 //
-// Solidity: function getExpectedRates(network address, sources address[], dests address[], qty uint256[]) constant returns(uint256[], uint256[])
-func (_ContractWrapper *ContractWrapperCaller) GetExpectedRates(opts *bind.CallOpts, network common.Address, sources []common.Address, dests []common.Address, qty []*big.Int) ([]*big.Int, []*big.Int, error) {
+// Solidity: function getExpectedRates(network address, srcs address[], dests address[], qty uint256[]) constant returns(uint256[], uint256[])
+func (_ContractWrapper *ContractWrapperCaller) GetExpectedRates(opts *bind.CallOpts, network common.Address, srcs []common.Address, dests []common.Address, qty []*big.Int) ([]*big.Int, []*big.Int, error) {
 	var (
 		ret0 = new([]*big.Int)
 		ret1 = new([]*big.Int)
@@ -207,22 +207,22 @@ func (_ContractWrapper *ContractWrapperCaller) GetExpectedRates(opts *bind.CallO
 		ret0,
 		ret1,
 	}
-	err := _ContractWrapper.contract.Call(opts, out, "getExpectedRates", network, sources, dests, qty)
+	err := _ContractWrapper.contract.Call(opts, out, "getExpectedRates", network, srcs, dests, qty)
 	return *ret0, *ret1, err
 }
 
 // GetExpectedRates is a free data retrieval call binding the contract method 0xf1838fe4.
 //
-// Solidity: function getExpectedRates(network address, sources address[], dests address[], qty uint256[]) constant returns(uint256[], uint256[])
-func (_ContractWrapper *ContractWrapperSession) GetExpectedRates(network common.Address, sources []common.Address, dests []common.Address, qty []*big.Int) ([]*big.Int, []*big.Int, error) {
-	return _ContractWrapper.Contract.GetExpectedRates(&_ContractWrapper.CallOpts, network, sources, dests, qty)
+// Solidity: function getExpectedRates(network address, srcs address[], dests address[], qty uint256[]) constant returns(uint256[], uint256[])
+func (_ContractWrapper *ContractWrapperSession) GetExpectedRates(network common.Address, srcs []common.Address, dests []common.Address, qty []*big.Int) ([]*big.Int, []*big.Int, error) {
+	return _ContractWrapper.Contract.GetExpectedRates(&_ContractWrapper.CallOpts, network, srcs, dests, qty)
 }
 
 // GetExpectedRates is a free data retrieval call binding the contract method 0xf1838fe4.
 //
-// Solidity: function getExpectedRates(network address, sources address[], dests address[], qty uint256[]) constant returns(uint256[], uint256[])
-func (_ContractWrapper *ContractWrapperCallerSession) GetExpectedRates(network common.Address, sources []common.Address, dests []common.Address, qty []*big.Int) ([]*big.Int, []*big.Int, error) {
-	return _ContractWrapper.Contract.GetExpectedRates(&_ContractWrapper.CallOpts, network, sources, dests, qty)
+// Solidity: function getExpectedRates(network address, srcs address[], dests address[], qty uint256[]) constant returns(uint256[], uint256[])
+func (_ContractWrapper *ContractWrapperCallerSession) GetExpectedRates(network common.Address, srcs []common.Address, dests []common.Address, qty []*big.Int) ([]*big.Int, []*big.Int, error) {
+	return _ContractWrapper.Contract.GetExpectedRates(&_ContractWrapper.CallOpts, network, srcs, dests, qty)
 }
 
 // GetInt8FromByte is a free data retrieval call binding the contract method 0x67c33c80.
