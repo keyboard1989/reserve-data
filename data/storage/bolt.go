@@ -446,6 +446,7 @@ func (self *BoltStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID)
 		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
 		v := b.Get(uint64ToBytes(id))
 		if v != nil && string(v) != actID.String() {
+			log.Printf("bolt: stored act id - current act id: %s - %s", string(v), actID.String())
 			res = false
 		}
 		return nil
