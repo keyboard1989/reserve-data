@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/metric"
@@ -23,11 +24,15 @@ const (
 	PENDING_ACTIVITY_BUCKET string = "pending_activities"
 	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
 	METRIC_BUCKET           string = "metrics"
+	LOG_BUCKET              string = "logs"
 	MAX_NUMBER_VERSION      int    = 1000
 )
 
 type BoltStorage struct {
-	db *bolt.DB
+	mu    sync.RWMutex
+	db    *bolt.DB
+	block uint64
+	index uint
 }
 
 func NewBoltStorage(path string) (*BoltStorage, error) {
@@ -72,9 +77,22 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		if err != nil {
 			return err
 		}
+		_, err = tx.CreateBucket([]byte(LOG_BUCKET))
+		if err != nil {
+			return err
+		}
 		return nil
 	})
-	return &BoltStorage{db}, nil
+	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
+	storage.db.View(func(tx *bolt.Tx) error {
+		block, index, err := storage.LoadLastLogIndex(tx)
+		if err == nil {
+			storage.block = block
+			storage.index = index
+		}
+		return err
+	})
+	return storage, nil
 }
 
 func uint64ToBytes(u uint64) []byte {
@@ -385,7 +403,8 @@ func (self *BoltStorage) GetPendingActivities() ([]common.ActivityRecord, error)
 			if err != nil {
 				return err
 			}
-			result = append(result, record)
+			result = append(
+				[]common.ActivityRecord{record}, result...)
 		}
 		return nil
 	})
@@ -490,11 +509,9 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(METRIC_BUCKET))
 		c := b.Cursor()
-		// Our time range spans the 90's decade.
 		min := uint64ToBytes(fromTime)
 		max := uint64ToBytes(toTime)
 
-		// Iterate over the 90's.
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			data := metric.MetricEntry{}
 			err = json.Unmarshal(v, &data)
@@ -509,10 +526,8 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 						AfpMid:    m.AfpMid,
 						Spread:    m.Spread,
 					})
-					log.Printf("token: %s, metricList: %+v", tok, metricList)
 				}
 			}
-			log.Printf("result: %+v", imResult)
 		}
 		return nil
 	})
@@ -521,4 +536,74 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 		result[k] = *v
 	}
 	return result, err
+}
+
+func (self *BoltStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) {
+	b := tx.Bucket([]byte(LOG_BUCKET))
+	c := b.Cursor()
+	k, v := c.Last()
+	if k != nil {
+		record := common.TradeLog{}
+		json.Unmarshal(v, &record)
+		return record.BlockNumber, record.TransactionIndex, nil
+	} else {
+		return 0, 0, errors.New("Database is empty")
+	}
+}
+
+func (self *BoltStorage) UpdateLogBlock(block uint64, timepoint uint64) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	self.block = block
+	return nil
+}
+
+func (self *BoltStorage) LastBlock() (uint64, error) {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	return self.block, nil
+}
+
+func (self *BoltStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
+	result := []common.TradeLog{}
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(LOG_BUCKET))
+		c := b.Cursor()
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			record := common.TradeLog{}
+			err = json.Unmarshal(v, &record)
+			if err != nil {
+				return err
+			}
+			result = append([]common.TradeLog{record}, result...)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(LOG_BUCKET))
+		var dataJson []byte
+		block, txindex, berr := self.LoadLastLogIndex(tx)
+		if berr == nil && (block > stat.BlockNumber || (block == stat.BlockNumber && txindex >= stat.TransactionIndex)) {
+			err = errors.New(
+				fmt.Sprintf("Duplicated log (new block number %s is smaller or equal to latest block number %s)", block, stat.BlockNumber))
+			return err
+		}
+		dataJson, err = json.Marshal(stat)
+		if err != nil {
+			return err
+		}
+		log.Printf("Storing log: %d", stat.Timestamp)
+		idByte := uint64ToBytes(stat.Timestamp)
+		err = b.Put(idByte, dataJson)
+		return err
+	})
+	return err
 }

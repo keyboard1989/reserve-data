@@ -124,6 +124,10 @@ func (self ReserveData) GetPendingActivities() ([]common.ActivityRecord, error) 
 	return self.storage.GetPendingActivities()
 }
 
+func (self ReserveData) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
+	return self.storage.GetTradeLogs(fromTime, toTime)
+}
+
 func (self ReserveData) Run() error {
 	return self.fetcher.Run()
 }

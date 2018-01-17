@@ -29,9 +29,11 @@ type Config struct {
 
 	SupportedTokens []common.Token
 
-	WrapperAddress ethereum.Address
-	PricingAddress ethereum.Address
-	ReserveAddress ethereum.Address
+	WrapperAddress   ethereum.Address
+	PricingAddress   ethereum.Address
+	ReserveAddress   ethereum.Address
+	FeeBurnerAddress ethereum.Address
+	NetworkAddress   ethereum.Address
 }
 
 func (self *Config) MapTokens() map[string]common.Token {

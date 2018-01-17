@@ -21,6 +21,8 @@ func GetConfigForRopsten() *Config {
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
+	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -61,5 +63,7 @@ func GetConfigForRopsten() *Config {
 		WrapperAddress:   wrapperAddr,
 		PricingAddress:   pricingAddr,
 		ReserveAddress:   reserveAddr,
+		FeeBurnerAddress: burnerAddr,
+		NetworkAddress:   networkAddr,
 	}
 }

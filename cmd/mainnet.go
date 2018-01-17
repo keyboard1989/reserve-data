@@ -20,6 +20,8 @@ func GetConfigForMainnet() *Config {
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
+	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
+	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -64,5 +66,7 @@ func GetConfigForMainnet() *Config {
 		WrapperAddress:       wrapperAddr,
 		PricingAddress:       pricingAddr,
 		ReserveAddress:       reserveAddr,
+		FeeBurnerAddress:     burnerAddr,
+		NetworkAddress:       networkAddr,
 	}
 }

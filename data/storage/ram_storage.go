@@ -16,6 +16,7 @@ type RamStorage struct {
 	auth     *RamAuthStorage
 	rate     *RamRateStorage
 	activity *RamActivityStorage
+	log      *RamLogStorage
 	bittrex  *RamBittrexStorage
 }
 
@@ -25,6 +26,7 @@ func NewRamStorage() *RamStorage {
 		NewRamAuthStorage(),
 		NewRamRateStorage(),
 		NewRamActivityStorage(),
+		NewRamLogStorage(),
 		NewRamBittrexStorage(),
 	}
 }
@@ -110,4 +112,20 @@ func (self *RamStorage) RegisterBittrexDeposit(id uint64, actID common.ActivityI
 
 func (self *RamStorage) HasPendingDeposit(token common.Token, exchange common.Exchange) bool {
 	return self.activity.HasPendingDeposit(token, exchange)
+}
+
+func (self *RamStorage) UpdateLogBlock(block uint64, timepoint uint64) error {
+	return self.log.UpdateLogBlock(block, timepoint)
+}
+
+func (self *RamStorage) LastBlock() (uint64, error) {
+	return self.log.LastBlock()
+}
+
+func (self *RamStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
+	return self.log.GetTradeLogs(fromTime, toTime)
+}
+
+func (self *RamStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) error {
+	return self.log.StoreTradeLog(stat, timepoint)
 }

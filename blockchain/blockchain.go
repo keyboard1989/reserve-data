@@ -6,8 +6,10 @@ import (
 	"strconv"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	ether "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -19,6 +21,18 @@ type tbindex struct {
 	IndexInBulk uint64
 }
 
+const (
+	FeeToWalletEvent string = "0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"
+	BurnFeeEvent     string = "0x41fd227440c32bb7e3ed320d32a91ca013da28568e2f8573aa2d0bdf448ea09c"
+	TradeEvent       string = "0xec0d3e799aa270a144d7e3be084ccfc657450e33ecea1b1a4154c95cedaae5c3"
+)
+
+// latest version
+// ethereum.HexToHash("0xf838f6ddc89706878e3c3e698e9b5cbfbf2c0e3d3dcd0bd2e00f1ccf313e0185"),
+// ethereum.HexToHash("0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"),
+// ethereum.HexToHash("0x1849bd6a030a1bca28b83437fd3de96f3d27a5d172fa7e9c78e7b61468928a39"),
+// ropsten version
+
 type Blockchain struct {
 	rpcClient    *rpc.Client
 	client       *ethclient.Client
@@ -27,6 +41,8 @@ type Blockchain struct {
 	reserve      *ReserveContract
 	rm           ethereum.Address
 	pricingAddr  ethereum.Address
+	burnerAddr   ethereum.Address
+	networkAddr  ethereum.Address
 	signer       Signer
 	tokens       []common.Token
 	tokenIndices map[string]tbindex
@@ -242,6 +258,113 @@ func (self *Blockchain) SetRates(
 	}
 }
 
+func toBlockNumArg(number *big.Int) string {
+	if number == nil {
+		return "latest"
+	}
+	return hexutil.EncodeBig(number)
+}
+
+func toFilterArg(q ether.FilterQuery) interface{} {
+	arg := map[string]interface{}{
+		"fromBlock": toBlockNumArg(q.FromBlock),
+		"toBlock":   toBlockNumArg(q.ToBlock),
+		"address":   q.Addresses,
+		"topics":    q.Topics,
+	}
+	if q.FromBlock == nil {
+		arg["fromBlock"] = "0x0"
+	}
+	return arg
+}
+
+func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint uint64) ([]types.Log, error) {
+	result := []types.Log{}
+	var to *big.Int
+	if toBlock != 0 {
+		to = big.NewInt(int64(toBlock))
+	}
+	param := ether.FilterQuery{
+		big.NewInt(int64(fromBlock)),
+		to,
+		[]ethereum.Address{
+			self.networkAddr,
+			self.burnerAddr,
+		},
+		[][]ethereum.Hash{
+			[]ethereum.Hash{
+				ethereum.HexToHash(TradeEvent),
+				ethereum.HexToHash(BurnFeeEvent),
+				ethereum.HexToHash(FeeToWalletEvent),
+			},
+		},
+	}
+	err := self.rpcClient.Call(&result, "eth_getLogs", toFilterArg(param))
+	return result, err
+}
+
+// return timestamp increasing array of trade log
+func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]common.TradeLog, error) {
+	result := []common.TradeLog{}
+	// get all logs from fromBlock to best block
+	logs, err := self.GetRawLogs(fromBlock, 0, timepoint)
+	if err != nil {
+		return result, err
+	}
+	var prevLog *types.Log
+	var tradeLog *common.TradeLog
+	for i, l := range logs {
+		if l.Removed {
+			log.Printf("Log is ignored because it is removed due to chain reorg")
+		} else {
+			if prevLog == nil || l.TxHash != prevLog.TxHash {
+				if tradeLog != nil {
+					result = append(result, *tradeLog)
+				}
+				// start new TradeLog
+				tradeLog = &common.TradeLog{}
+				tradeLog.BlockNumber = l.BlockNumber
+				tradeLog.TransactionHash = l.TxHash
+				tradeLog.TransactionIndex = l.TxIndex
+				tradeLog.Timestamp, err = self.InterpretTimestamp(
+					tradeLog.BlockNumber,
+					tradeLog.TransactionIndex,
+				)
+				if err != nil {
+					return result, err
+				}
+			}
+			if len(l.Topics) == 0 {
+				log.Printf("Getting empty zero topic list. This shouldn't happen and is Ethereum responsibility.")
+			} else {
+				topic := l.Topics[0]
+				switch topic.Hex() {
+				case FeeToWalletEvent:
+					reserveAddr, walletAddr, walletFee := LogDataToFeeWalletParams(l.Data)
+					tradeLog.ReserveAddress = reserveAddr
+					tradeLog.WalletAddress = walletAddr
+					tradeLog.WalletFee = walletFee.Big()
+				case BurnFeeEvent:
+					reserveAddr, burnFees := LogDataToBurnFeeParams(l.Data)
+					tradeLog.ReserveAddress = reserveAddr
+					tradeLog.BurnFee = burnFees.Big()
+				case TradeEvent:
+					srcAddr, destAddr, srcAmount, destAmount := LogDataToTradeParams(l.Data)
+					tradeLog.SrcAddress = srcAddr
+					tradeLog.DestAddress = destAddr
+					tradeLog.SrcAmount = srcAmount.Big()
+					tradeLog.DestAmount = destAmount.Big()
+				}
+			}
+			prevLog = &logs[i]
+		}
+	}
+	if tradeLog != nil {
+		result = append(result, *tradeLog)
+	}
+	return result, nil
+}
+
 func (self *Blockchain) Send(
 	token common.Token,
 	amount *big.Int,
@@ -311,8 +434,9 @@ func (self *Blockchain) Send(
 func NewBlockchain(
 	client *rpc.Client,
 	ethereum *ethclient.Client,
-	wrapperAddr, pricingAddr, reserveAddr ethereum.Address,
+	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr ethereum.Address,
 	signer Signer, nonceCorpus NonceCorpus) (*Blockchain, error) {
+	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper, err := NewContractWrapper(wrapperAddr, ethereum)
 	if err != nil {
 		return nil, err
@@ -328,6 +452,8 @@ func NewBlockchain(
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("burner address: %s", burnerAddr.Hex())
+	log.Printf("network address: %s", networkAddr.Hex())
 	return &Blockchain{
 		rpcClient:   client,
 		client:      ethereum,
@@ -336,6 +462,8 @@ func NewBlockchain(
 		reserve:     reserve,
 		rm:          reserveAddr,
 		pricingAddr: pricingAddr,
+		burnerAddr:  burnerAddr,
+		networkAddr: networkAddr,
 		signer:      signer,
 		tokens:      []common.Token{},
 		nonce:       nonceCorpus,

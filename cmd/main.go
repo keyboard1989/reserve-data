@@ -94,6 +94,8 @@ func main() {
 		infura,
 		config.WrapperAddress,
 		config.PricingAddress,
+		config.FeeBurnerAddress,
+		config.NetworkAddress,
 		config.ReserveAddress,
 		config.BlockchainSigner,
 		nonceCorpus,

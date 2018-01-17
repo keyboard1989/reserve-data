@@ -9,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type Version uint64
@@ -457,4 +459,21 @@ type AllRateResponse struct {
 	Timestamp  Timestamp
 	ReturnTime Timestamp
 	Data       map[string]RateResponse
+}
+
+type TradeLog struct {
+	Timestamp        uint64
+	BlockNumber      uint64
+	TransactionHash  ethereum.Hash
+	TransactionIndex uint
+
+	SrcAddress  ethereum.Address
+	DestAddress ethereum.Address
+	SrcAmount   *big.Int
+	DestAmount  *big.Int
+
+	ReserveAddress ethereum.Address
+	WalletAddress  ethereum.Address
+	WalletFee      *big.Int
+	BurnFee        *big.Int
 }
