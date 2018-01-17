@@ -107,3 +107,30 @@ func (self *RopstenInterface) AccountEndpoint(timepoint uint64) string {
 func NewRopstenInterface() *RopstenInterface {
 	return &RopstenInterface{}
 }
+
+type KovanInterface struct{}
+
+func (self *KovanInterface) baseurl() string {
+	baseurl := "http://127.0.0.1"
+	if len(os.Args) > 1 {
+		baseurl = os.Args[1]
+	}
+	return baseurl + ":5300"
+}
+
+func (self *KovanInterface) PublicEndpoint(timepoint uint64) string {
+	// ignore timepoint because timepoint is only relevant in simulation
+	return "https://bittrex.com/api/" + apiVersion + "/public"
+}
+
+func (self *KovanInterface) MarketEndpoint(timepoint uint64) string {
+	return fmt.Sprintf("%s/api/%s/market?timestamp=%d", self.baseurl(), apiVersion, timepoint)
+}
+
+func (self *KovanInterface) AccountEndpoint(timepoint uint64) string {
+	return fmt.Sprintf("%s/api/%s/account?timestamp=%d", self.baseurl(), apiVersion, timepoint)
+}
+
+func NewKovanInterface() *KovanInterface {
+	return &KovanInterface{}
+}

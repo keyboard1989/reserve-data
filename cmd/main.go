@@ -47,6 +47,10 @@ func main() {
 		log.Printf("Running in simulation mode")
 		config = GetConfigForSimulation()
 		break
+	case "kovan":
+		log.Printf("Running in kovan mode")
+		config = GetConfigForKovan()
+		break
 	case "ropsten":
 		log.Printf("Running in ropsten mode")
 		config = GetConfigForRopsten()

@@ -70,6 +70,31 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 	return &ExchangePool{exchanges}
 }
 
+func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
+	exchanges := map[common.ExchangeID]interface{}{}
+	params := os.Getenv("KYBER_EXCHANGES")
+	exparams := strings.Split(params, ",")
+	for _, exparam := range exparams {
+		switch exparam {
+		case "bittrex":
+			bit := exchange.NewBittrex(bittrex.NewKovanBittrexEndpoint(signer), bittrexStorage)
+			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
+				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+			}
+			bit.UpdatePairsPrecision()
+			exchanges[bit.ID()] = bit
+		case "binance":
+			bin := exchange.NewBinance(binance.NewKovanBinanceEndpoint(signer))
+			for tokenID, addr := range addressConfig.Exchanges["binance"] {
+				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+			}
+			bin.UpdatePairsPrecision()
+			exchanges[bin.ID()] = bin
+		}
+	}
+	return &ExchangePool{exchanges}
+}
+
 func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
