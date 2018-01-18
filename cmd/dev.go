@@ -12,7 +12,7 @@ import (
 )
 
 func GetConfigForDev() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json"
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
