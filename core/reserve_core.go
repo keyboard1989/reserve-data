@@ -194,7 +194,8 @@ func (self ReserveCore) SetRates(
 	tokens []common.Token,
 	buys []*big.Int,
 	sells []*big.Int,
-	block *big.Int) (common.ActivityID, error) {
+	block *big.Int,
+	afpMid []*big.Int) (common.ActivityID, error) {
 
 	lentokens := len(tokens)
 	lenbuys := len(buys)
@@ -226,6 +227,7 @@ func (self ReserveCore) SetRates(
 			"buys":   buys,
 			"sells":  sells,
 			"block":  block,
+			"afpMid": afpMid,
 		}, map[string]interface{}{
 			"tx":    tx.Hex(),
 			"error": err,
