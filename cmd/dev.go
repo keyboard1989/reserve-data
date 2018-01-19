@@ -46,7 +46,8 @@ func GetConfigForDev() *Config {
 		addressConfig, fileSigner, storage,
 	)
 
-	endpoint := "https://ropsten.infura.io"
+	// endpoint := "https://ropsten.infura.io"
+	endpoint := "http://blockchain:8545"
 
 	hmac512auth := fileSigner
 
