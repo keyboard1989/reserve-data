@@ -557,7 +557,7 @@ func (self *HTTPServer) GetActivities(c *gin.Context) {
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 
-	data, err := self.app.GetRecords(fromTime, toTime)
+	data, err := self.app.GetRecords(fromTime*1000000, toTime*1000000)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
