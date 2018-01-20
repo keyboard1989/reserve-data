@@ -38,7 +38,8 @@ func (self *Binance) UpdateAllDepositAddresses(address string) {
 	}
 }
 
-func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
+func (self *Binance) UpdateDepositAddress(token common.Token, address string, wait *sync.WaitGroup) {
+	defer wait.Done()
 	liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
 	if liveAddress.Address != "" {
 		self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Address)

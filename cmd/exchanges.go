@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
@@ -28,16 +29,22 @@ func NewSimulationExchangePool(
 		switch exparam {
 		case "bittrex":
 			bit := exchange.NewBittrex(bittrex.NewSimulatedBittrexEndpoint(signer), bittrexStorage)
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
-				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(signer))
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
-				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		}
@@ -53,16 +60,22 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 		switch exparam {
 		case "bittrex":
 			bit := exchange.NewBittrex(bittrex.NewDevBittrexEndpoint(signer), bittrexStorage)
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
-				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewDevBinanceEndpoint(signer))
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
-				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		}
@@ -78,16 +91,22 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 		switch exparam {
 		case "bittrex":
 			bit := exchange.NewBittrex(bittrex.NewKovanBittrexEndpoint(signer), bittrexStorage)
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
-				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewKovanBinanceEndpoint(signer))
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
-				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		}
@@ -103,16 +122,22 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 		switch exparam {
 		case "bittrex":
 			bit := exchange.NewBittrex(bittrex.NewRopstenBittrexEndpoint(signer), bittrexStorage)
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
-				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewRopstenBinanceEndpoint(signer))
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
-				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		}
@@ -128,16 +153,22 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 		switch exparam {
 		case "bittrex":
 			bit := exchange.NewBittrex(bittrex.NewRealBittrexEndpoint(signer), bittrexStorage)
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
-				bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewRealBinanceEndpoint(signer))
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
-				bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
 			}
+			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		}
