@@ -23,14 +23,12 @@ type tbindex struct {
 
 const (
 	FeeToWalletEvent string = "0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"
-	BurnFeeEvent     string = "0x41fd227440c32bb7e3ed320d32a91ca013da28568e2f8573aa2d0bdf448ea09c"
-	TradeEvent       string = "0xec0d3e799aa270a144d7e3be084ccfc657450e33ecea1b1a4154c95cedaae5c3"
+	BurnFeeEvent     string = "0xf838f6ddc89706878e3c3e698e9b5cbfbf2c0e3d3dcd0bd2e00f1ccf313e0185"
+	TradeEvent       string = "0x1849bd6a030a1bca28b83437fd3de96f3d27a5d172fa7e9c78e7b61468928a39"
 )
 
 // latest version
-// ethereum.HexToHash("0xf838f6ddc89706878e3c3e698e9b5cbfbf2c0e3d3dcd0bd2e00f1ccf313e0185"),
 // ethereum.HexToHash("0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"),
-// ethereum.HexToHash("0x1849bd6a030a1bca28b83437fd3de96f3d27a5d172fa7e9c78e7b61468928a39"),
 // ropsten version
 
 type Blockchain struct {
