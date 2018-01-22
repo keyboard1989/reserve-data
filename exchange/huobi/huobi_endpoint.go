@@ -133,6 +133,9 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	symbol := strings.ToLower(base.ID) + strings.ToLower(quote.ID)
 	orderType := tradeType + "-limit"
 	accounts, _ := self.GetAccounts()
+	if len(accounts.Data) == 0 {
+		return result, errors.New("Cannot get account")
+	}
 	params := map[string]string{
 		"account-id": strconv.FormatUint(accounts.Data[0].ID, 10),
 		"symbol":     symbol,
@@ -271,6 +274,9 @@ func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 func (self *HuobiEndpoint) GetInfo(timepoint uint64) (exchange.HuobiInfo, error) {
 	result := exchange.HuobiInfo{}
 	accounts, _ := self.GetAccounts()
+	if len(accounts.Data) == 0 {
+		return result, errors.New("Cannot get account")
+	}
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/account/accounts/"+strconv.FormatUint(accounts.Data[0].ID, 10)+"/balance",
