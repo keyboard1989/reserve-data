@@ -28,6 +28,11 @@ type TokenPair struct {
 	Quote Token
 }
 
+type TargetQty struct {
+	ReserveTargetQty float64 `json:"reserve-target"`
+	TotalTargetQty   float64 `json:"total"`
+}
+
 func (self *TokenPair) PairID() TokenPairID {
 	return NewTokenPairID(self.Base.ID, self.Quote.ID)
 }
@@ -52,6 +57,7 @@ func MustCreateTokenPair(base, quote string) TokenPair {
 }
 
 var SupportedTokens map[string]Token
+var TokenTargetQty map[string]TargetQty
 
 func GetToken(id string) (Token, error) {
 	t := SupportedTokens[strings.ToUpper(id)]
@@ -68,4 +74,16 @@ func MustGetToken(id string) Token {
 		panic(e)
 	}
 	return t
+}
+
+func UpdateTokenTargetQty(data map[string]TargetQty) error {
+	for id, qty := range data {
+		t := SupportedTokens[strings.ToUpper(id)]
+		if t.ID == "" {
+			return errors.New(fmt.Sprintf("Token %s is not supported", id))
+		}
+		TokenTargetQty[strings.ToUpper(id)] = qty
+
+	}
+	return nil
 }

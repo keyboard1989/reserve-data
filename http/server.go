@@ -1,6 +1,7 @@
 package http
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -296,7 +297,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
-				gin.H{"succes": false, "reason": err.Error()},
+				gin.H{"success": false, "reason": err.Error()},
 			)
 		} else {
 			bigAfpMid = append(bigAfpMid, r)
@@ -768,7 +769,6 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
-	log.Println("Get exchange info")
 	exchangeParam := c.Param("exchangeid")
 	exchange, err := common.GetExchange(exchangeParam)
 	if err != nil {
@@ -863,6 +863,41 @@ func (self *HTTPServer) GetFee(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetTargetQty(c *gin.Context) {
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": common.TokenTargetQty},
+	)
+}
+
+func (self *HTTPServer) SetTargetQty(c *gin.Context) {
+	log.Println("Storing targe quantity")
+	postForm, ok := self.Authenticated(c, []string{"data"})
+	if !ok {
+		return
+	}
+	data := postForm.Get("data")
+	tokenTargetQty := map[string]common.TargetQty{}
+	err := json.Unmarshal([]byte(data), &tokenTargetQty)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "data": err.Error()},
+		)
+	}
+	err = common.UpdateTokenTargetQty(tokenTargetQty)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "data": err.Error()},
+		)
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -884,6 +919,9 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
 	self.r.GET("/exchangefees", self.GetFee)
 	self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
+
+	self.r.GET("/targetqty", self.GetTargetQty)
+	self.r.POST("/settargetqty", self.SetTargetQty)
 
 	self.r.Run(self.host)
 }
