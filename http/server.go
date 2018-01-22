@@ -58,13 +58,14 @@ func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 
 func IsIntime(nonce string) bool {
 	serverTime := common.GetTimepoint()
+	log.Printf("Server time: %d, None: %d", serverTime, nonce)
 	nonceInt, err := strconv.ParseInt(nonce, 10, 64)
 	if err != nil {
 		log.Printf("IsIntime returns false, err: %v", err)
 		return false
 	}
 	difference := nonceInt - int64(serverTime)
-	if difference < -10000 || difference > 10000 {
+	if difference < -30000 || difference > 30000 {
 		log.Printf("IsIntime returns false, nonce: %d, serverTime: %d, difference: %d", nonceInt, int64(serverTime), difference)
 		return false
 	}

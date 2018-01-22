@@ -24,11 +24,12 @@ func NewRealInterface() *RealInterface {
 type SimulatedInterface struct{}
 
 func (self *SimulatedInterface) baseurl() string {
-	baseurl := "127.0.0.1"
+	// baseurl := "127.0.0.1"
+	baseurl := "192.168.24.228"
 	if len(os.Args) > 1 {
 		baseurl = os.Args[1]
 	}
-	return baseurl + ":5100"
+	return baseurl + ":5200"
 }
 
 func (self *SimulatedInterface) PublicEndpoint() string {
@@ -65,15 +66,39 @@ func NewRopstenInterface() *RopstenInterface {
 	return &RopstenInterface{}
 }
 
+type KovanInterface struct{}
+
+func (self *KovanInterface) baseurl() string {
+	baseurl := "127.0.0.1"
+	if len(os.Args) > 1 {
+		baseurl = os.Args[1]
+	}
+	return baseurl + ":5100"
+}
+
+func (self *KovanInterface) PublicEndpoint() string {
+	return "https://api.huobi.pro"
+}
+
+func (self *KovanInterface) AuthenticatedEndpoint() string {
+	return self.baseurl()
+}
+
+func NewKovanInterface() *KovanInterface {
+	return &KovanInterface{}
+}
+
 type DevInterface struct{}
 
 func (self *DevInterface) PublicEndpoint() string {
-	return "https://api.huobi.pro"
+	// return "https://api.huobi.pro"
+	return "http://192.168.24.228:5200"
 	// return "http://192.168.25.16:5100"
 }
 
 func (self *DevInterface) AuthenticatedEndpoint() string {
-	return "https://api.huobi.pro"
+	// return "https://api.huobi.pro"
+	return "http://192.168.24.228:5200"
 	// return "http://192.168.25.16:5100"
 }
 

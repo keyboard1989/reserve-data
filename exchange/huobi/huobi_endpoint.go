@@ -357,6 +357,9 @@ func NewSimulatedHuobiEndpoint(signer Signer) *HuobiEndpoint {
 func NewRopstenHuobiEndpoint(signer Signer) *HuobiEndpoint {
 	return &HuobiEndpoint{signer, NewRopstenInterface()}
 }
+func NewKovanHuobiEndpoint(signer Signer) *HuobiEndpoint {
+	return &HuobiEndpoint{signer, NewRopstenInterface()}
+}
 
 func NewDevHuobiEndpoint(signer Signer) *HuobiEndpoint {
 	return &HuobiEndpoint{signer, NewDevInterface()}

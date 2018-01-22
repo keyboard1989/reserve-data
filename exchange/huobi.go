@@ -39,12 +39,13 @@ func (self *Huobi) UpdateAllDepositAddresses(address string) {
 }
 
 func (self *Huobi) UpdateDepositAddress(token common.Token, address string) {
-	liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
-	if liveAddress.Address != "" {
-		self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Address)
-	} else {
-		self.addresses[token.ID] = ethereum.HexToAddress(address)
-	}
+	// liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
+	// if liveAddress.Address != "" {
+	// 	self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Address)
+	// } else {
+	// 	self.addresses[token.ID] = ethereum.HexToAddress(address)
+	// }
+	self.addresses[token.ID] = ethereum.HexToAddress(address)
 }
 
 func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExchangeInfo) {
@@ -347,10 +348,11 @@ func NewHuobi(interf HuobiInterface) *Huobi {
 	return &Huobi{
 		interf,
 		[]common.TokenPair{
-			common.MustCreateTokenPair("MCO", "ETH"),
 			common.MustCreateTokenPair("OMG", "ETH"),
 			common.MustCreateTokenPair("EOS", "ETH"),
 			common.MustCreateTokenPair("KNC", "ETH"),
+			common.MustCreateTokenPair("SNT", "ETH"),
+			common.MustCreateTokenPair("SALT", "ETH"),
 		},
 		map[string]ethereum.Address{},
 		common.NewExchangeInfo(),
@@ -361,18 +363,20 @@ func NewHuobi(interf HuobiInterface) *Huobi {
 			},
 			common.NewFundingFee(
 				map[string]float32{
-					"ETH": 0.01,
-					"EOS": 0.5,
-					"OMG": 0.1,
-					"KNC": 1.0,
-					"MCO": 0.2,
+					"ETH":  0.01,
+					"EOS":  0.5,
+					"OMG":  0.1,
+					"KNC":  1.0,
+					"SNT":  50.0,
+					"SALT": 0.1,
 				},
 				map[string]float32{
-					"ETH": 0,
-					"EOS": 0,
-					"OMG": 0,
-					"KNC": 0,
-					"MCO": 0,
+					"ETH":  0,
+					"EOS":  0,
+					"OMG":  0,
+					"KNC":  0,
+					"SNT":  0,
+					"SALT": 0,
 				},
 			),
 		),

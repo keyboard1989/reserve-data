@@ -54,6 +54,13 @@ func NewSimulationExchangePool(
 			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
+		case "huobi":
+			huobi := exchange.NewHuobi(huobi.NewSimulatedHuobiEndpoint(signer))
+			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
+				huobi.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+			}
+			huobi.UpdatePairsPrecision()
+			exchanges[huobi.ID()] = huobi
 		}
 	}
 	return &ExchangePool{exchanges}
@@ -125,6 +132,13 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
+		case "huobi":
+			huobi := exchange.NewHuobi(huobi.NewKovanHuobiEndpoint(signer))
+			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
+				huobi.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+			}
+			huobi.UpdatePairsPrecision()
+			exchanges[huobi.ID()] = huobi
 		}
 	}
 	return &ExchangePool{exchanges}
@@ -157,6 +171,13 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
+		case "huobi":
+			huobi := exchange.NewHuobi(huobi.NewRopstenHuobiEndpoint(signer))
+			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
+				huobi.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+			}
+			huobi.UpdatePairsPrecision()
+			exchanges[huobi.ID()] = huobi
 		}
 	}
 	return &ExchangePool{exchanges}
@@ -189,6 +210,13 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			wait.Wait()
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
+		case "huobi":
+			huobi := exchange.NewHuobi(huobi.NewRealHuobiEndpoint(signer))
+			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
+				huobi.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+			}
+			huobi.UpdatePairsPrecision()
+			exchanges[huobi.ID()] = huobi
 		}
 	}
 	return &ExchangePool{exchanges}
