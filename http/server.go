@@ -899,7 +899,11 @@ func NewHTTPServer(
 
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
-	r.Use(cors.Default())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AddAllowMethods("OPTIONS")
+	corsConfig.AddAllowHeaders("signed")
+	corsConfig.AllowAllOrigins = true
+	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
 		app, core, metric, host, enableAuth, authEngine, r,
