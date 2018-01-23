@@ -214,6 +214,7 @@ Form params:
   - tokens: string, not including "ETH", represent all base token IDs separated by "-", eg: "ETH-ETH"
   - buys: string, represent all the buy (end users to buy tokens by ether) prices in little endian hex string, rates are separated by "-", eg: "0x5-0x7"
   - sells: string, represent all the sell (end users to sell tokens to ether) prices in little endian hex string, rates are separated by "-", eg: "0x5-0x7"
+  - afp_mid: string, represent all the afp mid (average filled price) in little endian hex string, rates are separated by "-", eg: "0x5-0x7" (this rate only stores in activities for tracking)
   - block: number, in base 10, the block that prices are calculated on, eg: "3245876" means the prices are calculated from data at the time of block 3245876
 ```
 eg:
@@ -224,6 +225,7 @@ curl -X POST \
   -F tokens=KNC-EOS \
   -F buys=0x5-0x7 \
   -F sells=0x5-0x7 \
+  -F afp_mid=0x5-0x7 \
   -F block=2342353
 ```
 
@@ -282,9 +284,13 @@ response:
 
 ### Get all activityes (signing required)
 ```
-<host>:8000/activites
+<host>:8000/activities
 GET request
+url params: 
+  fromTime: from timepoint - uint64, unix millisecond (optional if empty then get from first activity)
+  toTime: to timepoint - uint64, unix millisecond (optional if empty then get to last activity)
 ```
+Note: `fromTime` and `toTime` shouldn't be included into signing message.
 ### Get immediate pending activities (signing required)
 ```
 <host>:8000/immediate-pending-activities
@@ -353,22 +359,15 @@ Example:
 ## Supported tokens
 
 1. eth (ETH)
-2. bat (BAT)
-3. civic (CVC)
-4. digix (DGD)
-5. eos (EOS)
-6. adex (ADX)
-7. funfair (FUN)
-8. golem (GNT)
-9. kybernetwork (KNC)
-10. link (LINK)
-11. monaco (MCO)
-12. omisego (OMG)
-13. tenx (PAY)
+2. eos (EOS)
+3. kybernetwork (KNC)
+4. omisego (OMG)
+5. salt (SALT)
+6. snt (STATUS)
 
 ## Supported exchanges
 
 1. Bittrex (bittrex)
 2. Binance (binance)
-3. Bitfinex (bitfinex)
-4. Liqui (liqui)
+3. Huobi (huobi) - on going
+4. Bitfinex (bitfinex) - on going

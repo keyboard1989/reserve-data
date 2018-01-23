@@ -109,10 +109,10 @@ func (self *RamActivityStorage) GetAllRecords(fromTime, toTime uint64) ([]common
 	})
 	from := 0
 	to := len(allRecords)
-	if toTime != 0 {
+	if toTime != 0 && fromIndex < len(allRecords) {
 		from = fromIndex
 	}
-	if fromTime != 0 {
+	if fromTime != 0 && toIndex < len(allRecords) {
 		timePoint := allRecords[toIndex].ID.Timepoint
 		if timePoint == fromTime {
 			to = toIndex + 1

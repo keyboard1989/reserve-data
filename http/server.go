@@ -240,7 +240,7 @@ func (self *HTTPServer) GetRate(c *gin.Context) {
 }
 
 func (self *HTTPServer) SetRate(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"tokens", "buys", "sells", "block"}, true)
+	postForm, ok := self.Authenticated(c, []string{"tokens", "buys", "sells", "block", "afp_mid"}, true)
 	if !ok {
 		return
 	}
@@ -248,6 +248,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	buys := postForm.Get("buys")
 	sells := postForm.Get("sells")
 	block := postForm.Get("block")
+	afpMid := postForm.Get("afp_mid")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenAddrs, "-") {
 		token, err := common.GetToken(tok)
@@ -293,7 +294,19 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 		)
 		return
 	}
-	id, err := self.core.SetRates(tokens, bigBuys, bigSells, big.NewInt(intBlock))
+	bigAfpMid := []*big.Int{}
+	for _, rate := range strings.Split(afpMid, "-") {
+		r, err := hexutil.DecodeBig(rate)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"succes": false, "reason": err.Error()},
+			)
+		} else {
+			bigAfpMid = append(bigAfpMid, r)
+		}
+	}
+	id, err := self.core.SetRates(tokens, bigBuys, bigSells, big.NewInt(intBlock), bigAfpMid)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -548,7 +561,7 @@ func (self *HTTPServer) GetActivities(c *gin.Context) {
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 
-	data, err := self.app.GetRecords(fromTime, toTime)
+	data, err := self.app.GetRecords(fromTime*1000000, toTime*1000000)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -890,7 +903,11 @@ func NewHTTPServer(
 
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
-	r.Use(cors.Default())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AddAllowMethods("OPTIONS")
+	corsConfig.AddAllowHeaders("signed")
+	corsConfig.AllowAllOrigins = true
+	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
 		app, core, metric, host, enableAuth, authEngine, r,
