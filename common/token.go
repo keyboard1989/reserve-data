@@ -29,8 +29,8 @@ type TokenPair struct {
 }
 
 type TargetQty struct {
-	ReserveTargetQty float64 `json:"reserve-target"`
-	TotalTargetQty   float64 `json:"total"`
+	ReserveTargetQty float64 `json:"reserve_target"`
+	TotalTargetQty   float64 `json:"total_target"`
 }
 
 func (self *TokenPair) PairID() TokenPairID {
