@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
@@ -580,8 +581,14 @@ func (self *HTTPServer) GetActivities(c *gin.Context) {
 
 func (self *HTTPServer) TradeLogs(c *gin.Context) {
 	log.Printf("Getting trade logs")
-	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
-	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	fromTime, err := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	if err != nil {
+		fromTime = 0
+	}
+	toTime, err := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if err != nil {
+		toTime = uint64(time.Now().UnixNano())
+	}
 
 	data, err := self.app.GetTradeLogs(fromTime, toTime)
 	if err != nil {
