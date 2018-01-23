@@ -194,6 +194,8 @@ func (self *Blockchain) SetRates(
 	block *big.Int) (ethereum.Hash, error) {
 
 	opts, err := self.getTransactOpts()
+	// fix to 50.1 gwei
+	opts.GasPrice = big.NewInt(50100000000)
 	block.Add(block, big.NewInt(1))
 	if err != nil {
 		log.Printf("Getting transaction opts failed!!!!!!!\n")
