@@ -6,7 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"io/ioutil"
-	"math/big"
+	// "math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -114,8 +114,8 @@ func NewFileSigner(file string) *FileSigner {
 		panic(err)
 	}
 
-	auth.GasLimit = big.NewInt(1000000)
-	auth.GasPrice = big.NewInt(10000000000)
+	// auth.GasLimit = big.NewInt(1000000)
+	// auth.GasPrice = big.NewInt(35000000000)
 	signer.opts = auth
 	return &signer
 }
