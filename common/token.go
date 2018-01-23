@@ -3,6 +3,7 @@ package common
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -76,14 +77,20 @@ func MustGetToken(id string) Token {
 	return t
 }
 
-func UpdateTokenTargetQty(data map[string]TargetQty) error {
-	for id, qty := range data {
-		t := SupportedTokens[strings.ToUpper(id)]
+func UpdateTokenTargetQty(data string) error {
+	tokensValues := strings.Split(data, "|")
+	for _, tok := range tokensValues {
+		values := strings.Split(tok, "_")
+		t := SupportedTokens[strings.ToUpper(values[0])]
 		if t.ID == "" {
-			return errors.New(fmt.Sprintf("Token %s is not supported", id))
+			return errors.New(fmt.Sprintf("Token %s is not supported", values[0]))
 		}
-		TokenTargetQty[strings.ToUpper(id)] = qty
-
+		totalValue, _ := strconv.ParseFloat(values[1], 64)
+		reserveValue, _ := strconv.ParseFloat(values[2], 64)
+		TokenTargetQty[values[0]] = TargetQty{
+			TotalTargetQty:   totalValue,
+			ReserveTargetQty: reserveValue,
+		}
 	}
 	return nil
 }

@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -92,6 +91,7 @@ func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string) (
 	}
 
 	params := c.Request.Form
+	log.Printf("Form params: %s\n", params)
 	if !IsIntime(params.Get("nonce")) {
 		c.JSON(
 			http.StatusOK,
@@ -877,25 +877,19 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 		return
 	}
 	data := postForm.Get("data")
-	tokenTargetQty := map[string]common.TargetQty{}
-	err := json.Unmarshal([]byte(data), &tokenTargetQty)
+	err := common.UpdateTokenTargetQty(data)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
-			gin.H{"success": false, "data": err.Error()},
+			gin.H{"success": false, "reason": err.Error()},
 		)
-	}
-	err = common.UpdateTokenTargetQty(tokenTargetQty)
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "data": err.Error()},
-		)
+		return
 	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{"success": true},
 	)
+	return
 }
 
 func (self *HTTPServer) Run() {
