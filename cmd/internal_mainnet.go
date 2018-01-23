@@ -11,7 +11,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetConfigForMainnet() *Config {
+func GetConfigForInternalMainnet() *Config {
 	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/internal_mainnet_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
