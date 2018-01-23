@@ -115,7 +115,7 @@ func NewFileSigner(file string) *FileSigner {
 	}
 
 	auth.GasLimit = big.NewInt(1000000)
-	auth.GasPrice = big.NewInt(35000000000)
+	auth.GasPrice = big.NewInt(10000000000)
 	signer.opts = auth
 	return &signer
 }

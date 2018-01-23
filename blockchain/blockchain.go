@@ -384,6 +384,26 @@ func (self *Blockchain) Send(
 	}
 }
 
+func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (*types.Transaction, error) {
+	opts, err := self.getTransactOpts()
+	if err != nil {
+		log.Printf("Getting transaction opts failed!!!!!!!\n")
+		return &types.Transaction{}, err
+	} else {
+		return self.pricing.SetImbalanceStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
+	}
+}
+
+func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (*types.Transaction, error) {
+	opts, err := self.getTransactOpts()
+	if err != nil {
+		log.Printf("Getting transaction opts failed!!!!!!!\n")
+		return &types.Transaction{}, err
+	} else {
+		return self.pricing.SetQtyStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
+	}
+}
+
 // func (self *Blockchain) sendToken(token common.Token, amount *big.Int, address ethereum.Address) (ethereum.Hash, error) {
 // 	erc20, err := NewErc20Contract(
 // 		ethereum.HexToAddress(token.Address),
