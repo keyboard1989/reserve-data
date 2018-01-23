@@ -17,6 +17,11 @@ type ExchangePool struct {
 	Exchanges map[common.ExchangeID]interface{}
 }
 
+func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *sync.WaitGroup) {
+	ex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+	wait.Done()
+}
+
 func NewSimulationExchangePool(
 	addressConfig common.AddressConfig,
 	signer *signer.FileSigner,
@@ -32,7 +37,7 @@ func NewSimulationExchangePool(
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
-				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bit.UpdatePairsPrecision()
@@ -42,7 +47,7 @@ func NewSimulationExchangePool(
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
-				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bin.UpdatePairsPrecision()
@@ -63,7 +68,7 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
-				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bit.UpdatePairsPrecision()
@@ -73,7 +78,7 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
-				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bin.UpdatePairsPrecision()
@@ -94,7 +99,7 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
-				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bit.UpdatePairsPrecision()
@@ -104,7 +109,7 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
-				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bin.UpdatePairsPrecision()
@@ -125,7 +130,7 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
-				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bit.UpdatePairsPrecision()
@@ -135,7 +140,7 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
-				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bin.UpdatePairsPrecision()
@@ -156,7 +161,7 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
-				go bit.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bit.UpdatePairsPrecision()
@@ -166,7 +171,7 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
-				go bin.UpdateDepositAddress(common.MustGetToken(tokenID), addr, &wait)
+				go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait)
 			}
 			wait.Wait()
 			bin.UpdatePairsPrecision()

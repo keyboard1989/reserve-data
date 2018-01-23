@@ -44,8 +44,7 @@ func (self *Bittrex) UpdateAllDepositAddresses(address string) {
 	}
 }
 
-func (self *Bittrex) UpdateDepositAddress(token common.Token, address string, wait *sync.WaitGroup) {
-	defer wait.Done()
+func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
 	liveAddress, _ := self.interf.GetDepositAddress(token.ID)
 	if liveAddress.Result.Address != "" {
 		self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Result.Address)
