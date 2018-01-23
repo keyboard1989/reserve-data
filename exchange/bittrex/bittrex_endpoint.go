@@ -163,6 +163,23 @@ func (self *BittrexEndpoint) OrderStatus(uuid string, timepoint uint64) (exchang
 	}
 }
 
+func (self *BittrexEndpoint) GetDepositAddress(currency string) (exchange.BittrexDepositAddress, error) {
+	result := exchange.BittrexDepositAddress{}
+	timepoint := common.GetTimepoint()
+	resp_body, err := self.GetResponse(
+		addPath(self.interf.AccountEndpoint(timepoint), "getdepositaddress"),
+		map[string]string{
+			"currency": currency,
+		},
+		true,
+		timepoint,
+	)
+	if err == nil {
+		json.Unmarshal(resp_body, &result)
+	}
+	return result, err
+}
+
 func (self *BittrexEndpoint) WithdrawHistory(currency string, timepoint uint64) (exchange.Bittwithdrawhistory, error) {
 	result := exchange.Bittwithdrawhistory{}
 	resp_body, err := self.GetResponse(

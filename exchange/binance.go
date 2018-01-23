@@ -39,7 +39,12 @@ func (self *Binance) UpdateAllDepositAddresses(address string) {
 }
 
 func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
-	self.addresses[token.ID] = ethereum.HexToAddress(address)
+	liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
+	if liveAddress.Address != "" {
+		self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Address)
+	} else {
+		self.addresses[token.ID] = ethereum.HexToAddress(address)
+	}
 }
 
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {

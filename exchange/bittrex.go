@@ -45,7 +45,12 @@ func (self *Bittrex) UpdateAllDepositAddresses(address string) {
 }
 
 func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
-	self.addresses[token.ID] = ethereum.HexToAddress(address)
+	liveAddress, _ := self.interf.GetDepositAddress(token.ID)
+	if liveAddress.Result.Address != "" {
+		self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Result.Address)
+	} else {
+		self.addresses[token.ID] = ethereum.HexToAddress(address)
+	}
 }
 
 func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {

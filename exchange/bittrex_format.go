@@ -21,6 +21,15 @@ type Bittinfo struct {
 	Error string `json:"message"`
 }
 
+type BittrexDepositAddress struct {
+	Success string `json:"success"`
+	Message string `json:"message"`
+	Result  struct {
+		Currency string `json:"Currency"`
+		Address  string `json:"Address"`
+	} `json:"result"`
+}
+
 type BittPairInfo struct {
 	Base      string  `json:"MarketCurrency"`
 	Quote     string  `json:"BaseCurrency"`
