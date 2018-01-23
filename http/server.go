@@ -864,6 +864,11 @@ func (self *HTTPServer) GetFee(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetTargetQty(c *gin.Context) {
+	log.Println("Getting target quantity")
+	_, ok := self.Authenticated(c, []string{})
+	if !ok {
+		return
+	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{"success": true, "data": common.TokenTargetQty},
@@ -871,7 +876,7 @@ func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 }
 
 func (self *HTTPServer) SetTargetQty(c *gin.Context) {
-	log.Println("Storing targe quantity")
+	log.Println("Storing target quantity")
 	postForm, ok := self.Authenticated(c, []string{"data"})
 	if !ok {
 		return

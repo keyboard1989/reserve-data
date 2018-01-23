@@ -342,7 +342,7 @@ response:
 ```
 Returned data will only include datas that have timestamp in range of `[from, to]`
 
-### Get token target quantity
+### Get token target quantity (signing required)
 ```
 <host>:8000/targetqty
 GET request
@@ -381,23 +381,12 @@ response:
   }
 ```
 
-### Set token target quantity
+### Set token target quantity (signing required)
 ```
 <host>:8000/settargetqty
 POST request
 form params:
-  - data: json, token target quantity
-  example:
-  {
-    "EOS":{
-      "reserve-target":1000.141,
-      "total":1471004712
-    },
-    "ETH":{
-      "reserve-target":1000.141,
-      "total":1471004712
-    }
-  }
+  - data: string, in format of <token>_totalQty_reserveQty|<token>_totalQty_reserveQty|..., eg. OMG_40_35|KNC_100_20
 ```
 
 response
