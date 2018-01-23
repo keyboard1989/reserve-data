@@ -18,8 +18,8 @@ type ExchangePool struct {
 }
 
 func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *sync.WaitGroup) {
+	defer wait.Done()
 	ex.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
-	wait.Done()
 }
 
 func NewSimulationExchangePool(
