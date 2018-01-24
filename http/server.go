@@ -555,14 +555,14 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 
 func (self *HTTPServer) GetActivities(c *gin.Context) {
 	log.Printf("Getting all activity records \n")
-	_, ok := self.Authenticated(c, []string{"fromTime"}, false)
+	postForm, ok := self.Authenticated(c, []string{"fromTime"}, false)
 	if !ok {
 		return
 	}
-	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
-	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	fromTime, _ := strconv.ParseUint(postForm.Get("fromTime"), 10, 64)
+	toTime := uint64(time.Now().UnixNano())
 
-	data, err := self.app.GetRecords(fromTime*1000000, toTime*1000000)
+	data, err := self.app.GetRecords(fromTime*1000000, toTime)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
