@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
@@ -73,7 +74,7 @@ func IsIntime(nonce string) bool {
 // using HMAC512
 // params must contain "nonce" which is the unixtime in millisecond. The nonce will be invalid
 // if it differs from server time more than 10s
-func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string) (url.Values, bool) {
+func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string, writeRequired bool) (url.Values, bool) {
 	err := c.Request.ParseForm()
 	if err != nil {
 		c.JSON(
@@ -117,11 +118,15 @@ func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string) (
 
 	signed := c.GetHeader("signed")
 	message := c.Request.Form.Encode()
+	var knReadonlySign string
+	if !writeRequired {
+		knReadonlySign = self.auth.KNReadonlySign(message)
+	}
 	knsign := self.auth.KNSign(message)
 	log.Printf(
 		"Signing message(%s) to check authentication. Expected \"%s\", got \"%s\"",
 		message, knsign, signed)
-	if signed == knsign {
+	if signed == knsign || (knReadonlySign != "" && signed == knReadonlySign) {
 		return params, true
 	} else {
 		c.JSON(
@@ -190,7 +195,7 @@ func (self *HTTPServer) Price(c *gin.Context) {
 
 func (self *HTTPServer) AuthData(c *gin.Context) {
 	log.Printf("Getting current auth data snapshot \n")
-	_, ok := self.Authenticated(c, []string{})
+	_, ok := self.Authenticated(c, []string{}, false)
 	if !ok {
 		return
 	}
@@ -236,7 +241,7 @@ func (self *HTTPServer) GetRate(c *gin.Context) {
 }
 
 func (self *HTTPServer) SetRate(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"tokens", "buys", "sells", "block", "afp_mid"})
+	postForm, ok := self.Authenticated(c, []string{"tokens", "buys", "sells", "block", "afp_mid"}, true)
 	if !ok {
 		return
 	}
@@ -321,7 +326,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 }
 
 func (self *HTTPServer) Trade(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"base", "quote", "amount", "rate", "type"})
+	postForm, ok := self.Authenticated(c, []string{"base", "quote", "amount", "rate", "type"}, true)
 	if !ok {
 		return
 	}
@@ -403,7 +408,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 }
 
 func (self *HTTPServer) CancelOrder(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"order_id"})
+	postForm, ok := self.Authenticated(c, []string{"order_id"}, true)
 	if !ok {
 		return
 	}
@@ -445,7 +450,7 @@ func (self *HTTPServer) CancelOrder(c *gin.Context) {
 }
 
 func (self *HTTPServer) Withdraw(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"token", "amount"})
+	postForm, ok := self.Authenticated(c, []string{"token", "amount"}, true)
 	if !ok {
 		return
 	}
@@ -497,7 +502,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 }
 
 func (self *HTTPServer) Deposit(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"amount", "token"})
+	postForm, ok := self.Authenticated(c, []string{"amount", "token"}, true)
 	if !ok {
 		return
 	}
@@ -550,7 +555,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 
 func (self *HTTPServer) GetActivities(c *gin.Context) {
 	log.Printf("Getting all activity records \n")
-	_, ok := self.Authenticated(c, []string{})
+	_, ok := self.Authenticated(c, []string{}, false)
 	if !ok {
 		return
 	}
@@ -576,8 +581,14 @@ func (self *HTTPServer) GetActivities(c *gin.Context) {
 
 func (self *HTTPServer) TradeLogs(c *gin.Context) {
 	log.Printf("Getting trade logs")
-	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
-	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	fromTime, err := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	if err != nil {
+		fromTime = 0
+	}
+	toTime, err := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if err != nil {
+		toTime = uint64(time.Now().UnixNano())
+	}
 
 	data, err := self.app.GetTradeLogs(fromTime, toTime)
 	if err != nil {
@@ -615,7 +626,7 @@ func (self *HTTPServer) StopFetcher(c *gin.Context) {
 
 func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
 	log.Printf("Getting all immediate pending activity records \n")
-	_, ok := self.Authenticated(c, []string{})
+	_, ok := self.Authenticated(c, []string{}, false)
 	if !ok {
 		return
 	}
@@ -642,7 +653,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 		Timestamp: common.GetTimepoint(),
 	}
 	log.Printf("Getting metrics")
-	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"})
+	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"}, false)
 	if !ok {
 		return
 	}
@@ -698,7 +709,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 
 func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 	log.Printf("Storing metrics")
-	postForm, ok := self.Authenticated(c, []string{"timestamp", "data"})
+	postForm, ok := self.Authenticated(c, []string{"timestamp", "data"}, true)
 	if !ok {
 		return
 	}
@@ -900,9 +911,9 @@ func NewHTTPServer(
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AddAllowMethods("OPTIONS")
 	corsConfig.AddAllowHeaders("signed")
 	corsConfig.AllowAllOrigins = true
+	corsConfig.MaxAge = 5 * time.Minute
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{

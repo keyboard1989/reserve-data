@@ -6,7 +6,7 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"io/ioutil"
-	"math/big"
+	// "math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -26,6 +26,7 @@ type FileSigner struct {
 	Keystore       string `json:"keystore_path"`
 	Passphrase     string `json:"passphrase"`
 	KNSecret       string `json:"kn_secret"`
+	KNReadOnly     string `json:"kn_readonly"`
 	opts           *bind.TransactOpts
 }
 
@@ -59,6 +60,12 @@ func (self FileSigner) GetBinanceKey() string {
 
 func (self FileSigner) KNSign(msg string) string {
 	mac := hmac.New(sha512.New, []byte(self.KNSecret))
+	mac.Write([]byte(msg))
+	return ethereum.Bytes2Hex(mac.Sum(nil))
+}
+
+func (self FileSigner) KNReadonlySign(msg string) string {
+	mac := hmac.New(sha512.New, []byte(self.KNReadOnly))
 	mac.Write([]byte(msg))
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }
@@ -107,8 +114,8 @@ func NewFileSigner(file string) *FileSigner {
 		panic(err)
 	}
 
-	auth.GasLimit = big.NewInt(1000000)
-	auth.GasPrice = big.NewInt(35000000000)
+	// auth.GasLimit = big.NewInt(1000000)
+	// auth.GasPrice = big.NewInt(35000000000)
 	signer.opts = auth
 	return &signer
 }

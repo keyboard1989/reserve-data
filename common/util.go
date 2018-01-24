@@ -1,6 +1,6 @@
 package common
 
-const TRUNC_LENGTH int = 6000
+const TRUNC_LENGTH int = 3072
 
 func TruncStr(src []byte) []byte {
 	if len(src) > TRUNC_LENGTH {

@@ -43,6 +43,10 @@ func main() {
 		log.Printf("Running in production mode")
 		config = GetConfigForMainnet()
 		break
+	case "internal_mainnet":
+		log.Printf("Running in internal mainnet mode")
+		config = GetConfigForInternalMainnet()
+		break
 	case "simulation":
 		log.Printf("Running in simulation mode")
 		config = GetConfigForSimulation()
