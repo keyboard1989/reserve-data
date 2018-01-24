@@ -70,7 +70,6 @@ func (self FileSigner) GetHuobiKey() string {
 }
 
 func (self FileSigner) KNSign(msg string) string {
-	log.Println("fasgfasfgsdf")
 	log.Printf("KN secret: %s", self.KNSecret)
 	mac := hmac.New(sha512.New, []byte(self.KNSecret))
 	mac.Write([]byte(msg))
