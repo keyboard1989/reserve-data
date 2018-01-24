@@ -55,6 +55,8 @@ func GetConfigForSimulation() *Config {
 		"http://blockchain:8545",
 	}
 
+	hmac512auth := fileSigner
+
 	return &Config{
 		ActivityStorage:         storage,
 		DataStorage:             storage,

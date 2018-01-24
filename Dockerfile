@@ -6,7 +6,7 @@ FROM golang
 ADD . /go/src/github.com/KyberNetwork/reserve-data
 
 ENV KYBER_EXCHANGES huobi
-ENV KYBER_ENV dev
+ENV KYBER_ENV simulation
 WORKDIR /go/src/github.com/KyberNetwork/reserve-data
 RUN go install -v github.com/KyberNetwork/reserve-data/cmd
 

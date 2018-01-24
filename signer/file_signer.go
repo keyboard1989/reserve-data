@@ -7,7 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"io/ioutil"
-	// "math/big"
+	"log"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -70,6 +70,8 @@ func (self FileSigner) GetHuobiKey() string {
 }
 
 func (self FileSigner) KNSign(msg string) string {
+	log.Println("fasgfasfgsdf")
+	log.Printf("KN secret: %s", self.KNSecret)
 	mac := hmac.New(sha512.New, []byte(self.KNSecret))
 	mac.Write([]byte(msg))
 	return ethereum.Bytes2Hex(mac.Sum(nil))
