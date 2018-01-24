@@ -555,7 +555,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 
 func (self *HTTPServer) GetActivities(c *gin.Context) {
 	log.Printf("Getting all activity records \n")
-	_, ok := self.Authenticated(c, []string{}, false)
+	_, ok := self.Authenticated(c, []string{"fromTime"}, false)
 	if !ok {
 		return
 	}
@@ -911,9 +911,9 @@ func NewHTTPServer(
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
 	corsConfig := cors.DefaultConfig()
-	corsConfig.AddAllowMethods("OPTIONS")
 	corsConfig.AddAllowHeaders("signed")
 	corsConfig.AllowAllOrigins = true
+	corsConfig.MaxAge = 5 * time.Minute
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
