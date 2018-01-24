@@ -78,6 +78,10 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		if err != nil {
 			return err
 		}
+		_, err = tx.CreateBucket([]byte(METRIC_TARGET_QUANTITY))
+		if err != nil {
+			return err
+		}
 		_, err = tx.CreateBucket([]byte(LOG_BUCKET))
 		if err != nil {
 			return err
@@ -539,15 +543,48 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 	return result, err
 }
 
+func (self *BoltStorage) CurrentTargetQtyVersion(timepoint uint64) (common.Version, error) {
+	var result uint64
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(PRICE_BUCKET)).Cursor()
+		result, err = reverseSeek(timepoint, c)
+		return nil
+	})
+	return common.Version(result), err
+}
+
 func (self *BoltStorage) GetTokenTargetQty() (map[string]metric.TargetQty, error) {
-	// TODO: compete this
 	tokenTargetQty := metric.TokenTargetQty{}
+	version, _ := self.CurrentTargetQtyVersion(common.GetTimepoint())
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
+		data := b.Get(uint64ToBytes(uint64(version)))
+		if data == nil {
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
+		} else {
+			err = json.Unmarshal(data, &tokenTargetQty)
+		}
+		return nil
+	})
 	return tokenTargetQty.Data, nil
 }
 
-func (self *BoltStorage) StoreTokenTargetQty(tokenTargetQty metric.TokenTargetQty) error {
-	// TODO: complete this
-	return nil
+func (self *BoltStorage) StoreTokenTargetQty(data metric.TokenTargetQty) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
+		dataJson, err = json.Marshal(&data)
+		if err != nil {
+			return err
+		}
+		idByte := uint64ToBytes(data.Timestamp)
+		err = b.Put(idByte, dataJson)
+		return err
+	})
+	return err
 }
 
 func (self *BoltStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) {
