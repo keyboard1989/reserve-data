@@ -261,10 +261,12 @@ func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
+		log.Printf("Response body: %+v\n", result)
 		if result.Status != "ok" {
 			return "", errors.New(fmt.Sprintf("Withdraw from Huobi failed: %s\n", result.Reason))
 		}
-		return strconv.FormatUint(result.ID, 64), nil
+		log.Printf("Withdraw id: %s", fmt.Sprintf("%v", result.ID))
+		return strconv.FormatUint(result.ID, 10), nil
 	} else {
 		log.Printf("Error: %v", err)
 		return "", errors.New("Withdraw rejected by Huobi")

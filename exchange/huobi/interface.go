@@ -91,14 +91,14 @@ func NewKovanInterface() *KovanInterface {
 type DevInterface struct{}
 
 func (self *DevInterface) PublicEndpoint() string {
-	// return "https://api.huobi.pro"
-	return "http://192.168.24.247:5200"
+	return "https://api.huobi.pro"
+	// return "http://192.168.24.247:5200"
 	// return "http://192.168.25.16:5100"
 }
 
 func (self *DevInterface) AuthenticatedEndpoint() string {
-	// return "https://api.huobi.pro"
-	return "http://192.168.24.247:5200"
+	return "https://api.huobi.pro"
+	// return "http://192.168.24.247:5200"
 	// return "http://192.168.25.16:5100"
 }
 
