@@ -3,7 +3,6 @@ package common
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"strings"
 )
 
@@ -27,11 +26,6 @@ func (self Token) IsETH() bool {
 type TokenPair struct {
 	Base  Token
 	Quote Token
-}
-
-type TargetQty struct {
-	ReserveTargetQty float64 `json:"reserve_target"`
-	TotalTargetQty   float64 `json:"total_target"`
 }
 
 func (self *TokenPair) PairID() TokenPairID {
@@ -58,7 +52,6 @@ func MustCreateTokenPair(base, quote string) TokenPair {
 }
 
 var SupportedTokens map[string]Token
-var TokenTargetQty map[string]TargetQty
 
 func GetToken(id string) (Token, error) {
 	t := SupportedTokens[strings.ToUpper(id)]
@@ -75,22 +68,4 @@ func MustGetToken(id string) Token {
 		panic(e)
 	}
 	return t
-}
-
-func UpdateTokenTargetQty(data string) error {
-	tokensValues := strings.Split(data, "|")
-	for _, tok := range tokensValues {
-		values := strings.Split(tok, "_")
-		t := SupportedTokens[strings.ToUpper(values[0])]
-		if t.ID == "" {
-			return errors.New(fmt.Sprintf("Token %s is not supported", values[0]))
-		}
-		totalValue, _ := strconv.ParseFloat(values[1], 64)
-		reserveValue, _ := strconv.ParseFloat(values[2], 64)
-		TokenTargetQty[values[0]] = TargetQty{
-			TotalTargetQty:   totalValue,
-			ReserveTargetQty: reserveValue,
-		}
-	}
-	return nil
 }

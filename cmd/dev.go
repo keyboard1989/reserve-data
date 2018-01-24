@@ -24,14 +24,12 @@ func GetConfigForDev() *Config {
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 
 	common.SupportedTokens = map[string]common.Token{}
-	common.TokenTargetQty = map[string]common.TargetQty{}
 	tokens := []common.Token{}
 	for id, t := range addressConfig.Tokens {
 		tok := common.Token{
 			id, t.Address, t.Decimals,
 		}
 		common.SupportedTokens[id] = tok
-		common.TokenTargetQty[id] = common.TargetQty{}
 		tokens = append(tokens, tok)
 	}
 

@@ -1,22 +1,25 @@
 package metric
 
 import (
-	"github.com/KyberNetwork/reserve-data/common"
 	"log"
 	"sync"
+
+	"github.com/KyberNetwork/reserve-data/common"
 )
 
 const MAX_CAPACITY int = 1000
 
 type RamMetricStorage struct {
-	mu   sync.RWMutex
-	data []*MetricEntry
+	mu             sync.RWMutex
+	data           []*MetricEntry
+	tokenTargetQty TokenTargetQty
 }
 
 func NewRamMetricStorage() *RamMetricStorage {
 	return &RamMetricStorage{
-		mu:   sync.RWMutex{},
-		data: []*MetricEntry{},
+		mu:             sync.RWMutex{},
+		data:           []*MetricEntry{},
+		tokenTargetQty: TokenTargetQty{},
 	}
 }
 
@@ -66,4 +69,17 @@ func (self *RamMetricStorage) GetMetric(tokens []common.Token, fromTime, toTime 
 		result[k] = *v
 	}
 	return result, nil
+}
+
+func (self *RamMetricStorage) StoreTokenTargetQty(tokenTargetQty TokenTargetQty) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	self.tokenTargetQty = tokenTargetQty
+	return nil
+}
+
+func (self *RamMetricStorage) GetTokenTargetQty() (map[string]TargetQty, error) {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	return self.tokenTargetQty.Data, nil
 }

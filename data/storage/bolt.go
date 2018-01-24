@@ -24,6 +24,7 @@ const (
 	PENDING_ACTIVITY_BUCKET string = "pending_activities"
 	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
 	METRIC_BUCKET           string = "metrics"
+	METRIC_TARGET_QUANTITY  string = "target_quantity"
 	LOG_BUCKET              string = "logs"
 	MAX_NUMBER_VERSION      int    = 1000
 )
@@ -536,6 +537,17 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 		result[k] = *v
 	}
 	return result, err
+}
+
+func (self *BoltStorage) GetTokenTargetQty() (map[string]metric.TargetQty, error) {
+	// TODO: compete this
+	tokenTargetQty := metric.TokenTargetQty{}
+	return tokenTargetQty.Data, nil
+}
+
+func (self *BoltStorage) StoreTokenTargetQty(tokenTargetQty metric.TokenTargetQty) error {
+	// TODO: complete this
+	return nil
 }
 
 func (self *BoltStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) {

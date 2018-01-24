@@ -869,20 +869,63 @@ func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 	if !ok {
 		return
 	}
+	data, err := self.metric.GetTokenTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "data": err.Error()},
+		)
+	}
 	c.JSON(
 		http.StatusOK,
-		gin.H{"success": true, "data": common.TokenTargetQty},
+		gin.H{"success": true, "data": data},
 	)
 }
 
 func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	log.Println("Storing target quantity")
-	postForm, ok := self.Authenticated(c, []string{"data"})
+	postForm, ok := self.Authenticated(c, []string{"timestamp", "data"})
 	if !ok {
 		return
 	}
+	timestamp, _ := strconv.ParseUint(postForm.Get("timestamp"), 10, 64)
 	data := postForm.Get("data")
-	err := common.UpdateTokenTargetQty(data)
+	tokenTargetQty := metric.TokenTargetQty{}
+	tokenTargetQty.Timestamp = timestamp
+	tokenTargetQty.Data = map[string]metric.TargetQty{}
+	for _, tok := range strings.Split(data, "|") {
+		parts := strings.Split(tok, "_")
+		if len(parts) != 3 {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "submitted data is not correct format"},
+			)
+		}
+		token := parts[0]
+		totalTargetStr := parts[1]
+		reserveTargetStr := parts[2]
+		totalTarget, err := strconv.ParseFloat(totalTargetStr, 64)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Total target " + totalTargetStr + " is not float64"},
+			)
+			return
+		}
+		reserveTarget, err := strconv.ParseFloat(reserveTargetStr, 64)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Total target " + reserveTargetStr + " is not float64"},
+			)
+			return
+		}
+		tokenTargetQty.Data[token] = metric.TargetQty{
+			TotalTargetQty:   totalTarget,
+			ReserveTargetQty: reserveTarget,
+		}
+	}
+	err := self.metric.StoreTokenTargetQty(tokenTargetQty)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
