@@ -170,3 +170,7 @@ type Binawithdrawal struct {
 	ApplyTime uint64  `json:"applyTime"`
 	Status    int     `json:"status"`
 }
+
+type BinaServerTime struct {
+	ServerTime uint64 `json:"serverTime"`
+}

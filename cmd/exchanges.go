@@ -44,6 +44,7 @@ func NewSimulationExchangePool(
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(signer))
+			bin.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -75,6 +76,7 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewDevBinanceEndpoint(signer))
+			bin.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)

@@ -29,11 +29,12 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		req.Header.Add("User-Agent", "binance/go")
 	}
 	req.Header.Add("Accept", "application/json")
+	log.Printf("Bin Time Delta: %s", exchange.BinanceTimeDelta)
 	if signNeeded {
 		q := req.URL.Query()
 		sig := url.Values{}
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
-		q.Set("timestamp", fmt.Sprintf("%d", timepoint-5000))
+		q.Set("timestamp", fmt.Sprintf("%d", int64(timepoint)+exchange.BinanceTimeDelta-1000))
 		q.Set("recvWindow", "7000")
 		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
 		// Using separated values map for signature to ensure it is at the end
@@ -317,6 +318,22 @@ func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, er
 		err = json.Unmarshal(resp_body, &result)
 	}
 	return result, err
+}
+
+func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
+	result := exchange.BinaServerTime{}
+	timepoint := common.GetTimepoint()
+	resp_body, err := self.GetResponse(
+		"GET",
+		self.interf.PublicEndpoint()+"/api/v1/time",
+		map[string]string{},
+		false,
+		timepoint,
+	)
+	if err == nil {
+		err = json.Unmarshal(resp_body, &result)
+	}
+	return result.ServerTime, err
 }
 
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {
