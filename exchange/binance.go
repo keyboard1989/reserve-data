@@ -18,7 +18,7 @@ const BINANCE_EPSILON float64 = 0.0000000001 // 10e-10
 type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
-	addresses    map[string]ethereum.Address
+	addresses    *common.ExchangeAddresses
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 }
@@ -28,22 +28,23 @@ func (self *Binance) MarshalText() (text []byte, err error) {
 }
 
 func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses[token.ID]
+	addr, supported := self.addresses.Get(token.ID)
 	return addr, supported
 }
 
 func (self *Binance) UpdateAllDepositAddresses(address string) {
-	for k, _ := range self.addresses {
-		self.addresses[k] = ethereum.HexToAddress(address)
+	data := self.addresses.GetData()
+	for k, _ := range data {
+		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }
 
 func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 	liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
 	if liveAddress.Address != "" {
-		self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Address)
+		self.addresses.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
 	} else {
-		self.addresses[token.ID] = ethereum.HexToAddress(address)
+		self.addresses.Update(token.ID, ethereum.HexToAddress(address))
 	}
 }
 
@@ -410,7 +411,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("SNT", "ETH"),
 			common.MustCreateTokenPair("SALT", "ETH"),
 		},
-		map[string]ethereum.Address{},
+		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		common.NewExchangeFee(
 			common.TradingFee{
