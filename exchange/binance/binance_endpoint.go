@@ -368,7 +368,6 @@ func NewRealBinanceEndpoint(signer Signer) *BinanceEndpoint {
 
 func NewSimulatedBinanceEndpoint(signer Signer) *BinanceEndpoint {
 	endpoint := &BinanceEndpoint{signer, NewSimulatedInterface(), 0}
-	endpoint.UpdateTimeDelta()
 	return endpoint
 }
 
