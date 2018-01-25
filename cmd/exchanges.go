@@ -43,8 +43,9 @@ func NewSimulationExchangePool(
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
-			bin := exchange.NewBinance(binance.NewSimulatedBinanceEndpoint(signer))
-			bin.UpdateBinanceTimeDelta()
+			endpoint := binance.NewSimulatedBinanceEndpoint(signer)
+			bin := exchange.NewBinance(endpoint)
+			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -75,8 +76,9 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
-			bin := exchange.NewBinance(binance.NewDevBinanceEndpoint(signer))
-			bin.UpdateBinanceTimeDelta()
+			endpoint := binance.NewDevBinanceEndpoint(signer)
+			bin := exchange.NewBinance(endpoint)
+			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -107,8 +109,9 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
-			bin := exchange.NewBinance(binance.NewKovanBinanceEndpoint(signer))
-			bin.UpdateBinanceTimeDelta()
+			endpoint := binance.NewKovanBinanceEndpoint(signer)
+			bin := exchange.NewBinance(endpoint)
+			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -139,8 +142,9 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
-			bin := exchange.NewBinance(binance.NewRopstenBinanceEndpoint(signer))
-			bin.UpdateBinanceTimeDelta()
+			endpoint := binance.NewRopstenBinanceEndpoint(signer)
+			bin := exchange.NewBinance(endpoint)
+			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -171,8 +175,9 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			bit.UpdatePairsPrecision()
 			exchanges[bit.ID()] = bit
 		case "binance":
-			bin := exchange.NewBinance(binance.NewRealBinanceEndpoint(signer))
-			bin.UpdateBinanceTimeDelta()
+			endpoint := binance.NewRealBinanceEndpoint(signer)
+			bin := exchange.NewBinance(endpoint)
+			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)

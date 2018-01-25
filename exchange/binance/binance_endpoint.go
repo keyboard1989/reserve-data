@@ -18,6 +18,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+var BinanceTimeDelta int64
+
 type BinanceEndpoint struct {
 	signer Signer
 	interf Interface
@@ -29,12 +31,12 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		req.Header.Add("User-Agent", "binance/go")
 	}
 	req.Header.Add("Accept", "application/json")
-	log.Printf("Bin Time Delta: %s", exchange.BinanceTimeDelta)
+	log.Printf("Bin Time Delta: %s", BinanceTimeDelta)
 	if signNeeded {
 		q := req.URL.Query()
 		sig := url.Values{}
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
-		q.Set("timestamp", fmt.Sprintf("%d", int64(timepoint)+exchange.BinanceTimeDelta-1000))
+		q.Set("timestamp", fmt.Sprintf("%d", int64(timepoint)+BinanceTimeDelta-1000))
 		q.Set("recvWindow", "7000")
 		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
 		// Using separated values map for signature to ensure it is at the end
@@ -334,6 +336,23 @@ func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
 		err = json.Unmarshal(resp_body, &result)
 	}
 	return result.ServerTime, err
+}
+
+func (self *BinanceEndpoint) UpdateBinanceTimeDelta() error {
+	currentTime := common.GetTimepoint()
+	serverTime, err := self.GetServerTime()
+	responseTime := common.GetTimepoint()
+	if err != nil {
+		return err
+	}
+	log.Printf("Binance current time: %s", currentTime)
+	log.Printf("Binance server time: %s", serverTime)
+	log.Printf("Binance response time: %s", responseTime)
+	roundtripTime := (int64(responseTime) - int64(currentTime)) / 2
+	BinanceTimeDelta = int64(serverTime) - int64(currentTime) - roundtripTime
+
+	log.Printf("Time delta: %s", BinanceTimeDelta)
+	return nil
 }
 
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {

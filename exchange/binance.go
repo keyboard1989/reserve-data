@@ -15,8 +15,6 @@ import (
 
 const BINANCE_EPSILON float64 = 0.0000000001 // 10e-10
 
-var BinanceTimeDelta int64
-
 type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
@@ -32,23 +30,6 @@ func (self *Binance) MarshalText() (text []byte, err error) {
 func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 	addr, supported := self.addresses[token.ID]
 	return addr, supported
-}
-
-func (self *Binance) UpdateBinanceTimeDelta() error {
-	currentTime := common.GetTimepoint()
-	serverTime, err := self.interf.GetServerTime()
-	responseTime := common.GetTimepoint()
-	if err != nil {
-		return err
-	}
-	log.Printf("Binance current time: %s", currentTime)
-	log.Printf("Binance server time: %s", serverTime)
-	log.Printf("Binance response time: %s", responseTime)
-	roundtripTime := (int64(responseTime) - int64(currentTime)) / 2
-	BinanceTimeDelta = int64(serverTime) - int64(currentTime) - roundtripTime
-
-	log.Printf("Time delta: %s", BinanceTimeDelta)
-	return nil
 }
 
 func (self *Binance) UpdateAllDepositAddresses(address string) {
