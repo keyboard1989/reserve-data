@@ -18,11 +18,10 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-var BinanceTimeDelta int64
-
 type BinanceEndpoint struct {
-	signer Signer
-	interf Interface
+	signer    Signer
+	interf    Interface
+	timeDelta int64
 }
 
 func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, timepoint uint64) {
@@ -31,12 +30,12 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		req.Header.Add("User-Agent", "binance/go")
 	}
 	req.Header.Add("Accept", "application/json")
-	log.Printf("Bin Time Delta: %s", BinanceTimeDelta)
+	log.Printf("Bin Time Delta: %s", self.timeDelta)
 	if signNeeded {
 		q := req.URL.Query()
 		sig := url.Values{}
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
-		q.Set("timestamp", fmt.Sprintf("%d", int64(timepoint)+BinanceTimeDelta-1000))
+		q.Set("timestamp", fmt.Sprintf("%d", int64(timepoint)+self.timeDelta-1000))
 		q.Set("recvWindow", "7000")
 		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
 		// Using separated values map for signature to ensure it is at the end
@@ -338,7 +337,7 @@ func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
 	return result.ServerTime, err
 }
 
-func (self *BinanceEndpoint) UpdateBinanceTimeDelta() error {
+func (self *BinanceEndpoint) UpdateTimeDelta() error {
 	currentTime := common.GetTimepoint()
 	serverTime, err := self.GetServerTime()
 	responseTime := common.GetTimepoint()
@@ -349,32 +348,43 @@ func (self *BinanceEndpoint) UpdateBinanceTimeDelta() error {
 	log.Printf("Binance server time: %s", serverTime)
 	log.Printf("Binance response time: %s", responseTime)
 	roundtripTime := (int64(responseTime) - int64(currentTime)) / 2
-	BinanceTimeDelta = int64(serverTime) - int64(currentTime) - roundtripTime
+	self.timeDelta = int64(serverTime) - int64(currentTime) - roundtripTime
 
-	log.Printf("Time delta: %s", BinanceTimeDelta)
+	log.Printf("Time delta: %s", self.timeDelta)
 	return nil
 }
 
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, interf}
+	endpoint := &BinanceEndpoint{signer, interf, 0}
+	endpoint.UpdateTimeDelta()
+	return endpoint
 }
 
 func NewRealBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewRealInterface()}
+	endpoint := &BinanceEndpoint{signer, NewRealInterface(), 0}
+	endpoint.UpdateTimeDelta()
+	return endpoint
 }
 
 func NewSimulatedBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewSimulatedInterface()}
+	endpoint := &BinanceEndpoint{signer, NewSimulatedInterface(), 0}
+	endpoint.UpdateTimeDelta()
+	return endpoint
 }
 
 func NewRopstenBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewRopstenInterface()}
+	endpoint := &BinanceEndpoint{signer, NewRopstenInterface(), 0}
+	endpoint.UpdateTimeDelta()
+	return endpoint
 }
 
 func NewKovanBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewKovanInterface()}
+	endpoint := &BinanceEndpoint{signer, NewKovanInterface(), 0}
+	return endpoint
 }
 
 func NewDevBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewDevInterface()}
+	endpoint := &BinanceEndpoint{signer, NewDevInterface(), 0}
+	endpoint.UpdateTimeDelta()
+	return endpoint
 }

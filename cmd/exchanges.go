@@ -45,7 +45,6 @@ func NewSimulationExchangePool(
 		case "binance":
 			endpoint := binance.NewSimulatedBinanceEndpoint(signer)
 			bin := exchange.NewBinance(endpoint)
-			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -78,7 +77,6 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 		case "binance":
 			endpoint := binance.NewDevBinanceEndpoint(signer)
 			bin := exchange.NewBinance(endpoint)
-			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -111,7 +109,6 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 		case "binance":
 			endpoint := binance.NewKovanBinanceEndpoint(signer)
 			bin := exchange.NewBinance(endpoint)
-			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -144,7 +141,6 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 		case "binance":
 			endpoint := binance.NewRopstenBinanceEndpoint(signer)
 			bin := exchange.NewBinance(endpoint)
-			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -177,7 +173,6 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 		case "binance":
 			endpoint := binance.NewRealBinanceEndpoint(signer)
 			bin := exchange.NewBinance(endpoint)
-			endpoint.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
