@@ -17,4 +17,5 @@ type Blockchain interface {
 		buys []*big.Int,
 		sells []*big.Int,
 		block *big.Int) (ethereum.Hash, error)
+	GetAddresses() *common.Addresses
 }
