@@ -46,46 +46,16 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	}
 	// init buckets
 	db.Update(func(tx *bolt.Tx) error {
-		_, err = tx.CreateBucket([]byte(PRICE_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(RATE_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(ORDER_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(ACTIVITY_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(PENDING_ACTIVITY_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(AUTH_DATA_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(METRIC_BUCKET))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(METRIC_TARGET_QUANTITY))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucket([]byte(LOG_BUCKET))
-		if err != nil {
-			return err
-		}
+		tx.CreateBucket([]byte(PRICE_BUCKET))
+		tx.CreateBucket([]byte(RATE_BUCKET))
+		tx.CreateBucket([]byte(ORDER_BUCKET))
+		tx.CreateBucket([]byte(ACTIVITY_BUCKET))
+		tx.CreateBucket([]byte(PENDING_ACTIVITY_BUCKET))
+		tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY))
+		tx.CreateBucket([]byte(AUTH_DATA_BUCKET))
+		tx.CreateBucket([]byte(METRIC_BUCKET))
+		tx.CreateBucket([]byte(METRIC_TARGET_QUANTITY))
+		tx.CreateBucket([]byte(LOG_BUCKET))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
@@ -568,7 +538,7 @@ func (self *BoltStorage) GetTokenTargetQty() (map[string]metric.TargetQty, error
 		}
 		return nil
 	})
-	return tokenTargetQty.Data, nil
+	return tokenTargetQty.Data, err
 }
 
 func (self *BoltStorage) StoreTokenTargetQty(data metric.TokenTargetQty) error {
