@@ -37,12 +37,16 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 func (self *Binance) UpdateBinanceTimeDelta() error {
 	currentTime := common.GetTimepoint()
 	serverTime, err := self.interf.GetServerTime()
+	responseTime := common.GetTimepoint()
 	if err != nil {
 		return err
 	}
 	log.Printf("Binance current time: %s", currentTime)
 	log.Printf("Binance server time: %s", serverTime)
-	BinanceTimeDelta = int64(serverTime) - int64(currentTime)
+	log.Printf("Binance response time: %s", responseTime)
+	roundtripTime := (int64(responseTime) - int64(currentTime)) / 2
+	BinanceTimeDelta = int64(serverTime) - int64(currentTime) - roundtripTime
+
 	log.Printf("Time delta: %s", BinanceTimeDelta)
 	return nil
 }

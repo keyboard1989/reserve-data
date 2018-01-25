@@ -108,6 +108,7 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewKovanBinanceEndpoint(signer))
+			bin.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -139,6 +140,7 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewRopstenBinanceEndpoint(signer))
+			bin.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -170,6 +172,7 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			exchanges[bit.ID()] = bit
 		case "binance":
 			bin := exchange.NewBinance(binance.NewRealBinanceEndpoint(signer))
+			bin.UpdateBinanceTimeDelta()
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
