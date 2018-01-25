@@ -891,7 +891,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	log.Printf("Getting quantity data")
 	data := postForm.Get("data")
 	tokenTargetQty := metric.TokenTargetQty{}
-	tokenTargetQty.Timestamp, _ = common.GetTimepoint()
+	tokenTargetQty.Timestamp = common.GetTimepoint()
 	tokenTargetQty.Data = map[string]metric.TargetQty{}
 	for _, tok := range strings.Split(data, "|") {
 		parts := strings.Split(tok, "_")
