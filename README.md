@@ -342,6 +342,60 @@ response:
 ```
 Returned data will only include datas that have timestamp in range of `[from, to]`
 
+### Get token target quantity (signing required)
+```
+<host>:8000/targetqty
+GET request
+```
+
+response:
+```
+  {
+    "data": {
+      "EOS": {
+        "reserve-target": 1000.141,
+        "total": 1471004712
+      },
+      "ETH": {
+        "reserve-target": 1000.141,
+        "total": 1471004712
+      },
+      "KNC": {
+        "reserve-target": 0,
+        "total": 0
+      },
+      "OMG": {
+        "reserve-target": 0,
+        "total": 0
+      },
+      "SALT": {
+        "reserve-target": 0,
+        "total": 0
+      },
+      "SNT": {
+        "reserve-target": 0,
+        "total": 0
+      }
+    },
+    "success": true
+  }
+```
+
+### Set token target quantity (signing required)
+```
+<host>:8000/settargetqty
+POST request
+form params:
+  - data: string, in format of <token>_totalQty_reserveQty|<token>_totalQty_reserveQty|..., eg. OMG_40_35|KNC_100_20
+```
+
+response
+```
+  {
+    "success": true
+  }
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 

@@ -7,6 +7,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -46,7 +47,11 @@ func GetConfigForMainnet() *Config {
 		addressConfig, fileSigner, storage,
 	)
 
-	hmac512auth := fileSigner
+	hmac512auth := http.KNAuthentication{
+		fileSigner.KNSecret,
+		fileSigner.KNReadOnly,
+		fileSigner.KNConfiguration,
+	}
 
 	endpoint := "https://mainnet.infura.io"
 

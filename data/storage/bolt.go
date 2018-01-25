@@ -24,6 +24,7 @@ const (
 	PENDING_ACTIVITY_BUCKET string = "pending_activities"
 	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
 	METRIC_BUCKET           string = "metrics"
+	METRIC_TARGET_QUANTITY  string = "target_quantity"
 	LOG_BUCKET              string = "logs"
 	MAX_NUMBER_VERSION      int    = 1000
 )
@@ -53,6 +54,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY))
 		tx.CreateBucket([]byte(AUTH_DATA_BUCKET))
 		tx.CreateBucket([]byte(METRIC_BUCKET))
+		tx.CreateBucket([]byte(METRIC_TARGET_QUANTITY))
 		tx.CreateBucket([]byte(LOG_BUCKET))
 		return nil
 	})
@@ -509,6 +511,59 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 		result[k] = *v
 	}
 	return result, err
+}
+
+func (self *BoltStorage) CurrentTargetQtyVersion(timepoint uint64) (common.Version, error) {
+	var result uint64
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(METRIC_TARGET_QUANTITY)).Cursor()
+		result, err = reverseSeek(timepoint, c)
+		return nil
+	})
+	return common.Version(result), err
+}
+
+func (self *BoltStorage) GetTokenTargetQty() (map[string]metric.TargetQty, error) {
+	tokenTargetQty := metric.TokenTargetQty{}
+	version, err := self.CurrentTargetQtyVersion(common.GetTimepoint())
+	log.Printf("Current version: %s", version)
+	if err != nil {
+		log.Printf("Cannot get version: %s", err.Error())
+	}
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
+		data := b.Get(uint64ToBytes(uint64(version)))
+		if data == nil {
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
+		} else {
+			err = json.Unmarshal(data, &tokenTargetQty)
+			if err != nil {
+				log.Printf("Cannot unmarshal: %s", err.Error())
+			}
+		}
+		return nil
+	})
+	return tokenTargetQty.Data, err
+}
+
+func (self *BoltStorage) StoreTokenTargetQty(data metric.TokenTargetQty) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
+		dataJson, err = json.Marshal(&data)
+		if err != nil {
+			return err
+		}
+		idByte := uint64ToBytes(data.Timestamp)
+		log.Printf("Version saved: %s", data.Timestamp)
+		log.Printf("Data saved: %v", data)
+		log.Printf("Data saved: %v", data)
+		err = b.Put(idByte, dataJson)
+		return err
+	})
+	return err
 }
 
 func (self *BoltStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) {

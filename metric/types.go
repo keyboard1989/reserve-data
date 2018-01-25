@@ -25,3 +25,13 @@ type MetricResponse struct {
 	ReturnTime uint64
 	Data       map[string]MetricList
 }
+
+type TargetQty struct {
+	ReserveTargetQty float64 `json:"reserve_target"`
+	TotalTargetQty   float64 `json:"total_target"`
+}
+
+type TokenTargetQty struct {
+	Timestamp uint64
+	Data      map[string]TargetQty
+}
