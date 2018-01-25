@@ -71,7 +71,11 @@ func (self *ExchangeAddresses) Get(tokenID string) (ethereum.Address, bool) {
 func (self *ExchangeAddresses) GetData() map[string]ethereum.Address {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
-	return self.data
+	dataCopy := map[string]ethereum.Address{}
+	for k, v := range self.data {
+		dataCopy[k] = v
+	}
+	return dataCopy
 }
 
 type ExchangePrecisionLimit struct {
