@@ -6,6 +6,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -55,7 +56,11 @@ func GetConfigForSimulation() *Config {
 		"http://blockchain:8545",
 	}
 
-	hmac512auth := fileSigner
+	hmac512auth := http.KNAuthentication{
+		fileSigner.KNSecret,
+		fileSigner.KNReadOnly,
+		fileSigner.KNConfiguration,
+	}
 
 	return &Config{
 		ActivityStorage:         storage,
