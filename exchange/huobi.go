@@ -127,8 +127,11 @@ func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token
 }
 
 func (self *Huobi) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
-	tx, err := self.interf.Withdraw(token, amount, address, timepoint)
-	return tx, err
+	withdrawID, err := self.interf.Withdraw(token, amount, address, timepoint)
+	if err != nil {
+		return "", err
+	}
+	return withdrawID, err
 }
 
 func (self *Huobi) CancelOrder(id common.ActivityID) error {
@@ -316,9 +319,9 @@ func (self *Huobi) WithdrawStatus(id common.ActivityID, timepoint uint64) (strin
 	for _, withdraw := range withdraws.Data {
 		if withdraw.ID == withdrawID {
 			if withdraw.State == "safe" {
-				return "done", strconv.FormatUint(withdraw.ID, 10), nil
+				return "done", withdraw.TxHash, nil
 			}
-			return "", strconv.FormatUint(withdraw.ID, 10), nil
+			return "", withdraw.TxHash, nil
 		}
 	}
 	return "", "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from huobi and activity ID are not consistently designed")
