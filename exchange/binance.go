@@ -24,7 +24,7 @@ type Binance struct {
 }
 
 func (self *Binance) TokenAddresses() map[string]ethereum.Address {
-	return self.addresses
+	return self.addresses.GetData()
 }
 
 func (self *Binance) MarshalText() (text []byte, err error) {

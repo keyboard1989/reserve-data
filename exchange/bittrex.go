@@ -26,7 +26,7 @@ type Bittrex struct {
 }
 
 func (self *Bittrex) TokenAddresses() map[string]ethereum.Address {
-	return self.addresses
+	return self.addresses.GetData()
 }
 
 func (self *Bittrex) MarshalText() (text []byte, err error) {
