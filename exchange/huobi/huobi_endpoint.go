@@ -191,8 +191,8 @@ func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
 		map[string]string{
-			"size": "10",
-			"type": "deposit-virtual",
+			"size":  "10",
+			"types": "deposit-virtual",
 		},
 		true,
 		timepoint,
