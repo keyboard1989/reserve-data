@@ -39,12 +39,12 @@ func (self *Huobi) UpdateAllDepositAddresses(address string) {
 }
 
 func (self *Huobi) UpdateDepositAddress(token common.Token, address string) {
-	// liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
-	// if liveAddress.Address != "" {
-	// 	self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Address)
-	// } else {
-	// 	self.addresses[token.ID] = ethereum.HexToAddress(address)
-	// }
+	liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
+	if liveAddress.Address != "" {
+		self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Address)
+	} else {
+		self.addresses[token.ID] = ethereum.HexToAddress(address)
+	}
 	self.addresses[token.ID] = ethereum.HexToAddress(address)
 }
 
