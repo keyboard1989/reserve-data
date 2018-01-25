@@ -913,7 +913,6 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	if !ok {
 		return
 	}
-	log.Printf("Getting quantity data")
 	data := postForm.Get("data")
 	tokenTargetQty := metric.TokenTargetQty{}
 	tokenTargetQty.Timestamp = common.GetTimepoint()
