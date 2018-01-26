@@ -31,6 +31,7 @@ type FilterLimit struct {
 	MaxPrice    string `json:"maxPrice"`
 	MinQuantity string `json:"minQty"`
 	MaxQuantity string `json:"maxQty"`
+	MinNotional string `json:"minNotional"`
 }
 
 type BinanceSymbol struct {

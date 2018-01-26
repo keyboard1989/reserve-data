@@ -82,6 +82,7 @@ type ExchangePrecisionLimit struct {
 	Precision   TokenPairPrecision
 	AmountLimit TokenPairAmountLimit
 	PriceLimit  TokenPairPriceLimit
+	MinNotional float64
 }
 
 // ExchangeInfo is written and read concurrently
@@ -125,20 +126,20 @@ type TokenPairPrecision struct {
 }
 
 type TokenPairAmountLimit struct {
-	Min float32
-	Max float32
+	Min float64
+	Max float64
 }
 
 type TokenPairPriceLimit struct {
-	Min float32
-	Max float32
+	Min float64
+	Max float64
 }
 
-type TradingFee map[string]float32
+type TradingFee map[string]float64
 
 type FundingFee struct {
-	Withdraw map[string]float32
-	Deposit  map[string]float32
+	Withdraw map[string]float64
+	Deposit  map[string]float64
 }
 
 type ExchangeFees struct {
@@ -153,7 +154,7 @@ func NewExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {
 	}
 }
 
-func NewFundingFee(withdraw map[string]float32, deposit map[string]float32) FundingFee {
+func NewFundingFee(withdraw map[string]float64, deposit map[string]float64) FundingFee {
 	return FundingFee{
 		withdraw,
 		deposit,

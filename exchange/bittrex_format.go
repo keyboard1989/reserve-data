@@ -33,7 +33,7 @@ type BittrexDepositAddress struct {
 type BittPairInfo struct {
 	Base      string  `json:"MarketCurrency"`
 	Quote     string  `json:"BaseCurrency"`
-	MinAmount float32 `json:"MinTradeSize"`
+	MinAmount float64 `json:"MinTradeSize"`
 }
 
 type BittExchangeInfo struct {

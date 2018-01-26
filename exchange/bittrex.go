@@ -369,13 +369,13 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 				"maker": 0.0025,
 			},
 			common.NewFundingFee(
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0.006,
 					"OMG":  0.3,
 					"SNT":  20.0,
 					"SALT": 0.6,
 				},
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0,
 					"OMG":  0,
 					"SNT":  0,
