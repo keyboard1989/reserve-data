@@ -169,7 +169,7 @@ func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
 		map[string]string{
-			"size":  "11",
+			"size":  "10",
 			"types": "withdraw-virtual",
 		},
 		true,

@@ -18,7 +18,7 @@ const HUOBI_EPSILON float64 = 0.0000000001 // 10e-10
 type Huobi struct {
 	interf       HuobiInterface
 	pairs        []common.TokenPair
-	addresses    map[string]ethereum.Address
+	addresses    *common.ExchangeAddresses
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 }
@@ -27,25 +27,29 @@ func (self *Huobi) MarshalText() (text []byte, err error) {
 	return []byte(self.ID()), nil
 }
 
+func (self *Huobi) TokenAddresses() map[string]ethereum.Address {
+	return self.addresses.GetData()
+}
+
 func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses[token.ID]
+	addr, supported := self.addresses.Get(token.ID)
 	return addr, supported
 }
 
 func (self *Huobi) UpdateAllDepositAddresses(address string) {
-	for k, _ := range self.addresses {
-		self.addresses[k] = ethereum.HexToAddress(address)
+	data := self.addresses.GetData()
+	for k, _ := range data {
+		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }
 
 func (self *Huobi) UpdateDepositAddress(token common.Token, address string) {
 	liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
 	if liveAddress.Address != "" {
-		self.addresses[token.ID] = ethereum.HexToAddress(liveAddress.Address)
+		self.addresses.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
 	} else {
-		self.addresses[token.ID] = ethereum.HexToAddress(address)
+		self.addresses.Update(token.ID, ethereum.HexToAddress(address))
 	}
-	self.addresses[token.ID] = ethereum.HexToAddress(address)
 }
 
 func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExchangeInfo) {
@@ -131,7 +135,9 @@ func (self *Huobi) Withdraw(token common.Token, amount *big.Int, address ethereu
 	if err != nil {
 		return "", err
 	}
-	return withdrawID, err
+	// this magical logic base on inspection on huobi website
+	result := withdrawID + "01"
+	return result, err
 }
 
 func (self *Huobi) CancelOrder(id common.ActivityID) error {
@@ -316,9 +322,10 @@ func (self *Huobi) WithdrawStatus(id common.ActivityID, timepoint uint64) (strin
 	if err != nil {
 		return "", "", nil
 	}
+	log.Printf("Withdrawal id: %s", withdrawID)
 	for _, withdraw := range withdraws.Data {
-		if withdraw.ID == withdrawID {
-			if withdraw.State == "safe" {
+		if withdraw.TxID == withdrawID {
+			if withdraw.State == "confirmed" {
 				return "done", withdraw.TxHash, nil
 			}
 			return "", withdraw.TxHash, nil
@@ -357,7 +364,7 @@ func NewHuobi(interf HuobiInterface) *Huobi {
 			common.MustCreateTokenPair("SNT", "ETH"),
 			common.MustCreateTokenPair("SALT", "ETH"),
 		},
-		map[string]ethereum.Address{},
+		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		common.NewExchangeFee(
 			common.TradingFee{
