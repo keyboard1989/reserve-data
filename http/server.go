@@ -794,32 +794,52 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
-	exchangeParam := c.Param("exchangeid")
-	exchange, err := common.GetExchange(exchangeParam)
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
-		)
-		return
-	}
-	exchangeInfo, err := exchange.GetInfo()
-	if err != nil {
+	exchangeParam := c.Query("exchangeid")
+	if exchangeParam == "" {
+		data := map[string]map[common.TokenPairID]common.ExchangePrecisionLimit{}
+		for _, ex := range common.SupportedExchanges {
+			exchangeInfo, err := ex.GetInfo()
+			if err != nil {
+				c.JSON(
+					http.StatusOK,
+					gin.H{"success": false, "reason": err.Error()},
+				)
+				return
+			}
+			data[string(ex.ID())] = exchangeInfo.GetData()
+		}
 		c.JSON(
 			http.StatusOK,
 			gin.H{
-				"success": false,
-				"reason":  err.Error(),
+				"success": true,
+				"data":    data,
+			},
+		)
+	} else {
+		exchange, err := common.GetExchange(exchangeParam)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		exchangeInfo, err := exchange.GetInfo()
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    exchangeInfo.GetData(),
 			},
 		)
 	}
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-			"data":    exchangeInfo.GetData(),
-		},
-	)
 }
 
 func (self *HTTPServer) GetPairInfo(c *gin.Context) {
@@ -992,7 +1012,7 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
 	self.r.POST("/trade/:exchangeid", self.Trade)
 	self.r.POST("/setrates", self.SetRate)
-	self.r.GET("/exchangeinfo/:exchangeid", self.GetExchangeInfo)
+	self.r.GET("/exchangeinfo", self.GetExchangeInfo)
 	self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
 	self.r.GET("/exchangefees", self.GetFee)
 	self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)

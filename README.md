@@ -92,14 +92,14 @@ response:
 ### Get precision and limit info when trading for all base-quote pairs of an exchange
 
 ```
-<host>:8000/exchangeinfo/<exchangeid>
+<host>:8000/exchangeinfo
 ```
-
-Where *<exchangeid>* is the id of the exchange
+url params:
+*exchangeid* : id of exchange to get info (optional, if exchangeid is empty then return all exchanges info)
 
 eg:
 ```
-curl -X GET "http://13.229.54.28:8000/exchangeinfo/binance"
+curl -X GET "http://13.229.54.28:8000/exchangeinfo?exchangeid=binance"
 ```
 response:
 ```

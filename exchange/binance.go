@@ -64,20 +64,25 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 			for _, filter := range symbol.Filters {
 				if filter.FilterType == "LOT_SIZE" {
 					// update amount min
-					minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 32)
-					exchangePrecisionLimit.AmountLimit.Min = float32(minQuantity)
+					minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 64)
+					exchangePrecisionLimit.AmountLimit.Min = minQuantity
 					// update amount max
-					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 32)
-					exchangePrecisionLimit.AmountLimit.Max = float32(maxQuantity)
+					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 64)
+					exchangePrecisionLimit.AmountLimit.Max = maxQuantity
 				}
 
 				if filter.FilterType == "PRICE_FILTER" {
 					// update price min
-					minPrice, _ := strconv.ParseFloat(filter.MinPrice, 32)
-					exchangePrecisionLimit.PriceLimit.Min = float32(minPrice)
+					minPrice, _ := strconv.ParseFloat(filter.MinPrice, 64)
+					exchangePrecisionLimit.PriceLimit.Min = minPrice
 					// update price max
-					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 32)
-					exchangePrecisionLimit.PriceLimit.Max = float32(maxPrice)
+					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 64)
+					exchangePrecisionLimit.PriceLimit.Max = maxPrice
+				}
+
+				if filter.FilterType == "MIN_NOTIONAL" {
+					minNotional, _ := strconv.ParseFloat(filter.MinNotional, 64)
+					exchangePrecisionLimit.MinNotional = minNotional
 				}
 			}
 			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
@@ -423,7 +428,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 				"maker": 0.001,
 			},
 			common.NewFundingFee(
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0.01,
 					"EOS":  0.7,
 					"OMG":  0.3,
@@ -431,7 +436,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 					"SNT":  34.0,
 					"SALT": 1.3,
 				},
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0,
 					"EOS":  0,
 					"OMG":  0,
