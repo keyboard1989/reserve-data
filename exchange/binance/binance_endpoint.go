@@ -91,6 +91,9 @@ func (self *BinanceEndpoint) GetDepthOnePair(
 		return resp_data, err
 	} else {
 		json.Unmarshal(resp_body, &resp_data)
+		if resp_data.Code != 0 {
+			return resp_data, errors.New(fmt.Sprintf("Getting depth from Binance failed: %s", resp_data.Msg))
+		}
 		return resp_data, nil
 	}
 }
@@ -214,7 +217,7 @@ func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64, timepoint uin
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
 		if result.Code != 0 {
-			err = errors.New(result.Message)
+			err = errors.New(result.Msg)
 		}
 	}
 	return result, err
@@ -236,13 +239,12 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
-		if result.Success == false {
-			return "", errors.New(result.Message)
+		if !result.Success {
+			return "", errors.New(result.Msg)
 		}
 		return result.ID, nil
 	} else {
-		log.Printf("Error: %v", err)
-		return "", errors.New("withdraw rejected by Binnace")
+		return "", errors.New(fmt.Sprintf("withdraw rejected by Binnace: %v", err))
 	}
 }
 
@@ -257,6 +259,9 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
+	}
+	if result.Code != 0 {
+		return result, errors.New(fmt.Sprintf("Getting account info from Binance failed: %s", result.Msg))
 	}
 	return result, err
 }

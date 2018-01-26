@@ -13,7 +13,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-const BINANCE_EPSILON float64 = 0.0000000001 // 10e-10
+const BINANCE_EPSILON float64 = 0.0000001 // 10e-7
 
 type Binance struct {
 	interf       BinanceInterface
@@ -163,12 +163,9 @@ func (self *Binance) CancelOrder(id common.ActivityID) error {
 		return err
 	}
 	symbol := idParts[1]
-	result, err := self.interf.CancelOrder(symbol, idNo)
+	_, err = self.interf.CancelOrder(symbol, idNo)
 	if err != nil {
 		return err
-	}
-	if result.Code != 0 {
-		return errors.New("Couldn't cancel order id " + id.EID + " err: " + result.Msg)
 	}
 	return nil
 }
