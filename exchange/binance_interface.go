@@ -41,4 +41,6 @@ type BinanceInterface interface {
 
 	OrderStatus(
 		symbol string, id uint64, timepoint uint64) (Binaorder, error)
+
+	GetServerTime() (uint64, error)
 }
