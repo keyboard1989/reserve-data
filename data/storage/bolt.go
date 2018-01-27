@@ -224,7 +224,29 @@ func (self *BoltStorage) CurrentRateVersion(timepoint uint64) (common.Version, e
 	return common.Version(result), err
 }
 
-func (self *BoltStorage) GetAllRates(version common.Version) (common.AllRateEntry, error) {
+func (self *BoltStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntry, error) {
+	result := []common.AllRateEntry{}
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(RATE_BUCKET))
+		c := b.Cursor()
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
+
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			data := common.AllRateEntry{}
+			err = json.Unmarshal(v, &data)
+			if err != nil {
+				return err
+			}
+			result = append(result, data)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) GetRate(version common.Version) (common.AllRateEntry, error) {
 	result := common.AllRateEntry{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
