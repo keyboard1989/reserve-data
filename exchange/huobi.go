@@ -372,7 +372,7 @@ func NewHuobi(interf HuobiInterface) *Huobi {
 				"maker": 0.002,
 			},
 			common.NewFundingFee(
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0.01,
 					"EOS":  0.5,
 					"OMG":  0.1,
@@ -380,7 +380,7 @@ func NewHuobi(interf HuobiInterface) *Huobi {
 					"SNT":  50.0,
 					"SALT": 0.1,
 				},
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0,
 					"EOS":  0,
 					"OMG":  0,
