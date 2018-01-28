@@ -86,13 +86,25 @@ func (self *Blockchain) CurrentBlock() (uint64, error) {
 	return result, err
 }
 
-func (self *Blockchain) IsMined(tx ethereum.Hash) (bool, error) {
+func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, error) {
 	option := context.Background()
-	receipt, err := self.client.TransactionReceipt(option, tx)
-	if receipt != nil {
-		err = nil
+	_, pending, err := self.client.TransactionByHash(option, hash)
+	if err == nil {
+		// tx exist
+		if pending {
+			return "", nil
+		} else {
+			return "mined", nil
+		}
+	} else {
+		if err == ether.NotFound {
+			// tx doesn't exist. it failed
+			return "failed", nil
+		} else {
+			// networking issue
+			return "", err
+		}
 	}
-	return receipt != nil, err
 }
 
 func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
@@ -238,19 +250,19 @@ func (self *Blockchain) SetRates(
 			tx, err = self.pricing.SetBaseRate(
 				opts, baseTokens, newBBuys, newBSells,
 				buys, sells, block, indices)
-			log.Printf("Setting base rates: tx(%s), err(%v) with baseTokens(%+v), basebuys(%+v), basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",
-				tx.Hash().Hex(), err, baseTokens, newBBuys, newBSells, buys, sells, block.Text(10), indices,
-			)
+			// log.Printf("Setting base rates: tx(%s), err(%v) with baseTokens(%+v), basebuys(%+v), basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",
+			// 	tx.Hash().Hex(), err, baseTokens, newBBuys, newBSells, buys, sells, block.Text(10), indices,
+			// )
 		} else {
 			// update compact tx
 			tx, err = self.pricing.SetCompactData(
 				opts, buys, sells, block, indices)
-			log.Printf("Setting compact rates: tx(%s), err(%v) with basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",
-				tx.Hash().Hex(), err, baseTokens, buys, sells, block.Text(10), indices,
-			)
+			// log.Printf("Setting compact rates: tx(%s), err(%v) with basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",
+			// 	tx.Hash().Hex(), err, baseTokens, buys, sells, block.Text(10), indices,
+			// )
 		}
 		if err != nil {
-			log.Printf("Broadcasting transaction failed!!!!!!!\n")
+			log.Printf("Broadcasting transaction failed!!!!!!!, err: %s", err)
 			return ethereum.Hash{}, err
 		} else {
 			return tx.Hash(), err

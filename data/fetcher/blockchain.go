@@ -8,7 +8,7 @@ import (
 type Blockchain interface {
 	FetchBalanceData(addr ethereum.Address, timepoint uint64) (map[string]common.BalanceEntry, error)
 	FetchRates(timepoint uint64) (common.AllRateEntry, error)
-	IsMined(tx ethereum.Hash) (bool, error)
+	TxStatus(tx ethereum.Hash) (string, error)
 	CurrentBlock() (uint64, error)
 	GetLogs(fromBlock uint64, timepoint uint64) ([]common.TradeLog, error)
 }

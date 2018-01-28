@@ -226,14 +226,12 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			if tx.Big().IsInt64() && tx.Big().Int64() == 0 {
 				continue
 			}
-			isMined, err := self.blockchain.IsMined(tx)
-			if isMined {
-				result[activity.ID] = common.ActivityStatus{
-					activity.ExchangeStatus,
-					activity.Result["tx"].(string),
-					"mined",
-					err,
-				}
+			status, err := self.blockchain.TxStatus(tx)
+			result[activity.ID] = common.ActivityStatus{
+				activity.ExchangeStatus,
+				activity.Result["tx"].(string),
+				status,
+				err,
 			}
 		}
 	}
