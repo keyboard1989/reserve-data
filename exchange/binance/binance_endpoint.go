@@ -85,7 +85,7 @@ func (self *BinanceEndpoint) GetDepthOnePair(
 			"limit":  "50",
 		},
 		false,
-		timepoint,
+		common.GetTimepoint(),
 	)
 
 	resp_data := exchange.Binaresp{}
@@ -129,7 +129,7 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
 		params,
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err != nil {
 		return result, err
@@ -141,7 +141,6 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 
 func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchange.Binawithdrawals, error) {
 	result := exchange.Binawithdrawals{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/withdrawHistory.html",
@@ -150,7 +149,7 @@ func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchang
 			"endTime":   fmt.Sprintf("%d", endTime),
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
@@ -163,7 +162,6 @@ func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchang
 
 func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange.Binadeposits, error) {
 	result := exchange.Binadeposits{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/depositHistory.html",
@@ -172,7 +170,7 @@ func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange
 			"endTime":   fmt.Sprintf("%d", endTime),
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
@@ -214,7 +212,7 @@ func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64, timepoint uin
 			"orderId": fmt.Sprintf("%d", id),
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
@@ -237,7 +235,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 			"amount":  strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
@@ -257,7 +255,7 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 		self.interf.AuthenticatedEndpoint()+"/api/v3/account",
 		map[string]string{},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
@@ -279,7 +277,7 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 			"symbol": pair.Base.ID + pair.Quote.ID,
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err != nil {
 		return result, err
@@ -291,7 +289,6 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 
 func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepositaddress, error) {
 	result := exchange.Binadepositaddress{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/depositAddress.html",
@@ -299,7 +296,7 @@ func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepos
 			"asset": asset,
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
@@ -312,13 +309,12 @@ func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepos
 
 func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, error) {
 	result := exchange.BinanceExchangeInfo{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.PublicEndpoint()+"/api/v1/exchangeInfo",
 		map[string]string{},
 		false,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
@@ -328,13 +324,12 @@ func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, er
 
 func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
 	result := exchange.BinaServerTime{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.PublicEndpoint()+"/api/v1/time",
 		map[string]string{},
 		false,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)

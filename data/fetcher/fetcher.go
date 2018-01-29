@@ -342,10 +342,9 @@ func (self *Fetcher) FetchAuthDataFromExchange(
 	var balances common.EBalanceEntry
 	var statuses map[common.ActivityID]common.ActivityStatus
 	var err error
-	curTimepoint := common.GetTimepoint()
 	for {
 		preStatuses := self.FetchStatusFromExchange(exchange, pendings, timepoint)
-		balances, err = exchange.FetchEBalanceData(timepoint + common.GetTimepoint() - curTimepoint)
+		balances, err = exchange.FetchEBalanceData(timepoint)
 		if err != nil {
 			log.Printf("Fetching exchange balances from %s failed: %v\n", exchange.Name(), err)
 			break
