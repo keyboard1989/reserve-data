@@ -99,7 +99,9 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, error) {
 	} else {
 		if err == ether.NotFound {
 			// tx doesn't exist. it failed
-			return "failed", nil
+			// return "failed", nil
+			// TODO: find out why all txs are not found right after it is broadcasted
+			return "", nil
 		} else {
 			// networking issue
 			return "", err
