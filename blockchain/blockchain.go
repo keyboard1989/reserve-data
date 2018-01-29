@@ -92,7 +92,7 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, error) {
 	if err == nil {
 		// tx exist
 		if pending {
-			return "", nil
+			return "submitted", nil
 		} else {
 			return "mined", nil
 		}
@@ -101,10 +101,10 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, error) {
 			// tx doesn't exist. it failed
 			// return "failed", nil
 			// TODO: find out why all txs are not found right after it is broadcasted
-			return "", nil
+			return "submitted", nil
 		} else {
 			// networking issue
-			return "", err
+			return "submitted", err
 		}
 	}
 }
