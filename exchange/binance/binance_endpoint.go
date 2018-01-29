@@ -36,7 +36,7 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		sig := url.Values{}
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
 		q.Set("timestamp", fmt.Sprintf("%d", int64(timepoint)+self.timeDelta-1000))
-		q.Set("recvWindow", "7000")
+		q.Set("recvWindow", "3000")
 		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
 		// Using separated values map for signature to ensure it is at the end
 		// of the query. This is required for /wapi apis from binance without
@@ -361,13 +361,19 @@ func (self *BinanceEndpoint) UpdateTimeDelta() error {
 
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {
 	endpoint := &BinanceEndpoint{signer, interf, 0}
-	endpoint.UpdateTimeDelta()
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
 	return endpoint
 }
 
 func NewRealBinanceEndpoint(signer Signer) *BinanceEndpoint {
 	endpoint := &BinanceEndpoint{signer, NewRealInterface(), 0}
-	endpoint.UpdateTimeDelta()
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
 	return endpoint
 }
 
@@ -378,17 +384,27 @@ func NewSimulatedBinanceEndpoint(signer Signer) *BinanceEndpoint {
 
 func NewRopstenBinanceEndpoint(signer Signer) *BinanceEndpoint {
 	endpoint := &BinanceEndpoint{signer, NewRopstenInterface(), 0}
-	endpoint.UpdateTimeDelta()
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
 	return endpoint
 }
 
 func NewKovanBinanceEndpoint(signer Signer) *BinanceEndpoint {
 	endpoint := &BinanceEndpoint{signer, NewKovanInterface(), 0}
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
 	return endpoint
 }
 
 func NewDevBinanceEndpoint(signer Signer) *BinanceEndpoint {
 	endpoint := &BinanceEndpoint{signer, NewDevInterface(), 0}
-	endpoint.UpdateTimeDelta()
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
 	return endpoint
 }
