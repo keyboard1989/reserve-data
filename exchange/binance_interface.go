@@ -18,6 +18,8 @@ type BinanceInterface interface {
 
 	GetExchangeInfo() (BinanceExchangeInfo, error)
 
+	GetDepositAddress(tokenID string) (Binadepositaddress, error)
+
 	Withdraw(
 		token common.Token,
 		amount *big.Int,
@@ -39,4 +41,6 @@ type BinanceInterface interface {
 
 	OrderStatus(
 		symbol string, id uint64, timepoint uint64) (Binaorder, error)
+
+	GetServerTime() (uint64, error)
 }

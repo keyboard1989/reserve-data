@@ -19,10 +19,14 @@ const BITTREX_EPSILON float64 = 0.000001
 type Bittrex struct {
 	interf       BittrexInterface
 	pairs        []common.TokenPair
-	addresses    map[string]ethereum.Address
+	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
+}
+
+func (self *Bittrex) TokenAddresses() map[string]ethereum.Address {
+	return self.addresses.GetData()
 }
 
 func (self *Bittrex) MarshalText() (text []byte, err error) {
@@ -30,7 +34,7 @@ func (self *Bittrex) MarshalText() (text []byte, err error) {
 }
 
 func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses[token.ID]
+	addr, supported := self.addresses.Get(token.ID)
 	return addr, supported
 }
 
@@ -39,13 +43,19 @@ func (self *Bittrex) GetFee() common.ExchangeFees {
 }
 
 func (self *Bittrex) UpdateAllDepositAddresses(address string) {
-	for k, _ := range self.addresses {
-		self.addresses[k] = ethereum.HexToAddress(address)
+	data := self.addresses.GetData()
+	for k, _ := range data {
+		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }
 
 func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
-	self.addresses[token.ID] = ethereum.HexToAddress(address)
+	liveAddress, _ := self.interf.GetDepositAddress(token.ID)
+	if liveAddress.Result.Address != "" {
+		self.addresses.Update(token.ID, ethereum.HexToAddress(liveAddress.Result.Address))
+	} else {
+		self.addresses.Update(token.ID, ethereum.HexToAddress(address))
+	}
 }
 
 func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {
@@ -350,7 +360,7 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 			common.MustCreateTokenPair("SNT", "ETH"),
 			common.MustCreateTokenPair("SALT", "ETH"),
 		},
-		map[string]ethereum.Address{},
+		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),
 		common.NewExchangeFee(
@@ -359,13 +369,13 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 				"maker": 0.0025,
 			},
 			common.NewFundingFee(
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0.006,
 					"OMG":  0.3,
 					"SNT":  20.0,
 					"SALT": 0.6,
 				},
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0,
 					"OMG":  0,
 					"SNT":  0,

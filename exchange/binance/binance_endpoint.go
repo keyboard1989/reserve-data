@@ -19,8 +19,9 @@ import (
 )
 
 type BinanceEndpoint struct {
-	signer Signer
-	interf Interface
+	signer    Signer
+	interf    Interface
+	timeDelta int64
 }
 
 func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, timepoint uint64) {
@@ -29,12 +30,13 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		req.Header.Add("User-Agent", "binance/go")
 	}
 	req.Header.Add("Accept", "application/json")
+	log.Printf("Bin Time Delta: %s", self.timeDelta)
 	if signNeeded {
 		q := req.URL.Query()
 		sig := url.Values{}
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
-		q.Set("timestamp", fmt.Sprintf("%d", timepoint-5000))
-		q.Set("recvWindow", "7000")
+		q.Set("timestamp", fmt.Sprintf("%d", int64(timepoint)+self.timeDelta-1000))
+		q.Set("recvWindow", "5000")
 		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
 		// Using separated values map for signature to ensure it is at the end
 		// of the query. This is required for /wapi apis from binance without
@@ -83,7 +85,7 @@ func (self *BinanceEndpoint) GetDepthOnePair(
 			"limit":  "50",
 		},
 		false,
-		timepoint,
+		common.GetTimepoint(),
 	)
 
 	resp_data := exchange.Binaresp{}
@@ -91,6 +93,9 @@ func (self *BinanceEndpoint) GetDepthOnePair(
 		return resp_data, err
 	} else {
 		json.Unmarshal(resp_body, &resp_data)
+		if resp_data.Code != 0 {
+			return resp_data, errors.New(fmt.Sprintf("Getting depth from Binance failed: %s", resp_data.Msg))
+		}
 		return resp_data, nil
 	}
 }
@@ -124,7 +129,7 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
 		params,
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err != nil {
 		return result, err
@@ -136,7 +141,6 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 
 func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchange.Binawithdrawals, error) {
 	result := exchange.Binawithdrawals{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/withdrawHistory.html",
@@ -145,7 +149,7 @@ func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchang
 			"endTime":   fmt.Sprintf("%d", endTime),
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
@@ -158,7 +162,6 @@ func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchang
 
 func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange.Binadeposits, error) {
 	result := exchange.Binadeposits{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/depositHistory.html",
@@ -167,7 +170,7 @@ func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange
 			"endTime":   fmt.Sprintf("%d", endTime),
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
@@ -209,12 +212,12 @@ func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64, timepoint uin
 			"orderId": fmt.Sprintf("%d", id),
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
 		if result.Code != 0 {
-			err = errors.New(result.Message)
+			err = errors.New(result.Msg)
 		}
 	}
 	return result, err
@@ -232,17 +235,16 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 			"amount":  strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
-		if result.Success == false {
-			return "", errors.New(result.Message)
+		if !result.Success {
+			return "", errors.New(result.Msg)
 		}
 		return result.ID, nil
 	} else {
-		log.Printf("Error: %v", err)
-		return "", errors.New("withdraw rejected by Binnace")
+		return "", errors.New(fmt.Sprintf("withdraw rejected by Binnace: %v", err))
 	}
 }
 
@@ -253,10 +255,13 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 		self.interf.AuthenticatedEndpoint()+"/api/v3/account",
 		map[string]string{},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
+	}
+	if result.Code != 0 {
+		return result, errors.New(fmt.Sprintf("Getting account info from Binance failed: %s", result.Msg))
 	}
 	return result, err
 }
@@ -272,7 +277,7 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 			"symbol": pair.Base.ID + pair.Quote.ID,
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err != nil {
 		return result, err
@@ -284,7 +289,6 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(
 
 func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepositaddress, error) {
 	result := exchange.Binadepositaddress{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/wapi/v3/depositAddress.html",
@@ -292,7 +296,7 @@ func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepos
 			"asset": asset,
 		},
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
@@ -305,13 +309,12 @@ func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepos
 
 func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, error) {
 	result := exchange.BinanceExchangeInfo{}
-	timepoint := common.GetTimepoint()
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.PublicEndpoint()+"/api/v1/exchangeInfo",
 		map[string]string{},
 		false,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
@@ -319,26 +322,84 @@ func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, er
 	return result, err
 }
 
+func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
+	result := exchange.BinaServerTime{}
+	resp_body, err := self.GetResponse(
+		"GET",
+		self.interf.PublicEndpoint()+"/api/v1/time",
+		map[string]string{},
+		false,
+		common.GetTimepoint(),
+	)
+	if err == nil {
+		err = json.Unmarshal(resp_body, &result)
+	}
+	return result.ServerTime, err
+}
+
+func (self *BinanceEndpoint) UpdateTimeDelta() error {
+	currentTime := common.GetTimepoint()
+	serverTime, err := self.GetServerTime()
+	responseTime := common.GetTimepoint()
+	if err != nil {
+		return err
+	}
+	log.Printf("Binance current time: %s", currentTime)
+	log.Printf("Binance server time: %s", serverTime)
+	log.Printf("Binance response time: %s", responseTime)
+	roundtripTime := (int64(responseTime) - int64(currentTime)) / 2
+	self.timeDelta = int64(serverTime) - int64(currentTime) - roundtripTime
+
+	log.Printf("Time delta: %s", self.timeDelta)
+	return nil
+}
+
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, interf}
+	endpoint := &BinanceEndpoint{signer, interf, 0}
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
+	return endpoint
 }
 
 func NewRealBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewRealInterface()}
+	endpoint := &BinanceEndpoint{signer, NewRealInterface(), 0}
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
+	return endpoint
 }
 
 func NewSimulatedBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewSimulatedInterface()}
+	endpoint := &BinanceEndpoint{signer, NewSimulatedInterface(), 0}
+	return endpoint
 }
 
 func NewRopstenBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewRopstenInterface()}
+	endpoint := &BinanceEndpoint{signer, NewRopstenInterface(), 0}
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
+	return endpoint
 }
 
 func NewKovanBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewKovanInterface()}
+	endpoint := &BinanceEndpoint{signer, NewKovanInterface(), 0}
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
+	return endpoint
 }
 
 func NewDevBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	return &BinanceEndpoint{signer, NewDevInterface()}
+	endpoint := &BinanceEndpoint{signer, NewDevInterface(), 0}
+	err := endpoint.UpdateTimeDelta()
+	if err != nil {
+		panic(err)
+	}
+	return endpoint
 }

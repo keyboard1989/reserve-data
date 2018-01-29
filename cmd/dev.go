@@ -7,6 +7,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -50,7 +51,11 @@ func GetConfigForDev() *Config {
 	// endpoint := "http://blockchain:8545"
 	endpoint := "https://kovan.infura.io"
 
-	hmac512auth := fileSigner
+	hmac512auth := http.KNAuthentication{
+		fileSigner.KNSecret,
+		fileSigner.KNReadOnly,
+		fileSigner.KNConfiguration,
+	}
 
 	return &Config{
 		ActivityStorage:      storage,

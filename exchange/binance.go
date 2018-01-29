@@ -13,14 +13,18 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-const BINANCE_EPSILON float64 = 0.0000000001 // 10e-10
+const BINANCE_EPSILON float64 = 0.0000001 // 10e-7
 
 type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
-	addresses    map[string]ethereum.Address
+	addresses    *common.ExchangeAddresses
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
+}
+
+func (self *Binance) TokenAddresses() map[string]ethereum.Address {
+	return self.addresses.GetData()
 }
 
 func (self *Binance) MarshalText() (text []byte, err error) {
@@ -28,18 +32,24 @@ func (self *Binance) MarshalText() (text []byte, err error) {
 }
 
 func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses[token.ID]
+	addr, supported := self.addresses.Get(token.ID)
 	return addr, supported
 }
 
 func (self *Binance) UpdateAllDepositAddresses(address string) {
-	for k, _ := range self.addresses {
-		self.addresses[k] = ethereum.HexToAddress(address)
+	data := self.addresses.GetData()
+	for k, _ := range data {
+		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }
 
 func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
-	self.addresses[token.ID] = ethereum.HexToAddress(address)
+	liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
+	if liveAddress.Address != "" {
+		self.addresses.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
+	} else {
+		self.addresses.Update(token.ID, ethereum.HexToAddress(address))
+	}
 }
 
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
@@ -54,20 +64,25 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 			for _, filter := range symbol.Filters {
 				if filter.FilterType == "LOT_SIZE" {
 					// update amount min
-					minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 32)
-					exchangePrecisionLimit.AmountLimit.Min = float32(minQuantity)
+					minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 64)
+					exchangePrecisionLimit.AmountLimit.Min = minQuantity
 					// update amount max
-					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 32)
-					exchangePrecisionLimit.AmountLimit.Max = float32(maxQuantity)
+					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 64)
+					exchangePrecisionLimit.AmountLimit.Max = maxQuantity
 				}
 
 				if filter.FilterType == "PRICE_FILTER" {
 					// update price min
-					minPrice, _ := strconv.ParseFloat(filter.MinPrice, 32)
-					exchangePrecisionLimit.PriceLimit.Min = float32(minPrice)
+					minPrice, _ := strconv.ParseFloat(filter.MinPrice, 64)
+					exchangePrecisionLimit.PriceLimit.Min = minPrice
 					// update price max
-					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 32)
-					exchangePrecisionLimit.PriceLimit.Max = float32(maxPrice)
+					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 64)
+					exchangePrecisionLimit.PriceLimit.Max = maxPrice
+				}
+
+				if filter.FilterType == "MIN_NOTIONAL" {
+					minNotional, _ := strconv.ParseFloat(filter.MinNotional, 64)
+					exchangePrecisionLimit.MinNotional = minNotional
 				}
 			}
 			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
@@ -153,12 +168,9 @@ func (self *Binance) CancelOrder(id common.ActivityID) error {
 		return err
 	}
 	symbol := idParts[1]
-	result, err := self.interf.CancelOrder(symbol, idNo)
+	_, err = self.interf.CancelOrder(symbol, idNo)
 	if err != nil {
 		return err
-	}
-	if result.Code != 0 {
-		return errors.New("Couldn't cancel order id " + id.EID + " err: " + result.Msg)
 	}
 	return nil
 }
@@ -405,7 +417,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("SNT", "ETH"),
 			common.MustCreateTokenPair("SALT", "ETH"),
 		},
-		map[string]ethereum.Address{},
+		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		common.NewExchangeFee(
 			common.TradingFee{
@@ -413,7 +425,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 				"maker": 0.001,
 			},
 			common.NewFundingFee(
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0.01,
 					"EOS":  0.7,
 					"OMG":  0.3,
@@ -421,7 +433,7 @@ func NewBinance(interf BinanceInterface) *Binance {
 					"SNT":  34.0,
 					"SALT": 1.3,
 				},
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0,
 					"EOS":  0,
 					"OMG":  0,

@@ -38,6 +38,7 @@ type Blockchain struct {
 	pricing      *Pricing
 	reserve      *ReserveContract
 	rm           ethereum.Address
+	wrapperAddr  ethereum.Address
 	pricingAddr  ethereum.Address
 	burnerAddr   ethereum.Address
 	networkAddr  ethereum.Address
@@ -49,6 +50,26 @@ type Blockchain struct {
 
 func (self *Blockchain) AddToken(t common.Token) {
 	self.tokens = append(self.tokens, t)
+}
+
+func (self *Blockchain) GetAddresses() *common.Addresses {
+	exs := map[common.ExchangeID]common.TokenAddresses{}
+	for _, ex := range common.SupportedExchanges {
+		exs[ex.ID()] = ex.TokenAddresses()
+	}
+	tokens := map[string]ethereum.Address{}
+	for _, t := range self.tokens {
+		tokens[t.ID] = ethereum.HexToAddress(t.Address)
+	}
+	return &common.Addresses{
+		Tokens: tokens,
+		Exchanges: exs,
+		WrapperAddress: self.wrapperAddr,
+		PricingAddress: self.pricingAddr,
+		ReserveAddress: self.rm,
+		FeeBurnerAddress: self.burnerAddr,
+		NetworkAddress: self.networkAddr,
+	}
 }
 
 func (self *Blockchain) LoadAndSetTokenIndices() error {
@@ -495,6 +516,7 @@ func NewBlockchain(
 		pricing:     pricing,
 		reserve:     reserve,
 		rm:          reserveAddr,
+		wrapperAddr: wrapperAddr,
 		pricingAddr: pricingAddr,
 		burnerAddr:  burnerAddr,
 		networkAddr: networkAddr,
