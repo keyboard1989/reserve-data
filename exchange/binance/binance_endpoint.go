@@ -36,7 +36,7 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		sig := url.Values{}
 		req.Header.Set("X-MBX-APIKEY", self.signer.GetBinanceKey())
 		q.Set("timestamp", fmt.Sprintf("%d", int64(timepoint)+self.timeDelta-1000))
-		q.Set("recvWindow", "3000")
+		q.Set("recvWindow", "5000")
 		sig.Set("signature", self.signer.BinanceSign(q.Encode()))
 		// Using separated values map for signature to ensure it is at the end
 		// of the query. This is required for /wapi apis from binance without
