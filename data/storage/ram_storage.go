@@ -12,12 +12,13 @@ import (
 // If Core uses such data, please use other kind of storage such as
 // bolt.
 type RamStorage struct {
-	price    *RamPriceStorage
-	auth     *RamAuthStorage
-	rate     *RamRateStorage
-	activity *RamActivityStorage
-	log      *RamLogStorage
-	bittrex  *RamBittrexStorage
+	price        *RamPriceStorage
+	auth         *RamAuthStorage
+	rate         *RamRateStorage
+	activity     *RamActivityStorage
+	log          *RamLogStorage
+	bittrex      *RamBittrexStorage
+	tradeHistory *RamTradeStorage
 }
 
 func NewRamStorage() *RamStorage {
@@ -28,6 +29,7 @@ func NewRamStorage() *RamStorage {
 		NewRamActivityStorage(),
 		NewRamLogStorage(),
 		NewRamBittrexStorage(),
+		NewRamTradeStorage(),
 	}
 }
 
@@ -132,4 +134,12 @@ func (self *RamStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.T
 
 func (self *RamStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) error {
 	return self.log.StoreTradeLog(stat, timepoint)
+}
+
+func (self *RamStorage) GetTradeHistory(version common.Version) (common.AllTradeHistory, error) {
+	return self.tradeHistory.GetTradeHistory(version)
+}
+
+func (self *RamStorage) StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error {
+	return self.tradeHistory.StoreTradeHistory(data, timepoint)
 }

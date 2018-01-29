@@ -175,3 +175,21 @@ type Binawithdrawal struct {
 type BinaServerTime struct {
 	ServerTime uint64 `json:"serverTime"`
 }
+
+type BinanceTradeHistory []struct {
+	ID           int64  `json:"id"`
+	Price        string `json:"price"`
+	Qty          string `json:"qty"`
+	Time         int64  `json:"time"`
+	IsBuyerMaker bool   `json:"isBuyerMaker"`
+	isBestMatch  bool   `json:"isBestMatch"`
+}
+
+type BinaAccountTradeHistory []struct {
+	ID           int64  `json:"id"`
+	Price        string `json:"price"`
+	Qty          string `json:"qty"`
+	Time         int64  `json:"time"`
+	IsBuyerMaker bool   `json:"isBuyerMaker"`
+	isBestMatch  bool   `json:"isBestMatch"`
+}

@@ -20,4 +20,5 @@ type Storage interface {
 	GetPendingActivities() ([]common.ActivityRecord, error)
 
 	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
+	GetTradeHistory(common.Version) (common.AllTradeHistory, error)
 }

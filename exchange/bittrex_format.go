@@ -118,3 +118,21 @@ type Bittdeposithistory struct {
 		LastUpdated   string
 	} `json:"result"`
 }
+
+type BittTradeHistory struct {
+	Success bool   `json:"success"`
+	Message string `json:"message"`
+	Result  []struct {
+		OrderUuid         string  `json:"OrderUuid"`
+		Exchange          string  `json:"Exchange"`
+		TimeStamp         string  `json:"TimeStamp"`
+		OrderType         string  `json:"OrderType"`
+		Limit             float64 `json:"Limit"`
+		Quantity          float64 `json:"Quantity"`
+		QuantityRemaining float64 `json:"QuantityRemaining"`
+		Commission        float64 `json:"Commission"`
+		Price             float64 `json:"Price"`
+		IsConditional     bool    `json:"IsConditional"`
+		ImmediateOrCancel bool    `json:"ImmediateOrCancel"`
+	} `json:"result"`
+}

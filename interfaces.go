@@ -23,6 +23,7 @@ type ReserveData interface {
 	GetPendingActivities() ([]common.ActivityRecord, error)
 
 	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
+	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
 
 	Run() error
 	Stop() error

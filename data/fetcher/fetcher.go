@@ -170,6 +170,46 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 	}
 }
 
+func (self *Fetcher) PersistDataTradeHistory(tradeHistory *common.AllTradeHistory, data *sync.Map, timepoint uint64) {
+	data.Range(func(key, value interface{}) bool {
+		tradeHistory.Data[key.(common.ExchangeID)] = value.(map[string]common.TradeHistory)
+		return true
+	})
+	err := self.storage.StoreTradeHistory(*tradeHistory, timepoint)
+	log.Printf("Store trade history failed: %s", err.Error())
+}
+
+func (self *Fetcher) FetchTradeHistoryFromExchange(
+	wait *sync.WaitGroup,
+	exchange Exchange,
+	data *sync.Map,
+	timepoint uint64) {
+
+	defer wait.Done()
+	tradeHistory, err := exchange.FetchTradeHistory(timepoint)
+	if err != nil {
+		log.Printf("Fetch trade history from exchange failed: %s", err.Error())
+	}
+	data.Store(exchange.ID(), tradeHistory)
+}
+
+func (self *Fetcher) FetchAllTradeHistory(timepoint uint64) {
+	tradeHistory := common.AllTradeHistory{
+		common.Version(timepoint),
+		true,
+		common.GetTimestamp(),
+		map[common.ExchangeID]map[string]common.TradeHistory{},
+	}
+	wait := sync.WaitGroup{}
+	data := sync.Map{}
+	for _, exchange := range self.exchanges {
+		wait.Add(1)
+		go self.FetchTradeHistoryFromExchange(&wait, exchange, &data, timepoint)
+	}
+	wait.Wait()
+	self.PersistDataTradeHistory(&tradeHistory, &data, timepoint)
+}
+
 func (self *Fetcher) FetchAuthDataFromBlockchain(
 	allBalances map[string]common.BalanceEntry,
 	allStatuses *sync.Map,

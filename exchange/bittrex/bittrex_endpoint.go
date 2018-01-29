@@ -270,6 +270,26 @@ func (self *BittrexEndpoint) CancelOrder(uuid string, timepoint uint64) (exchang
 	}
 }
 
+func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token, timepoint uint64) (exchange.BittTradeHistory, error) {
+	result := exchange.BittTradeHistory{}
+	params := map[string]string{}
+	symbol := fmt.Sprintf("%s-%s", base.ID, quote.ID)
+	if symbol != "" {
+		params["market"] = symbol
+	}
+	resp_body, err := self.GetResponse(
+		addPath(self.interf.AccountEndpoint(timepoint), "getorderhistory"),
+		params,
+		true,
+		timepoint,
+	)
+	if err != nil {
+		return result, err
+	}
+	err = json.Unmarshal(resp_body, &result)
+	return result, err
+}
+
 func NewBittrexEndpoint(signer Signer, interf Interface) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, interf}
 }

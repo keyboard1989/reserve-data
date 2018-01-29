@@ -338,6 +338,38 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	return result, nil
 }
 
+func (self *Binance) FetchOnePairTradeHistory(
+	wait *sync.WaitGroup,
+	data *sync.Map,
+	pair common.TokenPair,
+	timepoint uint64) {
+
+	defer wait.Done()
+	result, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, 0, timepoint)
+	if err != nil {
+		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
+	}
+	pairString := fmt.Sprintf("%s-%s", pair.Base.ID, pair.Quote.ID)
+	data.Store(pairString, result)
+}
+
+func (self *Binance) FetchTradeHistory(timepoint uint64) (map[string]common.TradeHistory, error) {
+	result := map[string]common.TradeHistory{}
+	data := sync.Map{}
+	pairs := self.pairs
+	wait := sync.WaitGroup{}
+	for _, pair := range pairs {
+		wait.Add(1)
+		go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
+	}
+	wait.Wait()
+	data.Range(func(key, value interface{}) bool {
+		result[key.(string)] = value.(common.TradeHistory)
+		return true
+	})
+	return result, nil
+}
+
 func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	idParts := strings.Split(id.EID, "|")
 	if len(idParts) != 3 {
