@@ -660,6 +660,17 @@ func (self *BoltStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) e
 	return err
 }
 
+func (self *BoltStorage) CurrentTradeHistoryVersion(timepoint uint64) (common.Version, error) {
+	var result uint64
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(TRADE_HISTORY)).Cursor()
+		result, err = reverseSeek(timepoint, c)
+		return nil
+	})
+	return common.Version(result), err
+}
+
 func (self *BoltStorage) GetTradeHistory(version common.Version) (common.AllTradeHistory, error) {
 	result := common.AllTradeHistory{}
 	var err error

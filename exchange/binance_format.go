@@ -186,10 +186,10 @@ type BinanceTradeHistory []struct {
 }
 
 type BinaAccountTradeHistory []struct {
-	ID           int64  `json:"id"`
+	ID           uint64 `json:"id"`
 	Price        string `json:"price"`
 	Qty          string `json:"qty"`
-	Time         int64  `json:"time"`
+	Time         uint64 `json:"time"`
 	IsBuyerMaker bool   `json:"isBuyerMaker"`
 	isBestMatch  bool   `json:"isBestMatch"`
 }

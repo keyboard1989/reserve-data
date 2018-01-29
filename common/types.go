@@ -515,6 +515,7 @@ type TradeLog struct {
 }
 
 type TradeHistory struct {
+	ID        string
 	Price     float64
 	Qty       float64
 	Timestamp uint64
@@ -524,5 +525,5 @@ type AllTradeHistory struct {
 	Version   Version
 	Valid     bool
 	Timestamp Timestamp
-	Data      map[ExchangeID]map[string]TradeHistory
+	Data      map[ExchangeID]map[string][]TradeHistory
 }

@@ -2,6 +2,7 @@ package bittrex
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -273,7 +274,7 @@ func (self *BittrexEndpoint) CancelOrder(uuid string, timepoint uint64) (exchang
 func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token, timepoint uint64) (exchange.BittTradeHistory, error) {
 	result := exchange.BittTradeHistory{}
 	params := map[string]string{}
-	symbol := fmt.Sprintf("%s-%s", base.ID, quote.ID)
+	symbol := fmt.Sprintf("%s-%s", quote.ID, base.ID)
 	if symbol != "" {
 		params["market"] = symbol
 	}
@@ -283,10 +284,12 @@ func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token, ti
 		true,
 		timepoint,
 	)
-	if err != nil {
-		return result, err
+	if err == nil {
+		json.Unmarshal(resp_body, &result)
+		if !result.Success {
+			return result, errors.New(fmt.Sprintf("Cannot get trade history: %s", result.Message))
+		}
 	}
-	err = json.Unmarshal(resp_body, &result)
 	return result, err
 }
 
