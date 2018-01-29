@@ -16,7 +16,8 @@ type ReserveData interface {
 	GetAuthData(timestamp uint64) (common.AuthDataResponse, error)
 
 	CurrentRateVersion(timestamp uint64) (common.Version, error)
-	GetAllRates(timestamp uint64) (common.AllRateResponse, error)
+	GetRate(timestamp uint64) (common.AllRateResponse, error)
+	GetRates(fromTime, toTime uint64) ([]common.AllRateResponse, error)
 
 	GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error)
 	GetPendingActivities() ([]common.ActivityRecord, error)

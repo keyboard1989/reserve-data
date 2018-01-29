@@ -58,8 +58,12 @@ func (self *RamStorage) GetAuthData(version common.Version) (common.AuthDataSnap
 	return self.auth.GetSnapshot(int64(version))
 }
 
-func (self *RamStorage) GetAllRates(version common.Version) (common.AllRateEntry, error) {
-	return self.rate.GetRates(int64(version))
+func (self *RamStorage) GetRate(version common.Version) (common.AllRateEntry, error) {
+	return self.rate.GetRate(int64(version))
+}
+
+func (self *RamStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntry, error) {
+	return self.rate.GetRates(fromTime, toTime)
 }
 
 func (self *RamStorage) StorePrice(data common.AllPriceEntry, timepoint uint64) error {

@@ -85,14 +85,46 @@ func (self ReserveData) CurrentRateVersion(timepoint uint64) (common.Version, er
 	return self.storage.CurrentRateVersion(timepoint)
 }
 
-func (self ReserveData) GetAllRates(timepoint uint64) (common.AllRateResponse, error) {
+func (self ReserveData) GetRates(fromTime, toTime uint64) ([]common.AllRateResponse, error) {
+	result := []common.AllRateResponse{}
+	rates, err := self.storage.GetRates(fromTime, toTime)
+	if err != nil {
+		return result, err
+	}
+	for _, rate := range rates {
+		one := common.AllRateResponse{}
+		one.Timestamp = rate.Timestamp
+		one.ReturnTime = rate.ReturnTime
+		one.Error = rate.Error
+		one.Valid = rate.Valid
+		data := map[string]common.RateResponse{}
+		for tokenID, r := range rate.Data {
+			data[tokenID] = common.RateResponse{
+				Valid:       rate.Valid,
+				Error:       rate.Error,
+				Timestamp:   rate.Timestamp,
+				ReturnTime:  rate.ReturnTime,
+				BaseBuy:     common.BigToFloat(r.BaseBuy, 18),
+				CompactBuy:  r.CompactBuy,
+				BaseSell:    common.BigToFloat(r.BaseSell, 18),
+				CompactSell: r.CompactSell,
+				Block:       r.Block,
+			}
+		}
+		one.Data = data
+		result = append(result, one)
+	}
+	return result, nil
+}
+
+func (self ReserveData) GetRate(timepoint uint64) (common.AllRateResponse, error) {
 	timestamp := common.GetTimestamp()
 	version, err := self.storage.CurrentRateVersion(timepoint)
 	if err != nil {
 		return common.AllRateResponse{}, err
 	} else {
 		result := common.AllRateResponse{}
-		rates, err := self.storage.GetAllRates(version)
+		rates, err := self.storage.GetRate(version)
 		returnTime := common.GetTimestamp()
 		result.Version = version
 		result.Timestamp = timestamp
