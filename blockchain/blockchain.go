@@ -62,13 +62,13 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 		tokens[t.ID] = ethereum.HexToAddress(t.Address)
 	}
 	return &common.Addresses{
-		Tokens: tokens,
-		Exchanges: exs,
-		WrapperAddress: self.wrapperAddr,
-		PricingAddress: self.pricingAddr,
-		ReserveAddress: self.rm,
+		Tokens:           tokens,
+		Exchanges:        exs,
+		WrapperAddress:   self.wrapperAddr,
+		PricingAddress:   self.pricingAddr,
+		ReserveAddress:   self.rm,
 		FeeBurnerAddress: self.burnerAddr,
-		NetworkAddress: self.networkAddr,
+		NetworkAddress:   self.networkAddr,
 	}
 }
 
@@ -113,19 +113,17 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, error) {
 	if err == nil {
 		// tx exist
 		if pending {
-			return "submitted", nil
+			return "", nil
 		} else {
 			return "mined", nil
 		}
 	} else {
 		if err == ether.NotFound {
 			// tx doesn't exist. it failed
-			// return "failed", nil
-			// TODO: find out why all txs are not found right after it is broadcasted
-			return "submitted", nil
+			return "lost", nil
 		} else {
 			// networking issue
-			return "submitted", err
+			return "", err
 		}
 	}
 }

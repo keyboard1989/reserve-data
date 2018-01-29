@@ -3,6 +3,7 @@ package fetcher
 import (
 	"log"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -227,11 +228,25 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 				continue
 			}
 			status, err := self.blockchain.TxStatus(tx)
-			result[activity.ID] = common.ActivityStatus{
-				activity.ExchangeStatus,
-				activity.Result["tx"].(string),
-				status,
-				err,
+			switch status {
+			case "mined":
+				result[activity.ID] = common.ActivityStatus{
+					activity.ExchangeStatus,
+					activity.Result["tx"].(string),
+					"mined",
+					err,
+				}
+			case "lost":
+				elapsed := common.GetTimepoint() - activity.Timestamp.ToUint64()
+				if elapsed > uint64(5*time.Minute/time.Millisecond) {
+					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %s", activity.Result["tx"].(string), elapsed)
+					result[activity.ID] = common.ActivityStatus{
+						activity.ExchangeStatus,
+						activity.Result["tx"].(string),
+						"failed",
+						err,
+					}
+				}
 			}
 		}
 	}
