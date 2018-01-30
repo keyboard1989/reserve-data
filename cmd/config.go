@@ -25,7 +25,8 @@ type Config struct {
 	EnableAuthentication bool
 	AuthEngine           http.Authentication
 
-	EthereumEndpoint string
+	EthereumEndpoint        string
+	BackupEthereumEndpoints []string
 
 	SupportedTokens []common.Token
 

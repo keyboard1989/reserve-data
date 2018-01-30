@@ -48,22 +48,26 @@ func GetConfigForRopsten() *Config {
 	// endpoint := "http://localhost:8545"
 	// endpoint := "https://ropsten.kyber.network"
 	endpoint := "https://ropsten.infura.io"
+	bkendpoints := []string{
+		"https://api.myetherapi.com/rop",
+	}
 
 	return &Config{
-		ActivityStorage:  storage,
-		DataStorage:      storage,
-		FetcherStorage:   storage,
-		MetricStorage:    metricStorage,
-		FetcherRunner:    fetcherRunner,
-		FetcherExchanges: exchangePool.FetcherExchanges(),
-		Exchanges:        exchangePool.CoreExchanges(),
-		BlockchainSigner: fileSigner,
-		EthereumEndpoint: endpoint,
-		SupportedTokens:  tokens,
-		WrapperAddress:   wrapperAddr,
-		PricingAddress:   pricingAddr,
-		ReserveAddress:   reserveAddr,
-		FeeBurnerAddress: burnerAddr,
-		NetworkAddress:   networkAddr,
+		ActivityStorage:         storage,
+		DataStorage:             storage,
+		FetcherStorage:          storage,
+		MetricStorage:           metricStorage,
+		FetcherRunner:           fetcherRunner,
+		FetcherExchanges:        exchangePool.FetcherExchanges(),
+		Exchanges:               exchangePool.CoreExchanges(),
+		BlockchainSigner:        fileSigner,
+		EthereumEndpoint:        endpoint,
+		BackupEthereumEndpoints: bkendpoints,
+		SupportedTokens:         tokens,
+		WrapperAddress:          wrapperAddr,
+		PricingAddress:          pricingAddr,
+		ReserveAddress:          reserveAddr,
+		FeeBurnerAddress:        burnerAddr,
+		NetworkAddress:          networkAddr,
 	}
 }
