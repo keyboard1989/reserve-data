@@ -1021,6 +1021,11 @@ func (self *HTTPServer) GetAddress(c *gin.Context) {
 
 func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	timepoint := common.GetTimepoint()
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	if !ok {
+		return
+	}
+
 	data, err := self.app.GetTradeHistory(timepoint)
 	if err != nil {
 		c.JSON(
