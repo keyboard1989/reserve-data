@@ -202,7 +202,7 @@ func (self *Fetcher) FetchAllTradeHistory(timepoint uint64) {
 		common.Version(timepoint),
 		true,
 		common.GetTimestamp(),
-		map[common.ExchangeID]common.OneTradeHistory{},
+		map[common.ExchangeID]common.ExchangeTradeHistory{},
 	}
 	wait := sync.WaitGroup{}
 	data := sync.Map{}

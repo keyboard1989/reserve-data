@@ -366,10 +366,15 @@ func (self *Bittrex) FetchOnePairTradeHistory(
 	}
 	for _, trade := range resp.Result {
 		t, _ := time.Parse("2014-07-09T04:01:00.667", trade.TimeStamp)
+		historyType := "sell"
+		if trade.OrderType == "LIMIT_BUY" {
+			historyType = "buy"
+		}
 		tradeHistory := common.TradeHistory{
 			trade.OrderUuid,
 			trade.Price,
 			trade.Quantity,
+			historyType,
 			common.TimeToTimepoint(t),
 		}
 		result = append(result, tradeHistory)

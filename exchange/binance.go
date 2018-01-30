@@ -354,10 +354,15 @@ func (self *Binance) FetchOnePairTradeHistory(
 	for _, trade := range resp {
 		price, _ := strconv.ParseFloat(trade.Price, 64)
 		quantity, _ := strconv.ParseFloat(trade.Qty, 64)
+		historyType := "sell"
+		if trade.IsBuyer {
+			historyType = "buy"
+		}
 		tradeHistory := common.TradeHistory{
 			strconv.FormatUint(trade.ID, 10),
 			price,
 			quantity,
+			historyType,
 			trade.Time,
 		}
 		result = append(result, tradeHistory)

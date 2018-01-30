@@ -147,7 +147,7 @@ func (self *BinanceEndpoint) GetTradeHistory(symbol string) (exchange.BinanceTra
 		self.interf.PublicEndpoint()+"/api/v1/trades",
 		map[string]string{
 			"symbol": symbol,
-			"limit":  "50",
+			"limit":  "500",
 		},
 		false,
 		timepoint,
@@ -167,7 +167,7 @@ func (self *BinanceEndpoint) GetAccountTradeHistory(
 	result := exchange.BinaAccountTradeHistory{}
 	params := map[string]string{
 		"symbol": symbol,
-		"limit":  "50",
+		"limit":  "500",
 	}
 	if fromID != 0 {
 		params["fromId"] = strconv.FormatUint(fromID, 10)

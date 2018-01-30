@@ -518,6 +518,7 @@ type TradeHistory struct {
 	ID        string
 	Price     float64
 	Qty       float64
+	Type      string // buy or sell
 	Timestamp uint64
 }
 
