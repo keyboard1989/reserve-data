@@ -300,14 +300,23 @@ func (self *BoltStorage) StoreAuthSnapshot(
 
 func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) error {
 	var err error
+	var lastEntryjson common.AllRateEntry
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(RATE_BUCKET))
-		dataJson, err = json.Marshal(data)
-		if err != nil {
-			return err
+		c := b.Cursor()
+		_, lastEntry := c.Last()
+		json.Unmarshal(lastEntry, &lastEntryjson)
+		log.Printf("Last blocknumber : %s", lastEntryjson.BlockNumber)
+		log.Printf("New blocknumber: %s", data.BlockNumber)
+		if lastEntryjson.BlockNumber != data.BlockNumber {
+			dataJson, err = json.Marshal(data)
+			if err != nil {
+				return err
+			}
+			return b.Put(uint64ToBytes(timepoint), dataJson)
 		}
-		return b.Put(uint64ToBytes(timepoint), dataJson)
+		return errors.New("Duplicate block entry")
 	})
 	return err
 }
