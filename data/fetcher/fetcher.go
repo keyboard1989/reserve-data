@@ -176,8 +176,11 @@ func (self *Fetcher) PersistDataTradeHistory(tradeHistory *common.AllTradeHistor
 		tradeHistory.Data[key.(common.ExchangeID)] = value.(map[string][]common.TradeHistory)
 		return true
 	})
+	log.Printf("Trade history to save: %v", *tradeHistory)
 	err := self.storage.StoreTradeHistory(*tradeHistory, timepoint)
-	log.Printf("Store trade history failed: %s", err.Error())
+	if err != nil {
+		log.Printf("Store trade history failed: %s", err.Error())
+	}
 }
 
 func (self *Fetcher) FetchTradeHistoryFromExchange(

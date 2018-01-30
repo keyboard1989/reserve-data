@@ -177,19 +177,22 @@ type BinaServerTime struct {
 }
 
 type BinanceTradeHistory []struct {
-	ID           int64  `json:"id"`
-	Price        string `json:"price"`
-	Qty          string `json:"qty"`
-	Time         int64  `json:"time"`
-	IsBuyerMaker bool   `json:"isBuyerMaker"`
-	isBestMatch  bool   `json:"isBestMatch"`
+	ID          uint64 `json:"id"`
+	Price       string `json:"price"`
+	Qty         string `json:"qty"`
+	Time        uint64 `json:"time"`
+	IsBuyer     bool   `json:"isBuyer"`
+	IsMaker     bool   `json:"isMaker"`
+	IsBestMatch bool   `json:"isBestMatch"`
 }
 
 type BinaAccountTradeHistory []struct {
-	ID           uint64 `json:"id"`
-	Price        string `json:"price"`
-	Qty          string `json:"qty"`
-	Time         uint64 `json:"time"`
-	IsBuyerMaker bool   `json:"isBuyerMaker"`
-	isBestMatch  bool   `json:"isBestMatch"`
+	ID          uint64 `json:"id"`
+	OrderID     uint64 `json:"orderId"`
+	Price       string `json:"price"`
+	Qty         string `json:"qty"`
+	Time        uint64 `json:"time"`
+	IsBuyer     bool   `json:"isBuyer"`
+	IsMaker     bool   `json:"isMaker"`
+	isBestMatch bool   `json:"isBestMatch"`
 }
