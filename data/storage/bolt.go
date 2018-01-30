@@ -239,7 +239,7 @@ func (self *BoltStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntr
 			if err != nil {
 				return err
 			}
-			result = append(result, data)
+			result = append([]common.AllRateEntry{data}, result...)
 		}
 		return nil
 	})
