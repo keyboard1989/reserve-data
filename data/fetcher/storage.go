@@ -10,6 +10,7 @@ type Storage interface {
 	StoreAuthSnapshot(data *common.AuthDataSnapshot, timepoint uint64) error
 	StoreTradeLog(stat common.TradeLog, timepoint uint64) error
 	UpdateLogBlock(block uint64, timepoint uint64) error
+	StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error
 
 	LastBlock() (uint64, error)
 	GetPendingActivities() ([]common.ActivityRecord, error)

@@ -352,6 +352,54 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	return result, nil
 }
 
+func (self *Bittrex) FetchOnePairTradeHistory(
+	wait *sync.WaitGroup,
+	data *sync.Map,
+	pair common.TokenPair,
+	timepoint uint64) {
+
+	defer wait.Done()
+	result := []common.TradeHistory{}
+	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, timepoint)
+	if err != nil {
+		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
+	}
+	for _, trade := range resp.Result {
+		t, _ := time.Parse("2014-07-09T04:01:00.667", trade.TimeStamp)
+		historyType := "sell"
+		if trade.OrderType == "LIMIT_BUY" {
+			historyType = "buy"
+		}
+		tradeHistory := common.TradeHistory{
+			trade.OrderUuid,
+			trade.Price,
+			trade.Quantity,
+			historyType,
+			common.TimeToTimepoint(t),
+		}
+		result = append(result, tradeHistory)
+	}
+	pairString := pair.PairID()
+	data.Store(pairString, result)
+}
+
+func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+	result := map[common.TokenPairID][]common.TradeHistory{}
+	data := sync.Map{}
+	pairs := self.pairs
+	wait := sync.WaitGroup{}
+	for _, pair := range pairs {
+		wait.Add(1)
+		go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
+	}
+	wait.Wait()
+	data.Range(func(key, value interface{}) bool {
+		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+		return true
+	})
+	return result, nil
+}
+
 func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 	return &Bittrex{
 		interf,

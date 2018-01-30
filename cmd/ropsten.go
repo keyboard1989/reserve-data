@@ -37,7 +37,7 @@ func GetConfigForRopsten() *Config {
 	storage := storage.NewRamStorage()
 	metricStorage := metric.NewRamMetricStorage()
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 
 	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 

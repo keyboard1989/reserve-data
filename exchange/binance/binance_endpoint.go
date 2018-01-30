@@ -139,6 +139,52 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	}
 }
 
+func (self *BinanceEndpoint) GetTradeHistory(symbol string) (exchange.BinanceTradeHistory, error) {
+	result := exchange.BinanceTradeHistory{}
+	timepoint := common.GetTimepoint()
+	resp_body, err := self.GetResponse(
+		"GET",
+		self.interf.PublicEndpoint()+"/api/v1/trades",
+		map[string]string{
+			"symbol": symbol,
+			"limit":  "500",
+		},
+		false,
+		timepoint,
+	)
+	if err == nil {
+		json.Unmarshal(resp_body, &result)
+	}
+	return result, err
+}
+
+func (self *BinanceEndpoint) GetAccountTradeHistory(
+	base, quote common.Token,
+	fromID uint64,
+	timepoint uint64) (exchange.BinaAccountTradeHistory, error) {
+
+	symbol := strings.ToUpper(fmt.Sprintf("%s%s", base.ID, quote.ID))
+	result := exchange.BinaAccountTradeHistory{}
+	params := map[string]string{
+		"symbol": symbol,
+		"limit":  "500",
+	}
+	if fromID != 0 {
+		params["fromId"] = strconv.FormatUint(fromID, 10)
+	}
+	resp_body, err := self.GetResponse(
+		"GET",
+		self.interf.AuthenticatedEndpoint()+"/api/v3/myTrades",
+		params,
+		true,
+		timepoint,
+	)
+	if err == nil {
+		json.Unmarshal(resp_body, &result)
+	}
+	return result, err
+}
+
 func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchange.Binawithdrawals, error) {
 	result := exchange.Binawithdrawals{}
 	resp_body, err := self.GetResponse(

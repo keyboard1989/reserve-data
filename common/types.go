@@ -515,3 +515,18 @@ type TradeLog struct {
 	WalletFee      *big.Int
 	BurnFee        *big.Int
 }
+
+type TradeHistory struct {
+	ID        string
+	Price     float64
+	Qty       float64
+	Type      string // buy or sell
+	Timestamp uint64
+}
+
+type ExchangeTradeHistory map[TokenPairID][]TradeHistory
+
+type AllTradeHistory struct {
+	Timestamp Timestamp
+	Data      map[ExchangeID]ExchangeTradeHistory
+}

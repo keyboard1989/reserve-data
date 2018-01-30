@@ -26,6 +26,7 @@ const (
 	METRIC_BUCKET           string = "metrics"
 	METRIC_TARGET_QUANTITY  string = "target_quantity"
 	LOG_BUCKET              string = "logs"
+	TRADE_HISTORY           string = "trade_history"
 	MAX_NUMBER_VERSION      int    = 1000
 )
 
@@ -56,6 +57,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(METRIC_BUCKET))
 		tx.CreateBucket([]byte(METRIC_TARGET_QUANTITY))
 		tx.CreateBucket([]byte(LOG_BUCKET))
+		tx.CreateBucket([]byte(TRADE_HISTORY))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
@@ -663,6 +665,45 @@ func (self *BoltStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) e
 		idByte := uint64ToBytes(stat.Timestamp)
 		err = b.Put(idByte, dataJson)
 		return err
+	})
+	return err
+}
+
+func (self *BoltStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
+	result := common.AllTradeHistory{}
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TRADE_HISTORY))
+		_, data := b.Cursor().First()
+		if data == nil {
+			err = errors.New(fmt.Sprintf("There no data before timepoint %s", timepoint))
+		} else {
+			err = json.Unmarshal(data, &result)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(TRADE_HISTORY))
+		// prune out old data
+		c := b.Cursor()
+		k, _ := c.First()
+		if k != nil {
+			b.Delete([]byte(k))
+		}
+
+		// add new data
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		idByte := uint64ToBytes(timepoint)
+		return b.Put(idByte, dataJson)
 	})
 	return err
 }
