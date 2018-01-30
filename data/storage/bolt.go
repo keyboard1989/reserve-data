@@ -692,6 +692,14 @@ func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory, timepoin
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(TRADE_HISTORY))
+		// prune out old data
+		c := b.Cursor()
+		k, _ := c.First()
+		if k != nil {
+			b.Delete([]byte(k))
+		}
+
+		// add new data
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err
