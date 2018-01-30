@@ -112,6 +112,7 @@ func (self ReserveData) GetRates(fromTime, toTime uint64) ([]common.AllRateRespo
 			}
 		}
 		one.Data = data
+		one.BlockNumber = rate.BlockNumber
 		result = append(result, one)
 	}
 	return result, nil
