@@ -71,15 +71,31 @@ func (self *RamMetricStorage) GetMetric(tokens []common.Token, fromTime, toTime 
 	return result, nil
 }
 
-func (self *RamMetricStorage) StoreTokenTargetQty(tokenTargetQty TokenTargetQty) error {
-	self.mu.Lock()
-	defer self.mu.Unlock()
-	self.tokenTargetQty = tokenTargetQty
+func (self *RamMetricStorage) StorePendingTargetQty(data string) error {
+	// TODO: add support ram storage
 	return nil
 }
 
-func (self *RamMetricStorage) GetTokenTargetQty() (map[string]TargetQty, error) {
+func (self *RamMetricStorage) RemovePendingTargetQty() error {
+	// TODO: add support ram storage
+	return nil
+}
+
+func (self *RamMetricStorage) GetPendingTargetQty() (TokenTargetQty, error) {
+	// TODO: add support ram storage
+	result := TokenTargetQty{}
+	return result, nil
+}
+
+func (self *RamMetricStorage) StoreTokenTargetQty(id, data string) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	// self.tokenTargetQty = data
+	return nil
+}
+
+func (self *RamMetricStorage) GetTokenTargetQty() (TokenTargetQty, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
-	return self.tokenTargetQty.Data, nil
+	return self.tokenTargetQty, nil
 }

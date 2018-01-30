@@ -16,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	raven "github.com/getsentry/raven-go"
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
 )
 
@@ -942,7 +941,7 @@ func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
-			gin.H{"success": false, "data": err.Error()},
+			gin.H{"success": false, "reason": err.Error()},
 		)
 	}
 	c.JSON(
@@ -953,62 +952,70 @@ func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 
 func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	log.Println("Storing target quantity")
-	postForm, ok := self.Authenticated(c, []string{"data"}, []Permission{ConfigurePermission})
+	postForm, ok := self.Authenticated(c, []string{"data", "action"}, []Permission{ConfigurePermission})
 	if !ok {
 		return
 	}
 	data := postForm.Get("data")
-	tokenTargetQty := metric.TokenTargetQty{}
-	tokenTargetQty.Timestamp = common.GetTimepoint()
-	tokenTargetQty.Data = map[string]metric.TargetQty{}
-	for _, tok := range strings.Split(data, "|") {
-		parts := strings.Split(tok, "_")
-		if len(parts) != 3 {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": "submitted data is not correct format"},
-			)
-		}
-		token := parts[0]
-		totalTargetStr := parts[1]
-		reserveTargetStr := parts[2]
-
-		totalTarget, err := strconv.ParseFloat(totalTargetStr, 64)
+	id := postForm.Get("id")
+	action := postForm.Get("action")
+	log.Printf("data from request: %v", data)
+	switch strings.ToUpper(action) {
+	case "SET":
+		log.Println("Setting target qty")
+		err := self.metric.StorePendingTargetQty(data)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
-				gin.H{"success": false, "reason": "Total target " + totalTargetStr + " is not float64"},
+				gin.H{"success": false, "reason": err.Error()},
 			)
 			return
 		}
 
-		reserveTarget, err := strconv.ParseFloat(reserveTargetStr, 64)
+		data, err := self.metric.GetPendingTargetQty()
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
-				gin.H{"success": false, "reason": "Reserve target " + reserveTargetStr + " is not float64"},
+				gin.H{"success": false, "reason": err.Error()},
 			)
 			return
 		}
-
-		tokenTargetQty.Data[token] = metric.TargetQty{
-			TotalTargetQty:   totalTarget,
-			ReserveTargetQty: reserveTarget,
-		}
-	}
-	err := self.metric.StoreTokenTargetQty(tokenTargetQty)
-	if err != nil {
 		c.JSON(
 			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
+			gin.H{"success": true, "data": data},
+		)
+		return
+	case "COMFIRM":
+		log.Println("Confirm target quantity")
+		err := self.metric.StoreTokenTargetQty(id, data)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": true},
+		)
+		return
+	case "CANCEL":
+		log.Println("Cancel target quantity")
+		err := self.metric.RemovePendingTargetQty()
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": true},
 		)
 		return
 	}
-	c.JSON(
-		http.StatusOK,
-		gin.H{"success": true},
-	)
-	return
 }
 
 func (self *HTTPServer) GetAddress(c *gin.Context) {
@@ -1087,7 +1094,7 @@ func NewHTTPServer(
 	raven.SetDSN("https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067")
 
 	r := gin.Default()
-	r.Use(sentry.Recovery(raven.DefaultClient, false))
+	// r.Use(sentry.Recovery(raven.DefaultClient, false))
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AddAllowHeaders("signed")
 	corsConfig.AllowAllOrigins = true

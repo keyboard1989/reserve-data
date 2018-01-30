@@ -26,12 +26,9 @@ type MetricResponse struct {
 	Data       map[string]MetricList
 }
 
-type TargetQty struct {
-	ReserveTargetQty float64 `json:"reserve_target"`
-	TotalTargetQty   float64 `json:"total_target"`
-}
-
 type TokenTargetQty struct {
+	ID        uint64
 	Timestamp uint64
-	Data      map[string]TargetQty
+	Data      map[string]map[string]float64
+	Status    string
 }
