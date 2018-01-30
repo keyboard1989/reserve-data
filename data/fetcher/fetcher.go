@@ -173,7 +173,7 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 
 func (self *Fetcher) PersistDataTradeHistory(tradeHistory *common.AllTradeHistory, data *sync.Map, timepoint uint64) {
 	data.Range(func(key, value interface{}) bool {
-		tradeHistory.Data[key.(common.ExchangeID)] = value.(map[string][]common.TradeHistory)
+		tradeHistory.Data[key.(common.ExchangeID)] = value.(map[common.TokenPairID][]common.TradeHistory)
 		return true
 	})
 	log.Printf("Trade history to save: %v", *tradeHistory)
@@ -202,7 +202,7 @@ func (self *Fetcher) FetchAllTradeHistory(timepoint uint64) {
 		common.Version(timepoint),
 		true,
 		common.GetTimestamp(),
-		map[common.ExchangeID]map[string][]common.TradeHistory{},
+		map[common.ExchangeID]common.OneTradeHistory{},
 	}
 	wait := sync.WaitGroup{}
 	data := sync.Map{}

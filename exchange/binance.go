@@ -350,7 +350,7 @@ func (self *Binance) FetchOnePairTradeHistory(
 	if err != nil {
 		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
 	}
-	pairString := fmt.Sprintf("%s-%s", pair.Base.ID, pair.Quote.ID)
+	pairString := pair.PairID()
 	for _, trade := range resp {
 		price, _ := strconv.ParseFloat(trade.Price, 64)
 		quantity, _ := strconv.ParseFloat(trade.Qty, 64)
@@ -365,8 +365,8 @@ func (self *Binance) FetchOnePairTradeHistory(
 	data.Store(pairString, result)
 }
 
-func (self *Binance) FetchTradeHistory(timepoint uint64) (map[string][]common.TradeHistory, error) {
-	result := map[string][]common.TradeHistory{}
+func (self *Binance) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+	result := map[common.TokenPairID][]common.TradeHistory{}
 	data := sync.Map{}
 	pairs := self.pairs
 	wait := sync.WaitGroup{}
@@ -376,7 +376,7 @@ func (self *Binance) FetchTradeHistory(timepoint uint64) (map[string][]common.Tr
 	}
 	wait.Wait()
 	data.Range(func(key, value interface{}) bool {
-		result[key.(string)] = value.([]common.TradeHistory)
+		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 		return true
 	})
 	return result, nil

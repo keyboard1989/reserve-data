@@ -374,12 +374,12 @@ func (self *Bittrex) FetchOnePairTradeHistory(
 		}
 		result = append(result, tradeHistory)
 	}
-	pairString := fmt.Sprintf("%s-%s", pair.Base.ID, pair.Quote.ID)
+	pairString := pair.PairID()
 	data.Store(pairString, result)
 }
 
-func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[string][]common.TradeHistory, error) {
-	result := map[string][]common.TradeHistory{}
+func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+	result := map[common.TokenPairID][]common.TradeHistory{}
 	data := sync.Map{}
 	pairs := self.pairs
 	wait := sync.WaitGroup{}
@@ -389,7 +389,7 @@ func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[string][]common.Tr
 	}
 	wait.Wait()
 	data.Range(func(key, value interface{}) bool {
-		result[key.(string)] = value.([]common.TradeHistory)
+		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 		return true
 	})
 	return result, nil
