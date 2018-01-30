@@ -174,7 +174,7 @@ func (self *BinanceEndpoint) GetAccountTradeHistory(
 	}
 	resp_body, err := self.GetResponse(
 		"GET",
-		self.interf.AuthenticatedEndpoint()+"/api/v1/historicalTrades",
+		self.interf.AuthenticatedEndpoint()+"/exchange/private/userTrades",
 		params,
 		true,
 		timepoint,
