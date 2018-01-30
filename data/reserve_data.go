@@ -161,11 +161,8 @@ func (self ReserveData) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.T
 }
 
 func (self ReserveData) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
-	version, err := self.storage.CurrentTradeHistoryVersion(timepoint)
-	if err != nil {
-		return common.AllTradeHistory{}, err
-	}
-	return self.storage.GetTradeHistory(version)
+	data, err := self.storage.GetTradeHistory(timepoint)
+	return data, err
 }
 
 func (self ReserveData) Run() error {

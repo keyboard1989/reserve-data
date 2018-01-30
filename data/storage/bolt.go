@@ -660,25 +660,14 @@ func (self *BoltStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) e
 	return err
 }
 
-func (self *BoltStorage) CurrentTradeHistoryVersion(timepoint uint64) (common.Version, error) {
-	var result uint64
-	var err error
-	self.db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte(TRADE_HISTORY)).Cursor()
-		result, err = reverseSeek(timepoint, c)
-		return nil
-	})
-	return common.Version(result), err
-}
-
-func (self *BoltStorage) GetTradeHistory(version common.Version) (common.AllTradeHistory, error) {
+func (self *BoltStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
 	result := common.AllTradeHistory{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
-		data := b.Get(uint64ToBytes(uint64(version)))
+		_, data := b.Cursor().First()
 		if data == nil {
-			err = errors.New(fmt.Sprintf("Version %s doesn't exist", version))
+			err = errors.New(fmt.Sprintf("There no data before timepoint %s", timepoint))
 		} else {
 			err = json.Unmarshal(data, &result)
 		}

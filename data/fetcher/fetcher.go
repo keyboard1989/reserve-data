@@ -171,18 +171,6 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 	}
 }
 
-func (self *Fetcher) PersistDataTradeHistory(tradeHistory *common.AllTradeHistory, data *sync.Map, timepoint uint64) {
-	data.Range(func(key, value interface{}) bool {
-		tradeHistory.Data[key.(common.ExchangeID)] = value.(map[common.TokenPairID][]common.TradeHistory)
-		return true
-	})
-	log.Printf("Trade history to save: %v", *tradeHistory)
-	err := self.storage.StoreTradeHistory(*tradeHistory, timepoint)
-	if err != nil {
-		log.Printf("Store trade history failed: %s", err.Error())
-	}
-}
-
 func (self *Fetcher) FetchTradeHistoryFromExchange(
 	wait *sync.WaitGroup,
 	exchange Exchange,
@@ -199,8 +187,6 @@ func (self *Fetcher) FetchTradeHistoryFromExchange(
 
 func (self *Fetcher) FetchAllTradeHistory(timepoint uint64) {
 	tradeHistory := common.AllTradeHistory{
-		common.Version(timepoint),
-		true,
 		common.GetTimestamp(),
 		map[common.ExchangeID]common.ExchangeTradeHistory{},
 	}
@@ -210,8 +196,17 @@ func (self *Fetcher) FetchAllTradeHistory(timepoint uint64) {
 		wait.Add(1)
 		go self.FetchTradeHistoryFromExchange(&wait, exchange, &data, timepoint)
 	}
+
 	wait.Wait()
-	self.PersistDataTradeHistory(&tradeHistory, &data, timepoint)
+	data.Range(func(key, value interface{}) bool {
+		tradeHistory.Data[key.(common.ExchangeID)] = value.(map[common.TokenPairID][]common.TradeHistory)
+		return true
+	})
+
+	err := self.storage.StoreTradeHistory(tradeHistory, timepoint)
+	if err != nil {
+		log.Printf("Store trade history failed: %s", err.Error())
+	}
 }
 
 func (self *Fetcher) RunTradeHistoryFetcher() {

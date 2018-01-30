@@ -48,11 +48,6 @@ func (self *RamStorage) CurrentRateVersion(timepoint uint64) (common.Version, er
 	return common.Version(version), err
 }
 
-func (self *RamStorage) CurrentTradeHistoryVersion(timepoint uint64) (common.Version, error) {
-	version, err := self.tradeHistory.CurrentVersion(timepoint)
-	return common.Version(version), err
-}
-
 func (self *RamStorage) GetAllPrices(version common.Version) (common.AllPriceEntry, error) {
 	return self.price.GetAllPrices(int64(version))
 }
@@ -141,8 +136,8 @@ func (self *RamStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) er
 	return self.log.StoreTradeLog(stat, timepoint)
 }
 
-func (self *RamStorage) GetTradeHistory(version common.Version) (common.AllTradeHistory, error) {
-	return self.tradeHistory.GetTradeHistory(version)
+func (self *RamStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
+	return self.tradeHistory.GetTradeHistory(timepoint)
 }
 
 func (self *RamStorage) StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error {

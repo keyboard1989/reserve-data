@@ -525,8 +525,6 @@ type TradeHistory struct {
 type ExchangeTradeHistory map[TokenPairID][]TradeHistory
 
 type AllTradeHistory struct {
-	Version   Version
-	Valid     bool
 	Timestamp Timestamp
 	Data      map[ExchangeID]ExchangeTradeHistory
 }

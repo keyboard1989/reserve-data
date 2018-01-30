@@ -21,6 +21,5 @@ type Storage interface {
 
 	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
 
-	CurrentTradeHistoryVersion(timepoint uint64) (common.Version, error)
-	GetTradeHistory(common.Version) (common.AllTradeHistory, error)
+	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
 }
