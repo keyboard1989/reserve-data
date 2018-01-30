@@ -26,7 +26,15 @@ func (self *RamRateStorage) CurrentVersion(timepoint uint64) (int64, error) {
 	return self.version, nil
 }
 
-func (self *RamRateStorage) GetRates(version int64) (common.AllRateEntry, error) {
+func (self *RamRateStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntry, error) {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	result := []common.AllRateEntry{}
+	// TODO: support get rates with ram storage
+	return result, nil
+}
+
+func (self *RamRateStorage) GetRate(version int64) (common.AllRateEntry, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
 	all, exist := self.data[version]
