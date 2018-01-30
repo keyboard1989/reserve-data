@@ -316,7 +316,7 @@ func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) e
 			}
 			return b.Put(uint64ToBytes(timepoint), dataJson)
 		}
-		return errors.New("Duplicate block entry")
+		return err
 	})
 	return err
 }
