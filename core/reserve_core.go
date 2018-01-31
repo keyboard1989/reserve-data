@@ -209,11 +209,14 @@ func (self ReserveCore) SetRates(
 	if lentokens != lenbuys || lentokens != lensells {
 		err = errors.New("Tokens, buys and sells must have the same length")
 	} else {
-		tokenAddrs := []ethereum.Address{}
-		for _, token := range tokens {
-			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(token.Address))
+		err = sanityCheck(buys, afpMid, sells)
+		if err == nil {
+			tokenAddrs := []ethereum.Address{}
+			for _, token := range tokens {
+				tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(token.Address))
+			}
+			tx, err = self.blockchain.SetRates(tokenAddrs, buys, sells, block)
 		}
-		tx, err = self.blockchain.SetRates(tokenAddrs, buys, sells, block)
 	}
 	var status string
 	if err != nil {
@@ -245,4 +248,45 @@ func (self ReserveCore) SetRates(
 		tx.Hex(), err,
 	)
 	return uid, err
+}
+
+func sanityCheck(buys, afpMid , sells []*big.Int) error {
+	eth := big.NewFloat(0).SetInt(big.NewInt(1000000000000000000))
+	for i, s := range(sells) {
+		check := checkZeroValue(buys[i], s) 
+		switch check {
+		case 1:
+			sFloat := big.NewFloat(0).SetInt(s)
+			sRate  := calculateRate(sFloat, eth)
+			bFloat := big.NewFloat(0).SetInt(buys[i])
+			bRate  := calculateRate(eth, bFloat)
+			aMFloat := big.NewFloat(0).SetInt(afpMid[i])
+			aMRate  := calculateRate(aMFloat, eth)
+			if bRate.Cmp(sRate) <= 0 || bRate.Cmp(aMRate) <= 0 {
+				return errors.New("Sell price must be bigger than buy price and afpMid price")
+			}
+		case 0:
+			return nil
+		case -1:
+			return errors.New("Rate cannot be zero")
+		}
+	}
+	return nil
+}
+
+func calculateRate(theDividend, divisor *big.Float) *big.Float {
+	div := big.NewFloat(0)
+	div.Quo(theDividend, divisor)
+	return div
+}
+
+func checkZeroValue(buy, sell *big.Int) int {
+	zero := big.NewInt(0)
+	if buy.Cmp(zero) == 0 && sell.Cmp(zero) == 0 {
+		return 0
+	}
+	if buy.Cmp(zero) > 0 && sell.Cmp(zero) > 0 {
+		return 1
+	}
+	return -1
 }
