@@ -1123,7 +1123,7 @@ func NewHTTPServer(
 	raven.SetDSN("https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067")
 
 	r := gin.Default()
-	// r.Use(sentry.Recovery(raven.DefaultClient, false))
+	r.Use(sentry.Recovery(raven.DefaultClient, false))
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AddAllowHeaders("signed")
 	corsConfig.AllowAllOrigins = true
