@@ -447,7 +447,7 @@ response:
 <host>:8000/settargetqty
 POST request
 form params:
-  - data: required, string, json string of target quantity data
+  - data: required, string, json string of target quantity data, json element must sort ascending in order to compare byte string when confirm
   - action: required, string, set/confirm/cancel, action to set, confirm or cancel target quantity
   - id: optional, required to confirm target quantity
 ```
