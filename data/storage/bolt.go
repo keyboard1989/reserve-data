@@ -228,6 +228,9 @@ func (self *BoltStorage) CurrentRateVersion(timepoint uint64) (common.Version, e
 
 func (self *BoltStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntry, error) {
 	result := []common.AllRateEntry{}
+	if toTime-fromTime > 3600000 {
+		return result, errors.New("Time range is too broad, it must be smaller or equal to 3600000 miliseconds")
+	}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(RATE_BUCKET))
