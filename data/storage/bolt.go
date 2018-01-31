@@ -654,9 +654,8 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 	var tokenTargetQty metric.TokenTargetQty
 	var dataJson []byte
 	self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
 		pending := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
-		k, pendingTargetQty := pending.Cursor().Last()
+		_, pendingTargetQty := pending.Cursor().Last()
 
 		if pendingTargetQty == nil {
 			err = errors.New("There is no pending target activity to confirm.")
