@@ -50,6 +50,7 @@ func GetConfigForDev() *Config {
 	// endpoint := "https://ropsten.infura.io"
 	// endpoint := "http://blockchain:8545"
 	endpoint := "https://kovan.infura.io"
+	bkendpoints := []string{}
 
 	hmac512auth := http.KNAuthentication{
 		fileSigner.KNSecret,
@@ -58,22 +59,23 @@ func GetConfigForDev() *Config {
 	}
 
 	return &Config{
-		ActivityStorage:      storage,
-		DataStorage:          storage,
-		FetcherStorage:       storage,
-		MetricStorage:        storage,
-		FetcherRunner:        fetcherRunner,
-		FetcherExchanges:     exchangePool.FetcherExchanges(),
-		Exchanges:            exchangePool.CoreExchanges(),
-		BlockchainSigner:     fileSigner,
-		EnableAuthentication: false,
-		AuthEngine:           hmac512auth,
-		EthereumEndpoint:     endpoint,
-		SupportedTokens:      tokens,
-		WrapperAddress:       wrapperAddr,
-		PricingAddress:       pricingAddr,
-		ReserveAddress:       reserveAddr,
-		FeeBurnerAddress:     burnerAddr,
-		NetworkAddress:       networkAddr,
+		ActivityStorage:         storage,
+		DataStorage:             storage,
+		FetcherStorage:          storage,
+		MetricStorage:           storage,
+		FetcherRunner:           fetcherRunner,
+		FetcherExchanges:        exchangePool.FetcherExchanges(),
+		Exchanges:               exchangePool.CoreExchanges(),
+		BlockchainSigner:        fileSigner,
+		EnableAuthentication:    false,
+		AuthEngine:              hmac512auth,
+		EthereumEndpoint:        endpoint,
+		BackupEthereumEndpoints: bkendpoints,
+		SupportedTokens:         tokens,
+		WrapperAddress:          wrapperAddr,
+		PricingAddress:          pricingAddr,
+		ReserveAddress:          reserveAddr,
+		FeeBurnerAddress:        burnerAddr,
+		NetworkAddress:          networkAddr,
 	}
 }

@@ -1,0 +1,3 @@
+cmd/log.log
+cmd/log.log.*
+cmd/*.db

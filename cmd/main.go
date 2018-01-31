@@ -93,6 +93,15 @@ func main() {
 		panic(err)
 	}
 	infura := ethclient.NewClient(client)
+	bkclients := map[string]*ethclient.Client{}
+	for _, ep := range config.BackupEthereumEndpoints {
+		bkclient, err := ethclient.Dial(ep)
+		if err != nil {
+			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, err)
+		} else {
+			bkclients[ep] = bkclient
+		}
+	}
 
 	// nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
 	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
@@ -100,6 +109,7 @@ func main() {
 	bc, err := blockchain.NewBlockchain(
 		client,
 		infura,
+		bkclients,
 		config.WrapperAddress,
 		config.PricingAddress,
 		config.FeeBurnerAddress,

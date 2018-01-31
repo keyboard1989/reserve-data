@@ -54,24 +54,30 @@ func GetConfigForMainnet() *Config {
 	}
 
 	endpoint := "https://mainnet.infura.io"
+	bkendpoints := []string{
+		"https://api.mycryptoapi.com/eth",
+		"https://api.myetherapi.com/eth",
+		"https://mew.giveth.io/",
+	}
 
 	return &Config{
-		ActivityStorage:      storage,
-		DataStorage:          storage,
-		FetcherStorage:       storage,
-		MetricStorage:        storage,
-		FetcherRunner:        fetcherRunner,
-		FetcherExchanges:     exchangePool.FetcherExchanges(),
-		Exchanges:            exchangePool.CoreExchanges(),
-		BlockchainSigner:     fileSigner,
-		EnableAuthentication: true,
-		AuthEngine:           hmac512auth,
-		EthereumEndpoint:     endpoint,
-		SupportedTokens:      tokens,
-		WrapperAddress:       wrapperAddr,
-		PricingAddress:       pricingAddr,
-		ReserveAddress:       reserveAddr,
-		FeeBurnerAddress:     burnerAddr,
-		NetworkAddress:       networkAddr,
+		ActivityStorage:         storage,
+		DataStorage:             storage,
+		FetcherStorage:          storage,
+		MetricStorage:           storage,
+		FetcherRunner:           fetcherRunner,
+		FetcherExchanges:        exchangePool.FetcherExchanges(),
+		Exchanges:               exchangePool.CoreExchanges(),
+		BlockchainSigner:        fileSigner,
+		EnableAuthentication:    true,
+		AuthEngine:              hmac512auth,
+		EthereumEndpoint:        endpoint,
+		BackupEthereumEndpoints: bkendpoints,
+		SupportedTokens:         tokens,
+		WrapperAddress:          wrapperAddr,
+		PricingAddress:          pricingAddr,
+		ReserveAddress:          reserveAddr,
+		FeeBurnerAddress:        burnerAddr,
+		NetworkAddress:          networkAddr,
 	}
 }

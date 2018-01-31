@@ -48,22 +48,24 @@ func GetConfigForKovan() *Config {
 
 	// endpoint := "http://localhost:8545"
 	endpoint := "https://kovan.infura.io"
+	bkendpoints := []string{}
 
 	return &Config{
-		ActivityStorage:  storage,
-		DataStorage:      storage,
-		FetcherStorage:   storage,
-		MetricStorage:    storage,
-		FetcherRunner:    fetcherRunner,
-		FetcherExchanges: exchangePool.FetcherExchanges(),
-		Exchanges:        exchangePool.CoreExchanges(),
-		BlockchainSigner: fileSigner,
-		EthereumEndpoint: endpoint,
-		SupportedTokens:  tokens,
-		WrapperAddress:   wrapperAddr,
-		PricingAddress:   pricingAddr,
-		ReserveAddress:   reserveAddr,
-		FeeBurnerAddress: burnerAddr,
-		NetworkAddress:   networkAddr,
+		ActivityStorage:         storage,
+		DataStorage:             storage,
+		FetcherStorage:          storage,
+		MetricStorage:           storage,
+		FetcherRunner:           fetcherRunner,
+		FetcherExchanges:        exchangePool.FetcherExchanges(),
+		Exchanges:               exchangePool.CoreExchanges(),
+		BlockchainSigner:        fileSigner,
+		EthereumEndpoint:        endpoint,
+		BackupEthereumEndpoints: bkendpoints,
+		SupportedTokens:         tokens,
+		WrapperAddress:          wrapperAddr,
+		PricingAddress:          pricingAddr,
+		ReserveAddress:          reserveAddr,
+		FeeBurnerAddress:        burnerAddr,
+		NetworkAddress:          networkAddr,
 	}
 }
