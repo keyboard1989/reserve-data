@@ -943,11 +943,13 @@ func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 			http.StatusOK,
 			gin.H{"success": false, "reason": err.Error()},
 		)
+		return
 	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{"success": true, "data": data},
 	)
+	return
 }
 
 func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
@@ -962,11 +964,13 @@ func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
 			http.StatusOK,
 			gin.H{"success": false, "reason": err.Error()},
 		)
+		return
 	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{"success": true, "data": data},
 	)
+	return
 }
 
 func (self *HTTPServer) SetTargetQty(c *gin.Context) {
@@ -978,7 +982,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	data := postForm.Get("data")
 	id := postForm.Get("id")
 	action := postForm.Get("action")
-	log.Printf("data from request: %v", data)
+	data = strings.Replace(data, " ", "", -1)
 	switch strings.ToUpper(action) {
 	case "SET":
 		log.Println("Setting target qty")
@@ -1004,7 +1008,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 			gin.H{"success": true, "data": data},
 		)
 		return
-	case "COMFIRM":
+	case "CONFIRM":
 		log.Println("Confirm target quantity")
 		err := self.metric.StoreTokenTargetQty(id, data)
 		if err != nil {
@@ -1035,6 +1039,11 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 		)
 		return
 	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": false, "reason": "Action "},
+	)
+	return
 }
 
 func (self *HTTPServer) GetAddress(c *gin.Context) {

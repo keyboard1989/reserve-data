@@ -574,9 +574,10 @@ func (self *BoltStorage) StorePendingTargetQty(data string) error {
 	tokenTargetQty := metric.TokenTargetQty{}
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
-		_, lastPending := b.Cursor().First()
+		_, lastPending := b.Cursor().Last()
 		if lastPending != nil {
-			return errors.New("There is another pending target quantity. Please confirm or cancel it before setting new target.")
+			err = errors.New("There is another pending target quantity. Please confirm or cancel it before setting new target.")
+			return err
 		} else {
 			tokenTargetQty.ID = timepoint
 			tokenTargetQty.Status = "unconfirmed"
@@ -669,8 +670,14 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 				err = errors.New("Pending target quantity ID does not match")
 				return err
 			}
+			log.Printf("data to compare: %s", data)
+			log.Printf("data saved:  %s", fmt.Sprintf("%s", pendingData))
+			log.Printf("byte typecast: %v", []byte(data))
+			log.Printf("byte saved: %v", pendingData)
+			log.Printf("byte compare: %s", bytes.Compare(pendingData, []byte(data)))
 			if bytes.Compare(pendingData, []byte(data)) != 0 {
 				err = errors.New("Pending target quantity data does not match")
+				return err
 			}
 
 			// Save to confirmed target quantity
@@ -681,15 +688,13 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 				return err
 			}
 			idByte := uint64ToBytes(common.GetTimepoint())
-			err = b.Put(idByte, dataJson)
-			if err != nil {
-				log.Printf("Cannot save token target qty: %s", err.Error())
-				return err
-			}
-			// Remove pending target qty
-			return self.RemovePendingTargetQty()
+			return b.Put(idByte, dataJson)
 		}
 	})
+	if err == nil {
+		// remove pending target qty
+		return self.RemovePendingTargetQty()
+	}
 	return err
 }
 
