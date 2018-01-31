@@ -12,8 +12,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetConfigForInternalMainnet() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/internal_mainnet_setting.json"
+func GetConfigForStagging() *Config {
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/stagging_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
@@ -34,14 +34,14 @@ func GetConfigForInternalMainnet() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/internal_mainnet.db")
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/stagging.db")
 	if err != nil {
 		panic(err)
 	}
 
 	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 
-	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/internal_mainnet_config.json")
+	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/stagging_config.json")
 
 	exchangePool := NewMainnetExchangePool(
 		addressConfig, fileSigner, storage,

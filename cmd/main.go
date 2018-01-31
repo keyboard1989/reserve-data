@@ -43,6 +43,10 @@ func main() {
 		log.Printf("Running in production mode")
 		config = GetConfigForMainnet()
 		break
+	case "stagging":
+		log.Printf("Running in stagging mode")
+		config = GetConfigForStagging()
+		break
 	case "internal_mainnet":
 		log.Printf("Running in internal mainnet mode")
 		config = GetConfigForInternalMainnet()
