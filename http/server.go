@@ -950,6 +950,25 @@ func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
+	log.Println("Getting pending target qty")
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetPendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": data},
+	)
+}
+
 func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	log.Println("Storing target quantity")
 	postForm, ok := self.Authenticated(c, []string{"data", "action"}, []Permission{ConfigurePermission})
@@ -1079,6 +1098,7 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/tradehistory", self.GetTradeHistory)
 
 	self.r.GET("/targetqty", self.GetTargetQty)
+	self.r.GET("/pendingtargetqty", self.GetPendingTargetQty)
 	self.r.POST("/settargetqty", self.SetTargetQty)
 
 	self.r.Run(self.host)

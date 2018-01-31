@@ -600,7 +600,7 @@ func (self *BoltStorage) StorePendingTargetQty(data string) error {
 
 func (self *BoltStorage) RemovePendingTargetQty() error {
 	var err error
-	self.db.View(func(tx *bolt.Tx) error {
+	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
 		k, lastPending := b.Cursor().Last()
 		log.Printf("Last key: %s", k)
@@ -651,24 +651,44 @@ func (self *BoltStorage) GetTokenTargetQty() (metric.TokenTargetQty, error) {
 
 func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 	var err error
+	var tokenTargetQty metric.TokenTargetQty
+	var dataJson []byte
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		pending := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
-		_, pendingTargetQty := pending.Cursor().Last()
+		k, pendingTargetQty := pending.Cursor().Last()
+
 		if pendingTargetQty == nil {
-			err = errors.New("There is no pending target activity.")
+			err = errors.New("There is no pending target activity to confirm.")
 			return err
 		} else {
-			// TODO: confirm data and save
+			// verify confirm data
+			json.Unmarshal(pendingTargetQty, &tokenTargetQty)
+			pendingData, _ := json.Marshal(tokenTargetQty.Data)
+			idInt, _ := strconv.ParseUint(id, 10, 64)
+			if tokenTargetQty.ID != idInt {
+				err = errors.New("Pending target quantity ID does not match")
+				return err
+			}
+			if bytes.Compare(pendingData, []byte(data)) != 0 {
+				err = errors.New("Pending target quantity data does not match")
+			}
 
+			// Save to confirmed target quantity
+			tokenTargetQty.Status = "confirmed"
 			b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
-			dataJson, err = json.Marshal(&data)
+			dataJson, err = json.Marshal(tokenTargetQty)
 			if err != nil {
 				return err
 			}
-			idByte := []byte{}
+			idByte := uint64ToBytes(common.GetTimepoint())
 			err = b.Put(idByte, dataJson)
-			return err
+			if err != nil {
+				log.Printf("Cannot save token target qty: %s", err.Error())
+				return err
+			}
+			// Remove pending target qty
+			return self.RemovePendingTargetQty()
 		}
 	})
 	return err
