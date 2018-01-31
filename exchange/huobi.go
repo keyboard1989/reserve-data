@@ -298,6 +298,55 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 	return result, nil
 }
 
+func (self *Huobi) FetchOnePairTradeHistory(
+	wait *sync.WaitGroup,
+	data *sync.Map,
+	pair common.TokenPair,
+	timepoint uint64) {
+
+	defer wait.Done()
+	result := []common.TradeHistory{}
+	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, timepoint)
+	if err != nil {
+		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
+	}
+	pairString := pair.PairID()
+	for _, trade := range resp.Data {
+		price, _ := strconv.ParseFloat(trade.Price, 64)
+		quantity, _ := strconv.ParseFloat(trade.Amount, 64)
+		historyType := "sell"
+		if trade.Type == "buy-limit" {
+			historyType = "buy"
+		}
+		tradeHistory := common.TradeHistory{
+			strconv.FormatUint(trade.ID, 10),
+			price,
+			quantity,
+			historyType,
+			trade.Timestamp,
+		}
+		result = append(result, tradeHistory)
+	}
+	data.Store(pairString, result)
+}
+
+func (self *Huobi) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+	result := map[common.TokenPairID][]common.TradeHistory{}
+	data := sync.Map{}
+	pairs := self.pairs
+	wait := sync.WaitGroup{}
+	for _, pair := range pairs {
+		wait.Add(1)
+		go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
+	}
+	wait.Wait()
+	data.Range(func(key, value interface{}) bool {
+		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+		return true
+	})
+	return result, nil
+}
+
 func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	idParts := strings.Split(id.EID, "|")
 	txID := idParts[0]

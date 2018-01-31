@@ -20,6 +20,8 @@ type HuobiInterface interface {
 
 	GetDepositAddress(token string) (HuobiDepositAddress, error)
 
+	GetAccountTradeHistory(base, quote common.Token, timepoint uint64) (HuobiTradeHistory, error)
+
 	Withdraw(
 		token common.Token,
 		amount *big.Int,

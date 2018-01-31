@@ -121,3 +121,16 @@ type HuobiAccounts struct {
 	} `json:"data"`
 	Reason string `json:"err-msg"`
 }
+
+type HuobiTradeHistory struct {
+	Status string `json:"status"`
+	Data   []struct {
+		ID         uint64 `json:"id"`
+		Symbol     string `json:"symbol"`
+		Amount     string `json:"amount"`
+		Price      string `json:"price"`
+		Timestamp  uint64 `json:"created-at"`
+		Type       string `json:"type"`
+		FinishedAt uint64 `json:"finished-at"`
+	} `json:"data"`
+}

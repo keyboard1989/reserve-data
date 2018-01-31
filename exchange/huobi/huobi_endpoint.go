@@ -292,6 +292,27 @@ func (self *HuobiEndpoint) GetInfo(timepoint uint64) (exchange.HuobiInfo, error)
 	return result, err
 }
 
+func (self *HuobiEndpoint) GetAccountTradeHistory(
+	base, quote common.Token,
+	timepoint uint64) (exchange.HuobiTradeHistory, error) {
+	result := exchange.HuobiTradeHistory{}
+	symbol := strings.ToUpper(fmt.Sprintf("%s%s", base.ID, quote.ID))
+	resp_body, err := self.GetResponse(
+		"GET",
+		self.interf.AuthenticatedEndpoint()+"/v1/order/orders",
+		map[string]string{
+			"symbol": symbol,
+			"states": "filled",
+		},
+		true,
+		timepoint,
+	)
+	if err == nil {
+		json.Unmarshal(resp_body, &result)
+	}
+	return result, err
+}
+
 func (self *HuobiEndpoint) OpenOrdersForOnePair(
 	pair common.TokenPair, timepoint uint64) (exchange.HuobiOrder, error) {
 	// TODO: check again if use
