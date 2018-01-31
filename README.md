@@ -391,6 +391,18 @@ response:
 ```
 Returned data will only include datas that have timestamp in range of `[from, to]`
 
+
+### Get pending token target quantity (signing required)
+```
+<host>:8000/pendingtargetqty
+GET request
+```
+
+response:
+```
+  {"data":{"ID":1517397155549,"Timestamp":0,"Data":{"EOS":{"reserve_target":500,"total_target":750},"ETH":{"reserve_target":25,"total_target":50},"KNC":{"reserve_target":1600,"total_target":2400},"OMG":{"reserve_target":277,"total_target":415.5},"SALT":{"reserve_target":625,"total_target":937.5},"SNT":{"reserve_target":17450,"total_target":26175}},"Status":"unconfirmed"},"success":true}
+```
+
 ### Get token target quantity (signing required)
 ```
 <host>:8000/targetqty
@@ -435,13 +447,24 @@ response:
 <host>:8000/settargetqty
 POST request
 form params:
-  - data: string, in format of <token>_totalQty_reserveQty|<token>_totalQty_reserveQty|..., eg. OMG_40_35|KNC_100_20
+  - data: required, string, json string of target quantity data
+  - action: required, string, set/confirm/cancel, action to set, confirm or cancel target quantity
+  - id: optional, required to confirm target quantity
 ```
-
+eg:
+```
+curl -X POST \
+  http://localhost:8000/settargetqty \
+  -H 'content-type: multipart/form-data' \
+  -F data= '{"EOS": {"reserve_target": 500, "total_target": 750}, "ETH": {"reserve_target": 25, "total_target": 50}, "KNC": {"reserve_target": 1600, "total_target": 2400}, "OMG": {"reserve_target": 277, "total_target": 415.5}, "SALT": {"reserve_target": 625, "total_target": 937.5}, "SNT": {"reserve_target": 17450, "total_target": 26175}}' \
+  -F action=set
+  -F id=1517396850670
+```
 response
 ```
   {
-    "success": true
+    "success": true,
+    {"data":{"ID":1517396850670,"Timestamp":0,"Data":{"EOS":{"reserve_target":500,"total_target":750},"ETH":{"reserve_target":25,"total_target":50},"KNC":{"reserve_target":1600,"total_target":2400},"OMG":{"reserve_target":277,"total_target":415.5},"SALT":{"reserve_target":625,"total_target":937.5},"SNT":{"reserve_target":17450,"total_target":26175}},"Status":"unconfirmed"},"success":true}
   }
 ```
 
