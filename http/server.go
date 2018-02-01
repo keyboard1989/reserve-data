@@ -1086,7 +1086,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	}
 	c.JSON(
 		http.StatusOK,
-		gin.H{"success": false, "reason": "Action "},
+		gin.H{"success": false, "reason": fmt.Sprintf("Action %s is not supported", action)},
 	)
 	return
 }
