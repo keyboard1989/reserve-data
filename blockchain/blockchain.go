@@ -153,17 +153,21 @@ func toFilterArg(q ether.FilterQuery) interface{} {
 }
 
 func (self *Blockchain) rebroadcast(tx *types.Transaction, err error) (ethereum.Hash, error) {
-	failures, ok := self.rebroadcaster.Broadcast(tx)
-	log.Printf("Rebroadcasting failures: %s", failures)
-	if err != nil && !ok {
-		log.Printf("Broadcasting transaction failed!!!!!!!, err: %s, retry failures: %s", err, failures)
-		if tx != nil {
-			return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
-		} else {
-			return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
-		}
+	if tx == nil {
+		return ethereum.Hash{}, err
 	} else {
-		return tx.Hash(), err
+		failures, ok := self.rebroadcaster.Broadcast(tx)
+		log.Printf("Rebroadcasting failures: %s", failures)
+		if err != nil && !ok {
+			log.Printf("Broadcasting transaction failed!!!!!!!, err: %s, retry failures: %s", err, failures)
+			if tx != nil {
+				return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
+			} else {
+				return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
+			}
+		} else {
+			return tx.Hash(), err
+		}
 	}
 }
 
