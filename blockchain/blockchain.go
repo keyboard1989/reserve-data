@@ -78,7 +78,7 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 		} else {
 			// this is not really needed. Just a safe guard
-			self.tokenIndices[tok.Hex()] = tbindex{1000000, 1000000}
+			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
 		}
 	}
 	bulkIndices, indicesInBulk, err := self.wrapper.GetTokenIndicies(
