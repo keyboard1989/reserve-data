@@ -30,6 +30,24 @@ sample:
 
 ## APIs
 
+### Get time server
+```
+<host>:8000/timeserver
+```
+
+eg:
+```
+curl -X GET "http://localhost:8000/timeserver"
+```
+
+response:
+```
+{
+  "data": "1517479497447",
+  "success": true
+}
+```
+
 ### Get all addresses are being used by core
 
 ```
@@ -95,6 +113,7 @@ response:
 <host>:8000/exchangeinfo
 ```
 url params:
+
 *exchangeid* : id of exchange to get info (optional, if exchangeid is empty then return all exchanges info)
 
 eg:
@@ -400,7 +419,10 @@ GET request
 
 response:
 ```
-  {"data":{"ID":1517397155549,"Timestamp":0,"Data":{"EOS":{"reserve_target":500,"total_target":750},"ETH":{"reserve_target":25,"total_target":50},"KNC":{"reserve_target":1600,"total_target":2400},"OMG":{"reserve_target":277,"total_target":415.5},"SALT":{"reserve_target":625,"total_target":937.5},"SNT":{"reserve_target":17450,"total_target":26175}},"Status":"unconfirmed"},"success":true}
+  {
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"unconfirmed"}
+  }
 ```
 
 ### Get token target quantity (signing required)
@@ -412,33 +434,15 @@ GET request
 response:
 ```
   {
-    "data": {
-      "EOS": {
-        "reserve-target": 1000.141,
-        "total": 1471004712
-      },
-      "ETH": {
-        "reserve-target": 1000.141,
-        "total": 1471004712
-      },
-      "KNC": {
-        "reserve-target": 0,
-        "total": 0
-      },
-      "OMG": {
-        "reserve-target": 0,
-        "total": 0
-      },
-      "SALT": {
-        "reserve-target": 0,
-        "total": 0
-      },
-      "SNT": {
-        "reserve-target": 0,
-        "total": 0
-      }
-    },
-    "success": true
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"confirmed"}
+  }
+```
+response if there no data yet:
+```
+  {
+    "success": false,
+    "reason": "Version doesn't exist: 1517481572058"
   }
 ```
 
@@ -465,7 +469,7 @@ response
 ```
   {
     "success": true,
-    {"data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"unconfirmed"},"success":true}
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"unconfirmed"}
   }
 ```
 

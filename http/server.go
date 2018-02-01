@@ -1126,6 +1126,16 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetTimeServer(c *gin.Context) {
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    common.GetTimestamp(),
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -1154,6 +1164,8 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/targetqty", self.GetTargetQty)
 	self.r.GET("/pendingtargetqty", self.GetPendingTargetQty)
 	self.r.POST("/settargetqty", self.SetTargetQty)
+
+	self.r.GET("/timeserver", self.GetTimeServer)
 
 	self.r.Run(self.host)
 }
