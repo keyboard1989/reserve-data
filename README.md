@@ -447,16 +447,17 @@ response:
 <host>:8000/settargetqty
 POST request
 form params:
-  - data: required, string, json string of target quantity data, json element must sort ascending in order to compare byte string when confirm
+  - data: required, string, must sort by token id by ascending order
   - action: required, string, set/confirm/cancel, action to set, confirm or cancel target quantity
   - id: optional, required to confirm target quantity
+  - type: required, number, data type (now it should be 1)
 ```
 eg:
 ```
 curl -X POST \
   http://localhost:8000/settargetqty \
   -H 'content-type: multipart/form-data' \
-  -F data= '{"EOS": {"reserve_target": 500, "total_target": 750}, "ETH": {"reserve_target": 25, "total_target": 50}, "KNC": {"reserve_target": 1600, "total_target": 2400}, "OMG": {"reserve_target": 277, "total_target": 415.5}, "SALT": {"reserve_target": 625, "total_target": 937.5}, "SNT": {"reserve_target": 17450, "total_target": 26175}}' \
+  -F data= EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25 \
   -F action=set
   -F id=1517396850670
 ```
@@ -464,7 +465,7 @@ response
 ```
   {
     "success": true,
-    {"data":{"ID":1517396850670,"Timestamp":0,"Data":{"EOS":{"reserve_target":500,"total_target":750},"ETH":{"reserve_target":25,"total_target":50},"KNC":{"reserve_target":1600,"total_target":2400},"OMG":{"reserve_target":277,"total_target":415.5},"SALT":{"reserve_target":625,"total_target":937.5},"SNT":{"reserve_target":17450,"total_target":26175}},"Status":"unconfirmed"},"success":true}
+    {"data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"unconfirmed"},"success":true}
   }
 ```
 
