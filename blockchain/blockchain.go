@@ -74,7 +74,12 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 func (self *Blockchain) LoadAndSetTokenIndices() error {
 	tokens := []ethereum.Address{}
 	for _, tok := range self.tokens {
-		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
+		if tok.ID != "ETH" {
+			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
+		} else {
+			// this is not really needed. Just a safe guard
+			self.tokenIndices[tok.Hex()] = tbindex{1000000, 1000000}
+		}
 	}
 	bulkIndices, indicesInBulk, err := self.wrapper.GetTokenIndicies(
 		nil,
