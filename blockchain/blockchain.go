@@ -341,8 +341,12 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uin
 func (self *Blockchain) FetchRates(timepoint uint64) (common.AllRateEntry, error) {
 	result := common.AllRateEntry{}
 	tokenAddrs := []ethereum.Address{}
+	validTokens := []common.Token{}
 	for _, s := range self.tokens {
-		tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(s.Address))
+		if s.ID != "ETH" {
+			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(s.Address))
+			validTokens = append(validTokens, s)
+		}
 	}
 	timestamp := common.GetTimestamp()
 	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.wrapper.GetTokenRates(
@@ -358,7 +362,7 @@ func (self *Blockchain) FetchRates(timepoint uint64) (common.AllRateEntry, error
 	} else {
 		result.Valid = true
 		result.Data = map[string]common.RateEntry{}
-		for i, token := range self.tokens {
+		for i, token := range validTokens {
 			result.Data[token.ID] = common.RateEntry{
 				baseBuys[i],
 				int8(compactBuys[i]),
