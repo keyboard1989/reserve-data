@@ -101,9 +101,21 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	return nil
 }
 
+func (self *Blockchain) getNextNonce() (*big.Int, error) {
+	var nonce *big.Int
+	var err error
+	for i := 0; i < 3; i++ {
+		nonce, err = self.nonce.GetNextNonce()
+		if err == nil {
+			return nonce, nil
+		}
+	}
+	return nonce, err
+}
+
 func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
 	shared := self.signer.GetTransactOpts()
-	nonce, err := self.nonce.GetNextNonce()
+	nonce, err := self.getNextNonce()
 	if err != nil {
 		return nil, err
 	} else {
@@ -164,13 +176,13 @@ func (self *Blockchain) SetRates(
 	block *big.Int) (ethereum.Hash, error) {
 
 	opts, err := self.getTransactOpts()
-	// fix to 50.1 gwei
-	opts.GasPrice = big.NewInt(50100000000)
 	block.Add(block, big.NewInt(1))
 	if err != nil {
-		log.Printf("Getting transaction opts failed!!!!!!!\n")
+		log.Printf("Getting transaction opts failed, err: %s", err)
 		return ethereum.Hash{}, err
 	} else {
+		// fix to 50.1 gwei
+		opts.GasPrice = big.NewInt(50100000000)
 		baseBuys, baseSells, compactBuys, compactSells, _, err := self.wrapper.GetTokenRates(
 			nil, self.pricingAddr, tokens,
 		)
@@ -243,7 +255,7 @@ func (self *Blockchain) Send(
 func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (ethereum.Hash, error) {
 	opts, err := self.getTransactOpts()
 	if err != nil {
-		log.Printf("Getting transaction opts failed!!!!!!!\n")
+		log.Printf("Getting transaction opts failed, err: %s", err)
 		return ethereum.Hash{}, err
 	} else {
 		tx, err := self.pricing.SetImbalanceStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
@@ -254,7 +266,7 @@ func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []
 func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (ethereum.Hash, error) {
 	opts, err := self.getTransactOpts()
 	if err != nil {
-		log.Printf("Getting transaction opts failed!!!!!!!\n")
+		log.Printf("Getting transaction opts failed, err: %s", err)
 		return ethereum.Hash{}, err
 	} else {
 		tx, err := self.pricing.SetQtyStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
