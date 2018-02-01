@@ -73,6 +73,8 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 
 func (self *Blockchain) LoadAndSetTokenIndices() error {
 	tokens := []ethereum.Address{}
+	self.tokenIndices = map[string]tbindex{}
+
 	for _, tok := range self.tokens {
 		if tok.ID != "ETH" {
 			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
@@ -89,8 +91,6 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	if err != nil {
 		return err
 	}
-	self.tokenIndices = map[string]tbindex{}
-
 	for i, tok := range tokens {
 		self.tokenIndices[tok.Hex()] = tbindex{
 			bulkIndices[i].Uint64(),
