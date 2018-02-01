@@ -103,7 +103,7 @@ curl -X GET "http://13.229.54.28:8000/exchangeinfo?exchangeid=binance"
 ```
 response:
 ```
-  {"data":{"EOS-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}},"FUN-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-8,"Max":100000}},"KNC-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-7,"Max":100000}},"LINK-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-8,"Max":100000}},"MCO-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}},"OMG-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}}},"success":true}
+  {"data":{"binance":{"EOS-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000},"MinNotional":0.02},"KNC-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-7,"Max":100000},"MinNotional":0.02},"OMG-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000},"MinNotional":0.02},"SALT-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000},"MinNotional":0.02},"SNT-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-8,"Max":100000},"MinNotional":0.02}}},"success":true}
 ```
 
 ### Get fee for transaction on all exchanges

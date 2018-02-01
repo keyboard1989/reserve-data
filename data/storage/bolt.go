@@ -581,10 +581,7 @@ func (self *BoltStorage) StorePendingTargetQty(data string) error {
 		} else {
 			tokenTargetQty.ID = timepoint
 			tokenTargetQty.Status = "unconfirmed"
-			err = json.Unmarshal([]byte(data), &tokenTargetQty.Data)
-			if err != nil {
-				return err
-			}
+			tokenTargetQty.Data = data
 			idByte := uint64ToBytes(timepoint)
 			var dataJson []byte
 			dataJson, err = json.Marshal(tokenTargetQty)
@@ -664,18 +661,13 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 		} else {
 			// verify confirm data
 			json.Unmarshal(pendingTargetQty, &tokenTargetQty)
-			pendingData, _ := json.Marshal(tokenTargetQty.Data)
+			pendingData := tokenTargetQty.Data
 			idInt, _ := strconv.ParseUint(id, 10, 64)
 			if tokenTargetQty.ID != idInt {
 				err = errors.New("Pending target quantity ID does not match")
 				return err
 			}
-			log.Printf("data to compare: %s", data)
-			log.Printf("data saved:  %s", fmt.Sprintf("%s", pendingData))
-			log.Printf("byte typecast: %v", []byte(data))
-			log.Printf("byte saved: %v", pendingData)
-			log.Printf("byte compare: %s", bytes.Compare(pendingData, []byte(data)))
-			if bytes.Compare(pendingData, []byte(data)) != 0 {
+			if data != pendingData {
 				err = errors.New("Pending target quantity data does not match")
 				return err
 			}

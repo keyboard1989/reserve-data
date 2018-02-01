@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -974,19 +975,62 @@ func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
 	return
 }
 
+func targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold float64) error {
+	if total <= reserve {
+		return errors.New("Total quantity must bigger than reserver quantity")
+	}
+	if rebalanceThresold < 0 || rebalanceThresold > 1 || transferThresold < 0 || transferThresold > 1 {
+		return errors.New("Rebalance and transfer thresold must bigger than 0 and smaller than 1")
+	}
+	return nil
+}
+
 func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	log.Println("Storing target quantity")
-	postForm, ok := self.Authenticated(c, []string{"data", "action"}, []Permission{ConfigurePermission})
+	postForm, ok := self.Authenticated(c, []string{"data", "action", "type"}, []Permission{ConfigurePermission})
 	if !ok {
 		return
 	}
 	data := postForm.Get("data")
 	id := postForm.Get("id")
 	action := postForm.Get("action")
-	data = strings.Replace(data, " ", "", -1)
+	dataType := postForm.Get("type")
+	// data = strings.Replace(data, " ", "", -1)
+	var err error
 	switch strings.ToUpper(action) {
 	case "SET":
 		log.Println("Setting target qty")
+		for _, dataConfig := range strings.Split(data, "|") {
+			dataParts := strings.Split(dataConfig, "_")
+			if dataType == "" || (dataType == "1" && len(dataParts) != 5) {
+				c.JSON(
+					http.StatusOK,
+					gin.H{"success": false, "reason": "Data submitted not enough information"},
+				)
+				return
+			}
+			token := dataParts[0]
+			total, _ := strconv.ParseFloat(dataParts[1], 64)
+			reserve, _ := strconv.ParseFloat(dataParts[2], 64)
+			rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
+			transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
+			_, err = common.GetToken(token)
+			if err != nil {
+				c.JSON(
+					http.StatusOK,
+					gin.H{"success": false, "reason": err.Error()},
+				)
+				return
+			}
+			err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
+			if err != nil {
+				c.JSON(
+					http.StatusOK,
+					gin.H{"success": false, "reason": err.Error()},
+				)
+				return
+			}
+		}
 		err := self.metric.StorePendingTargetQty(data)
 		if err != nil {
 			c.JSON(
@@ -996,7 +1040,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 			return
 		}
 
-		data, err := self.metric.GetPendingTargetQty()
+		pendingData, err := self.metric.GetPendingTargetQty()
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -1006,7 +1050,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 		}
 		c.JSON(
 			http.StatusOK,
-			gin.H{"success": true, "data": data},
+			gin.H{"success": true, "data": pendingData},
 		)
 		return
 	case "CONFIRM":

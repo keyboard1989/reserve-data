@@ -29,6 +29,6 @@ type MetricResponse struct {
 type TokenTargetQty struct {
 	ID        uint64
 	Timestamp uint64
-	Data      map[string]map[string]interface{}
+	Data      string
 	Status    string
 }
