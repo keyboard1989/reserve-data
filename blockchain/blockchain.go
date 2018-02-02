@@ -187,7 +187,7 @@ func (self *Blockchain) SetRates(
 	} else {
 		// fix to 50.1 gwei
 		opts.GasPrice = big.NewInt(50100000000)
-		baseBuys, baseSells, compactBuys, compactSells, _, err := self.wrapper.GetTokenRates(
+		baseBuys, baseSells, _, _, _, err := self.wrapper.GetTokenRates(
 			nil, self.pricingAddr, tokens,
 		)
 		if err != nil {
@@ -203,14 +203,11 @@ func (self *Blockchain) SetRates(
 			compactBuy, overflow2 := BigIntToCompactRate(buys[i], baseBuys[i])
 			if overflow1 || overflow2 {
 				baseTokens = append(baseTokens, token)
-				newBSells = append(newBSells, compactSell.Base)
-				newBBuys = append(newBBuys, compactBuy.Base)
+				newBSells = append(newBSells, sells[i])
+				newBBuys = append(newBBuys, buys[i])
 			} else {
-				if compactSell.Compact != byte(compactSells[i]) ||
-					compactBuy.Compact != byte(compactBuys[i]) {
-					newCSells[token] = compactSell.Compact
-					newCBuys[token] = compactBuy.Compact
-				}
+				newCSells[token] = compactSell.Compact
+				newCBuys[token] = compactBuy.Compact
 			}
 		}
 		buys, sells, indices := BuildCompactBulk(
