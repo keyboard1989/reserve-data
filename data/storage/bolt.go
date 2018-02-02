@@ -568,7 +568,7 @@ func (self *BoltStorage) GetPendingTargetQty() (metric.TokenTargetQty, error) {
 	return tokenTargetQty, err
 }
 
-func (self *BoltStorage) StorePendingTargetQty(data string) error {
+func (self *BoltStorage) StorePendingTargetQty(data, dataType string) error {
 	var err error
 	timepoint := common.GetTimepoint()
 	tokenTargetQty := metric.TokenTargetQty{}
@@ -582,6 +582,7 @@ func (self *BoltStorage) StorePendingTargetQty(data string) error {
 			tokenTargetQty.ID = timepoint
 			tokenTargetQty.Status = "unconfirmed"
 			tokenTargetQty.Data = data
+			tokenTargetQty.Type, _ = strconv.ParseInt(dataType, 10, 64)
 			idByte := uint64ToBytes(timepoint)
 			var dataJson []byte
 			dataJson, err = json.Marshal(tokenTargetQty)

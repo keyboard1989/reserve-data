@@ -71,7 +71,7 @@ func (self *RamMetricStorage) GetMetric(tokens []common.Token, fromTime, toTime 
 	return result, nil
 }
 
-func (self *RamMetricStorage) StorePendingTargetQty(data string) error {
+func (self *RamMetricStorage) StorePendingTargetQty(data, dataType string) error {
 	// TODO: add support ram storage
 	return nil
 }

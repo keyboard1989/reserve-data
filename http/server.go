@@ -1031,7 +1031,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 				return
 			}
 		}
-		err := self.metric.StorePendingTargetQty(data)
+		err := self.metric.StorePendingTargetQty(data, dataType)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,

@@ -31,4 +31,5 @@ type TokenTargetQty struct {
 	Timestamp uint64
 	Data      string
 	Status    string
+	Type      int64
 }
