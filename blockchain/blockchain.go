@@ -173,6 +173,10 @@ func (self *Blockchain) rebroadcast(tx *types.Transaction, err error) (ethereum.
 
 //====================== Write calls ===============================
 
+// TODO: Need better test coverage
+// we got a bug when compact is not set to old compact
+// or when one of buy/sell got overflowed, it discards
+// the other's compact
 func (self *Blockchain) SetRates(
 	tokens []ethereum.Address,
 	buys []*big.Int,

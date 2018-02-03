@@ -1,11 +1,28 @@
 package exchange
 
+import (
+	"encoding/json"
+)
+
+type Binaprice struct {
+	Quantity string
+	Rate     string
+}
+
+func (self *Binaprice) UnmarshalJSON(text []byte) error {
+	temp := []interface{}{}
+	err := json.Unmarshal(text, &temp)
+	self.Quantity = temp[0].(string)
+	self.Rate = temp[1].(string)
+	return err
+}
+
 type Binaresp struct {
-	LastUpdatedId int64      `json:"lastUpdateId"`
-	Code          int        `json:"code"`
-	Msg           string     `json:"msg"`
-	Bids          [][]string `json:"bids"`
-	Asks          [][]string `json:"asks"`
+	LastUpdatedId int64       `json:"lastUpdateId"`
+	Code          int         `json:"code"`
+	Msg           string      `json:"msg"`
+	Bids          []Binaprice `json:"bids"`
+	Asks          []Binaprice `json:"asks"`
 }
 
 type Binainfo struct {

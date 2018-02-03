@@ -199,8 +199,8 @@ func (self *Binance) FetchOnePairData(
 			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
 		} else {
 			for _, buy := range resp_data.Bids {
-				quantity, _ := strconv.ParseFloat(buy[1], 64)
-				rate, _ := strconv.ParseFloat(buy[0], 64)
+				quantity, _ := strconv.ParseFloat(buy.Quantity, 64)
+				rate, _ := strconv.ParseFloat(buy.Rate, 64)
 				result.Bids = append(
 					result.Bids,
 					common.PriceEntry{
@@ -210,8 +210,8 @@ func (self *Binance) FetchOnePairData(
 				)
 			}
 			for _, sell := range resp_data.Asks {
-				quantity, _ := strconv.ParseFloat(sell[1], 64)
-				rate, _ := strconv.ParseFloat(sell[0], 64)
+				quantity, _ := strconv.ParseFloat(sell.Quantity, 64)
+				rate, _ := strconv.ParseFloat(sell.Rate, 64)
 				result.Asks = append(
 					result.Asks,
 					common.PriceEntry{
