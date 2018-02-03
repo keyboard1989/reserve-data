@@ -12,8 +12,8 @@ type Binaprice struct {
 func (self *Binaprice) UnmarshalJSON(text []byte) error {
 	temp := []interface{}{}
 	err := json.Unmarshal(text, &temp)
-	self.Quantity = temp[0].(string)
-	self.Rate = temp[1].(string)
+	self.Quantity = temp[1].(string)
+	self.Rate = temp[0].(string)
 	return err
 }
 
