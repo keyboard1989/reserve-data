@@ -69,7 +69,16 @@ func (self *BinanceEndpoint) GetResponse(
 		return resp_body, err
 	} else {
 		defer resp.Body.Close()
-		resp_body, err = ioutil.ReadAll(resp.Body)
+		switch resp.StatusCode {
+		case 429:
+			err = errors.New("breaking a request rate limit.")
+		case 418:
+			err = errors.New("IP has been auto-banned for continuing to send requests after receiving 429 codes.")
+		case 500:
+			err = errors.New("500 from Binance, its fault.")
+		case 200:
+			resp_body, err = ioutil.ReadAll(resp.Body)
+		}
 		log.Printf("request to %s, got response from binance: %s\n", req.URL, common.TruncStr(resp_body))
 		return resp_body, err
 	}
@@ -92,9 +101,13 @@ func (self *BinanceEndpoint) GetDepthOnePair(
 	if err != nil {
 		return resp_data, err
 	} else {
-		json.Unmarshal(resp_body, &resp_data)
-		if resp_data.Code != 0 {
-			return resp_data, errors.New(fmt.Sprintf("Getting depth from Binance failed: %s", resp_data.Msg))
+		err = json.Unmarshal(resp_body, &resp_data)
+		if err != nil {
+			return resp_data, err
+		} else {
+			if resp_data.Code != 0 {
+				return resp_data, errors.New(fmt.Sprintf("Getting depth from Binance failed: %s", resp_data.Msg))
+			}
 		}
 		return resp_data, nil
 	}
