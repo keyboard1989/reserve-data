@@ -103,6 +103,7 @@ func (self *BinanceEndpoint) GetDepthOnePair(
 	} else {
 		err = json.Unmarshal(resp_body, &resp_data)
 		if err != nil {
+			log.Printf("failed to unmarshal response from binance: %s, Response: %s", err, resp_body)
 			return resp_data, err
 		} else {
 			if resp_data.Code != 0 {

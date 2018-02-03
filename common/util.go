@@ -1,6 +1,6 @@
 package common
 
-const TRUNC_LENGTH int = 3072
+const TRUNC_LENGTH int = 256
 
 // const TRUNC_LENGTH int = 10000000
 
