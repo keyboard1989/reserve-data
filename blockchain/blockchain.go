@@ -73,8 +73,15 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 
 func (self *Blockchain) LoadAndSetTokenIndices() error {
 	tokens := []ethereum.Address{}
+	self.tokenIndices = map[string]tbindex{}
+
 	for _, tok := range self.tokens {
-		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
+		if tok.ID != "ETH" {
+			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
+		} else {
+			// this is not really needed. Just a safe guard
+			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
+		}
 	}
 	bulkIndices, indicesInBulk, err := self.wrapper.GetTokenIndicies(
 		nil,
@@ -84,8 +91,6 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	if err != nil {
 		return err
 	}
-	self.tokenIndices = map[string]tbindex{}
-
 	for i, tok := range tokens {
 		self.tokenIndices[tok.Hex()] = tbindex{
 			bulkIndices[i].Uint64(),
@@ -96,9 +101,21 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	return nil
 }
 
+func (self *Blockchain) getNextNonce() (*big.Int, error) {
+	var nonce *big.Int
+	var err error
+	for i := 0; i < 3; i++ {
+		nonce, err = self.nonce.GetNextNonce()
+		if err == nil {
+			return nonce, nil
+		}
+	}
+	return nonce, err
+}
+
 func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
 	shared := self.signer.GetTransactOpts()
-	nonce, err := self.nonce.GetNextNonce()
+	nonce, err := self.getNextNonce()
 	if err != nil {
 		return nil, err
 	} else {
@@ -136,17 +153,21 @@ func toFilterArg(q ether.FilterQuery) interface{} {
 }
 
 func (self *Blockchain) rebroadcast(tx *types.Transaction, err error) (ethereum.Hash, error) {
-	failures, ok := self.rebroadcaster.Broadcast(tx)
-	log.Printf("Rebroadcasting failures: %s", failures)
-	if err != nil && !ok {
-		log.Printf("Broadcasting transaction failed!!!!!!!, err: %s, retry failures: %s", err, failures)
-		if tx != nil {
-			return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
-		} else {
-			return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
-		}
+	if tx == nil {
+		return ethereum.Hash{}, err
 	} else {
-		return tx.Hash(), err
+		failures, ok := self.rebroadcaster.Broadcast(tx)
+		log.Printf("Rebroadcasting failures: %s", failures)
+		if err != nil && !ok {
+			log.Printf("Broadcasting transaction failed!!!!!!!, err: %s, retry failures: %s", err, failures)
+			if tx != nil {
+				return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
+			} else {
+				return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
+			}
+		} else {
+			return tx.Hash(), err
+		}
 	}
 }
 
@@ -159,14 +180,14 @@ func (self *Blockchain) SetRates(
 	block *big.Int) (ethereum.Hash, error) {
 
 	opts, err := self.getTransactOpts()
-	// fix to 50.1 gwei
-	opts.GasPrice = big.NewInt(50100000000)
 	block.Add(block, big.NewInt(1))
 	if err != nil {
-		log.Printf("Getting transaction opts failed!!!!!!!\n")
+		log.Printf("Getting transaction opts failed, err: %s", err)
 		return ethereum.Hash{}, err
 	} else {
-		baseBuys, baseSells, compactBuys, compactSells, _, err := self.wrapper.GetTokenRates(
+		// fix to 50.1 gwei
+		opts.GasPrice = big.NewInt(50100000000)
+		baseBuys, baseSells, _, _, _, err := self.wrapper.GetTokenRates(
 			nil, self.pricingAddr, tokens,
 		)
 		if err != nil {
@@ -182,14 +203,11 @@ func (self *Blockchain) SetRates(
 			compactBuy, overflow2 := BigIntToCompactRate(buys[i], baseBuys[i])
 			if overflow1 || overflow2 {
 				baseTokens = append(baseTokens, token)
-				newBSells = append(newBSells, compactSell.Base)
-				newBBuys = append(newBBuys, compactBuy.Base)
+				newBSells = append(newBSells, sells[i])
+				newBBuys = append(newBBuys, buys[i])
 			} else {
-				if compactSell.Compact != byte(compactSells[i]) ||
-					compactBuy.Compact != byte(compactBuys[i]) {
-					newCSells[token] = compactSell.Compact
-					newCBuys[token] = compactBuy.Compact
-				}
+				newCSells[token] = compactSell.Compact
+				newCBuys[token] = compactBuy.Compact
 			}
 		}
 		buys, sells, indices := BuildCompactBulk(
@@ -238,7 +256,7 @@ func (self *Blockchain) Send(
 func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (ethereum.Hash, error) {
 	opts, err := self.getTransactOpts()
 	if err != nil {
-		log.Printf("Getting transaction opts failed!!!!!!!\n")
+		log.Printf("Getting transaction opts failed, err: %s", err)
 		return ethereum.Hash{}, err
 	} else {
 		tx, err := self.pricing.SetImbalanceStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
@@ -249,7 +267,7 @@ func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []
 func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (ethereum.Hash, error) {
 	opts, err := self.getTransactOpts()
 	if err != nil {
-		log.Printf("Getting transaction opts failed!!!!!!!\n")
+		log.Printf("Getting transaction opts failed, err: %s", err)
 		return ethereum.Hash{}, err
 	} else {
 		tx, err := self.pricing.SetQtyStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
@@ -324,8 +342,12 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uin
 func (self *Blockchain) FetchRates(timepoint uint64) (common.AllRateEntry, error) {
 	result := common.AllRateEntry{}
 	tokenAddrs := []ethereum.Address{}
+	validTokens := []common.Token{}
 	for _, s := range self.tokens {
-		tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(s.Address))
+		if s.ID != "ETH" {
+			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(s.Address))
+			validTokens = append(validTokens, s)
+		}
 	}
 	timestamp := common.GetTimestamp()
 	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.wrapper.GetTokenRates(
@@ -341,7 +363,7 @@ func (self *Blockchain) FetchRates(timepoint uint64) (common.AllRateEntry, error
 	} else {
 		result.Valid = true
 		result.Data = map[string]common.RateEntry{}
-		for i, token := range self.tokens {
+		for i, token := range validTokens {
 			result.Data[token.ID] = common.RateEntry{
 				baseBuys[i],
 				int8(compactBuys[i]),
