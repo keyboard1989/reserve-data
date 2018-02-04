@@ -250,25 +250,25 @@ func (self ReserveCore) SetRates(
 	return uid, err
 }
 
-func sanityCheck(buys, afpMid , sells []*big.Int) error {
+func sanityCheck(buys, afpMid, sells []*big.Int) error {
 	eth := big.NewFloat(0).SetInt(big.NewInt(1000000000000000000))
-	for i, s := range(sells) {
-		check := checkZeroValue(buys[i], s) 
+	for i, s := range sells {
+		check := checkZeroValue(buys[i], s)
 		switch check {
 		case 1:
 			sFloat := big.NewFloat(0).SetInt(s)
-			sRate  := calculateRate(sFloat, eth)
+			sRate := calculateRate(sFloat, eth)
 			bFloat := big.NewFloat(0).SetInt(buys[i])
-			bRate  := calculateRate(eth, bFloat)
+			bRate := calculateRate(eth, bFloat)
 			aMFloat := big.NewFloat(0).SetInt(afpMid[i])
-			aMRate  := calculateRate(aMFloat, eth)
+			aMRate := calculateRate(aMFloat, eth)
 			if bRate.Cmp(sRate) <= 0 || bRate.Cmp(aMRate) <= 0 {
 				return errors.New("Sell price must be bigger than buy price and afpMid price")
 			}
 		case 0:
 			return nil
 		case -1:
-			return errors.New("Rate cannot be zero")
+			return errors.New("Rate cannot be zero on only sell or buy side")
 		}
 	}
 	return nil
