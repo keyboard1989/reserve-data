@@ -54,6 +54,14 @@ func (self testBittrexInterface) OrderStatus(uuid string, timepoint uint64) (Bit
 	return Bitttraderesult{}, nil
 }
 
+func (self testBittrexInterface) GetAccountTradeHistory(base, quote common.Token, timepoint uint64) (BittTradeHistory, error) {
+	return BittTradeHistory{}, nil
+}
+
+func (self testBittrexInterface) GetDepositAddress(currency string) (BittrexDepositAddress, error) {
+	return BittrexDepositAddress{}, nil
+}
+
 type testBittrexStorage struct {
 	IsNew bool
 }
@@ -71,7 +79,7 @@ func getTestBittrex(depositHistory string, registered bool) *Bittrex {
 	return &Bittrex{
 		testBittrexInterface{depositHistory},
 		[]common.TokenPair{},
-		map[string]ethereum.Address{},
+		common.NewExchangeAddresses(),
 		&testBittrexStorage{registered},
 		&common.ExchangeInfo{},
 		common.ExchangeFees{},

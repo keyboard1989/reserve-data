@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ether "github.com/ethereum/go-ethereum"
@@ -113,11 +114,15 @@ func (self *Blockchain) getNextNonce() (*big.Int, error) {
 	return nonce, err
 }
 
-func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
+func donothing() {}
+
+func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, context.CancelFunc, error) {
 	shared := self.signer.GetTransactOpts()
 	nonce, err := self.getNextNonce()
+	timeout, cancel := context.WithTimeout(shared.Context, 3*time.Second)
+
 	if err != nil {
-		return nil, err
+		return nil, donothing, err
 	} else {
 		result := bind.TransactOpts{
 			shared.From,
@@ -126,9 +131,9 @@ func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, error) {
 			shared.Value,
 			shared.GasPrice,
 			shared.GasLimit,
-			shared.Context,
+			timeout,
 		}
-		return &result, nil
+		return &result, cancel, nil
 	}
 }
 
@@ -183,7 +188,8 @@ func (self *Blockchain) SetRates(
 	sells []*big.Int,
 	block *big.Int) (ethereum.Hash, error) {
 
-	opts, err := self.getTransactOpts()
+	opts, cancel, err := self.getTransactOpts()
+	defer cancel()
 	block.Add(block, big.NewInt(1))
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
@@ -245,7 +251,8 @@ func (self *Blockchain) Send(
 	amount *big.Int,
 	dest ethereum.Address) (ethereum.Hash, error) {
 
-	opts, err := self.getTransactOpts()
+	opts, cancel, err := self.getTransactOpts()
+	defer cancel()
 	if err != nil {
 		return ethereum.Hash{}, err
 	} else {
@@ -258,7 +265,8 @@ func (self *Blockchain) Send(
 }
 
 func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (ethereum.Hash, error) {
-	opts, err := self.getTransactOpts()
+	opts, cancel, err := self.getTransactOpts()
+	defer cancel()
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
 		return ethereum.Hash{}, err
@@ -269,7 +277,8 @@ func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []
 }
 
 func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (ethereum.Hash, error) {
-	opts, err := self.getTransactOpts()
+	opts, cancel, err := self.getTransactOpts()
+	defer cancel()
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
 		return ethereum.Hash{}, err

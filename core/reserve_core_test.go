@@ -38,6 +38,11 @@ func (self testExchange) GetFee() common.ExchangeFees {
 func (self testExchange) GetInfo() (common.ExchangeInfo, error) {
 	return common.ExchangeInfo{}, nil
 }
+func (self testExchange) TokenAddresses() map[string]ethereum.Address {
+	return map[string]ethereum.Address{}
+}
+func (self testExchange) UpdateDepositAddress(token common.Token, address string) {
+}
 
 type testBlockchain struct {
 }
@@ -55,6 +60,10 @@ func (self testBlockchain) SetRates(
 	sells []*big.Int,
 	block *big.Int) (ethereum.Hash, error) {
 	return ethereum.Hash{}, nil
+}
+
+func (self testBlockchain) GetAddresses() *common.Addresses {
+	return &common.Addresses{}
 }
 
 type testActivityStorage struct {

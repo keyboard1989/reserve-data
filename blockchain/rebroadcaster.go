@@ -3,6 +3,7 @@ package blockchain
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -17,11 +18,11 @@ type Rebroadcaster struct {
 }
 
 func (self Rebroadcaster) broadcast(
+	ctx context.Context,
 	id string, client *ethclient.Client, tx *types.Transaction,
 	wg *sync.WaitGroup, failures *sync.Map) {
 	defer wg.Done()
-	option := context.Background()
-	err := client.SendTransaction(option, tx)
+	err := client.SendTransaction(ctx, tx)
 	if err != nil {
 		failures.Store(id, err)
 	}
@@ -32,7 +33,9 @@ func (self Rebroadcaster) Broadcast(tx *types.Transaction) (map[string]error, bo
 	wg := sync.WaitGroup{}
 	for id, client := range self.clients {
 		wg.Add(1)
-		self.broadcast(id, client, tx, &wg, &failures)
+		timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		self.broadcast(timeout, id, client, tx, &wg, &failures)
+		defer cancel()
 	}
 	wg.Wait()
 	result := map[string]error{}
