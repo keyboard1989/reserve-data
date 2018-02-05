@@ -142,6 +142,11 @@ type FundingFee struct {
 	Deposit  map[string]float64
 }
 
+func (self FundingFee) GetTokenFee(token string) float64 {
+	withdrawFee := self.Withdraw
+	return withdrawFee[token]
+}
+
 type ExchangeFees struct {
 	Trading TradingFee
 	Funding FundingFee

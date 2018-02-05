@@ -54,7 +54,7 @@ func (self ReserveCore) Trade(
 	var done, remaining float64
 	var finished bool
 	var err error
-	
+
 	err = sanityCheckTrading(exchange, base, quote, rate, amount)
 	if err == nil {
 		id, done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
@@ -123,7 +123,10 @@ func (self ReserveCore) Deposit(
 		tx = ethereum.Hash{}
 		err = errors.New(fmt.Sprintf("There is a pending %s deposit to %s currently, please try again", token.ID, exchange.ID()))
 	} else {
-		tx, err = self.blockchain.Send(token, amount, address)
+		err = sanityCheckAmount(exchange, token, amount)
+		if err == nil {
+			tx, err = self.blockchain.Send(token, amount, address)			
+		}
 	}
 	var status string
 	if err != nil {
@@ -167,7 +170,10 @@ func (self ReserveCore) Withdraw(
 	if !supported {
 		err = errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
 	} else {
-		id, err = exchange.Withdraw(token, amount, self.rm, timepoint)
+		err = sanityCheckAmount(exchange, token, amount)
+		if err == nil {
+			id, err = exchange.Withdraw(token, amount, self.rm, timepoint)
+		}
 	}
 	var status string
 	if err != nil {
@@ -296,6 +302,20 @@ func sanityCheckTrading(exchange common.Exchange, base, quote common.Token, rate
 		if currentNotional < minNotional {
 			return errors.New("Notional must be bigger than exchange's MinNotional")
 		}
+	}
+	return nil
+}
+
+func sanityCheckAmount(exchange common.Exchange, token common.Token, amount *big.Int) error {
+	exchangeFee := exchange.GetFee()
+	amountFloat := big.NewFloat(0).SetInt(amount)
+	feeWithdrawing := exchangeFee.Funding.GetTokenFee(string(token.ID))
+	expDecimal := big.NewInt(0).Exp(big.NewInt(10), big.NewInt(token.Decimal), nil)
+	minAmountWithdraw := big.NewFloat(0)
+
+	minAmountWithdraw.Mul(big.NewFloat(feeWithdrawing), big.NewFloat(0).SetInt(expDecimal))
+	if amountFloat.Cmp(minAmountWithdraw) < 0 {
+		return errors.New("Amount is too small!!!")
 	}
 	return nil
 }
