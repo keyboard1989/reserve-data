@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
@@ -36,8 +37,9 @@ func (self *TimeWindow) GetAddress() ethereum.Address {
 }
 
 func (self *TimeWindow) getNonceFromNode() (*big.Int, error) {
-	option := context.Background()
-	nonce, err := self.ethclient.PendingNonceAt(option, self.signer.GetAddress())
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	nonce, err := self.ethclient.PendingNonceAt(ctx, self.signer.GetAddress())
 	return big.NewInt(int64(nonce)), err
 }
 

@@ -50,7 +50,16 @@ func (self ReserveCore) Trade(
 	amount float64,
 	timepoint uint64) (common.ActivityID, float64, float64, bool, error) {
 
-	id, done, remaining, finished, err := exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+	var id string
+	var done, remaining float64
+	var finished bool
+	var err error
+	
+	err = sanityCheckTrading(exchange, base, quote, rate, amount)
+	if err == nil {
+		id, done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+	}
+
 	var status string
 	if err != nil {
 		status = "failed"
@@ -199,17 +208,18 @@ func (self ReserveCore) SetRates(
 	buys []*big.Int,
 	sells []*big.Int,
 	block *big.Int,
-	afpMid []*big.Int) (common.ActivityID, error) {
+	afpMids []*big.Int) (common.ActivityID, error) {
 
 	lentokens := len(tokens)
 	lenbuys := len(buys)
 	lensells := len(sells)
+	lenafps := len(afpMids)
 	tx := ethereum.Hash{}
 	var err error
-	if lentokens != lenbuys || lentokens != lensells {
-		err = errors.New("Tokens, buys and sells must have the same length")
+	if lentokens != lenbuys || lentokens != lensells || lentokens != lenafps {
+		err = errors.New("Tokens, buys sells and afpMids must have the same length")
 	} else {
-		err = sanityCheck(buys, afpMid, sells)
+		err = sanityCheck(buys, afpMids, sells)
 		if err == nil {
 			tokenAddrs := []ethereum.Address{}
 			for _, token := range tokens {
@@ -234,7 +244,7 @@ func (self ReserveCore) SetRates(
 			"buys":   buys,
 			"sells":  sells,
 			"block":  block,
-			"afpMid": afpMid,
+			"afpMid": afpMids,
 		}, map[string]interface{}{
 			"tx":    tx.Hex(),
 			"error": err,
@@ -274,6 +284,22 @@ func sanityCheck(buys, afpMid, sells []*big.Int) error {
 	return nil
 }
 
+func sanityCheckTrading(exchange common.Exchange, base, quote common.Token, rate, amount float64) error {
+	tokenPairID := makeTokenPair(base.ID, quote.ID)
+	exchangeInfo, err := exchange.GetExchangeInfo(tokenPairID)
+	if err != nil {
+		return err
+	}
+	currentNotional := rate * amount
+	minNotional := exchangeInfo.MinNotional
+	if minNotional != float64(0) {
+		if currentNotional < minNotional {
+			return errors.New("Notional must be bigger than exchange's MinNotional")
+		}
+	}
+	return nil
+}
+
 func calculateRate(theDividend, divisor *big.Float) *big.Float {
 	div := big.NewFloat(0)
 	div.Quo(theDividend, divisor)
@@ -289,4 +315,11 @@ func checkZeroValue(buy, sell *big.Int) int {
 		return 1
 	}
 	return -1
+}
+
+func makeTokenPair(base, quote string) common.TokenPairID {
+	if base == "ETH" {
+		return common.NewTokenPairID(quote, base)
+	}
+	return common.NewTokenPairID(base, quote)
 }
