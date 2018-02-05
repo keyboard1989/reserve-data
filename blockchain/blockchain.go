@@ -31,21 +31,21 @@ const (
 )
 
 type Blockchain struct {
-	rpcClient     *rpc.Client
-	client        *ethclient.Client
-	wrapper       *ContractWrapper
-	pricing       *Pricing
-	reserve       *ReserveContract
-	rm            ethereum.Address
-	wrapperAddr   ethereum.Address
-	pricingAddr   ethereum.Address
-	burnerAddr    ethereum.Address
-	networkAddr   ethereum.Address
-	signer        Signer
-	tokens        []common.Token
-	tokenIndices  map[string]tbindex
-	nonce         NonceCorpus
-	rebroadcaster *Rebroadcaster
+	rpcClient    *rpc.Client
+	client       *ethclient.Client
+	wrapper      *ContractWrapper
+	pricing      *KNPricingContract
+	reserve      *ReserveContract
+	rm           ethereum.Address
+	wrapperAddr  ethereum.Address
+	pricingAddr  ethereum.Address
+	burnerAddr   ethereum.Address
+	networkAddr  ethereum.Address
+	signer       Signer
+	tokens       []common.Token
+	tokenIndices map[string]tbindex
+	nonce        NonceCorpus
+	broadcaster  *Broadcaster
 }
 
 func (self *Blockchain) AddToken(t common.Token) {
@@ -119,7 +119,7 @@ func donothing() {}
 func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, context.CancelFunc, error) {
 	shared := self.signer.GetTransactOpts()
 	nonce, err := self.getNextNonce()
-	timeout, cancel := context.WithTimeout(shared.Context, 3*time.Second)
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	if err != nil {
 		return nil, donothing, err
@@ -157,21 +157,25 @@ func toFilterArg(q ether.FilterQuery) interface{} {
 	return arg
 }
 
-func (self *Blockchain) rebroadcast(tx *types.Transaction, err error) (ethereum.Hash, error) {
+func (self *Blockchain) broadcast(tx *types.Transaction) (ethereum.Hash, error) {
 	if tx == nil {
-		return ethereum.Hash{}, err
+		panic(errors.New("Nil tx is forbidden here"))
 	} else {
-		failures, ok := self.rebroadcaster.Broadcast(tx)
+		signedTx, err := self.signer.Sign(tx)
+		if err != nil {
+			return ethereum.Hash{}, err
+		}
+		failures, ok := self.broadcaster.Broadcast(signedTx)
 		log.Printf("Rebroadcasting failures: %s", failures)
-		if err != nil && !ok {
+		if !ok {
 			log.Printf("Broadcasting transaction failed!!!!!!!, err: %s, retry failures: %s", err, failures)
-			if tx != nil {
+			if signedTx != nil {
 				return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
 			} else {
 				return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
 			}
 		} else {
-			return tx.Hash(), err
+			return signedTx.Hash(), nil
 		}
 	}
 }
@@ -242,7 +246,11 @@ func (self *Blockchain) SetRates(
 			// 	tx.Hash().Hex(), err, baseTokens, buys, sells, block.Text(10), indices,
 			// )
 		}
-		return self.rebroadcast(tx, err)
+		if err != nil {
+			return ethereum.Hash{}, err
+		} else {
+			return self.broadcast(tx)
+		}
 	}
 }
 
@@ -260,7 +268,11 @@ func (self *Blockchain) Send(
 			opts,
 			ethereum.HexToAddress(token.Address),
 			amount, dest)
-		return self.rebroadcast(tx, err)
+		if err != nil {
+			return ethereum.Hash{}, err
+		} else {
+			return self.broadcast(tx)
+		}
 	}
 }
 
@@ -272,7 +284,10 @@ func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []
 		return ethereum.Hash{}, err
 	} else {
 		tx, err := self.pricing.SetImbalanceStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
-		return self.rebroadcast(tx, err)
+		if err != nil {
+			return ethereum.Hash{}, err
+		}
+		return self.broadcast(tx)
 	}
 }
 
@@ -284,7 +299,10 @@ func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.I
 		return ethereum.Hash{}, err
 	} else {
 		tx, err := self.pricing.SetQtyStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
-		return self.rebroadcast(tx, err)
+		if err != nil {
+			return ethereum.Hash{}, err
+		}
+		return self.broadcast(tx)
 	}
 }
 
@@ -547,26 +565,26 @@ func NewBlockchain(
 		return nil, err
 	}
 	log.Printf("pricing address: %s", pricingAddr.Hex())
-	pricing, err := NewPricing(pricingAddr, ethereum)
+	pricing, err := NewKNPricingContract(pricingAddr, ethereum)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("burner address: %s", burnerAddr.Hex())
 	log.Printf("network address: %s", networkAddr.Hex())
 	return &Blockchain{
-		rpcClient:     client,
-		client:        ethereum,
-		wrapper:       wrapper,
-		pricing:       pricing,
-		reserve:       reserve,
-		rm:            reserveAddr,
-		wrapperAddr:   wrapperAddr,
-		pricingAddr:   pricingAddr,
-		burnerAddr:    burnerAddr,
-		networkAddr:   networkAddr,
-		signer:        signer,
-		tokens:        []common.Token{},
-		nonce:         nonceCorpus,
-		rebroadcaster: NewRebroadcaster(clients),
+		rpcClient:   client,
+		client:      ethereum,
+		wrapper:     wrapper,
+		pricing:     pricing,
+		reserve:     reserve,
+		rm:          reserveAddr,
+		wrapperAddr: wrapperAddr,
+		pricingAddr: pricingAddr,
+		burnerAddr:  burnerAddr,
+		networkAddr: networkAddr,
+		signer:      signer,
+		tokens:      []common.Token{},
+		nonce:       nonceCorpus,
+		broadcaster: NewBroadcaster(clients),
 	}, nil
 }

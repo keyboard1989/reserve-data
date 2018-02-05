@@ -122,6 +122,9 @@ func main() {
 		config.BlockchainSigner,
 		nonceCorpus,
 	)
+	if err != nil {
+		panic(err)
+	}
 	for _, token := range config.SupportedTokens {
 		bc.AddToken(token)
 	}

@@ -199,17 +199,18 @@ func (self ReserveCore) SetRates(
 	buys []*big.Int,
 	sells []*big.Int,
 	block *big.Int,
-	afpMid []*big.Int) (common.ActivityID, error) {
+	afpMids []*big.Int) (common.ActivityID, error) {
 
 	lentokens := len(tokens)
 	lenbuys := len(buys)
 	lensells := len(sells)
+	lenafps := len(afpMids)
 	tx := ethereum.Hash{}
 	var err error
-	if lentokens != lenbuys || lentokens != lensells {
-		err = errors.New("Tokens, buys and sells must have the same length")
+	if lentokens != lenbuys || lentokens != lensells || lentokens != lenafps {
+		err = errors.New("Tokens, buys sells and afpMids must have the same length")
 	} else {
-		err = sanityCheck(buys, afpMid, sells)
+		err = sanityCheck(buys, afpMids, sells)
 		if err == nil {
 			tokenAddrs := []ethereum.Address{}
 			for _, token := range tokens {
@@ -234,7 +235,7 @@ func (self ReserveCore) SetRates(
 			"buys":   buys,
 			"sells":  sells,
 			"block":  block,
-			"afpMid": afpMid,
+			"afpMid": afpMids,
 		}, map[string]interface{}{
 			"tx":    tx.Hex(),
 			"error": err,
