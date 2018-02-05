@@ -35,7 +35,7 @@ type Blockchain struct {
 	client       *ethclient.Client
 	wrapper      *ContractWrapper
 	pricing      *KNPricingContract
-	reserve      *ReserveContract
+	reserve      *KNReserveContract
 	rm           ethereum.Address
 	wrapperAddr  ethereum.Address
 	pricingAddr  ethereum.Address
@@ -560,7 +560,7 @@ func NewBlockchain(
 	}
 	log.Printf("reserve owner address: %s", signer.GetAddress().Hex())
 	log.Printf("reserve address: %s", reserveAddr.Hex())
-	reserve, err := NewReserveContract(reserveAddr, ethereum)
+	reserve, err := NewKNReserveContract(reserveAddr, ethereum)
 	if err != nil {
 		return nil, err
 	}
