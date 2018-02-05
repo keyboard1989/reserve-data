@@ -3,7 +3,6 @@ package blockchain
 import (
 	"math/big"
 	"os"
-	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -39,12 +38,8 @@ func (self *KNPricingContract) GetRate(opts *bind.CallOpts, token ethereum.Addre
 }
 
 func NewKNPricingContract(address ethereum.Address, client *ethclient.Client) (*KNPricingContract, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	exPath := filepath.Dir(ex)
-	file, err := os.Open(filepath.Join(exPath, "..", "blockchain", "pricing.abi"))
+	file, err := os.Open(
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/pricing.abi")
 	if err != nil {
 		return nil, err
 	}

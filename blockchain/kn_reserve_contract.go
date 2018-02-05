@@ -3,7 +3,6 @@ package blockchain
 import (
 	"math/big"
 	"os"
-	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -21,12 +20,8 @@ func (self *KNReserveContract) Withdraw(opts *bind.TransactOpts, token ethereum.
 }
 
 func NewKNReserveContract(address ethereum.Address, client *ethclient.Client) (*KNReserveContract, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		panic(err)
-	}
-	exPath := filepath.Dir(ex)
-	file, err := os.Open(filepath.Join(exPath, "..", "blockchain", "reserve.abi"))
+	file, err := os.Open(
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/reserve.abi")
 	if err != nil {
 		return nil, err
 	}
