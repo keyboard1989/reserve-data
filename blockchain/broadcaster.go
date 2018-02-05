@@ -9,15 +9,15 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-// Rebroadcaster takes a signed tx and try to broadcast it to all
+// Broadcaster takes a signed tx and try to broadcast it to all
 // nodes that it manages as fast as possible. It returns a map of
 // failures and a bool indicating that the tx is broadcasted to
 // at least 1 node
-type Rebroadcaster struct {
+type Broadcaster struct {
 	clients map[string]*ethclient.Client
 }
 
-func (self Rebroadcaster) broadcast(
+func (self Broadcaster) broadcast(
 	ctx context.Context,
 	id string, client *ethclient.Client, tx *types.Transaction,
 	wg *sync.WaitGroup, failures *sync.Map) {
@@ -28,12 +28,12 @@ func (self Rebroadcaster) broadcast(
 	}
 }
 
-func (self Rebroadcaster) Broadcast(tx *types.Transaction) (map[string]error, bool) {
+func (self Broadcaster) Broadcast(tx *types.Transaction) (map[string]error, bool) {
 	failures := sync.Map{}
 	wg := sync.WaitGroup{}
 	for id, client := range self.clients {
 		wg.Add(1)
-		timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		timeout, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		self.broadcast(timeout, id, client, tx, &wg, &failures)
 		defer cancel()
 	}
@@ -46,8 +46,8 @@ func (self Rebroadcaster) Broadcast(tx *types.Transaction) (map[string]error, bo
 	return result, len(result) != len(self.clients) && len(self.clients) > 0
 }
 
-func NewRebroadcaster(clients map[string]*ethclient.Client) *Rebroadcaster {
-	return &Rebroadcaster{
+func NewBroadcaster(clients map[string]*ethclient.Client) *Broadcaster {
+	return &Broadcaster{
 		clients: clients,
 	}
 }

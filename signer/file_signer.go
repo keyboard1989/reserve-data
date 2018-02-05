@@ -35,8 +35,8 @@ func (self FileSigner) GetAddress() ethereum.Address {
 	return self.opts.From
 }
 
-func (self FileSigner) Sign(address ethereum.Address, tx *types.Transaction) (*types.Transaction, error) {
-	return self.opts.Signer(types.HomesteadSigner{}, address, tx)
+func (self FileSigner) Sign(tx *types.Transaction) (*types.Transaction, error) {
+	return self.opts.Signer(types.HomesteadSigner{}, self.GetAddress(), tx)
 }
 
 func (self FileSigner) GetTransactOpts() *bind.TransactOpts {
