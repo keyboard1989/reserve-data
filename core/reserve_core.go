@@ -50,7 +50,16 @@ func (self ReserveCore) Trade(
 	amount float64,
 	timepoint uint64) (common.ActivityID, float64, float64, bool, error) {
 
-	id, done, remaining, finished, err := exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+	var id string
+	var done, remaining float64
+	var finished bool
+	var err error
+	
+	err = sanityCheckTrading(exchange, base, quote, rate, amount)
+	if err == nil {
+		id, done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+	}
+
 	var status string
 	if err != nil {
 		status = "failed"
@@ -275,6 +284,22 @@ func sanityCheck(buys, afpMid, sells []*big.Int) error {
 	return nil
 }
 
+func sanityCheckTrading(exchange common.Exchange, base, quote common.Token, rate, amount float64) error {
+	tokenPairID := makeTokenPair(base.ID, quote.ID)
+	exchangeInfo, err := exchange.GetExchangeInfo(tokenPairID)
+	if err != nil {
+		return err
+	}
+	currentNotional := rate * amount
+	minNotional := exchangeInfo.MinNotional
+	if minNotional != float64(0) {
+		if currentNotional < minNotional {
+			return errors.New("Notional must be bigger than exchange's MinNotional")
+		}
+	}
+	return nil
+}
+
 func calculateRate(theDividend, divisor *big.Float) *big.Float {
 	div := big.NewFloat(0)
 	div.Quo(theDividend, divisor)
@@ -290,4 +315,11 @@ func checkZeroValue(buy, sell *big.Int) int {
 		return 1
 	}
 	return -1
+}
+
+func makeTokenPair(base, quote string) common.TokenPairID {
+	if base == "ETH" {
+		return common.NewTokenPairID(quote, base)
+	}
+	return common.NewTokenPairID(base, quote)
 }
