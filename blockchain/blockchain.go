@@ -31,21 +31,23 @@ const (
 )
 
 type Blockchain struct {
-	rpcClient    *rpc.Client
-	client       *ethclient.Client
-	wrapper      *ContractWrapper
-	pricing      *KNPricingContract
-	reserve      *KNReserveContract
-	rm           ethereum.Address
-	wrapperAddr  ethereum.Address
-	pricingAddr  ethereum.Address
-	burnerAddr   ethereum.Address
-	networkAddr  ethereum.Address
-	signer       Signer
-	tokens       []common.Token
-	tokenIndices map[string]tbindex
-	nonce        NonceCorpus
-	broadcaster  *Broadcaster
+	rpcClient     *rpc.Client
+	client        *ethclient.Client
+	wrapper       *ContractWrapper
+	pricing       *KNPricingContract
+	reserve       *KNReserveContract
+	rm            ethereum.Address
+	wrapperAddr   ethereum.Address
+	pricingAddr   ethereum.Address
+	burnerAddr    ethereum.Address
+	networkAddr   ethereum.Address
+	signer        Signer
+	depositSigner Signer
+	tokens        []common.Token
+	tokenIndices  map[string]tbindex
+	nonce         NonceCorpus
+	nonceDeposit  NonceCorpus
+	broadcaster   *Broadcaster
 }
 
 func (self *Blockchain) AddToken(t common.Token) {
@@ -102,11 +104,11 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	return nil
 }
 
-func (self *Blockchain) getNextNonce() (*big.Int, error) {
+func getNextNonce(n NonceCorpus) (*big.Int, error) {
 	var nonce *big.Int
 	var err error
 	for i := 0; i < 3; i++ {
-		nonce, err = self.nonce.GetNextNonce()
+		nonce, err = n.GetNextNonce()
 		if err == nil {
 			return nonce, nil
 		}
@@ -118,7 +120,28 @@ func donothing() {}
 
 func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, context.CancelFunc, error) {
 	shared := self.signer.GetTransactOpts()
-	nonce, err := self.getNextNonce()
+	nonce, err := getNextNonce(self.nonce)
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+
+	if err != nil {
+		return nil, donothing, err
+	} else {
+		result := bind.TransactOpts{
+			shared.From,
+			nonce,
+			shared.Signer,
+			shared.Value,
+			shared.GasPrice,
+			shared.GasLimit,
+			timeout,
+		}
+		return &result, cancel, nil
+	}
+}
+
+func (self *Blockchain) getDepositTransactOpts() (*bind.TransactOpts, context.CancelFunc, error) {
+	shared := self.depositSigner.GetTransactOpts()
+	nonce, err := getNextNonce(self.nonceDeposit)
 	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 
 	if err != nil {
@@ -157,11 +180,11 @@ func toFilterArg(q ether.FilterQuery) interface{} {
 	return arg
 }
 
-func (self *Blockchain) broadcast(tx *types.Transaction) (ethereum.Hash, error) {
+func (self *Blockchain) signAndBroadcast(tx *types.Transaction, singer Signer) (ethereum.Hash, error) {
 	if tx == nil {
 		panic(errors.New("Nil tx is forbidden here"))
 	} else {
-		signedTx, err := self.signer.Sign(tx)
+		signedTx, err := singer.Sign(tx)
 		if err != nil {
 			return ethereum.Hash{}, err
 		}
@@ -249,7 +272,7 @@ func (self *Blockchain) SetRates(
 		if err != nil {
 			return ethereum.Hash{}, err
 		} else {
-			return self.broadcast(tx)
+			return self.signAndBroadcast(tx, self.signer)
 		}
 	}
 }
@@ -259,7 +282,7 @@ func (self *Blockchain) Send(
 	amount *big.Int,
 	dest ethereum.Address) (ethereum.Hash, error) {
 
-	opts, cancel, err := self.getTransactOpts()
+	opts, cancel, err := self.getDepositTransactOpts()
 	defer cancel()
 	if err != nil {
 		return ethereum.Hash{}, err
@@ -271,7 +294,7 @@ func (self *Blockchain) Send(
 		if err != nil {
 			return ethereum.Hash{}, err
 		} else {
-			return self.broadcast(tx)
+			return self.signAndBroadcast(tx, self.depositSigner)
 		}
 	}
 }
@@ -287,7 +310,7 @@ func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []
 		if err != nil {
 			return ethereum.Hash{}, err
 		}
-		return self.broadcast(tx)
+		return self.signAndBroadcast(tx, self.signer)
 	}
 }
 
@@ -302,7 +325,7 @@ func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.I
 		if err != nil {
 			return ethereum.Hash{}, err
 		}
-		return self.broadcast(tx)
+		return self.signAndBroadcast(tx, self.signer)
 	}
 }
 
@@ -552,7 +575,8 @@ func NewBlockchain(
 	ethereum *ethclient.Client,
 	clients map[string]*ethclient.Client,
 	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr ethereum.Address,
-	signer Signer, nonceCorpus NonceCorpus) (*Blockchain, error) {
+	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
+  nonceDeposit NonceCorpus) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper, err := NewContractWrapper(wrapperAddr, ethereum)
 	if err != nil {
@@ -572,19 +596,21 @@ func NewBlockchain(
 	log.Printf("burner address: %s", burnerAddr.Hex())
 	log.Printf("network address: %s", networkAddr.Hex())
 	return &Blockchain{
-		rpcClient:   client,
-		client:      ethereum,
-		wrapper:     wrapper,
-		pricing:     pricing,
-		reserve:     reserve,
-		rm:          reserveAddr,
-		wrapperAddr: wrapperAddr,
-		pricingAddr: pricingAddr,
-		burnerAddr:  burnerAddr,
-		networkAddr: networkAddr,
-		signer:      signer,
-		tokens:      []common.Token{},
-		nonce:       nonceCorpus,
-		broadcaster: NewBroadcaster(clients),
+		rpcClient:     client,
+		client:        ethereum,
+		wrapper:       wrapper,
+		pricing:       pricing,
+		reserve:       reserve,
+		rm:            reserveAddr,
+		wrapperAddr:   wrapperAddr,
+		pricingAddr:   pricingAddr,
+		burnerAddr:    burnerAddr,
+		networkAddr:   networkAddr,
+		signer:        signer,
+		depositSigner: depositSigner,
+		tokens:        []common.Token{},
+		nonce:         nonceCorpus,
+		nonceDeposit:  nonceDeposit,
+		broadcaster:   NewBroadcaster(clients),
 	}, nil
 }
