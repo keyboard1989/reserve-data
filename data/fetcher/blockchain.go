@@ -10,5 +10,6 @@ type Blockchain interface {
 	FetchRates(timepoint uint64) (common.AllRateEntry, error)
 	TxStatus(tx ethereum.Hash) (string, error)
 	CurrentBlock() (uint64, error)
+	SetRateMinedNonce() (uint64, error)
 	GetLogs(fromBlock uint64, timepoint uint64) ([]common.TradeLog, error)
 }

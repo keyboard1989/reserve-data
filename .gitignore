@@ -27,11 +27,14 @@ cmd/faucet/faucet
 cmd/faucet/faucet_wallet
 
 build.sh
+cmd/config.json
 cmd/dev.db
 cmd/internal_mainnet.db
 cmd/internal_mainnet_config.json
-cmd/keystore_internal_mainnet
-cmd/keystore_staging
+cmd/internal_mainnet_keystore
+cmd/internal_mainnet_deposit_keystore
+cmd/staging_keystore
+cmd/staging_deposit_keystore
 cmd/kovan.db
 cmd/settings.json
 cmd/staging.db

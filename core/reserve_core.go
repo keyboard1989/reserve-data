@@ -10,6 +10,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type ReserveCore struct {
@@ -54,7 +55,7 @@ func (self ReserveCore) Trade(
 	var done, remaining float64
 	var finished bool
 	var err error
-	
+
 	err = sanityCheckTrading(exchange, base, quote, rate, amount)
 	if err == nil {
 		id, done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
@@ -114,25 +115,31 @@ func (self ReserveCore) Deposit(
 	timepoint uint64) (common.ActivityID, error) {
 
 	address, supported := exchange.Address(token)
-	tx := ethereum.Hash{}
+
+	var tx *types.Transaction
+	var txhex string = ethereum.Hash{}.Hex()
+	var txnonce string = "0"
+	var txprice string = "0"
 	var err error
+	var status string
+
 	if !supported {
-		tx = ethereum.Hash{}
 		err = errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
 	} else if self.activityStorage.HasPendingDeposit(token, exchange) {
-		tx = ethereum.Hash{}
 		err = errors.New(fmt.Sprintf("There is a pending %s deposit to %s currently, please try again", token.ID, exchange.ID()))
 	} else {
 		tx, err = self.blockchain.Send(token, amount, address)
 	}
-	var status string
 	if err != nil {
 		status = "failed"
 	} else {
 		status = "submitted"
+		txhex = tx.Hash().Hex()
+		txnonce = strconv.FormatUint(tx.Nonce(), 10)
+		txprice = tx.GasPrice().Text(10)
 	}
 	amountFloat := common.BigToFloat(amount, token.Decimal)
-	uid := timebasedID(tx.Hex() + "|" + token.ID + "|" + strconv.FormatFloat(amountFloat, 'f', -1, 64))
+	uid := timebasedID(txhex + "|" + token.ID + "|" + strconv.FormatFloat(amountFloat, 'f', -1, 64))
 	self.activityStorage.Record(
 		"deposit",
 		uid,
@@ -143,8 +150,10 @@ func (self ReserveCore) Deposit(
 			"amount":    strconv.FormatFloat(amountFloat, 'f', -1, 64),
 			"timepoint": timepoint,
 		}, map[string]interface{}{
-			"tx":    tx.Hex(),
-			"error": err,
+			"tx":       txhex,
+			"nonce":    txnonce,
+			"gasPrice": txprice,
+			"error":    err,
 		},
 		"",
 		status,
@@ -152,7 +161,7 @@ func (self ReserveCore) Deposit(
 	)
 	log.Printf(
 		"Core ----------> Deposit to %s: token: %s, amount: %s, timestamp: %d ==> Result: tx: %s, error: %s",
-		exchange.ID(), token.ID, amount.Text(10), timepoint, tx.Hex(), err,
+		exchange.ID(), token.ID, amount.Text(10), timepoint, txhex, err,
 	)
 	return uid, err
 }
@@ -203,6 +212,20 @@ func (self ReserveCore) Withdraw(
 	return uid, err
 }
 
+func (self ReserveCore) pendingSetrateInfo(minedNonce uint64) (*big.Int, *big.Int, error) {
+	act, err := self.activityStorage.PendingSetrate(minedNonce)
+	if err != nil {
+		return nil, nil, err
+	}
+	if act != nil {
+		nonce, _ := strconv.ParseUint(act.Result["nonce"].(string), 10, 64)
+		gasPrice, _ := strconv.ParseUint(act.Result["gasPrice"].(string), 10, 64)
+		return big.NewInt(int64(nonce)), big.NewInt(int64(gasPrice)), nil
+	} else {
+		return nil, nil, nil
+	}
+}
+
 func (self ReserveCore) SetRates(
 	tokens []common.Token,
 	buys []*big.Int,
@@ -214,8 +237,14 @@ func (self ReserveCore) SetRates(
 	lenbuys := len(buys)
 	lensells := len(sells)
 	lenafps := len(afpMids)
-	tx := ethereum.Hash{}
+
+	var tx *types.Transaction
+	var txhex string = ethereum.Hash{}.Hex()
+	var txnonce string = "0"
+	var txprice string = "0"
 	var err error
+	var status string
+
 	if lentokens != lenbuys || lentokens != lensells || lentokens != lenafps {
 		err = errors.New("Tokens, buys sells and afpMids must have the same length")
 	} else {
@@ -225,16 +254,46 @@ func (self ReserveCore) SetRates(
 			for _, token := range tokens {
 				tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(token.Address))
 			}
-			tx, err = self.blockchain.SetRates(tokenAddrs, buys, sells, block)
+			// if there is a pending set rate tx, we replace it
+			var oldNonce *big.Int
+			var oldPrice *big.Int
+			var minedNonce uint64
+			minedNonce, err := self.blockchain.SetRateMinedNonce()
+			if err != nil {
+				err = errors.New("Couldn't get mined nonce of set rate operator")
+			} else {
+				oldNonce, oldPrice, err = self.pendingSetrateInfo(minedNonce)
+				if err != nil {
+					err = errors.New("Couldn't check pending set rate tx pool. Please try later")
+				} else {
+					if oldNonce != nil {
+						newPrice := big.NewInt(0).Add(oldPrice, big.NewInt(10000000000))
+						log.Printf("Trying to replace old tx with new price: %s", newPrice.Text(10))
+						tx, err = self.blockchain.SetRates(
+							tokenAddrs, buys, sells, block,
+							oldNonce,
+							newPrice,
+						)
+					} else {
+						tx, err = self.blockchain.SetRates(
+							tokenAddrs, buys, sells, block,
+							nil,
+							big.NewInt(50100000000),
+						)
+					}
+				}
+			}
 		}
 	}
-	var status string
 	if err != nil {
 		status = "failed"
 	} else {
 		status = "submitted"
+		txhex = tx.Hash().Hex()
+		txnonce = strconv.FormatUint(tx.Nonce(), 10)
+		txprice = tx.GasPrice().Text(10)
 	}
-	uid := timebasedID(tx.Hex())
+	uid := timebasedID(txhex)
 	self.activityStorage.Record(
 		"set_rates",
 		uid,
@@ -246,8 +305,10 @@ func (self ReserveCore) SetRates(
 			"block":  block,
 			"afpMid": afpMids,
 		}, map[string]interface{}{
-			"tx":    tx.Hex(),
-			"error": err,
+			"tx":       txhex,
+			"nonce":    txnonce,
+			"gasPrice": txprice,
+			"error":    err,
 		},
 		"",
 		status,
@@ -255,7 +316,7 @@ func (self ReserveCore) SetRates(
 	)
 	log.Printf(
 		"Core ----------> Set rates: ==> Result: tx: %s, error: %s",
-		tx.Hex(), err,
+		txhex, err,
 	)
 	return uid, err
 }

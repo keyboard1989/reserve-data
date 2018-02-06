@@ -2,6 +2,7 @@ package fetcher
 
 import (
 	"log"
+	"strconv"
 	"sync"
 	"time"
 
@@ -272,6 +273,7 @@ func (self *Fetcher) FetchBalanceFromBlockchain(timepoint uint64) (map[string]co
 
 func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {
 	result := map[common.ActivityID]common.ActivityStatus{}
+	minedNonce, _ := self.blockchain.SetRateMinedNonce()
 	for _, activity := range pendings {
 		if activity.IsBlockchainPending() && (activity.Action == "set_rates" || activity.Action == "deposit" || activity.Action == "withdraw") {
 			tx := ethereum.HexToHash(activity.Result["tx"].(string))
@@ -279,12 +281,28 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 				continue
 			}
 			status, err := self.blockchain.TxStatus(tx)
+			if activity.Action == "set_rates" {
+				actNonce := activity.Result["nonce"]
+				if actNonce != nil {
+					nonce, _ := strconv.ParseUint(actNonce.(string), 10, 64)
+					if nonce < minedNonce {
+						status = "failed"
+					}
+				}
+			}
 			switch status {
 			case "mined":
 				result[activity.ID] = common.ActivityStatus{
 					activity.ExchangeStatus,
 					activity.Result["tx"].(string),
 					"mined",
+					err,
+				}
+			case "failed":
+				result[activity.ID] = common.ActivityStatus{
+					activity.ExchangeStatus,
+					activity.Result["tx"].(string),
+					"failed",
 					err,
 				}
 			case "lost":

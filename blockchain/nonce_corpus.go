@@ -8,4 +8,5 @@ import (
 type NonceCorpus interface {
 	GetAddress() ethereum.Address
 	GetNextNonce() (*big.Int, error)
+	MinedNonce() (*big.Int, error)
 }
