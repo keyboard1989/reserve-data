@@ -6,6 +6,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type testExchange struct {
@@ -50,16 +51,32 @@ type testBlockchain struct {
 func (self testBlockchain) Send(
 	token common.Token,
 	amount *big.Int,
-	address ethereum.Address) (ethereum.Hash, error) {
-	return ethereum.Hash{}, nil
+	address ethereum.Address) (*types.Transaction, error) {
+	tx := types.NewTransaction(
+		0,
+		ethereum.Address{},
+		big.NewInt(0),
+		big.NewInt(300000),
+		big.NewInt(1000000000),
+		[]byte{})
+	return tx, nil
 }
 
 func (self testBlockchain) SetRates(
 	tokens []ethereum.Address,
 	buys []*big.Int,
 	sells []*big.Int,
-	block *big.Int) (ethereum.Hash, error) {
-	return ethereum.Hash{}, nil
+	block *big.Int,
+	nonce *big.Int,
+	gasPrice *big.Int) (*types.Transaction, error) {
+	tx := types.NewTransaction(
+		0,
+		ethereum.Address{},
+		big.NewInt(0),
+		big.NewInt(300000),
+		big.NewInt(1000000000),
+		[]byte{})
+	return tx, nil
 }
 
 func (self testBlockchain) GetAddresses() *common.Addresses {

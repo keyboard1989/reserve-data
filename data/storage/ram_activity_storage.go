@@ -60,7 +60,21 @@ func (self *RamActivityStorage) StoreNewData(
 		MiningStatus:   mstatus,
 		Timestamp:      common.Timestamp(strconv.FormatUint(timepoint, 10)),
 	}
+
 	self.records.PushBack(&record)
+	// all other pending set rates should be staled now
+	// remove all of them
+	// AFTER EXPERIMENT, THIS WILL NOT WORK
+	// if action == "set_rates" {
+	// 	stales := []common.ActivityRecord{}
+	// 	activities := activitiesFromList(self.pendingRecords)
+	// 	for _, act := range activities {
+	// 		if act.Action == "set_rates" {
+	// 			stales = append(stales, act)
+	// 		}
+	// 	}
+	// 	self.RemovePendings(stales)
+	// }
 	if record.IsPending() {
 		self.pendingRecords.PushBack(&record)
 	}
@@ -122,6 +136,30 @@ func (self *RamActivityStorage) GetAllRecords(fromTime, toTime uint64) ([]common
 	}
 	result := allRecords[from:to]
 	return result, nil
+}
+
+func (self *RamActivityStorage) RemovePendings(stales []common.ActivityRecord) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	toRemoves := []*list.Element{}
+	ele := self.pendingRecords.Back()
+	for {
+		if ele == nil {
+			break
+		} else {
+			activity := ele.Value.(*common.ActivityRecord)
+			for _, stale := range stales {
+				if activity.ID == stale.ID {
+					toRemoves = append(toRemoves, ele)
+				}
+			}
+			ele = ele.Prev()
+		}
+	}
+	for _, e := range toRemoves {
+		self.pendingRecords.Remove(e)
+	}
+	return nil
 }
 
 func (self *RamActivityStorage) GetPendingRecords() ([]common.ActivityRecord, error) {

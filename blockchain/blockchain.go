@@ -118,46 +118,54 @@ func getNextNonce(n NonceCorpus) (*big.Int, error) {
 
 func donothing() {}
 
-func (self *Blockchain) getTransactOpts() (*bind.TransactOpts, context.CancelFunc, error) {
+func (self *Blockchain) getTransactOpts(nonce *big.Int, gasPrice *big.Int) (*bind.TransactOpts, context.CancelFunc, error) {
 	shared := self.signer.GetTransactOpts()
-	nonce, err := getNextNonce(self.nonce)
-	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-
+	var err error
+	if nonce == nil {
+		nonce, err = getNextNonce(self.nonce)
+	}
 	if err != nil {
 		return nil, donothing, err
-	} else {
-		result := bind.TransactOpts{
-			shared.From,
-			nonce,
-			shared.Signer,
-			shared.Value,
-			shared.GasPrice,
-			shared.GasLimit,
-			timeout,
-		}
-		return &result, cancel, nil
 	}
+	if gasPrice == nil {
+		gasPrice = big.NewInt(50100000000)
+	}
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	result := bind.TransactOpts{
+		shared.From,
+		nonce,
+		shared.Signer,
+		shared.Value,
+		gasPrice,
+		shared.GasLimit,
+		timeout,
+	}
+	return &result, cancel, nil
 }
 
-func (self *Blockchain) getDepositTransactOpts() (*bind.TransactOpts, context.CancelFunc, error) {
-	shared := self.depositSigner.GetTransactOpts()
-	nonce, err := getNextNonce(self.nonceDeposit)
-	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-
+func (self *Blockchain) getDepositTransactOpts(nonce, gasPrice *big.Int) (*bind.TransactOpts, context.CancelFunc, error) {
+	shared := self.signer.GetTransactOpts()
+	var err error
+	if nonce == nil {
+		nonce, err = getNextNonce(self.nonceDeposit)
+	}
 	if err != nil {
 		return nil, donothing, err
-	} else {
-		result := bind.TransactOpts{
-			shared.From,
-			nonce,
-			shared.Signer,
-			shared.Value,
-			shared.GasPrice,
-			shared.GasLimit,
-			timeout,
-		}
-		return &result, cancel, nil
 	}
+	if gasPrice == nil {
+		gasPrice = big.NewInt(50100000000)
+	}
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	result := bind.TransactOpts{
+		shared.From,
+		nonce,
+		shared.Signer,
+		shared.Value,
+		gasPrice,
+		shared.GasLimit,
+		timeout,
+	}
+	return &result, cancel, nil
 }
 
 func toBlockNumArg(number *big.Int) string {
@@ -180,26 +188,35 @@ func toFilterArg(q ether.FilterQuery) interface{} {
 	return arg
 }
 
-func (self *Blockchain) signAndBroadcast(tx *types.Transaction, singer Signer) (ethereum.Hash, error) {
+func (self *Blockchain) signAndBroadcast(tx *types.Transaction, singer Signer) (*types.Transaction, error) {
 	if tx == nil {
 		panic(errors.New("Nil tx is forbidden here"))
 	} else {
 		signedTx, err := singer.Sign(tx)
 		if err != nil {
-			return ethereum.Hash{}, err
+			return nil, err
 		}
 		failures, ok := self.broadcaster.Broadcast(signedTx)
 		log.Printf("Rebroadcasting failures: %s", failures)
 		if !ok {
 			log.Printf("Broadcasting transaction failed!!!!!!!, err: %s, retry failures: %s", err, failures)
 			if signedTx != nil {
-				return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
+				return signedTx, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
 			} else {
-				return ethereum.Hash{}, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
+				return signedTx, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
 			}
 		} else {
-			return signedTx.Hash(), nil
+			return signedTx, nil
 		}
+	}
+}
+
+func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
+	nonce, err := self.nonce.MinedNonce()
+	if err != nil {
+		return 0, err
+	} else {
+		return nonce.Uint64(), err
 	}
 }
 
@@ -213,22 +230,24 @@ func (self *Blockchain) SetRates(
 	tokens []ethereum.Address,
 	buys []*big.Int,
 	sells []*big.Int,
-	block *big.Int) (ethereum.Hash, error) {
+	block *big.Int,
+	nonce *big.Int,
+	gasPrice *big.Int) (*types.Transaction, error) {
 
-	opts, cancel, err := self.getTransactOpts()
+	opts, cancel, err := self.getTransactOpts(nonce, gasPrice)
+
 	defer cancel()
 	block.Add(block, big.NewInt(1))
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
-		return ethereum.Hash{}, err
+		return nil, err
 	} else {
 		// fix to 50.1 gwei
-		opts.GasPrice = big.NewInt(50100000000)
 		baseBuys, baseSells, _, _, _, err := self.wrapper.GetTokenRates(
 			nil, self.pricingAddr, tokens,
 		)
 		if err != nil {
-			return ethereum.Hash{}, err
+			return nil, err
 		}
 		baseTokens := []ethereum.Address{}
 		newBSells := []*big.Int{}
@@ -270,7 +289,7 @@ func (self *Blockchain) SetRates(
 			// )
 		}
 		if err != nil {
-			return ethereum.Hash{}, err
+			return nil, err
 		} else {
 			return self.signAndBroadcast(tx, self.signer)
 		}
@@ -280,50 +299,50 @@ func (self *Blockchain) SetRates(
 func (self *Blockchain) Send(
 	token common.Token,
 	amount *big.Int,
-	dest ethereum.Address) (ethereum.Hash, error) {
+	dest ethereum.Address) (*types.Transaction, error) {
 
-	opts, cancel, err := self.getDepositTransactOpts()
+	opts, cancel, err := self.getDepositTransactOpts(nil, nil)
 	defer cancel()
 	if err != nil {
-		return ethereum.Hash{}, err
+		return nil, err
 	} else {
 		tx, err := self.reserve.Withdraw(
 			opts,
 			ethereum.HexToAddress(token.Address),
 			amount, dest)
 		if err != nil {
-			return ethereum.Hash{}, err
+			return nil, err
 		} else {
 			return self.signAndBroadcast(tx, self.depositSigner)
 		}
 	}
 }
 
-func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (ethereum.Hash, error) {
-	opts, cancel, err := self.getTransactOpts()
+func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (*types.Transaction, error) {
+	opts, cancel, err := self.getTransactOpts(nil, nil)
 	defer cancel()
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
-		return ethereum.Hash{}, err
+		return nil, err
 	} else {
 		tx, err := self.pricing.SetImbalanceStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
 		if err != nil {
-			return ethereum.Hash{}, err
+			return nil, err
 		}
 		return self.signAndBroadcast(tx, self.signer)
 	}
 }
 
-func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (ethereum.Hash, error) {
-	opts, cancel, err := self.getTransactOpts()
+func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (*types.Transaction, error) {
+	opts, cancel, err := self.getTransactOpts(nil, nil)
 	defer cancel()
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
-		return ethereum.Hash{}, err
+		return nil, err
 	} else {
 		tx, err := self.pricing.SetQtyStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
 		if err != nil {
-			return ethereum.Hash{}, err
+			return nil, err
 		}
 		return self.signAndBroadcast(tx, self.signer)
 	}
@@ -576,7 +595,7 @@ func NewBlockchain(
 	clients map[string]*ethclient.Client,
 	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr ethereum.Address,
 	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
-  nonceDeposit NonceCorpus) (*Blockchain, error) {
+	nonceDeposit NonceCorpus) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper, err := NewContractWrapper(wrapperAddr, ethereum)
 	if err != nil {

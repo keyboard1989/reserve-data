@@ -361,6 +361,28 @@ func (self *BoltStorage) Record(
 		}
 		if record.IsPending() {
 			pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
+			// all other pending set rates should be staled now
+			// remove all of them
+			// AFTER EXPERIMENT, THIS WILL NOT WORK
+			// log.Printf("===> Trying to remove staled set rates")
+			// if record.Action == "set_rates" {
+			// 	stales := []common.ActivityRecord{}
+			// 	c := pb.Cursor()
+			// 	for k, v := c.First(); k != nil; k, v = c.Next() {
+			// 		record := common.ActivityRecord{}
+			// 		log.Printf("===> staled act: %+v", record)
+			// 		err = json.Unmarshal(v, &record)
+			// 		if err != nil {
+			// 			return err
+			// 		}
+			// 		if record.Action == "set_rates" {
+			// 			stales = append(stales, record)
+			// 		}
+			// 	}
+			// 	log.Printf("===> removing staled acts: %+v", stales)
+			// 	self.RemoveStalePendingActivities(tx, stales)
+			// }
+			// after remove all of them, put new set rate activity
 			err = pb.Put(idByte[:], dataJson)
 		}
 		return err
@@ -402,6 +424,67 @@ func (self *BoltStorage) GetAllRecords(fromTime, toTime uint64) ([]common.Activi
 	return result, err
 }
 
+func getLastPendingSetrate(pendings []common.ActivityRecord, minedNonce uint64) (*common.ActivityRecord, error) {
+	var maxNonce uint64 = 0
+	var maxPrice uint64 = 0
+	var result *common.ActivityRecord
+	for _, act := range pendings {
+		if act.Action == "set_rates" {
+			log.Printf("looking for pending set_rates: %+v", act)
+			var nonce uint64
+			actNonce := act.Result["nonce"]
+			if actNonce != nil {
+				nonce, _ = strconv.ParseUint(actNonce.(string), 10, 64)
+			} else {
+				nonce = 0
+			}
+			if nonce < minedNonce {
+				// this is a stale actitivity, ignore it
+				continue
+			}
+			var gasPrice uint64
+			actPrice := act.Result["gasPrice"]
+			if actPrice != nil {
+				gasPrice, _ = strconv.ParseUint(actPrice.(string), 10, 64)
+			} else {
+				gasPrice = 0
+			}
+			if nonce == maxNonce {
+				if gasPrice > maxPrice {
+					maxNonce = nonce
+					result = &act
+					maxPrice = gasPrice
+				}
+			} else if nonce > maxNonce {
+				maxNonce = nonce
+				result = &act
+				maxPrice = gasPrice
+			}
+		}
+	}
+	return result, nil
+}
+
+func (self *BoltStorage) RemoveStalePendingActivities(tx *bolt.Tx, stales []common.ActivityRecord) error {
+	pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
+	for _, stale := range stales {
+		idBytes := stale.ID.ToBytes()
+		if err := pb.Delete(idBytes[:]); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (self *BoltStorage) PendingSetrate(minedNonce uint64) (*common.ActivityRecord, error) {
+	pendings, err := self.GetPendingActivities()
+	if err != nil {
+		return nil, err
+	} else {
+		return getLastPendingSetrate(pendings, minedNonce)
+	}
+}
+
 func (self *BoltStorage) GetPendingActivities() ([]common.ActivityRecord, error) {
 	result := []common.ActivityRecord{}
 	var err error
@@ -432,14 +515,19 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 		if err != nil {
 			return err
 		}
-		err = pb.Put(idBytes[:], dataJson)
-		if err != nil {
-			return err
-		}
-		if !activity.IsPending() {
-			err = pb.Delete(idBytes[:])
+		// only update when it exists in pending activity bucket because
+		// It might be deleted if it is replaced by another activity
+		found := pb.Get(idBytes[:])
+		if found != nil {
+			err = pb.Put(idBytes[:], dataJson)
 			if err != nil {
 				return err
+			}
+			if !activity.IsPending() {
+				err = pb.Delete(idBytes[:])
+				if err != nil {
+					return err
+				}
 			}
 		}
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))

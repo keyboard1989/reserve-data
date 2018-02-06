@@ -108,6 +108,15 @@ func (self *RamStorage) GetPendingActivities() ([]common.ActivityRecord, error) 
 	return self.activity.GetPendingRecords()
 }
 
+func (self *RamStorage) PendingSetrate(minedNonce uint64) (*common.ActivityRecord, error) {
+	pendings, err := self.GetPendingActivities()
+	if err != nil {
+		return nil, err
+	} else {
+		return getLastPendingSetrate(pendings, minedNonce)
+	}
+}
+
 func (self *RamStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID) bool {
 	return self.bittrex.IsNewDeposit(id, actID)
 }

@@ -16,4 +16,5 @@ type ActivityStorage interface {
 		timepoint uint64) error
 	HasPendingDeposit(
 		token common.Token, exchange common.Exchange) bool
+	PendingSetrate(minedNonce uint64) (*common.ActivityRecord, error)
 }

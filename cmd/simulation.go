@@ -50,6 +50,9 @@ func GetConfigForSimulation() *Config {
 	// endpoint := "https://kovan.infura.io"
 	// endpoint := "https://kovan.kyber.network"
 	endpoint := "http://blockchain:8545"
+	bkendpoints := []string{
+		"http://blockchain:8545",
+	}
 
 	return &Config{
 		ActivityStorage:         storage,
@@ -62,7 +65,7 @@ func GetConfigForSimulation() *Config {
 		BlockchainSigner:        fileSigner,
 		DepositSigner:           depositSigner,
 		EthereumEndpoint:        endpoint,
-		BackupEthereumEndpoints: []string{},
+		BackupEthereumEndpoints: bkendpoints,
 		SupportedTokens:         tokens,
 		WrapperAddress:          wrapperAddr,
 		PricingAddress:          pricingAddr,

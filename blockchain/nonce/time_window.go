@@ -43,6 +43,13 @@ func (self *TimeWindow) getNonceFromNode() (*big.Int, error) {
 	return big.NewInt(int64(nonce)), err
 }
 
+func (self *TimeWindow) MinedNonce() (*big.Int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	nonce, err := self.ethclient.NonceAt(ctx, self.signer.GetAddress(), nil)
+	return big.NewInt(int64(nonce)), err
+}
+
 func (self *TimeWindow) GetNextNonce() (*big.Int, error) {
 	self.mu.Lock()
 	defer self.mu.Unlock()
