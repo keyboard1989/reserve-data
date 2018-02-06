@@ -276,11 +276,14 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 	minedNonce, _ := self.blockchain.SetRateMinedNonce()
 	for _, activity := range pendings {
 		if activity.IsBlockchainPending() && (activity.Action == "set_rates" || activity.Action == "deposit" || activity.Action == "withdraw") {
+			var blockNum uint64
+			var status string
+			var err error
 			tx := ethereum.HexToHash(activity.Result["tx"].(string))
 			if tx.Big().IsInt64() && tx.Big().Int64() == 0 {
 				continue
 			}
-			status, err := self.blockchain.TxStatus(tx)
+			status, err = self.blockchain.TxStatus(tx)
 			if activity.Action == "set_rates" {
 				actNonce := activity.Result["nonce"]
 				if actNonce != nil {
@@ -292,26 +295,32 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			}
 			switch status {
 			case "mined":
+				blockNum, err = self.blockchain.GetBlockNumByTxHash(tx)
 				result[activity.ID] = common.ActivityStatus{
 					activity.ExchangeStatus,
 					activity.Result["tx"].(string),
+					blockNum,
 					"mined",
 					err,
 				}
 			case "failed":
+				blockNum, err = self.blockchain.GetBlockNumByTxHash(tx)
 				result[activity.ID] = common.ActivityStatus{
 					activity.ExchangeStatus,
 					activity.Result["tx"].(string),
+					blockNum,
 					"failed",
 					err,
 				}
 			case "lost":
+				blockNum, err = self.blockchain.GetBlockNumByTxHash(tx)
 				elapsed := common.GetTimepoint() - activity.Timestamp.ToUint64()
 				if elapsed > uint64(15*time.Minute/time.Millisecond) && activity.Action == "set_rates" {
 					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %s", activity.Result["tx"].(string), elapsed)
 					result[activity.ID] = common.ActivityStatus{
 						activity.ExchangeStatus,
 						activity.Result["tx"].(string),
+						blockNum,
 						"failed",
 						err,
 					}
@@ -397,6 +406,7 @@ func (self *Fetcher) PersistSnapshot(
 		if activity.IsPending() {
 			pendingActivities = append(pendingActivities, activity)
 		}
+		activity.Result["blockNum"] = activityStatus.BlockNum
 		err := self.storage.UpdateActivity(activity.ID, activity)
 		if err != nil {
 			snapshot.Valid = false
@@ -451,6 +461,8 @@ func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []commo
 			var err error
 			var status string
 			var tx string
+			var blockNum uint64
+			
 			id := activity.ID
 			if activity.Action == "trade" {
 				status, err = exchange.OrderStatus(id, timepoint)
@@ -466,7 +478,7 @@ func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []commo
 				continue
 			}
 			result[id] = common.ActivityStatus{
-				status, tx, activity.MiningStatus, err,
+				status, tx, blockNum, activity.MiningStatus, err,
 			}
 		}
 	}

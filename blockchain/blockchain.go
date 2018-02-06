@@ -544,6 +544,22 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]common.Tr
 	return result, nil
 }
 
+func (self *Blockchain) GetBlockNumByTxHash(tx ethereum.Hash) (uint64, error) {
+	var txReceipt common.TxReceipt
+	err := self.rpcClient.Call(&txReceipt, "eth_getTransactionReceipt", tx)
+	if err != nil {
+		return 0, err
+	}
+	if txReceipt.BlockNumber == "" {
+		return 0, errors.New("Can not get block number, transaction not found!!!")
+	}
+	blockNum, err := strconv.ParseUint(txReceipt.BlockNumber, 0, 64)
+	if err != nil {
+		return 0, err
+	}
+	return blockNum, nil
+}
+
 // func (self *Blockchain) sendToken(token common.Token, amount *big.Int, address ethereum.Address) (ethereum.Hash, error) {
 // 	erc20, err := NewErc20Contract(
 // 		ethereum.HexToAddress(token.Address),
