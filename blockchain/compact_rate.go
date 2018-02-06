@@ -28,13 +28,10 @@ func BigIntToCompactRate(rate *big.Int, base *big.Int) (compactrate *CompactRate
 	fRate := big.NewFloat(0).SetInt(rate)
 	fBase := big.NewFloat(0).SetInt(base)
 	div := big.NewFloat(0).Quo(fRate, fBase)
-	fmt.Printf("div: %s\n", div.Text('f', 5))
 	div = div.Add(div, big.NewFloat(-1.0))
-	fmt.Printf("div - 1: %s\n", div.Text('f', 5))
 	compact := big.NewFloat(0).Mul(div, big.NewFloat(1000.0))
 	// using text to round float
 	str := compact.Text('f', 0)
-	fmt.Printf("compact: %s\n", str)
 	intComp, _ := strconv.ParseInt(str, 10, 64)
 	fmt.Println(intComp)
 	if -128 <= intComp && intComp <= 127 {

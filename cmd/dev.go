@@ -13,7 +13,7 @@ import (
 )
 
 func GetConfigForDev() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
@@ -34,7 +34,7 @@ func GetConfigForDev() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db")
 	if err != nil {
 		panic(err)
 	}
@@ -50,7 +50,9 @@ func GetConfigForDev() *Config {
 	// endpoint := "https://ropsten.infura.io"
 	// endpoint := "http://blockchain:8545"
 	endpoint := "https://kovan.infura.io"
-	bkendpoints := []string{}
+	bkendpoints := []string{
+		"https://kovan.infura.io",
+	}
 
 	hmac512auth := http.KNAuthentication{
 		fileSigner.KNSecret,

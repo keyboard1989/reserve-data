@@ -55,6 +55,8 @@ func GetConfigForStaging() *Config {
 
 	endpoint := "https://mainnet.infura.io"
 	bkendpoints := []string{
+		"https://node.kyber.network",
+		"https://mainnet.infura.io",
 		"https://api.mycryptoapi.com/eth",
 		"https://api.myetherapi.com/eth",
 		"https://mew.giveth.io/",

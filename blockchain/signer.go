@@ -8,6 +8,6 @@ import (
 
 type Signer interface {
 	GetAddress() ethereum.Address
-	Sign(ethereum.Address, *types.Transaction) (*types.Transaction, error)
+	Sign(*types.Transaction) (*types.Transaction, error)
 	GetTransactOpts() *bind.TransactOpts
 }
