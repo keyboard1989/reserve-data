@@ -984,108 +984,111 @@ func targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold fl
 	return nil
 }
 
-func (self *HTTPServer) SetTargetQty(c *gin.Context) {
-	log.Println("Storing target quantity")
-	postForm, ok := self.Authenticated(c, []string{"data", "action", "type"}, []Permission{ConfigurePermission})
+func (self *HTTPServer) ConfirmTargetQty(c *gin.Context) {
+	log.Println("Confirm target quantity")
+	postForm, ok := self.Authenticated(c, []string{"data", "type"}, []Permission{ConfirmConfPermission})
 	if !ok {
 		return
 	}
 	data := postForm.Get("data")
 	id := postForm.Get("id")
-	action := postForm.Get("action")
-	dataType := postForm.Get("type")
-	// data = strings.Replace(data, " ", "", -1)
-	var err error
-	switch strings.ToUpper(action) {
-	case "SET":
-		log.Println("Setting target qty")
-		for _, dataConfig := range strings.Split(data, "|") {
-			dataParts := strings.Split(dataConfig, "_")
-			if dataType == "" || (dataType == "1" && len(dataParts) != 5) {
-				c.JSON(
-					http.StatusOK,
-					gin.H{"success": false, "reason": "Data submitted not enough information"},
-				)
-				return
-			}
-			token := dataParts[0]
-			total, _ := strconv.ParseFloat(dataParts[1], 64)
-			reserve, _ := strconv.ParseFloat(dataParts[2], 64)
-			rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
-			transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
-			_, err = common.GetToken(token)
-			if err != nil {
-				c.JSON(
-					http.StatusOK,
-					gin.H{"success": false, "reason": err.Error()},
-				)
-				return
-			}
-			err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
-			if err != nil {
-				c.JSON(
-					http.StatusOK,
-					gin.H{"success": false, "reason": err.Error()},
-				)
-				return
-			}
-		}
-		err := self.metric.StorePendingTargetQty(data, dataType)
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": err.Error()},
-			)
-			return
-		}
-
-		pendingData, err := self.metric.GetPendingTargetQty()
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": err.Error()},
-			)
-			return
-		}
+	err := self.metric.StoreTokenTargetQty(id, data)
+	if err != nil {
 		c.JSON(
 			http.StatusOK,
-			gin.H{"success": true, "data": pendingData},
-		)
-		return
-	case "CONFIRM":
-		log.Println("Confirm target quantity")
-		err := self.metric.StoreTokenTargetQty(id, data)
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": err.Error()},
-			)
-			return
-		}
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": true},
-		)
-		return
-	case "CANCEL":
-		log.Println("Cancel target quantity")
-		err := self.metric.RemovePendingTargetQty()
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": err.Error()},
-			)
-			return
-		}
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": true},
+			gin.H{"success": false, "reason": err.Error()},
 		)
 		return
 	}
 	c.JSON(
 		http.StatusOK,
-		gin.H{"success": false, "reason": fmt.Sprintf("Action %s is not supported", action)},
+		gin.H{"success": true},
+	)
+	return
+}
+
+func (self *HTTPServer) CancelTargetQty(c *gin.Context) {
+	log.Println("Cancel target quantity")
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	err := self.metric.RemovePendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true},
+	)
+	return
+}
+
+func (self *HTTPServer) SetTargetQty(c *gin.Context) {
+	log.Println("Storing target quantity")
+	postForm, ok := self.Authenticated(c, []string{"data", "type"}, []Permission{ConfigurePermission})
+	if !ok {
+		return
+	}
+	data := postForm.Get("data")
+	dataType := postForm.Get("type")
+	log.Println("Setting target qty")
+	var err error
+	for _, dataConfig := range strings.Split(data, "|") {
+		dataParts := strings.Split(dataConfig, "_")
+		if dataType == "" || (dataType == "1" && len(dataParts) != 5) {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Data submitted not enough information"},
+			)
+			return
+		}
+		token := dataParts[0]
+		total, _ := strconv.ParseFloat(dataParts[1], 64)
+		reserve, _ := strconv.ParseFloat(dataParts[2], 64)
+		rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
+		transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
+		_, err = common.GetToken(token)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+	}
+	err = self.metric.StorePendingTargetQty(data, dataType)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+
+	pendingData, err := self.metric.GetPendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": pendingData},
 	)
 	return
 }
@@ -1163,6 +1166,8 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/targetqty", self.GetTargetQty)
 	self.r.GET("/pendingtargetqty", self.GetPendingTargetQty)
 	self.r.POST("/settargetqty", self.SetTargetQty)
+	self.r.POST("/confirmtargetqty", self.ConfirmTargetQty)
+	self.r.POST("/canceltargetqty", self.CancelTargetQty)
 
 	self.r.GET("/timeserver", self.GetTimeServer)
 

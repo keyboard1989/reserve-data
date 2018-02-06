@@ -473,6 +473,48 @@ response
   }
 ```
 
+### Confirm token target quantity (signing required)
+```
+<host>:8000/confirmtargetqty
+POST request
+form params:
+  - data: required, string, must sort by token id by ascending order
+  - id: optional, required to confirm target quantity
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/confirmtargetqty \
+  -H 'content-type: multipart/form-data' \
+  -F data= EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25 \
+  -F id=1517396850670
+```
+response
+```
+  {
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"unconfirmed"}
+  }
+```
+
+### Cancel token target quantity (signing required)
+```
+<host>:8000/confirmtargetqty
+POST request
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/confirmtargetqty \
+  -H 'content-type: multipart/form-data' \
+```
+response
+```
+  {
+    "success": true,
+  }
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 
