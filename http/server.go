@@ -1139,26 +1139,36 @@ func (self *HTTPServer) GetTimeServer(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetRebalanceStatus(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
-	data, err := self.core.GetRebalanceStatus()
+	data, err := self.metric.GetRebalanceControl()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{
 			"success": true,
-			"data":    data,
+			"data":    data.Status,
 		},
 	)
 }
 
 func (self *HTTPServer) HoldRebalance(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
 	if !ok {
 		return
 	}
-	self.core.HoldRebalance()
+	self.metric.StoreRebalanceControl(false)
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -1169,11 +1179,11 @@ func (self *HTTPServer) HoldRebalance(c *gin.Context) {
 }
 
 func (self *HTTPServer) EnableRebalance(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
 	if !ok {
 		return
 	}
-	self.core.EnableRebalance()
+	self.metric.StoreRebalanceControl(true)
 	c.JSON(
 		http.StatusOK,
 		gin.H{
