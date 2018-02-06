@@ -1138,6 +1138,51 @@ func (self *HTTPServer) GetTimeServer(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetRebalanceStatus(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.core.GetRebalanceStatus()
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) HoldRebalance(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	self.core.HoldRebalance()
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+	return
+}
+
+func (self *HTTPServer) EnableRebalance(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	self.core.EnableRebalance()
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+	return
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -1170,6 +1215,10 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/canceltargetqty", self.CancelTargetQty)
 
 	self.r.GET("/timeserver", self.GetTimeServer)
+
+	self.r.GET("/rebalancestatus", self.GetRebalanceStatus)
+	self.r.POST("/holdrebalance", self.HoldRebalance)
+	self.r.POST("/enablerebalance", self.EnableRebalance)
 
 	self.r.Run(self.host)
 }

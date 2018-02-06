@@ -17,6 +17,7 @@ type ReserveCore struct {
 	blockchain      Blockchain
 	activityStorage ActivityStorage
 	rm              ethereum.Address
+	enableRebalance bool
 }
 
 func NewReserveCore(
@@ -27,6 +28,7 @@ func NewReserveCore(
 		blockchain,
 		storage,
 		rm,
+		true,
 	}
 }
 
@@ -40,6 +42,18 @@ func (self ReserveCore) CancelOrder(id common.ActivityID, exchange common.Exchan
 
 func (self ReserveCore) GetAddresses() *common.Addresses {
 	return self.blockchain.GetAddresses()
+}
+
+func (self ReserveCore) HoldRebalance() {
+	self.enableRebalance = false
+}
+
+func (self ReserveCore) EnableRebalance() {
+	self.enableRebalance = true
+}
+
+func (self ReserveCore) GetRebalanceStatus() bool {
+	return self.enableRebalance
 }
 
 func (self ReserveCore) Trade(

@@ -28,6 +28,7 @@ const (
 	PENDING_TARGET_QUANTITY string = "pending_target_quantity"
 	LOG_BUCKET              string = "logs"
 	TRADE_HISTORY           string = "trade_history"
+	ENABLE_REBALANCE        string = "enable_rebalance"
 	MAX_NUMBER_VERSION      int    = 1000
 )
 
@@ -60,6 +61,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(PENDING_TARGET_QUANTITY))
 		tx.CreateBucket([]byte(LOG_BUCKET))
 		tx.CreateBucket([]byte(TRADE_HISTORY))
+		tx.CreateBucket([]byte(ENABLE_REBALANCE))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
