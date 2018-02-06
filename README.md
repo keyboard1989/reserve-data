@@ -30,6 +30,24 @@ sample:
 
 ## APIs
 
+### Get time server
+```
+<host>:8000/timeserver
+```
+
+eg:
+```
+curl -X GET "http://localhost:8000/timeserver"
+```
+
+response:
+```
+{
+  "data": "1517479497447",
+  "success": true
+}
+```
+
 ### Get all addresses are being used by core
 
 ```
@@ -95,6 +113,7 @@ response:
 <host>:8000/exchangeinfo
 ```
 url params:
+
 *exchangeid* : id of exchange to get info (optional, if exchangeid is empty then return all exchanges info)
 
 eg:
@@ -103,7 +122,7 @@ curl -X GET "http://13.229.54.28:8000/exchangeinfo?exchangeid=binance"
 ```
 response:
 ```
-  {"data":{"EOS-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}},"FUN-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-8,"Max":100000}},"KNC-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-7,"Max":100000}},"LINK-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-8,"Max":100000}},"MCO-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}},"OMG-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000}}},"success":true}
+  {"data":{"binance":{"EOS-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000},"MinNotional":0.02},"KNC-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-7,"Max":100000},"MinNotional":0.02},"OMG-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000},"MinNotional":0.02},"SALT-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":0.01,"Max":90000000},"PriceLimit":{"Min":0.000001,"Max":100000},"MinNotional":0.02},"SNT-ETH":{"Precision":{"Amount":8,"Price":8},"AmountLimit":{"Min":1,"Max":90000000},"PriceLimit":{"Min":1e-8,"Max":100000},"MinNotional":0.02}}},"success":true}
 ```
 
 ### Get fee for transaction on all exchanges
@@ -391,6 +410,21 @@ response:
 ```
 Returned data will only include datas that have timestamp in range of `[from, to]`
 
+
+### Get pending token target quantity (signing required)
+```
+<host>:8000/pendingtargetqty
+GET request
+```
+
+response:
+```
+  {
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"unconfirmed"}
+  }
+```
+
 ### Get token target quantity (signing required)
 ```
 <host>:8000/targetqty
@@ -400,33 +434,15 @@ GET request
 response:
 ```
   {
-    "data": {
-      "EOS": {
-        "reserve-target": 1000.141,
-        "total": 1471004712
-      },
-      "ETH": {
-        "reserve-target": 1000.141,
-        "total": 1471004712
-      },
-      "KNC": {
-        "reserve-target": 0,
-        "total": 0
-      },
-      "OMG": {
-        "reserve-target": 0,
-        "total": 0
-      },
-      "SALT": {
-        "reserve-target": 0,
-        "total": 0
-      },
-      "SNT": {
-        "reserve-target": 0,
-        "total": 0
-      }
-    },
-    "success": true
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"confirmed"}
+  }
+```
+response if there no data yet:
+```
+  {
+    "success": false,
+    "reason": "Version doesn't exist: 1517481572058"
   }
 ```
 
@@ -435,13 +451,67 @@ response:
 <host>:8000/settargetqty
 POST request
 form params:
-  - data: string, in format of <token>_totalQty_reserveQty|<token>_totalQty_reserveQty|..., eg. OMG_40_35|KNC_100_20
+  - data: required, string, must sort by token id by ascending order
+  - action: required, string, set/confirm/cancel, action to set, confirm or cancel target quantity
+  - id: optional, required to confirm target quantity
+  - type: required, number, data type (now it should be 1)
 ```
-
+eg:
+```
+curl -X POST \
+  http://localhost:8000/settargetqty \
+  -H 'content-type: multipart/form-data' \
+  -F data= EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25 \
+  -F action=set
+  -F id=1517396850670
+```
 response
 ```
   {
-    "success": true
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"unconfirmed"}
+  }
+```
+
+### Confirm token target quantity (signing required)
+```
+<host>:8000/confirmtargetqty
+POST request
+form params:
+  - data: required, string, must sort by token id by ascending order
+  - id: optional, required to confirm target quantity
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/confirmtargetqty \
+  -H 'content-type: multipart/form-data' \
+  -F data= EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25 \
+  -F id=1517396850670
+```
+response
+```
+  {
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25_0.25|ETH_750_500_0.25_0.25|KNC_750_500_0.25_0.25|OMG_750_500_0.25_0.25|SALT_750_500_0.25_0.25","Status":"unconfirmed"}
+  }
+```
+
+### Cancel token target quantity (signing required)
+```
+<host>:8000/confirmtargetqty
+POST request
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/confirmtargetqty \
+  -H 'content-type: multipart/form-data' \
+```
+response
+```
+  {
+    "success": true,
   }
 ```
 

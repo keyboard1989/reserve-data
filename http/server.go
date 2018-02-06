@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -210,7 +211,7 @@ func (self *HTTPServer) Price(c *gin.Context) {
 
 func (self *HTTPServer) AuthData(c *gin.Context) {
 	log.Printf("Getting current auth data snapshot \n")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -594,7 +595,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 
 func (self *HTTPServer) GetActivities(c *gin.Context) {
 	log.Printf("Getting all activity records \n")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -665,7 +666,7 @@ func (self *HTTPServer) StopFetcher(c *gin.Context) {
 
 func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
 	log.Printf("Getting all immediate pending activity records \n")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -692,7 +693,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 		Timestamp: common.GetTimepoint(),
 	}
 	log.Printf("Getting metrics")
-	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -934,7 +935,7 @@ func (self *HTTPServer) GetFee(c *gin.Context) {
 
 func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 	log.Println("Getting target quantity")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -942,61 +943,56 @@ func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
-			gin.H{"success": false, "data": err.Error()},
+			gin.H{"success": false, "reason": err.Error()},
 		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": true, "data": data},
+		)
+	}
+}
+
+func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
+	log.Println("Getting pending target qty")
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetPendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
 	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{"success": true, "data": data},
 	)
+	return
 }
 
-func (self *HTTPServer) SetTargetQty(c *gin.Context) {
-	log.Println("Storing target quantity")
-	postForm, ok := self.Authenticated(c, []string{"data"}, []Permission{ConfigurePermission})
+func targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold float64) error {
+	if total <= reserve {
+		return errors.New("Total quantity must bigger than reserver quantity")
+	}
+	if rebalanceThresold < 0 || rebalanceThresold > 1 || transferThresold < 0 || transferThresold > 1 {
+		return errors.New("Rebalance and transfer thresold must bigger than 0 and smaller than 1")
+	}
+	return nil
+}
+
+func (self *HTTPServer) ConfirmTargetQty(c *gin.Context) {
+	log.Println("Confirm target quantity")
+	postForm, ok := self.Authenticated(c, []string{"data", "type"}, []Permission{ConfirmConfPermission})
 	if !ok {
 		return
 	}
 	data := postForm.Get("data")
-	tokenTargetQty := metric.TokenTargetQty{}
-	tokenTargetQty.Timestamp = common.GetTimepoint()
-	tokenTargetQty.Data = map[string]metric.TargetQty{}
-	for _, tok := range strings.Split(data, "|") {
-		parts := strings.Split(tok, "_")
-		if len(parts) != 3 {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": "submitted data is not correct format"},
-			)
-		}
-		token := parts[0]
-		totalTargetStr := parts[1]
-		reserveTargetStr := parts[2]
-
-		totalTarget, err := strconv.ParseFloat(totalTargetStr, 64)
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": "Total target " + totalTargetStr + " is not float64"},
-			)
-			return
-		}
-
-		reserveTarget, err := strconv.ParseFloat(reserveTargetStr, 64)
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": "Reserve target " + reserveTargetStr + " is not float64"},
-			)
-			return
-		}
-
-		tokenTargetQty.Data[token] = metric.TargetQty{
-			TotalTargetQty:   totalTarget,
-			ReserveTargetQty: reserveTarget,
-		}
-	}
-	err := self.metric.StoreTokenTargetQty(tokenTargetQty)
+	id := postForm.Get("id")
+	err := self.metric.StoreTokenTargetQty(id, data)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1011,6 +1007,92 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) CancelTargetQty(c *gin.Context) {
+	log.Println("Cancel target quantity")
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	err := self.metric.RemovePendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true},
+	)
+	return
+}
+
+func (self *HTTPServer) SetTargetQty(c *gin.Context) {
+	log.Println("Storing target quantity")
+	postForm, ok := self.Authenticated(c, []string{"data", "type"}, []Permission{ConfigurePermission})
+	if !ok {
+		return
+	}
+	data := postForm.Get("data")
+	dataType := postForm.Get("type")
+	log.Println("Setting target qty")
+	var err error
+	for _, dataConfig := range strings.Split(data, "|") {
+		dataParts := strings.Split(dataConfig, "_")
+		if dataType == "" || (dataType == "1" && len(dataParts) != 5) {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Data submitted not enough information"},
+			)
+			return
+		}
+		token := dataParts[0]
+		total, _ := strconv.ParseFloat(dataParts[1], 64)
+		reserve, _ := strconv.ParseFloat(dataParts[2], 64)
+		rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
+		transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
+		_, err = common.GetToken(token)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+	}
+	err = self.metric.StorePendingTargetQty(data, dataType)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+
+	pendingData, err := self.metric.GetPendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": pendingData},
+	)
+	return
+}
+
 func (self *HTTPServer) GetAddress(c *gin.Context) {
 	c.JSON(
 		http.StatusOK,
@@ -1021,7 +1103,7 @@ func (self *HTTPServer) GetAddress(c *gin.Context) {
 
 func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	timepoint := common.GetTimepoint()
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -1042,6 +1124,16 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 		gin.H{
 			"success": true,
 			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetTimeServer(c *gin.Context) {
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    common.GetTimestamp(),
 		},
 	)
 }
@@ -1072,7 +1164,12 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/tradehistory", self.GetTradeHistory)
 
 	self.r.GET("/targetqty", self.GetTargetQty)
+	self.r.GET("/pendingtargetqty", self.GetPendingTargetQty)
 	self.r.POST("/settargetqty", self.SetTargetQty)
+	self.r.POST("/confirmtargetqty", self.ConfirmTargetQty)
+	self.r.POST("/canceltargetqty", self.CancelTargetQty)
+
+	self.r.GET("/timeserver", self.GetTimeServer)
 
 	self.r.Run(self.host)
 }

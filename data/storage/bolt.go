@@ -25,6 +25,7 @@ const (
 	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
 	METRIC_BUCKET           string = "metrics"
 	METRIC_TARGET_QUANTITY  string = "target_quantity"
+	PENDING_TARGET_QUANTITY string = "pending_target_quantity"
 	LOG_BUCKET              string = "logs"
 	TRADE_HISTORY           string = "trade_history"
 	MAX_NUMBER_VERSION      int    = 1000
@@ -56,6 +57,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(AUTH_DATA_BUCKET))
 		tx.CreateBucket([]byte(METRIC_BUCKET))
 		tx.CreateBucket([]byte(METRIC_TARGET_QUANTITY))
+		tx.CreateBucket([]byte(PENDING_TARGET_QUANTITY))
 		tx.CreateBucket([]byte(LOG_BUCKET))
 		tx.CreateBucket([]byte(TRADE_HISTORY))
 		return nil
@@ -547,6 +549,71 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 	return result, err
 }
 
+func (self *BoltStorage) GetPendingTargetQty() (metric.TokenTargetQty, error) {
+	var err error
+	var tokenTargetQty metric.TokenTargetQty
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
+		_, data := b.Cursor().Last()
+		if data == nil {
+			err = errors.New("There no pending target quantity")
+		} else {
+			err = json.Unmarshal(data, &tokenTargetQty)
+			if err != nil {
+				log.Printf("Cannot unmarshal: %s", err.Error())
+			}
+		}
+		return nil
+	})
+	return tokenTargetQty, err
+}
+
+func (self *BoltStorage) StorePendingTargetQty(data, dataType string) error {
+	var err error
+	timepoint := common.GetTimepoint()
+	tokenTargetQty := metric.TokenTargetQty{}
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
+		_, lastPending := b.Cursor().Last()
+		if lastPending != nil {
+			err = errors.New("There is another pending target quantity. Please confirm or cancel it before setting new target.")
+			return err
+		} else {
+			tokenTargetQty.ID = timepoint
+			tokenTargetQty.Status = "unconfirmed"
+			tokenTargetQty.Data = data
+			tokenTargetQty.Type, _ = strconv.ParseInt(dataType, 10, 64)
+			idByte := uint64ToBytes(timepoint)
+			var dataJson []byte
+			dataJson, err = json.Marshal(tokenTargetQty)
+			if err != nil {
+				return err
+			}
+			log.Printf("Target to save: %v", dataJson)
+			return b.Put(idByte, dataJson)
+		}
+		return err
+	})
+	return err
+}
+
+func (self *BoltStorage) RemovePendingTargetQty() error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
+		k, lastPending := b.Cursor().Last()
+		log.Printf("Last key: %s", k)
+		if lastPending == nil {
+			return errors.New("There is no pending target quantity.")
+		} else {
+			b.Delete([]byte(k))
+			return nil
+		}
+		return err
+	})
+	return err
+}
+
 func (self *BoltStorage) CurrentTargetQtyVersion(timepoint uint64) (common.Version, error) {
 	var result uint64
 	var err error
@@ -558,7 +625,7 @@ func (self *BoltStorage) CurrentTargetQtyVersion(timepoint uint64) (common.Versi
 	return common.Version(result), err
 }
 
-func (self *BoltStorage) GetTokenTargetQty() (map[string]metric.TargetQty, error) {
+func (self *BoltStorage) GetTokenTargetQty() (metric.TokenTargetQty, error) {
 	tokenTargetQty := metric.TokenTargetQty{}
 	version, err := self.CurrentTargetQtyVersion(common.GetTimepoint())
 	log.Printf("Current version: %s", version)
@@ -578,25 +645,49 @@ func (self *BoltStorage) GetTokenTargetQty() (map[string]metric.TargetQty, error
 		}
 		return nil
 	})
-	return tokenTargetQty.Data, err
+	return tokenTargetQty, err
 }
 
-func (self *BoltStorage) StoreTokenTargetQty(data metric.TokenTargetQty) error {
+func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 	var err error
+	var tokenTargetQty metric.TokenTargetQty
+	var dataJson []byte
 	self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
-		b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
-		dataJson, err = json.Marshal(&data)
-		if err != nil {
+		pending := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
+		_, pendingTargetQty := pending.Cursor().Last()
+
+		if pendingTargetQty == nil {
+			err = errors.New("There is no pending target activity to confirm.")
 			return err
+		} else {
+			// verify confirm data
+			json.Unmarshal(pendingTargetQty, &tokenTargetQty)
+			pendingData := tokenTargetQty.Data
+			idInt, _ := strconv.ParseUint(id, 10, 64)
+			if tokenTargetQty.ID != idInt {
+				err = errors.New("Pending target quantity ID does not match")
+				return err
+			}
+			if data != pendingData {
+				err = errors.New("Pending target quantity data does not match")
+				return err
+			}
+
+			// Save to confirmed target quantity
+			tokenTargetQty.Status = "confirmed"
+			b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
+			dataJson, err = json.Marshal(tokenTargetQty)
+			if err != nil {
+				return err
+			}
+			idByte := uint64ToBytes(common.GetTimepoint())
+			return b.Put(idByte, dataJson)
 		}
-		idByte := uint64ToBytes(data.Timestamp)
-		log.Printf("Version saved: %s", data.Timestamp)
-		log.Printf("Data saved: %v", data)
-		log.Printf("Data saved: %v", data)
-		err = b.Put(idByte, dataJson)
-		return err
 	})
+	if err == nil {
+		// remove pending target qty
+		return self.RemovePendingTargetQty()
+	}
 	return err
 }
 

@@ -58,6 +58,7 @@ func GetConfigForDev() *Config {
 		fileSigner.KNSecret,
 		fileSigner.KNReadOnly,
 		fileSigner.KNConfiguration,
+		fileSigner.KNConfirmConf,
 	}
 
 	return &Config{
@@ -69,8 +70,8 @@ func GetConfigForDev() *Config {
 		FetcherExchanges:        exchangePool.FetcherExchanges(),
 		Exchanges:               exchangePool.CoreExchanges(),
 		BlockchainSigner:        fileSigner,
+		EnableAuthentication:    true,
 		DepositSigner:           depositSigner,
-		EnableAuthentication:    false,
 		AuthEngine:              hmac512auth,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
