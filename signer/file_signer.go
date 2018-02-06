@@ -28,6 +28,7 @@ type FileSigner struct {
 	KNSecret        string `json:"kn_secret"`
 	KNReadOnly      string `json:"kn_readonly"`
 	KNConfiguration string `json:"kn_configuration"`
+	KNConfirmConf   string `json:"kn_confirm_configuration"`
 	opts            *bind.TransactOpts
 }
 

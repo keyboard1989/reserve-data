@@ -51,6 +51,7 @@ func GetConfigForInternalMainnet() *Config {
 		fileSigner.KNSecret,
 		fileSigner.KNReadOnly,
 		fileSigner.KNConfiguration,
+		fileSigner.KNConfirmConf,
 	}
 
 	endpoint := "https://mainnet.infura.io"

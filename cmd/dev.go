@@ -58,6 +58,7 @@ func GetConfigForDev() *Config {
 		fileSigner.KNSecret,
 		fileSigner.KNReadOnly,
 		fileSigner.KNConfiguration,
+		fileSigner.KNConfirmConf,
 	}
 
 	return &Config{

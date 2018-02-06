@@ -211,7 +211,7 @@ func (self *HTTPServer) Price(c *gin.Context) {
 
 func (self *HTTPServer) AuthData(c *gin.Context) {
 	log.Printf("Getting current auth data snapshot \n")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -595,7 +595,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 
 func (self *HTTPServer) GetActivities(c *gin.Context) {
 	log.Printf("Getting all activity records \n")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -666,7 +666,7 @@ func (self *HTTPServer) StopFetcher(c *gin.Context) {
 
 func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
 	log.Printf("Getting all immediate pending activity records \n")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -693,7 +693,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 		Timestamp: common.GetTimepoint(),
 	}
 	log.Printf("Getting metrics")
-	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -935,7 +935,7 @@ func (self *HTTPServer) GetFee(c *gin.Context) {
 
 func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 	log.Println("Getting target quantity")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -945,18 +945,17 @@ func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 			http.StatusOK,
 			gin.H{"success": false, "reason": err.Error()},
 		)
-		return
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": true, "data": data},
+		)
 	}
-	c.JSON(
-		http.StatusOK,
-		gin.H{"success": true, "data": data},
-	)
-	return
 }
 
 func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
 	log.Println("Getting pending target qty")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -1101,7 +1100,7 @@ func (self *HTTPServer) GetAddress(c *gin.Context) {
 
 func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	timepoint := common.GetTimepoint()
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
