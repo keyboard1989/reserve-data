@@ -406,7 +406,6 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 		[]common.TokenPair{
 			common.MustCreateTokenPair("OMG", "ETH"),
 			common.MustCreateTokenPair("SNT", "ETH"),
-			common.MustCreateTokenPair("SALT", "ETH"),
 		},
 		common.NewExchangeAddresses(),
 		storage,
@@ -418,16 +417,14 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 			},
 			common.NewFundingFee(
 				map[string]float64{
-					"ETH":  0.006,
-					"OMG":  0.3,
-					"SNT":  20.0,
-					"SALT": 0.6,
+					"ETH": 0.006,
+					"OMG": 0.3,
+					"SNT": 20.0,
 				},
 				map[string]float64{
-					"ETH":  0,
-					"OMG":  0,
-					"SNT":  0,
-					"SALT": 0,
+					"ETH": 0,
+					"OMG": 0,
+					"SNT": 0,
 				},
 			),
 		),
