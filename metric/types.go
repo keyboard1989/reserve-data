@@ -33,3 +33,7 @@ type TokenTargetQty struct {
 	Status    string
 	Type      int64
 }
+
+type RebalanceControl struct {
+	Status bool `json:status`
+}
