@@ -144,7 +144,7 @@ func (self *Blockchain) getTransactOpts(nonce *big.Int, gasPrice *big.Int) (*bin
 }
 
 func (self *Blockchain) getDepositTransactOpts(nonce, gasPrice *big.Int) (*bind.TransactOpts, context.CancelFunc, error) {
-	shared := self.signer.GetTransactOpts()
+	shared := self.depositSigner.GetTransactOpts()
 	var err error
 	if nonce == nil {
 		nonce, err = getNextNonce(self.nonceDeposit)
