@@ -367,7 +367,19 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, error) {
 		if pending {
 			return "", nil
 		} else {
-			return "mined", nil
+			receipt, err := self.client.TransactionReceipt(option, hash)
+			if err != nil {
+				// networking issue
+				return "", err
+			} else {
+				if receipt.Status == 1 {
+					// successful tx
+					return "mined", nil
+				} else {
+					// failed tx
+					return "failed", nil
+				}
+			}
 		}
 	} else {
 		if err == ether.NotFound {
