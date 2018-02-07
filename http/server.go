@@ -1139,7 +1139,7 @@ func (self *HTTPServer) GetTimeServer(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetRebalanceStatus(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
