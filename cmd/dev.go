@@ -13,6 +13,7 @@ import (
 )
 
 func GetConfigForDev() *Config {
+	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
