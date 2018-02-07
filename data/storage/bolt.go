@@ -900,7 +900,7 @@ func (self *BoltStorage) GetRebalanceControl() (metric.RebalanceControl, error) 
 			result = metric.RebalanceControl{
 				Status: true,
 			}
-			self.StoreRebalanceControl(true)
+			self.StoreRebalanceControl(false)
 		} else {
 			json.Unmarshal(data, &result)
 		}
