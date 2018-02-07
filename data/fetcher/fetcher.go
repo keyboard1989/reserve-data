@@ -275,7 +275,7 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 	result := map[common.ActivityID]common.ActivityStatus{}
 	minedNonce, _ := self.blockchain.SetRateMinedNonce()
 	for _, activity := range pendings {
-		if activity.IsBlockchainPending() && (activity.Action == "set_rates" || activity.Action == "deposit" || activity.Action == "withdraw") {
+		if (activity.IsBlockchainPending() || activity.Result["tx"].(string) == "0xd3da5ad7c0e816226e01568f55f3a1e91e208f2cb296ef23c627b5ff60100237") && (activity.Action == "set_rates" || activity.Action == "deposit" || activity.Action == "withdraw") {
 			tx := ethereum.HexToHash(activity.Result["tx"].(string))
 			if tx.Big().IsInt64() && tx.Big().Int64() == 0 {
 				continue
