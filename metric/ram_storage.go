@@ -119,3 +119,14 @@ func (self *RamMetricStorage) GetTokenTargetQty() (TokenTargetQty, error) {
 	defer self.mu.RUnlock()
 	return self.tokenTargetQty, nil
 }
+
+func (self *RamMetricStorage) GetRebalanceControl() (RebalanceControl, error) {
+	// TODO: update this
+	result := RebalanceControl{}
+	return result, nil
+}
+
+func (self *RamMetricStorage) StoreRebalanceControl(status bool) error {
+	// TODO: update this
+	return nil
+}

@@ -28,6 +28,7 @@ const (
 	PENDING_TARGET_QUANTITY string = "pending_target_quantity"
 	LOG_BUCKET              string = "logs"
 	TRADE_HISTORY           string = "trade_history"
+	ENABLE_REBALANCE        string = "enable_rebalance"
 	MAX_NUMBER_VERSION      int    = 1000
 )
 
@@ -60,6 +61,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(PENDING_TARGET_QUANTITY))
 		tx.CreateBucket([]byte(LOG_BUCKET))
 		tx.CreateBucket([]byte(TRADE_HISTORY))
+		tx.CreateBucket([]byte(ENABLE_REBALANCE))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
@@ -883,6 +885,51 @@ func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory, timepoin
 			return err
 		}
 		idByte := uint64ToBytes(timepoint)
+		return b.Put(idByte, dataJson)
+	})
+	return err
+}
+
+func (self *BoltStorage) GetRebalanceControl() (metric.RebalanceControl, error) {
+	var err error
+	var result metric.RebalanceControl
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(ENABLE_REBALANCE))
+		_, data := b.Cursor().First()
+		if data == nil {
+			result = metric.RebalanceControl{
+				Status: true,
+			}
+			self.StoreRebalanceControl(true)
+		} else {
+			json.Unmarshal(data, &result)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) StoreRebalanceControl(status bool) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(ENABLE_REBALANCE))
+		// prune out old data
+		c := b.Cursor()
+		k, _ := c.First()
+		if k != nil {
+			b.Delete([]byte(k))
+		}
+
+		// add new data
+		data := metric.RebalanceControl{
+			Status: status,
+		}
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		idByte := uint64ToBytes(common.GetTimepoint())
 		return b.Put(idByte, dataJson)
 	})
 	return err

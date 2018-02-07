@@ -515,6 +515,57 @@ response
   }
 ```
 
+### Get rebalance status
+Get rebalance status, if reponse is *true* then rebalance is enable, the analytic can perform rebalance, else reponse is *false*, the analytic hold rebalance ability.
+```
+<host>:8000/rebalancestatus
+GET request
+```
+
+response
+```
+  {
+    "success": true,
+    "data": true
+  }
+```
+
+### Hold rebalance
+```
+<host>:8000/holdrebalance
+POST request
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/holdrebalance \
+  -H 'content-type: multipart/form-data' \
+```
+response
+```
+  {
+    "success": true
+  }
+```
+
+### Enable rebalance
+```
+<host>:8000/enablerebalance
+POST request
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/enablerebalance \
+  -H 'content-type: multipart/form-data' \
+```
+response
+```
+  {
+    "success": true
+  }
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 
