@@ -70,7 +70,7 @@ func GetConfigForDev() *Config {
 		FetcherExchanges:        exchangePool.FetcherExchanges(),
 		Exchanges:               exchangePool.CoreExchanges(),
 		BlockchainSigner:        fileSigner,
-		EnableAuthentication:    true,
+		EnableAuthentication:    false,
 		DepositSigner:           depositSigner,
 		AuthEngine:              hmac512auth,
 		EthereumEndpoint:        endpoint,

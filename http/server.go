@@ -311,6 +311,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 				http.StatusOK,
 				gin.H{"success": false, "reason": err.Error()},
 			)
+			return
 		} else {
 			bigBuys = append(bigBuys, r)
 		}
@@ -323,6 +324,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 				http.StatusOK,
 				gin.H{"success": false, "reason": err.Error()},
 			)
+			return
 		} else {
 			bigSells = append(bigSells, r)
 		}
@@ -343,6 +345,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 				http.StatusOK,
 				gin.H{"success": false, "reason": err.Error()},
 			)
+			return
 		} else {
 			bigAfpMid = append(bigAfpMid, r)
 		}
