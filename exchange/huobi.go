@@ -407,9 +407,9 @@ func NewHuobi(interf HuobiInterface) *Huobi {
 	return &Huobi{
 		interf,
 		[]common.TokenPair{
-			// common.MustCreateTokenPair("OMG", "ETH"),
+			common.MustCreateTokenPair("OMG", "ETH"),
 			// common.MustCreateTokenPair("EOS", "ETH"),
-			common.MustCreateTokenPair("KNC", "ETH"),
+			// common.MustCreateTokenPair("KNC", "ETH"),
 			// common.MustCreateTokenPair("SNT", "ETH"),
 			// common.MustCreateTokenPair("SALT", "ETH"),
 		},
