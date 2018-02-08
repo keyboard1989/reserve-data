@@ -566,6 +566,56 @@ response
   }
 ```
 
+### Get setrate status
+Get setrate status, if reponse is *true* then setrate is enable, the analytic can perform setrate, else reponse is *false*, the analytic hold setrate ability.
+```
+<host>:8000/setratestatus
+GET request
+```
+
+response
+```
+  {
+    "success": true,
+    "data": true
+  }
+```
+
+### Hold setrate
+```
+<host>:8000/holdsetrate
+POST request
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/holdsetrate \
+  -H 'content-type: multipart/form-data' \
+```
+response
+```
+  {
+    "success": true
+  }
+```
+
+### Enable setrate
+```
+<host>:8000/enablesetrate
+POST request
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/enablesetrate \
+  -H 'content-type: multipart/form-data' \
+```
+response
+```
+  {
+    "success": true
+  }
+```
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 
