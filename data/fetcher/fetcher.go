@@ -281,16 +281,17 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 				continue
 			}
 			status, err := self.blockchain.TxStatus(tx)
-			if activity.Action == "set_rates" {
-				actNonce := activity.Result["nonce"]
-				if actNonce != nil {
-					nonce, _ := strconv.ParseUint(actNonce.(string), 10, 64)
-					if nonce < minedNonce {
-						status = "failed"
+			switch status {
+			case "":
+				if activity.Action == "set_rates" {
+					actNonce := activity.Result["nonce"]
+					if actNonce != nil {
+						nonce, _ := strconv.ParseUint(actNonce.(string), 10, 64)
+						if nonce < minedNonce {
+							status = "failed"
+						}
 					}
 				}
-			}
-			switch status {
 			case "mined":
 				result[activity.ID] = common.ActivityStatus{
 					activity.ExchangeStatus,
