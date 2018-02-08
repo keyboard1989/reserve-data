@@ -113,12 +113,10 @@ func (self *Fetcher) RunRateFetcher() {
 }
 
 func (self *Fetcher) FetchRate(timepoint uint64) {
-	data, err := self.blockchain.FetchRates(timepoint)
+	data, err := self.blockchain.FetchRates(timepoint, self.currentBlock)
 	if err != nil {
 		log.Printf("Fetching rates from blockchain failed: %s\n", err)
 	}
-	data.BlockNumber = self.currentBlock
-	log.Printf("data to saved: %v", data)
 	err = self.storage.StoreRate(data, timepoint)
 	// fmt.Printf("balance data: %v\n", data)
 	if err != nil {
