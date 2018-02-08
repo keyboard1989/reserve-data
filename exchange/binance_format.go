@@ -48,6 +48,8 @@ type FilterLimit struct {
 	MaxPrice    string `json:"maxPrice"`
 	MinQuantity string `json:"minQty"`
 	MaxQuantity string `json:"maxQty"`
+	StepSize    string `json:"stepSize"`
+	TickSize    string `json:"tickSize"`
 	MinNotional string `json:"minNotional"`
 }
 
