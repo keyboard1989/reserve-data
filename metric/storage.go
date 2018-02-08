@@ -9,11 +9,13 @@ type MetricStorage interface {
 	StoreTokenTargetQty(id, data string) error
 	StorePendingTargetQty(data, dataType string) error
 	StoreRebalanceControl(status bool) error
+	StoreSetrateControl(status bool) error
 
 	GetMetric(tokens []common.Token, fromTime, toTime uint64) (map[string]MetricList, error)
 	GetTokenTargetQty() (TokenTargetQty, error)
 	GetPendingTargetQty() (TokenTargetQty, error)
 	GetRebalanceControl() (RebalanceControl, error)
+	GetSetrateControl() (SetrateControl, error)
 
 	RemovePendingTargetQty() error
 }

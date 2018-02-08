@@ -29,6 +29,7 @@ const (
 	LOG_BUCKET              string = "logs"
 	TRADE_HISTORY           string = "trade_history"
 	ENABLE_REBALANCE        string = "enable_rebalance"
+	SETRATE_CONTROL         string = "setrate_control"
 	MAX_NUMBER_VERSION      int    = 1000
 )
 
@@ -62,6 +63,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(LOG_BUCKET))
 		tx.CreateBucket([]byte(TRADE_HISTORY))
 		tx.CreateBucket([]byte(ENABLE_REBALANCE))
+		tx.CreateBucket([]byte(SETRATE_CONTROL))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
@@ -923,6 +925,51 @@ func (self *BoltStorage) StoreRebalanceControl(status bool) error {
 
 		// add new data
 		data := metric.RebalanceControl{
+			Status: status,
+		}
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		idByte := uint64ToBytes(common.GetTimepoint())
+		return b.Put(idByte, dataJson)
+	})
+	return err
+}
+
+func (self *BoltStorage) GetSetrateControl() (metric.SetrateControl, error) {
+	var err error
+	var result metric.SetrateControl
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(SETRATE_CONTROL))
+		_, data := b.Cursor().First()
+		if data == nil {
+			result = metric.SetrateControl{
+				Status: true,
+			}
+			self.StoreSetrateControl(false)
+		} else {
+			json.Unmarshal(data, &result)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) StoreSetrateControl(status bool) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(SETRATE_CONTROL))
+		// prune out old data
+		c := b.Cursor()
+		k, _ := c.First()
+		if k != nil {
+			b.Delete([]byte(k))
+		}
+
+		// add new data
+		data := metric.SetrateControl{
 			Status: status,
 		}
 		dataJson, err = json.Marshal(data)
