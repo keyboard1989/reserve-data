@@ -481,8 +481,8 @@ func NewBinance(interf BinanceInterface) *Binance {
 				map[string]float64{
 					"ETH": 0.01,
 					// "EOS":  1,
-					// "OMG":  0.7,
-					"KNC": 2.6,
+					"OMG": 0.7,
+					// "KNC": 2.6,
 					// "SNT":  38.0,
 					// "ELF":  6.2,
 					// "POWR": 13.6,
@@ -494,8 +494,8 @@ func NewBinance(interf BinanceInterface) *Binance {
 				map[string]float64{
 					"ETH": 0,
 					// "EOS":  0,
-					// "OMG":  0,
-					"KNC": 0,
+					"OMG": 0,
+					// "KNC": 0,
 					// "SNT":  0,
 					// "ELF":  0,
 					// "POWR": 0,
