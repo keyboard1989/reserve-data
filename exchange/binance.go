@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -52,6 +53,15 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 	}
 }
 
+func (self *Binance) precisionFromStepSize(stepSize string) int {
+	re := regexp.MustCompile("0*$")
+	parts := strings.Split(re.ReplaceAllString(stepSize, ""), ".")
+	if len(parts) > 1 {
+		return len(parts[1])
+	}
+	return 0
+}
+
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
@@ -69,6 +79,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					// update amount max
 					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 64)
 					exchangePrecisionLimit.AmountLimit.Max = maxQuantity
+					exchangePrecisionLimit.Precision.Amount = self.precisionFromStepSize(filter.StepSize)
 				}
 
 				if filter.FilterType == "PRICE_FILTER" {
@@ -78,6 +89,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					// update price max
 					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 64)
 					exchangePrecisionLimit.PriceLimit.Max = maxPrice
+					exchangePrecisionLimit.Precision.Price = self.precisionFromStepSize(filter.TickSize)
 				}
 
 				if filter.FilterType == "MIN_NOTIONAL" {
