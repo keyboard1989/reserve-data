@@ -173,9 +173,12 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			exchanges[bin.ID()] = bin
 		case "huobi":
 			huobi := exchange.NewHuobi(huobi.NewRopstenHuobiEndpoint(signer))
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
-				huobi.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
+				go AsyncUpdateDepositAddress(huobi, tokenID, addr, &wait)
 			}
+			wait.Wait()
 			huobi.UpdatePairsPrecision()
 			exchanges[huobi.ID()] = huobi
 		}
@@ -212,9 +215,12 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			exchanges[bin.ID()] = bin
 		case "huobi":
 			huobi := exchange.NewHuobi(huobi.NewRealHuobiEndpoint(signer))
+			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
 				huobi.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
+				wait.Add(1)
 			}
+			wait.Wait()
 			huobi.UpdatePairsPrecision()
 			exchanges[huobi.ID()] = huobi
 		}
