@@ -1,6 +1,8 @@
 package data
 
 import (
+	"log"
+
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
@@ -85,39 +87,81 @@ func (self ReserveData) CurrentRateVersion(timepoint uint64) (common.Version, er
 	return self.storage.CurrentRateVersion(timepoint)
 }
 
+func compareData(old, new map[string]common.RateResponse) bool {
+	for tokenID, oldElem := range old {
+		newelem, ok := new[tokenID]
+		if !ok {
+			return (false)
+		}
+		if oldElem.BaseBuy != newelem.BaseBuy {
+			log.Println("basebuy was different")
+			return (false)
+		}
+		if oldElem.CompactBuy != newelem.CompactBuy {
+			log.Println("compactBuy was different")
+			return (false)
+		}
+		if oldElem.BaseSell != newelem.BaseSell {
+			return (false)
+		}
+		if oldElem.CompactSell != newelem.CompactSell {
+			return (false)
+		}
+		if oldElem.Rate != newelem.Rate {
+			return (false)
+		}
+	}
+	return (true)
+}
+
+func getOneRateData(rate common.AllRateEntry) map[string]common.RateResponse {
+	data := map[string]common.RateResponse{}
+	for tokenID, r := range rate.Data {
+		data[tokenID] = common.RateResponse{
+			Valid:       rate.Valid,
+			Error:       rate.Error,
+			Timestamp:   rate.Timestamp,
+			ReturnTime:  rate.ReturnTime,
+			BaseBuy:     common.BigToFloat(r.BaseBuy, 18),
+			CompactBuy:  r.CompactBuy,
+			BaseSell:    common.BigToFloat(r.BaseSell, 18),
+			CompactSell: r.CompactSell,
+			Block:       r.Block,
+		}
+	}
+	return data
+}
+
 func (self ReserveData) GetRates(fromTime, toTime uint64) ([]common.AllRateResponse, error) {
 	result := []common.AllRateResponse{}
 	rates, err := self.storage.GetRates(fromTime, toTime)
 	if err != nil {
 		return result, err
 	}
+	//current: the unchanged one so far
+	current := common.AllRateResponse{}
 	for _, rate := range rates {
 		one := common.AllRateResponse{}
 		one.Timestamp = rate.Timestamp
 		one.ReturnTime = rate.ReturnTime
 		one.Error = rate.Error
 		one.Valid = rate.Valid
-		data := map[string]common.RateResponse{}
-		for tokenID, r := range rate.Data {
-			data[tokenID] = common.RateResponse{
-				Valid:       rate.Valid,
-				Error:       rate.Error,
-				Timestamp:   rate.Timestamp,
-				ReturnTime:  rate.ReturnTime,
-				BaseBuy:     common.BigToFloat(r.BaseBuy, 18),
-				CompactBuy:  r.CompactBuy,
-				BaseSell:    common.BigToFloat(r.BaseSell, 18),
-				CompactSell: r.CompactSell,
-				Block:       r.Block,
-			}
-		}
-		one.Data = data
+		one.Data = getOneRateData(rate)
 		one.BlockNumber = rate.BlockNumber
-		result = append(result, one)
+		if compareData(one.Data, current.Data) {
+			result[len(result)-1].ToBlockNumber = one.BlockNumber
+
+		} else {
+			one.ToBlockNumber = rate.BlockNumber
+			result = append(result, one)
+			current = one
+		}
+		log.Println("from %d to %d", one.BlockNumber, one.ToBlockNumber)
+
 	}
+
 	return result, nil
 }
-
 func (self ReserveData) GetRate(timepoint uint64) (common.AllRateResponse, error) {
 	timestamp := common.GetTimestamp()
 	version, err := self.storage.CurrentRateVersion(timepoint)
