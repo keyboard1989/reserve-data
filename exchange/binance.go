@@ -474,9 +474,8 @@ func NewBinance(interf BinanceInterface) *Binance {
 		[]common.TokenPair{
 			common.MustCreateTokenPair("OMG", "ETH"),
 			common.MustCreateTokenPair("KNC", "ETH"),
-			common.MustCreateTokenPair("EOS", "ETH"),
 			common.MustCreateTokenPair("SNT", "ETH"),
-			// common.MustCreateTokenPair("SALT", "ETH"),
+			common.MustCreateTokenPair("EOS", "ETH"),
 			common.MustCreateTokenPair("ELF", "ETH"),
 			common.MustCreateTokenPair("POWR", "ETH"),
 			common.MustCreateTokenPair("MANA", "ETH"),

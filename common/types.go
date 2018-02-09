@@ -282,6 +282,7 @@ func (self ActivityRecord) IsPending() bool {
 type ActivityStatus struct {
 	ExchangeStatus string
 	Tx             string
+	BlockNumber    uint64
 	MiningStatus   string
 	Error          error
 }
