@@ -901,7 +901,7 @@ func (self *BoltStorage) GetRebalanceControl() (metric.RebalanceControl, error) 
 		_, data := b.Cursor().First()
 		if data == nil {
 			result = metric.RebalanceControl{
-				Status: true,
+				Status: false,
 			}
 			self.StoreRebalanceControl(false)
 		} else {
@@ -946,7 +946,7 @@ func (self *BoltStorage) GetSetrateControl() (metric.SetrateControl, error) {
 		_, data := b.Cursor().First()
 		if data == nil {
 			result = metric.SetrateControl{
-				Status: true,
+				Status: false,
 			}
 			self.StoreSetrateControl(false)
 		} else {
