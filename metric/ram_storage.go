@@ -130,3 +130,14 @@ func (self *RamMetricStorage) StoreRebalanceControl(status bool) error {
 	// TODO: update this
 	return nil
 }
+
+func (self *RamMetricStorage) GetSetrateControl() (SetrateControl, error) {
+	// TODO: update this
+	result := SetrateControl{}
+	return result, nil
+}
+
+func (self *RamMetricStorage) StoreSetrateControl(status bool) error {
+	// TODO: update this
+	return nil
+}
