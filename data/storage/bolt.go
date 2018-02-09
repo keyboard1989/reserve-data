@@ -31,6 +31,7 @@ const (
 	ENABLE_REBALANCE        string = "enable_rebalance"
 	SETRATE_CONTROL         string = "setrate_control"
 	MAX_NUMBER_VERSION      int    = 1000
+	MAX_GET_RATES_PERIOD    uint64 = 86400000 //1 days in milisec
 )
 
 type BoltStorage struct {
@@ -234,8 +235,8 @@ func (self *BoltStorage) CurrentRateVersion(timepoint uint64) (common.Version, e
 
 func (self *BoltStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntry, error) {
 	result := []common.AllRateEntry{}
-	if toTime-fromTime > 3600000 {
-		return result, errors.New("Time range is too broad, it must be smaller or equal to 3600000 miliseconds")
+	if toTime-fromTime > MAX_GET_RATES_PERIOD {
+		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
 	}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {

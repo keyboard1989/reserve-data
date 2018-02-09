@@ -490,13 +490,14 @@ type AllRateEntry struct {
 }
 
 type AllRateResponse struct {
-	Version     Version
-	Valid       bool
-	Error       string
-	Timestamp   Timestamp
-	ReturnTime  Timestamp
-	Data        map[string]RateResponse
-	BlockNumber uint64
+	Version       Version
+	Valid         bool
+	Error         string
+	Timestamp     Timestamp
+	ReturnTime    Timestamp
+	Data          map[string]RateResponse
+	BlockNumber   uint64
+	ToBlockNumber uint64
 }
 
 type TradeLog struct {
