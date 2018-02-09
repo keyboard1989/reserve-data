@@ -400,11 +400,23 @@ func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID
 	return result, nil
 }
 
-func NewBittrex(addressConfig map[string]string, interf BittrexInterface, storage BittrexStorage) *Bittrex {
+func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BittrexInterface, storage BittrexStorage) *Bittrex {
 	pairs := []common.TokenPair{}
+	fees := common.ExchangeFees{
+		feeConfig.Trading,
+		common.FundingFee{
+			map[string]float64{},
+			map[string]float64{},
+		},
+	}
 	for tokenID, _ := range addressConfig {
 		pair := common.MustCreateTokenPair(tokenID, "ETH")
 		pairs = append(pairs, pair)
+
+		fees.Funding.Deposit[tokenID] = 0
+		if _, exist := feeConfig.Funding.Withdraw[tokenID]; exist {
+			fees.Funding.Withdraw[tokenID] = feeConfig.Funding.Withdraw[tokenID]
+		}
 	}
 	return &Bittrex{
 		interf,
@@ -412,23 +424,6 @@ func NewBittrex(addressConfig map[string]string, interf BittrexInterface, storag
 		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),
-		common.NewExchangeFee(
-			common.TradingFee{
-				"taker": 0.0025,
-				"maker": 0.0025,
-			},
-			common.NewFundingFee(
-				map[string]float64{
-					"ETH": 0.006,
-					"OMG": 0.3,
-					"SNT": 20.0,
-				},
-				map[string]float64{
-					"ETH": 0,
-					"OMG": 0,
-					"SNT": 0,
-				},
-			),
-		),
+		fees,
 	}
 }

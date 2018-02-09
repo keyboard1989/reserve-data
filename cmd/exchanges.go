@@ -36,7 +36,7 @@ func NewSimulationExchangePool(
 		switch exparam {
 		case "bittrex":
 			endpoint := bittrex.NewSimulatedBittrexEndpoint(signer)
-			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
+			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], feeConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
@@ -79,7 +79,7 @@ func NewDevExchangePool(
 		switch exparam {
 		case "bittrex":
 			endpoint := bittrex.NewDevBittrexEndpoint(signer)
-			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
+			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], feeConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
@@ -122,7 +122,7 @@ func NewKovanExchangePool(
 		switch exparam {
 		case "bittrex":
 			endpoint := bittrex.NewKovanBittrexEndpoint(signer)
-			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
+			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], feeConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
@@ -168,7 +168,7 @@ func NewRopstenExchangePool(
 		switch exparam {
 		case "bittrex":
 			endpoint := bittrex.NewRopstenBittrexEndpoint(signer)
-			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
+			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], feeConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
@@ -214,7 +214,7 @@ func NewMainnetExchangePool(
 		switch exparam {
 		case "bittrex":
 			endpoint := bittrex.NewRealBittrexEndpoint(signer)
-			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
+			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], feeConfig.Exchanges["bittrex"], endpoint, bittrexStorage)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
