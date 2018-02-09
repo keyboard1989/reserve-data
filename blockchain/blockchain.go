@@ -359,35 +359,49 @@ func (self *Blockchain) CurrentBlock() (uint64, error) {
 	return result, err
 }
 
-func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, error) {
+func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Hash) (tx *rpcTransaction, isPending bool, err error) {
+	var json *rpcTransaction
+	err = self.rpcClient.CallContext(ctx, &json, "eth_getTransactionByHash", hash)
+	if err != nil {
+		return nil, false, err
+	} else if json == nil {
+		return nil, false, ether.NotFound
+	} else if _, r, _ := json.tx.RawSignatureValues(); r == nil {
+		return nil, false, fmt.Errorf("server returned transaction without signature")
+	}
+	setSenderFromServer(json.tx, json.From, json.BlockHash)
+	return json, json.BlockNumber == nil, nil
+}
+
+func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	option := context.Background()
-	_, pending, err := self.client.TransactionByHash(option, hash)
+	tx, pending, err := self.TransactionByHash(option, hash)
 	if err == nil {
 		// tx exist
 		if pending {
-			return "", nil
+			return "", 0, nil
 		} else {
 			receipt, err := self.client.TransactionReceipt(option, hash)
 			if err != nil {
 				// networking issue
-				return "", err
+				return "", 0, err
 			} else {
 				if receipt.Status == 1 {
 					// successful tx
-					return "mined", nil
+					return "mined", tx.BlockNumber().Uint64(), nil
 				} else {
 					// failed tx
-					return "failed", nil
+					return "failed", tx.BlockNumber().Uint64(), nil
 				}
 			}
 		}
 	} else {
 		if err == ether.NotFound {
 			// tx doesn't exist. it failed
-			return "lost", nil
+			return "lost", 0, nil
 		} else {
 			// networking issue
-			return "", err
+			return "", 0, err
 		}
 	}
 }
