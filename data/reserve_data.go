@@ -147,7 +147,11 @@ func (self ReserveData) GetRates(fromTime, toTime uint64) ([]common.AllRateRespo
 		one.BlockNumber = rate.BlockNumber
 		//if one is the same as current
 		if isDuplicated(one.Data, current.Data) {
-			result[len(result)-1].ToBlockNumber = one.BlockNumber
+			if len(result) > 0 {
+				result[len(result)-1].ToBlockNumber = one.BlockNumber
+			} else {
+				one.ToBlockNumber = one.BlockNumber
+			}
 		} else {
 			one.ToBlockNumber = rate.BlockNumber
 			result = append(result, one)
