@@ -473,7 +473,6 @@ func NewBinance(interf BinanceInterface) *Binance {
 		interf,
 		[]common.TokenPair{
 			common.MustCreateTokenPair("OMG", "ETH"),
-<<<<<<< HEAD
 			// common.MustCreateTokenPair("KNC", "ETH"),
 			// common.MustCreateTokenPair("EOS", "ETH"),
 			// common.MustCreateTokenPair("ELF", "ETH"),
@@ -482,17 +481,6 @@ func NewBinance(interf BinanceInterface) *Binance {
 			// common.MustCreateTokenPair("BAT", "ETH"),
 			// common.MustCreateTokenPair("REQ", "ETH"),
 			// common.MustCreateTokenPair("GTO", "ETH"),
-=======
-			common.MustCreateTokenPair("KNC", "ETH"),
-			common.MustCreateTokenPair("SNT", "ETH"),
-			common.MustCreateTokenPair("EOS", "ETH"),
-			common.MustCreateTokenPair("ELF", "ETH"),
-			common.MustCreateTokenPair("POWR", "ETH"),
-			common.MustCreateTokenPair("MANA", "ETH"),
-			common.MustCreateTokenPair("BAT", "ETH"),
-			common.MustCreateTokenPair("REQ", "ETH"),
-			common.MustCreateTokenPair("GTO", "ETH"),
->>>>>>> 3b4f74f22dc66ff68d65b7a5d4b1457c082a4a69
 		},
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
