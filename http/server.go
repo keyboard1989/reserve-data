@@ -1212,7 +1212,7 @@ func (self *HTTPServer) GetSetrateStatus(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success": true,
-			"data":    data,
+			"data":    data.Status,
 		},
 	)
 }
