@@ -85,29 +85,29 @@ func (self ReserveData) CurrentRateVersion(timepoint uint64) (common.Version, er
 	return self.storage.CurrentRateVersion(timepoint)
 }
 
-func compareData(old, new map[string]common.RateResponse) bool {
-	for tokenID, oldElem := range old {
-		newelem, ok := new[tokenID]
+func isDuplicated(oldData, newData map[string]common.RateResponse) bool {
+	for tokenID, oldElem := range oldData {
+		newelem, ok := newData[tokenID]
 		if !ok {
-			return (false)
+			return false
 		}
 		if oldElem.BaseBuy != newelem.BaseBuy {
-			return (false)
+			return false
 		}
 		if oldElem.CompactBuy != newelem.CompactBuy {
-			return (false)
+			return false
 		}
 		if oldElem.BaseSell != newelem.BaseSell {
-			return (false)
+			return false
 		}
 		if oldElem.CompactSell != newelem.CompactSell {
-			return (false)
+			return false
 		}
 		if oldElem.Rate != newelem.Rate {
-			return (false)
+			return false
 		}
 	}
-	return (true)
+	return true
 }
 
 func getOneRateData(rate common.AllRateEntry) map[string]common.RateResponse {
@@ -145,10 +145,9 @@ func (self ReserveData) GetRates(fromTime, toTime uint64) ([]common.AllRateRespo
 		one.Valid = rate.Valid
 		one.Data = getOneRateData(rate)
 		one.BlockNumber = rate.BlockNumber
-		//if one is the same as current unchanged block
-		if compareData(one.Data, current.Data) {
+		//if one is the same as current
+		if isDuplicated(one.Data, current.Data) {
 			result[len(result)-1].ToBlockNumber = one.BlockNumber
-
 		} else {
 			one.ToBlockNumber = rate.BlockNumber
 			result = append(result, one)
