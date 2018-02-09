@@ -1,8 +1,6 @@
 package data
 
 import (
-	"log"
-
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
@@ -94,11 +92,9 @@ func compareData(old, new map[string]common.RateResponse) bool {
 			return (false)
 		}
 		if oldElem.BaseBuy != newelem.BaseBuy {
-			log.Println("basebuy was different")
 			return (false)
 		}
 		if oldElem.CompactBuy != newelem.CompactBuy {
-			log.Println("compactBuy was different")
 			return (false)
 		}
 		if oldElem.BaseSell != newelem.BaseSell {
@@ -115,6 +111,7 @@ func compareData(old, new map[string]common.RateResponse) bool {
 }
 
 func getOneRateData(rate common.AllRateEntry) map[string]common.RateResponse {
+	//get data from rate object and return the data.
 	data := map[string]common.RateResponse{}
 	for tokenID, r := range rate.Data {
 		data[tokenID] = common.RateResponse{
@@ -148,6 +145,7 @@ func (self ReserveData) GetRates(fromTime, toTime uint64) ([]common.AllRateRespo
 		one.Valid = rate.Valid
 		one.Data = getOneRateData(rate)
 		one.BlockNumber = rate.BlockNumber
+		//if one is the same as current unchanged block
 		if compareData(one.Data, current.Data) {
 			result[len(result)-1].ToBlockNumber = one.BlockNumber
 
@@ -156,8 +154,6 @@ func (self ReserveData) GetRates(fromTime, toTime uint64) ([]common.AllRateRespo
 			result = append(result, one)
 			current = one
 		}
-		log.Println("from %d to %d", one.BlockNumber, one.ToBlockNumber)
-
 	}
 
 	return result, nil
