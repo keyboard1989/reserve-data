@@ -1197,6 +1197,60 @@ func (self *HTTPServer) EnableRebalance(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetSetrateStatus(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetSetrateControl()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) HoldSetrate(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	self.metric.StoreSetrateControl(false)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+	return
+}
+
+func (self *HTTPServer) EnableSetrate(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	self.metric.StoreSetrateControl(true)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+	return
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
@@ -1233,6 +1287,10 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/rebalancestatus", self.GetRebalanceStatus)
 	self.r.POST("/holdrebalance", self.HoldRebalance)
 	self.r.POST("/enablerebalance", self.EnableRebalance)
+
+	self.r.GET("/setratestatus", self.GetSetrateStatus)
+	self.r.POST("/holdsetrate", self.HoldSetrate)
+	self.r.POST("/enablesetrate", self.EnableSetrate)
 
 	self.r.Run(self.host)
 }

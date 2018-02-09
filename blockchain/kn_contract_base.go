@@ -29,7 +29,7 @@ func ensureContext(ctx context.Context) context.Context {
 	return ctx
 }
 
-func (self *KNContractBase) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (self *KNContractBase) Call(opts *bind.CallOpts, atBlock *big.Int, result interface{}, method string, params ...interface{}) error {
 	// Don't crash on a lazy user
 	if opts == nil {
 		opts = new(bind.CallOpts)
@@ -45,8 +45,8 @@ func (self *KNContractBase) Call(opts *bind.CallOpts, result interface{}, method
 		code   []byte
 		output []byte
 	)
-	// not support block or pending calling yet
-	output, err = self.client.CallContract(ctx, msg, nil)
+	// not support pending calling yet
+	output, err = self.client.CallContract(ctx, msg, atBlock)
 	if err == nil && len(output) == 0 {
 		// Make sure we have a contract to operate on, and bail out otherwise.
 		if code, err = self.client.CodeAt(ctx, self.address, nil); err != nil {

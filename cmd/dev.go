@@ -53,7 +53,7 @@ func GetConfigForDev() *Config {
 	// endpoint := "https://kovan.infura.io"
 	endpoint := "https://mainnet.infura.io"
 	bkendpoints := []string{
-		"https://kovan.infura.io",
+		"https://mainnet.infura.io",
 	}
 
 	hmac512auth := http.KNAuthentication{
