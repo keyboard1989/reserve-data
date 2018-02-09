@@ -281,7 +281,7 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			if tx.Big().IsInt64() && tx.Big().Int64() == 0 {
 				continue
 			}
-			status, err := self.blockchain.TxStatus(tx)
+			status, blockNum, _ = self.blockchain.TxStatus(tx)
 			switch status {
 			case "":
 				if activity.Action == "set_rates" {
@@ -292,6 +292,7 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 							result[activity.ID] = common.ActivityStatus{
 								activity.ExchangeStatus,
 								activity.Result["tx"].(string),
+								blockNum,
 								"failed",
 								err,
 							}
@@ -299,7 +300,6 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 					}
 				}
 			case "mined":
-				blockNum, err = self.blockchain.GetBlockNumByTxHash(tx)
 				result[activity.ID] = common.ActivityStatus{
 					activity.ExchangeStatus,
 					activity.Result["tx"].(string),
@@ -308,7 +308,6 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 					err,
 				}
 			case "failed":
-				blockNum, err = self.blockchain.GetBlockNumByTxHash(tx)
 				result[activity.ID] = common.ActivityStatus{
 					activity.ExchangeStatus,
 					activity.Result["tx"].(string),
@@ -317,7 +316,6 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 					err,
 				}
 			case "lost":
-				blockNum, err = self.blockchain.GetBlockNumByTxHash(tx)
 				elapsed := common.GetTimepoint() - activity.Timestamp.ToUint64()
 				if elapsed > uint64(15*time.Minute/time.Millisecond) && activity.Action == "set_rates" {
 					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %s", activity.Result["tx"].(string), elapsed)
@@ -410,7 +408,7 @@ func (self *Fetcher) PersistSnapshot(
 		if activity.IsPending() {
 			pendingActivities = append(pendingActivities, activity)
 		}
-		activity.Result["blockNum"] = activityStatus.BlockNum
+		activity.Result["blockNumber"] = activityStatus.BlockNumber
 		err := self.storage.UpdateActivity(activity.ID, activity)
 		if err != nil {
 			snapshot.Valid = false

@@ -282,7 +282,7 @@ func (self ActivityRecord) IsPending() bool {
 type ActivityStatus struct {
 	ExchangeStatus string
 	Tx             string
-	BlockNum       uint64
+	BlockNumber    uint64
 	MiningStatus   string
 	Error          error
 }
@@ -530,8 +530,4 @@ type ExchangeTradeHistory map[TokenPairID][]TradeHistory
 type AllTradeHistory struct {
 	Timestamp Timestamp
 	Data      map[ExchangeID]ExchangeTradeHistory
-}
-
-type TxReceipt struct {
-	BlockNumber string `json: "blockNumber"`
 }
