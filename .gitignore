@@ -39,6 +39,10 @@ cmd/kovan.db
 cmd/settings.json
 cmd/staging.db
 cmd/staging_config.json
+cmd/mainnet.db
+cmd/mainnet_config.json
+cmd/mainnet_deposit_keystore
+cmd/mainnet_keystore
 debugger.txt
 log.log
 run.sh
