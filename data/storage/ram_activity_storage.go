@@ -3,6 +3,7 @@ package storage
 import (
 	"container/list"
 	"errors"
+	"sort"
 	"strconv"
 	"sync"
 
@@ -59,7 +60,21 @@ func (self *RamActivityStorage) StoreNewData(
 		MiningStatus:   mstatus,
 		Timestamp:      common.Timestamp(strconv.FormatUint(timepoint, 10)),
 	}
+
 	self.records.PushBack(&record)
+	// all other pending set rates should be staled now
+	// remove all of them
+	// AFTER EXPERIMENT, THIS WILL NOT WORK
+	// if action == "set_rates" {
+	// 	stales := []common.ActivityRecord{}
+	// 	activities := activitiesFromList(self.pendingRecords)
+	// 	for _, act := range activities {
+	// 		if act.Action == "set_rates" {
+	// 			stales = append(stales, act)
+	// 		}
+	// 	}
+	// 	self.RemovePendings(stales)
+	// }
 	if record.IsPending() {
 		self.pendingRecords.PushBack(&record)
 	}
@@ -94,10 +109,57 @@ func (self *RamActivityStorage) UpdateActivity(id common.ActivityID, activity co
 	}
 }
 
-func (self *RamActivityStorage) GetAllRecords() ([]common.ActivityRecord, error) {
+func (self *RamActivityStorage) GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()
-	return activitiesFromList(self.records), nil
+	allRecords := activitiesFromList(self.records)
+	toIndex := sort.Search(len(allRecords), func(i int) bool {
+		timepoint := allRecords[i].ID.Timepoint
+		return timepoint <= fromTime
+	})
+	fromIndex := sort.Search(len(allRecords), func(i int) bool {
+		timepoint := allRecords[i].ID.Timepoint
+		return timepoint <= toTime
+	})
+	from := 0
+	to := len(allRecords)
+	if toTime != 0 && fromIndex < len(allRecords) {
+		from = fromIndex
+	}
+	if fromTime != 0 && toIndex < len(allRecords) {
+		timePoint := allRecords[toIndex].ID.Timepoint
+		if timePoint == fromTime {
+			to = toIndex + 1
+		} else {
+			to = toIndex
+		}
+	}
+	result := allRecords[from:to]
+	return result, nil
+}
+
+func (self *RamActivityStorage) RemovePendings(stales []common.ActivityRecord) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	toRemoves := []*list.Element{}
+	ele := self.pendingRecords.Back()
+	for {
+		if ele == nil {
+			break
+		} else {
+			activity := ele.Value.(*common.ActivityRecord)
+			for _, stale := range stales {
+				if activity.ID == stale.ID {
+					toRemoves = append(toRemoves, ele)
+				}
+			}
+			ele = ele.Prev()
+		}
+	}
+	for _, e := range toRemoves {
+		self.pendingRecords.Remove(e)
+	}
+	return nil
 }
 
 func (self *RamActivityStorage) GetPendingRecords() ([]common.ActivityRecord, error) {

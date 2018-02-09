@@ -85,14 +85,90 @@ func (self ReserveData) CurrentRateVersion(timepoint uint64) (common.Version, er
 	return self.storage.CurrentRateVersion(timepoint)
 }
 
-func (self ReserveData) GetAllRates(timepoint uint64) (common.AllRateResponse, error) {
+func isDuplicated(oldData, newData map[string]common.RateResponse) bool {
+	for tokenID, oldElem := range oldData {
+		newelem, ok := newData[tokenID]
+		if !ok {
+			return false
+		}
+		if oldElem.BaseBuy != newelem.BaseBuy {
+			return false
+		}
+		if oldElem.CompactBuy != newelem.CompactBuy {
+			return false
+		}
+		if oldElem.BaseSell != newelem.BaseSell {
+			return false
+		}
+		if oldElem.CompactSell != newelem.CompactSell {
+			return false
+		}
+		if oldElem.Rate != newelem.Rate {
+			return false
+		}
+	}
+	return true
+}
+
+func getOneRateData(rate common.AllRateEntry) map[string]common.RateResponse {
+	//get data from rate object and return the data.
+	data := map[string]common.RateResponse{}
+	for tokenID, r := range rate.Data {
+		data[tokenID] = common.RateResponse{
+			Valid:       rate.Valid,
+			Error:       rate.Error,
+			Timestamp:   rate.Timestamp,
+			ReturnTime:  rate.ReturnTime,
+			BaseBuy:     common.BigToFloat(r.BaseBuy, 18),
+			CompactBuy:  r.CompactBuy,
+			BaseSell:    common.BigToFloat(r.BaseSell, 18),
+			CompactSell: r.CompactSell,
+			Block:       r.Block,
+		}
+	}
+	return data
+}
+
+func (self ReserveData) GetRates(fromTime, toTime uint64) ([]common.AllRateResponse, error) {
+	result := []common.AllRateResponse{}
+	rates, err := self.storage.GetRates(fromTime, toTime)
+	if err != nil {
+		return result, err
+	}
+	//current: the unchanged one so far
+	current := common.AllRateResponse{}
+	for _, rate := range rates {
+		one := common.AllRateResponse{}
+		one.Timestamp = rate.Timestamp
+		one.ReturnTime = rate.ReturnTime
+		one.Error = rate.Error
+		one.Valid = rate.Valid
+		one.Data = getOneRateData(rate)
+		one.BlockNumber = rate.BlockNumber
+		//if one is the same as current
+		if isDuplicated(one.Data, current.Data) {
+			if len(result) > 0 {
+				result[len(result)-1].ToBlockNumber = one.BlockNumber
+			} else {
+				one.ToBlockNumber = one.BlockNumber
+			}
+		} else {
+			one.ToBlockNumber = rate.BlockNumber
+			result = append(result, one)
+			current = one
+		}
+	}
+
+	return result, nil
+}
+func (self ReserveData) GetRate(timepoint uint64) (common.AllRateResponse, error) {
 	timestamp := common.GetTimestamp()
 	version, err := self.storage.CurrentRateVersion(timepoint)
 	if err != nil {
 		return common.AllRateResponse{}, err
 	} else {
 		result := common.AllRateResponse{}
-		rates, err := self.storage.GetAllRates(version)
+		rates, err := self.storage.GetRate(version)
 		returnTime := common.GetTimestamp()
 		result.Version = version
 		result.Timestamp = timestamp
@@ -116,12 +192,21 @@ func (self ReserveData) GetAllRates(timepoint uint64) (common.AllRateResponse, e
 	}
 }
 
-func (self ReserveData) GetRecords() ([]common.ActivityRecord, error) {
-	return self.storage.GetAllRecords()
+func (self ReserveData) GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
+	return self.storage.GetAllRecords(fromTime, toTime)
 }
 
 func (self ReserveData) GetPendingActivities() ([]common.ActivityRecord, error) {
 	return self.storage.GetPendingActivities()
+}
+
+func (self ReserveData) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
+	return self.storage.GetTradeLogs(fromTime, toTime)
+}
+
+func (self ReserveData) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
+	data, err := self.storage.GetTradeHistory(timepoint)
+	return data, err
 }
 
 func (self ReserveData) Run() error {

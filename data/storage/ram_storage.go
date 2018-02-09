@@ -12,11 +12,13 @@ import (
 // If Core uses such data, please use other kind of storage such as
 // bolt.
 type RamStorage struct {
-	price    *RamPriceStorage
-	auth     *RamAuthStorage
-	rate     *RamRateStorage
-	activity *RamActivityStorage
-	bittrex  *RamBittrexStorage
+	price        *RamPriceStorage
+	auth         *RamAuthStorage
+	rate         *RamRateStorage
+	activity     *RamActivityStorage
+	log          *RamLogStorage
+	bittrex      *RamBittrexStorage
+	tradeHistory *RamTradeStorage
 }
 
 func NewRamStorage() *RamStorage {
@@ -25,7 +27,9 @@ func NewRamStorage() *RamStorage {
 		NewRamAuthStorage(),
 		NewRamRateStorage(),
 		NewRamActivityStorage(),
+		NewRamLogStorage(),
 		NewRamBittrexStorage(),
+		NewRamTradeStorage(),
 	}
 }
 
@@ -56,8 +60,12 @@ func (self *RamStorage) GetAuthData(version common.Version) (common.AuthDataSnap
 	return self.auth.GetSnapshot(int64(version))
 }
 
-func (self *RamStorage) GetAllRates(version common.Version) (common.AllRateEntry, error) {
-	return self.rate.GetRates(int64(version))
+func (self *RamStorage) GetRate(version common.Version) (common.AllRateEntry, error) {
+	return self.rate.GetRate(int64(version))
+}
+
+func (self *RamStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntry, error) {
+	return self.rate.GetRates(fromTime, toTime)
 }
 
 func (self *RamStorage) StorePrice(data common.AllPriceEntry, timepoint uint64) error {
@@ -92,12 +100,21 @@ func (self *RamStorage) Record(
 	)
 }
 
-func (self *RamStorage) GetAllRecords() ([]common.ActivityRecord, error) {
-	return self.activity.GetAllRecords()
+func (self *RamStorage) GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
+	return self.activity.GetAllRecords(fromTime, toTime)
 }
 
 func (self *RamStorage) GetPendingActivities() ([]common.ActivityRecord, error) {
 	return self.activity.GetPendingRecords()
+}
+
+func (self *RamStorage) PendingSetrate(minedNonce uint64) (*common.ActivityRecord, error) {
+	pendings, err := self.GetPendingActivities()
+	if err != nil {
+		return nil, err
+	} else {
+		return getLastPendingSetrate(pendings, minedNonce)
+	}
 }
 
 func (self *RamStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID) bool {
@@ -110,4 +127,28 @@ func (self *RamStorage) RegisterBittrexDeposit(id uint64, actID common.ActivityI
 
 func (self *RamStorage) HasPendingDeposit(token common.Token, exchange common.Exchange) bool {
 	return self.activity.HasPendingDeposit(token, exchange)
+}
+
+func (self *RamStorage) UpdateLogBlock(block uint64, timepoint uint64) error {
+	return self.log.UpdateLogBlock(block, timepoint)
+}
+
+func (self *RamStorage) LastBlock() (uint64, error) {
+	return self.log.LastBlock()
+}
+
+func (self *RamStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
+	return self.log.GetTradeLogs(fromTime, toTime)
+}
+
+func (self *RamStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) error {
+	return self.log.StoreTradeLog(stat, timepoint)
+}
+
+func (self *RamStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
+	return self.tradeHistory.GetTradeHistory(timepoint)
+}
+
+func (self *RamStorage) StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error {
+	return self.tradeHistory.StoreTradeHistory(data, timepoint)
 }

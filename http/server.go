@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -8,6 +9,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
@@ -56,24 +58,36 @@ func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 
 func IsIntime(nonce string) bool {
 	serverTime := common.GetTimepoint()
+	log.Printf("Server time: %d, None: %d", serverTime, nonce)
 	nonceInt, err := strconv.ParseInt(nonce, 10, 64)
 	if err != nil {
 		log.Printf("IsIntime returns false, err: %v", err)
 		return false
 	}
 	difference := nonceInt - int64(serverTime)
-	if difference < -10000 || difference > 10000 {
+	if difference < -30000 || difference > 30000 {
 		log.Printf("IsIntime returns false, nonce: %d, serverTime: %d, difference: %d", nonceInt, int64(serverTime), difference)
 		return false
 	}
 	return true
 }
 
+func eligible(ups, allowedPerms []Permission) bool {
+	for _, up := range ups {
+		for _, ap := range allowedPerms {
+			if up == ap {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // signed message (message = url encoded both query params and post params, keys are sorted) in "signed" header
 // using HMAC512
 // params must contain "nonce" which is the unixtime in millisecond. The nonce will be invalid
 // if it differs from server time more than 10s
-func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string) (url.Values, bool) {
+func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string, perms []Permission) (url.Values, bool) {
 	err := c.Request.ParseForm()
 	if err != nil {
 		c.JSON(
@@ -91,6 +105,7 @@ func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string) (
 	}
 
 	params := c.Request.Form
+	log.Printf("Form params: %s\n", params)
 	if !IsIntime(params.Get("nonce")) {
 		c.JSON(
 			http.StatusOK,
@@ -117,20 +132,27 @@ func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string) (
 
 	signed := c.GetHeader("signed")
 	message := c.Request.Form.Encode()
-	knsign := self.auth.KNSign(message)
-	log.Printf(
-		"Signing message(%s) to check authentication. Expected \"%s\", got \"%s\"",
-		message, knsign, signed)
-	if signed == knsign {
+	userPerms := self.auth.GetPermission(signed, message)
+	if eligible(userPerms, perms) {
 		return params, true
 	} else {
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"success": false,
-				"reason":  "Invalid signed token",
-			},
-		)
+		if len(userPerms) == 0 {
+			c.JSON(
+				http.StatusOK,
+				gin.H{
+					"success": false,
+					"reason":  "Invalid signed token",
+				},
+			)
+		} else {
+			c.JSON(
+				http.StatusOK,
+				gin.H{
+					"success": false,
+					"reason":  "You don't have permission to proceed",
+				},
+			)
+		}
 		return params, false
 	}
 }
@@ -190,7 +212,7 @@ func (self *HTTPServer) Price(c *gin.Context) {
 
 func (self *HTTPServer) AuthData(c *gin.Context) {
 	log.Printf("Getting current auth data snapshot \n")
-	_, ok := self.Authenticated(c, []string{})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -214,9 +236,33 @@ func (self *HTTPServer) AuthData(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) GetRates(c *gin.Context) {
+	log.Printf("Getting all rates \n")
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if toTime == 0 {
+		toTime = MAX_TIMESPOT
+	}
+	data, err := self.app.GetRates(fromTime, toTime)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) GetRate(c *gin.Context) {
 	log.Printf("Getting all rates \n")
-	data, err := self.app.GetAllRates(getTimePoint(c, true))
+	data, err := self.app.GetRate(getTimePoint(c, true))
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -236,7 +282,7 @@ func (self *HTTPServer) GetRate(c *gin.Context) {
 }
 
 func (self *HTTPServer) SetRate(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"tokens", "buys", "sells", "block"})
+	postForm, ok := self.Authenticated(c, []string{"tokens", "buys", "sells", "block", "afp_mid"}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
@@ -244,6 +290,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	buys := postForm.Get("buys")
 	sells := postForm.Get("sells")
 	block := postForm.Get("block")
+	afpMid := postForm.Get("afp_mid")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenAddrs, "-") {
 		token, err := common.GetToken(tok)
@@ -265,6 +312,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 				http.StatusOK,
 				gin.H{"success": false, "reason": err.Error()},
 			)
+			return
 		} else {
 			bigBuys = append(bigBuys, r)
 		}
@@ -277,6 +325,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 				http.StatusOK,
 				gin.H{"success": false, "reason": err.Error()},
 			)
+			return
 		} else {
 			bigSells = append(bigSells, r)
 		}
@@ -289,7 +338,20 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 		)
 		return
 	}
-	id, err := self.core.SetRates(tokens, bigBuys, bigSells, big.NewInt(intBlock))
+	bigAfpMid := []*big.Int{}
+	for _, rate := range strings.Split(afpMid, "-") {
+		r, err := hexutil.DecodeBig(rate)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		} else {
+			bigAfpMid = append(bigAfpMid, r)
+		}
+	}
+	id, err := self.core.SetRates(tokens, bigBuys, bigSells, big.NewInt(intBlock), bigAfpMid)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -308,7 +370,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 }
 
 func (self *HTTPServer) Trade(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"base", "quote", "amount", "rate", "type"})
+	postForm, ok := self.Authenticated(c, []string{"base", "quote", "amount", "rate", "type"}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
@@ -390,7 +452,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 }
 
 func (self *HTTPServer) CancelOrder(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"order_id"})
+	postForm, ok := self.Authenticated(c, []string{"order_id"}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
@@ -432,7 +494,7 @@ func (self *HTTPServer) CancelOrder(c *gin.Context) {
 }
 
 func (self *HTTPServer) Withdraw(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"token", "amount"})
+	postForm, ok := self.Authenticated(c, []string{"token", "amount"}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
@@ -484,7 +546,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 }
 
 func (self *HTTPServer) Deposit(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"amount", "token"})
+	postForm, ok := self.Authenticated(c, []string{"amount", "token"}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
@@ -537,12 +599,42 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 
 func (self *HTTPServer) GetActivities(c *gin.Context) {
 	log.Printf("Getting all activity records \n")
-	_, ok := self.Authenticated(c, []string{})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 
-	data, err := self.app.GetRecords()
+	data, err := self.app.GetRecords(fromTime*1000000, toTime*1000000)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
+func (self *HTTPServer) TradeLogs(c *gin.Context) {
+	log.Printf("Getting trade logs")
+	fromTime, err := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	if err != nil {
+		fromTime = 0
+	}
+	toTime, err := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if err != nil {
+		toTime = uint64(time.Now().UnixNano())
+	}
+
+	data, err := self.app.GetTradeLogs(fromTime, toTime)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -578,7 +670,7 @@ func (self *HTTPServer) StopFetcher(c *gin.Context) {
 
 func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
 	log.Printf("Getting all immediate pending activity records \n")
-	_, ok := self.Authenticated(c, []string{})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -605,7 +697,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 		Timestamp: common.GetTimepoint(),
 	}
 	log.Printf("Getting metrics")
-	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"})
+	postForm, ok := self.Authenticated(c, []string{"tokens", "from", "to"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -661,7 +753,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 
 func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 	log.Printf("Storing metrics")
-	postForm, ok := self.Authenticated(c, []string{"timestamp", "data"})
+	postForm, ok := self.Authenticated(c, []string{"timestamp", "data"}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
@@ -731,33 +823,52 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
-	log.Println("Get exchange info")
-	exchangeParam := c.Param("exchangeid")
-	exchange, err := common.GetExchange(exchangeParam)
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
-		)
-		return
-	}
-	exchangeInfo, err := exchange.GetInfo()
-	if err != nil {
+	exchangeParam := c.Query("exchangeid")
+	if exchangeParam == "" {
+		data := map[string]map[common.TokenPairID]common.ExchangePrecisionLimit{}
+		for _, ex := range common.SupportedExchanges {
+			exchangeInfo, err := ex.GetInfo()
+			if err != nil {
+				c.JSON(
+					http.StatusOK,
+					gin.H{"success": false, "reason": err.Error()},
+				)
+				return
+			}
+			data[string(ex.ID())] = exchangeInfo.GetData()
+		}
 		c.JSON(
 			http.StatusOK,
 			gin.H{
-				"success": false,
-				"reason":  err.Error(),
+				"success": true,
+				"data":    data,
+			},
+		)
+	} else {
+		exchange, err := common.GetExchange(exchangeParam)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		exchangeInfo, err := exchange.GetInfo()
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    exchangeInfo.GetData(),
 			},
 		)
 	}
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-			"data":    exchangeInfo.GetData(),
-		},
-	)
 }
 
 func (self *HTTPServer) GetPairInfo(c *gin.Context) {
@@ -814,14 +925,10 @@ func (self *HTTPServer) GetExchangeFee(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetFee(c *gin.Context) {
-	var data []map[string]common.ExchangeFees
-	var exchangeFee map[string]common.ExchangeFees
+	data := map[string]common.ExchangeFees{}
 	for _, exchange := range common.SupportedExchanges {
 		fee := exchange.GetFee()
-		exchangeFee = map[string]common.ExchangeFees{
-			string(exchange.ID()): fee,
-		}
-		data = append(data, exchangeFee)
+		data[string(exchange.ID())] = fee
 	}
 	c.JSON(
 		http.StatusOK,
@@ -830,15 +937,330 @@ func (self *HTTPServer) GetFee(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetTargetQty(c *gin.Context) {
+	log.Println("Getting target quantity")
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetTokenTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": true, "data": data},
+		)
+	}
+}
+
+func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
+	log.Println("Getting pending target qty")
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetPendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": data},
+	)
+	return
+}
+
+func targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold float64) error {
+	if total <= reserve {
+		return errors.New("Total quantity must bigger than reserver quantity")
+	}
+	if rebalanceThresold < 0 || rebalanceThresold > 1 || transferThresold < 0 || transferThresold > 1 {
+		return errors.New("Rebalance and transfer thresold must bigger than 0 and smaller than 1")
+	}
+	return nil
+}
+
+func (self *HTTPServer) ConfirmTargetQty(c *gin.Context) {
+	log.Println("Confirm target quantity")
+	postForm, ok := self.Authenticated(c, []string{"data", "type"}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data := postForm.Get("data")
+	id := postForm.Get("id")
+	err := self.metric.StoreTokenTargetQty(id, data)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true},
+	)
+	return
+}
+
+func (self *HTTPServer) CancelTargetQty(c *gin.Context) {
+	log.Println("Cancel target quantity")
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	err := self.metric.RemovePendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true},
+	)
+	return
+}
+
+func (self *HTTPServer) SetTargetQty(c *gin.Context) {
+	log.Println("Storing target quantity")
+	postForm, ok := self.Authenticated(c, []string{"data", "type"}, []Permission{ConfigurePermission})
+	if !ok {
+		return
+	}
+	data := postForm.Get("data")
+	dataType := postForm.Get("type")
+	log.Println("Setting target qty")
+	var err error
+	for _, dataConfig := range strings.Split(data, "|") {
+		dataParts := strings.Split(dataConfig, "_")
+		if dataType == "" || (dataType == "1" && len(dataParts) != 5) {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "Data submitted not enough information"},
+			)
+			return
+		}
+		token := dataParts[0]
+		total, _ := strconv.ParseFloat(dataParts[1], 64)
+		reserve, _ := strconv.ParseFloat(dataParts[2], 64)
+		rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
+		transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
+		_, err = common.GetToken(token)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+	}
+	err = self.metric.StorePendingTargetQty(data, dataType)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+
+	pendingData, err := self.metric.GetPendingTargetQty()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": pendingData},
+	)
+	return
+}
+
+func (self *HTTPServer) GetAddress(c *gin.Context) {
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": self.core.GetAddresses()},
+	)
+	return
+}
+
+func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
+	timepoint := common.GetTimepoint()
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+
+	data, err := self.app.GetTradeHistory(timepoint)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"data":    err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetTimeServer(c *gin.Context) {
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    common.GetTimestamp(),
+		},
+	)
+}
+
+func (self *HTTPServer) GetRebalanceStatus(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetRebalanceControl()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data.Status,
+		},
+	)
+}
+
+func (self *HTTPServer) HoldRebalance(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	self.metric.StoreRebalanceControl(false)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+	return
+}
+
+func (self *HTTPServer) EnableRebalance(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	self.metric.StoreRebalanceControl(true)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+	return
+}
+
+func (self *HTTPServer) GetSetrateStatus(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetSetrateControl()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) HoldSetrate(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	self.metric.StoreSetrateControl(false)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+	return
+}
+
+func (self *HTTPServer) EnableSetrate(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	self.metric.StoreSetrateControl(true)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+	return
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
 	self.r.GET("/getrates", self.GetRate)
+	self.r.GET("/get-all-rates", self.GetRates)
 
 	self.r.GET("/authdata", self.AuthData)
 	self.r.GET("/activities", self.GetActivities)
 	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
-
+	self.r.GET("/tradelogs", self.TradeLogs)
 	self.r.GET("/metrics", self.Metrics)
 	self.r.POST("/metrics", self.StoreMetrics)
 
@@ -847,10 +1269,28 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
 	self.r.POST("/trade/:exchangeid", self.Trade)
 	self.r.POST("/setrates", self.SetRate)
-	self.r.GET("/exchangeinfo/:exchangeid", self.GetExchangeInfo)
+	self.r.GET("/exchangeinfo", self.GetExchangeInfo)
 	self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
 	self.r.GET("/exchangefees", self.GetFee)
 	self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
+	self.r.GET("/core/addresses", self.GetAddress)
+	self.r.GET("/tradehistory", self.GetTradeHistory)
+
+	self.r.GET("/targetqty", self.GetTargetQty)
+	self.r.GET("/pendingtargetqty", self.GetPendingTargetQty)
+	self.r.POST("/settargetqty", self.SetTargetQty)
+	self.r.POST("/confirmtargetqty", self.ConfirmTargetQty)
+	self.r.POST("/canceltargetqty", self.CancelTargetQty)
+
+	self.r.GET("/timeserver", self.GetTimeServer)
+
+	self.r.GET("/rebalancestatus", self.GetRebalanceStatus)
+	self.r.POST("/holdrebalance", self.HoldRebalance)
+	self.r.POST("/enablerebalance", self.EnableRebalance)
+
+	self.r.GET("/setratestatus", self.GetSetrateStatus)
+	self.r.POST("/holdsetrate", self.HoldSetrate)
+	self.r.POST("/enablesetrate", self.EnableSetrate)
 
 	self.r.Run(self.host)
 }
@@ -866,7 +1306,11 @@ func NewHTTPServer(
 
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
-	r.Use(cors.Default())
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AddAllowHeaders("signed")
+	corsConfig.AllowAllOrigins = true
+	corsConfig.MaxAge = 5 * time.Minute
+	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
 		app, core, metric, host, enableAuth, authEngine, r,

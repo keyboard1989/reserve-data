@@ -14,15 +14,19 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-const BITTREX_EPSILON float64 = 0.00000001
+const BITTREX_EPSILON float64 = 0.000001
 
 type Bittrex struct {
 	interf       BittrexInterface
 	pairs        []common.TokenPair
-	addresses    map[string]ethereum.Address
+	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
+}
+
+func (self *Bittrex) TokenAddresses() map[string]ethereum.Address {
+	return self.addresses.GetData()
 }
 
 func (self *Bittrex) MarshalText() (text []byte, err error) {
@@ -30,7 +34,7 @@ func (self *Bittrex) MarshalText() (text []byte, err error) {
 }
 
 func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses[token.ID]
+	addr, supported := self.addresses.Get(token.ID)
 	return addr, supported
 }
 
@@ -39,13 +43,19 @@ func (self *Bittrex) GetFee() common.ExchangeFees {
 }
 
 func (self *Bittrex) UpdateAllDepositAddresses(address string) {
-	for k, _ := range self.addresses {
-		self.addresses[k] = ethereum.HexToAddress(address)
+	data := self.addresses.GetData()
+	for k, _ := range data {
+		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }
 
 func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
-	self.addresses[token.ID] = ethereum.HexToAddress(address)
+	liveAddress, _ := self.interf.GetDepositAddress(token.ID)
+	if liveAddress.Result.Address != "" {
+		self.addresses.Update(token.ID, ethereum.HexToAddress(liveAddress.Result.Address))
+	} else {
+		self.addresses.Update(token.ID, ethereum.HexToAddress(address))
+	}
 }
 
 func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {
@@ -175,6 +185,19 @@ func (self *Bittrex) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 		return "", err
 	} else {
 		for _, deposit := range histories.Result {
+			log.Printf("Bittrex deposit history check: %v %v %v %v",
+				deposit.Currency == currency,
+				deposit.Amount-amount < BITTREX_EPSILON,
+				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond),
+				self.storage.IsNewBittrexDeposit(deposit.Id, id),
+			)
+			log.Printf("deposit.Currency: %s", deposit.Currency)
+			log.Printf("currency: %s", currency)
+			log.Printf("deposit.Amount: %s", deposit.Amount)
+			log.Printf("amount: %s", amount)
+			log.Printf("deposit.LastUpdated: %s", bitttimestampToUint64(deposit.LastUpdated))
+			log.Printf("timestamp: %s", timestamp/uint64(time.Millisecond))
+			log.Printf("is new deposit: %s", self.storage.IsNewBittrexDeposit(deposit.Id, id))
 			if deposit.Currency == currency &&
 				deposit.Amount-amount < BITTREX_EPSILON &&
 				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond) &&
@@ -329,21 +352,62 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	return result, nil
 }
 
+func (self *Bittrex) FetchOnePairTradeHistory(
+	wait *sync.WaitGroup,
+	data *sync.Map,
+	pair common.TokenPair,
+	timepoint uint64) {
+
+	defer wait.Done()
+	result := []common.TradeHistory{}
+	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, timepoint)
+	if err != nil {
+		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
+	}
+	for _, trade := range resp.Result {
+		t, _ := time.Parse("2014-07-09T04:01:00.667", trade.TimeStamp)
+		historyType := "sell"
+		if trade.OrderType == "LIMIT_BUY" {
+			historyType = "buy"
+		}
+		tradeHistory := common.TradeHistory{
+			trade.OrderUuid,
+			trade.Price,
+			trade.Quantity,
+			historyType,
+			common.TimeToTimepoint(t),
+		}
+		result = append(result, tradeHistory)
+	}
+	pairString := pair.PairID()
+	data.Store(pairString, result)
+}
+
+func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+	result := map[common.TokenPairID][]common.TradeHistory{}
+	data := sync.Map{}
+	pairs := self.pairs
+	wait := sync.WaitGroup{}
+	for _, pair := range pairs {
+		wait.Add(1)
+		go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
+	}
+	wait.Wait()
+	data.Range(func(key, value interface{}) bool {
+		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+		return true
+	})
+	return result, nil
+}
+
 func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 	return &Bittrex{
 		interf,
 		[]common.TokenPair{
 			common.MustCreateTokenPair("OMG", "ETH"),
-			common.MustCreateTokenPair("DGD", "ETH"),
-			common.MustCreateTokenPair("CVC", "ETH"),
-			common.MustCreateTokenPair("FUN", "ETH"),
-			common.MustCreateTokenPair("MCO", "ETH"),
-			common.MustCreateTokenPair("GNT", "ETH"),
-			common.MustCreateTokenPair("ADX", "ETH"),
-			common.MustCreateTokenPair("PAY", "ETH"),
-			common.MustCreateTokenPair("BAT", "ETH"),
+			common.MustCreateTokenPair("SNT", "ETH"),
 		},
-		map[string]ethereum.Address{},
+		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),
 		common.NewExchangeFee(
@@ -352,29 +416,15 @@ func NewBittrex(interf BittrexInterface, storage BittrexStorage) *Bittrex {
 				"maker": 0.0025,
 			},
 			common.NewFundingFee(
-				map[string]float32{
+				map[string]float64{
 					"ETH": 0.006,
 					"OMG": 0.3,
-					"DGD": 0.034,
-					"CVC": 6,
-					"FUN": 36,
-					"MCO": 0.35,
-					"GNT": 6,
-					"ADX": 2.5,
-					"PAY": 1.5,
-					"BAT": 11,
+					"SNT": 20.0,
 				},
-				map[string]float32{
+				map[string]float64{
 					"ETH": 0,
 					"OMG": 0,
-					"DGD": 0,
-					"CVC": 0,
-					"FUN": 0,
-					"MCO": 0,
-					"GNT": 0,
-					"ADX": 0,
-					"PAY": 0,
-					"BAT": 0,
+					"SNT": 0,
 				},
 			),
 		),

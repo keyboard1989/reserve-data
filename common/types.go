@@ -1,6 +1,7 @@
 package common
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"math/big"
@@ -8,6 +9,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type Version uint64
@@ -40,10 +43,46 @@ func TimepointToTime(t uint64) time.Time {
 	return time.Unix(0, int64(t)*int64(time.Millisecond))
 }
 
+type ExchangeAddresses struct {
+	mu   sync.RWMutex
+	data map[string]ethereum.Address
+}
+
+func NewExchangeAddresses() *ExchangeAddresses {
+	return &ExchangeAddresses{
+		mu:   sync.RWMutex{},
+		data: map[string]ethereum.Address{},
+	}
+}
+
+func (self *ExchangeAddresses) Update(tokenID string, address ethereum.Address) {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	self.data[tokenID] = address
+}
+
+func (self *ExchangeAddresses) Get(tokenID string) (ethereum.Address, bool) {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	address, supported := self.data[tokenID]
+	return address, supported
+}
+
+func (self *ExchangeAddresses) GetData() map[string]ethereum.Address {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	dataCopy := map[string]ethereum.Address{}
+	for k, v := range self.data {
+		dataCopy[k] = v
+	}
+	return dataCopy
+}
+
 type ExchangePrecisionLimit struct {
 	Precision   TokenPairPrecision
 	AmountLimit TokenPairAmountLimit
 	PriceLimit  TokenPairPriceLimit
+	MinNotional float64
 }
 
 // ExchangeInfo is written and read concurrently
@@ -87,20 +126,20 @@ type TokenPairPrecision struct {
 }
 
 type TokenPairAmountLimit struct {
-	Min float32
-	Max float32
+	Min float64
+	Max float64
 }
 
 type TokenPairPriceLimit struct {
-	Min float32
-	Max float32
+	Min float64
+	Max float64
 }
 
-type TradingFee map[string]float32
+type TradingFee map[string]float64
 
 type FundingFee struct {
-	Withdraw map[string]float32
-	Deposit  map[string]float32
+	Withdraw map[string]float64
+	Deposit  map[string]float64
 }
 
 type ExchangeFees struct {
@@ -115,7 +154,7 @@ func NewExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {
 	}
 }
 
-func NewFundingFee(withdraw map[string]float32, deposit map[string]float32) FundingFee {
+func NewFundingFee(withdraw map[string]float64, deposit map[string]float64) FundingFee {
 	return FundingFee{
 		withdraw,
 		deposit,
@@ -133,6 +172,15 @@ type ExchangeID string
 type ActivityID struct {
 	Timepoint uint64
 	EID       string
+}
+
+func (self ActivityID) ToBytes() [64]byte {
+	var b [64]byte
+	temp := make([]byte, 64)
+	binary.BigEndian.PutUint64(temp, self.Timepoint)
+	temp = append(temp, []byte(self.EID)...)
+	copy(b[0:], temp)
+	return b
 }
 
 func (self ActivityID) MarshalText() ([]byte, error) {
@@ -234,6 +282,7 @@ func (self ActivityRecord) IsPending() bool {
 type ActivityStatus struct {
 	ExchangeStatus string
 	Tx             string
+	BlockNumber    uint64
 	MiningStatus   string
 	Error          error
 }
@@ -433,18 +482,53 @@ type RateResponse struct {
 }
 
 type AllRateEntry struct {
-	Valid      bool
-	Error      string
-	Timestamp  Timestamp
-	ReturnTime Timestamp
-	Data       map[string]RateEntry
+	Valid       bool
+	Error       string
+	Timestamp   Timestamp
+	ReturnTime  Timestamp
+	Data        map[string]RateEntry
+	BlockNumber uint64
 }
 
 type AllRateResponse struct {
-	Version    Version
-	Valid      bool
-	Error      string
-	Timestamp  Timestamp
-	ReturnTime Timestamp
-	Data       map[string]RateResponse
+	Version       Version
+	Valid         bool
+	Error         string
+	Timestamp     Timestamp
+	ReturnTime    Timestamp
+	Data          map[string]RateResponse
+	BlockNumber   uint64
+	ToBlockNumber uint64
+}
+
+type TradeLog struct {
+	Timestamp        uint64
+	BlockNumber      uint64
+	TransactionHash  ethereum.Hash
+	TransactionIndex uint
+
+	SrcAddress  ethereum.Address
+	DestAddress ethereum.Address
+	SrcAmount   *big.Int
+	DestAmount  *big.Int
+
+	ReserveAddress ethereum.Address
+	WalletAddress  ethereum.Address
+	WalletFee      *big.Int
+	BurnFee        *big.Int
+}
+
+type TradeHistory struct {
+	ID        string
+	Price     float64
+	Qty       float64
+	Type      string // buy or sell
+	Timestamp uint64
+}
+
+type ExchangeTradeHistory map[TokenPairID][]TradeHistory
+
+type AllTradeHistory struct {
+	Timestamp Timestamp
+	Data      map[ExchangeID]ExchangeTradeHistory
 }

@@ -1,8 +1,9 @@
 package reserve
 
 import (
-	"github.com/KyberNetwork/reserve-data/common"
 	"math/big"
+
+	"github.com/KyberNetwork/reserve-data/common"
 )
 
 // all of the functions must support concurrency
@@ -15,10 +16,14 @@ type ReserveData interface {
 	GetAuthData(timestamp uint64) (common.AuthDataResponse, error)
 
 	CurrentRateVersion(timestamp uint64) (common.Version, error)
-	GetAllRates(timestamp uint64) (common.AllRateResponse, error)
+	GetRate(timestamp uint64) (common.AllRateResponse, error)
+	GetRates(fromTime, toTime uint64) ([]common.AllRateResponse, error)
 
-	GetRecords() ([]common.ActivityRecord, error)
+	GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error)
 	GetPendingActivities() ([]common.ActivityRecord, error)
+
+	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
+	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
 
 	Run() error
 	Stop() error
@@ -50,5 +55,7 @@ type ReserveCore interface {
 	CancelOrder(id common.ActivityID, exchange common.Exchange) error
 
 	// blockchain related action
-	SetRates(tokens []common.Token, buys, sells []*big.Int, block *big.Int) (common.ActivityID, error)
+	SetRates(tokens []common.Token, buys, sells []*big.Int, block *big.Int, afpMid []*big.Int) (common.ActivityID, error)
+
+	GetAddresses() *common.Addresses
 }

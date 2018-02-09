@@ -1,22 +1,29 @@
 package metric
 
 import (
-	"github.com/KyberNetwork/reserve-data/common"
+	"errors"
 	"log"
+	"strconv"
 	"sync"
+
+	"github.com/KyberNetwork/reserve-data/common"
 )
 
 const MAX_CAPACITY int = 1000
 
 type RamMetricStorage struct {
-	mu   sync.RWMutex
-	data []*MetricEntry
+	mu               sync.RWMutex
+	data             []*MetricEntry
+	pendingTargetQty TokenTargetQty
+	tokenTargetQty   TokenTargetQty
 }
 
 func NewRamMetricStorage() *RamMetricStorage {
 	return &RamMetricStorage{
-		mu:   sync.RWMutex{},
-		data: []*MetricEntry{},
+		mu:               sync.RWMutex{},
+		data:             []*MetricEntry{},
+		pendingTargetQty: TokenTargetQty{},
+		tokenTargetQty:   TokenTargetQty{},
 	}
 }
 
@@ -66,4 +73,71 @@ func (self *RamMetricStorage) GetMetric(tokens []common.Token, fromTime, toTime 
 		result[k] = *v
 	}
 	return result, nil
+}
+
+func (self *RamMetricStorage) StorePendingTargetQty(data, dataType string) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	if self.pendingTargetQty.ID != 0 {
+		return errors.New("There is one pending target quantity, please confirm or cancel it before adding a new one")
+	}
+	self.pendingTargetQty.Type, _ = strconv.ParseInt(dataType, 10, 64)
+	self.pendingTargetQty.Data = data
+	self.pendingTargetQty.Status = "unconfirmed"
+	self.pendingTargetQty.ID = common.GetTimepoint()
+	return nil
+}
+
+func (self *RamMetricStorage) RemovePendingTargetQty() error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	self.pendingTargetQty = TokenTargetQty{}
+	return nil
+}
+
+func (self *RamMetricStorage) GetPendingTargetQty() (TokenTargetQty, error) {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	result := self.pendingTargetQty
+	return result, nil
+}
+
+func (self *RamMetricStorage) StoreTokenTargetQty(id, data string) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
+	if self.pendingTargetQty.ID == 0 {
+		return errors.New("There is not pending data. Please set before confirm")
+	}
+	self.tokenTargetQty = self.pendingTargetQty
+	self.tokenTargetQty.Status = "confirmed"
+	self.RemovePendingTargetQty()
+	return nil
+}
+
+func (self *RamMetricStorage) GetTokenTargetQty() (TokenTargetQty, error) {
+	self.mu.RLock()
+	defer self.mu.RUnlock()
+	return self.tokenTargetQty, nil
+}
+
+func (self *RamMetricStorage) GetRebalanceControl() (RebalanceControl, error) {
+	// TODO: update this
+	result := RebalanceControl{}
+	return result, nil
+}
+
+func (self *RamMetricStorage) StoreRebalanceControl(status bool) error {
+	// TODO: update this
+	return nil
+}
+
+func (self *RamMetricStorage) GetSetrateControl() (SetrateControl, error) {
+	// TODO: update this
+	result := SetrateControl{}
+	return result, nil
+}
+
+func (self *RamMetricStorage) StoreSetrateControl(status bool) error {
+	// TODO: update this
+	return nil
 }

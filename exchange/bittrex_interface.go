@@ -15,6 +15,10 @@ type BittrexInterface interface {
 
 	GetExchangeInfo() (BittExchangeInfo, error)
 
+	GetDepositAddress(currency string) (BittrexDepositAddress, error)
+
+	GetAccountTradeHistory(base, quote common.Token, timepoint uint64) (BittTradeHistory, error)
+
 	Withdraw(
 		token common.Token,
 		amount *big.Int,

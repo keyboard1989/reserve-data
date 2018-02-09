@@ -25,3 +25,19 @@ type MetricResponse struct {
 	ReturnTime uint64
 	Data       map[string]MetricList
 }
+
+type TokenTargetQty struct {
+	ID        uint64
+	Timestamp uint64
+	Data      string
+	Status    string
+	Type      int64
+}
+
+type RebalanceControl struct {
+	Status bool `json:status`
+}
+
+type SetrateControl struct {
+	Status bool `json:status`
+}

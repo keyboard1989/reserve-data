@@ -21,17 +21,21 @@ type Config struct {
 	FetcherExchanges []fetcher.Exchange
 	Exchanges        []common.Exchange
 	BlockchainSigner blockchain.Signer
+	DepositSigner    blockchain.Signer
 
 	EnableAuthentication bool
 	AuthEngine           http.Authentication
 
-	EthereumEndpoint string
+	EthereumEndpoint        string
+	BackupEthereumEndpoints []string
 
 	SupportedTokens []common.Token
 
-	WrapperAddress ethereum.Address
-	PricingAddress ethereum.Address
-	ReserveAddress ethereum.Address
+	WrapperAddress   ethereum.Address
+	PricingAddress   ethereum.Address
+	ReserveAddress   ethereum.Address
+	FeeBurnerAddress ethereum.Address
+	NetworkAddress   ethereum.Address
 }
 
 func (self *Config) MapTokens() map[string]common.Token {

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"sync"
 	"testing"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -15,7 +14,11 @@ type testBittrexInterface struct {
 	DepositHistoryMock string
 }
 
-func (self testBittrexInterface) FetchOnePairData(wq *sync.WaitGroup, pair common.TokenPair, data *sync.Map, timepoint uint64) {
+func (self testBittrexInterface) FetchOnePairData(pair common.TokenPair, timepoint uint64) (Bittresp, error) {
+	return Bittresp{}, nil
+}
+func (self testBittrexInterface) GetExchangeInfo() (BittExchangeInfo, error) {
+	return BittExchangeInfo{}, nil
 }
 func (self testBittrexInterface) GetInfo(timepoint uint64) (Bittinfo, error) {
 	return Bittinfo{}, nil
@@ -31,8 +34,8 @@ func (self testBittrexInterface) Trade(
 	tradeType string,
 	base, quote common.Token,
 	rate, amount float64,
-	timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
-	return "", 0, 0, false, nil
+	timepoint uint64) (Bitttrade, error) {
+	return Bitttrade{}, nil
 }
 func (self testBittrexInterface) CancelOrder(uuid string, timepoint uint64) (Bittcancelorder, error) {
 	return Bittcancelorder{}, nil
@@ -49,6 +52,14 @@ func (self testBittrexInterface) WithdrawHistory(currency string, timepoint uint
 }
 func (self testBittrexInterface) OrderStatus(uuid string, timepoint uint64) (Bitttraderesult, error) {
 	return Bitttraderesult{}, nil
+}
+
+func (self testBittrexInterface) GetAccountTradeHistory(base, quote common.Token, timepoint uint64) (BittTradeHistory, error) {
+	return BittTradeHistory{}, nil
+}
+
+func (self testBittrexInterface) GetDepositAddress(currency string) (BittrexDepositAddress, error) {
+	return BittrexDepositAddress{}, nil
 }
 
 type testBittrexStorage struct {
@@ -68,8 +79,10 @@ func getTestBittrex(depositHistory string, registered bool) *Bittrex {
 	return &Bittrex{
 		testBittrexInterface{depositHistory},
 		[]common.TokenPair{},
-		map[string]ethereum.Address{},
+		common.NewExchangeAddresses(),
 		&testBittrexStorage{registered},
+		&common.ExchangeInfo{},
+		common.ExchangeFees{},
 	}
 }
 

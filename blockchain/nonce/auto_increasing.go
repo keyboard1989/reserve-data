@@ -4,6 +4,7 @@ import (
 	"context"
 	"math/big"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -33,8 +34,16 @@ func (self *AutoIncreasing) GetAddress() ethereum.Address {
 }
 
 func (self *AutoIncreasing) getNonceFromNode() (*big.Int, error) {
-	option := context.Background()
-	nonce, err := self.ethclient.PendingNonceAt(option, self.signer.GetAddress())
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	nonce, err := self.ethclient.PendingNonceAt(ctx, self.signer.GetAddress())
+	return big.NewInt(int64(nonce)), err
+}
+
+func (self *AutoIncreasing) MinedNonce() (*big.Int, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	nonce, err := self.ethclient.NonceAt(ctx, self.signer.GetAddress(), nil)
 	return big.NewInt(int64(nonce)), err
 }
 

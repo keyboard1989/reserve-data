@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -13,14 +14,18 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-const BINANCE_EPSILON float64 = 0.0000000001 // 10e-10
+const BINANCE_EPSILON float64 = 0.0000001 // 10e-7
 
 type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
-	addresses    map[string]ethereum.Address
+	addresses    *common.ExchangeAddresses
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
+}
+
+func (self *Binance) TokenAddresses() map[string]ethereum.Address {
+	return self.addresses.GetData()
 }
 
 func (self *Binance) MarshalText() (text []byte, err error) {
@@ -28,18 +33,33 @@ func (self *Binance) MarshalText() (text []byte, err error) {
 }
 
 func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses[token.ID]
+	addr, supported := self.addresses.Get(token.ID)
 	return addr, supported
 }
 
 func (self *Binance) UpdateAllDepositAddresses(address string) {
-	for k, _ := range self.addresses {
-		self.addresses[k] = ethereum.HexToAddress(address)
+	data := self.addresses.GetData()
+	for k, _ := range data {
+		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }
 
 func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
-	self.addresses[token.ID] = ethereum.HexToAddress(address)
+	liveAddress, _ := self.interf.GetDepositAddress(strings.ToLower(token.ID))
+	if liveAddress.Address != "" {
+		self.addresses.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
+	} else {
+		self.addresses.Update(token.ID, ethereum.HexToAddress(address))
+	}
+}
+
+func (self *Binance) precisionFromStepSize(stepSize string) int {
+	re := regexp.MustCompile("0*$")
+	parts := strings.Split(re.ReplaceAllString(stepSize, ""), ".")
+	if len(parts) > 1 {
+		return len(parts[1])
+	}
+	return 0
 }
 
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
@@ -54,20 +74,27 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 			for _, filter := range symbol.Filters {
 				if filter.FilterType == "LOT_SIZE" {
 					// update amount min
-					minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 32)
-					exchangePrecisionLimit.AmountLimit.Min = float32(minQuantity)
+					minQuantity, _ := strconv.ParseFloat(filter.MinQuantity, 64)
+					exchangePrecisionLimit.AmountLimit.Min = minQuantity
 					// update amount max
-					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 32)
-					exchangePrecisionLimit.AmountLimit.Max = float32(maxQuantity)
+					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 64)
+					exchangePrecisionLimit.AmountLimit.Max = maxQuantity
+					exchangePrecisionLimit.Precision.Amount = self.precisionFromStepSize(filter.StepSize)
 				}
 
 				if filter.FilterType == "PRICE_FILTER" {
 					// update price min
-					minPrice, _ := strconv.ParseFloat(filter.MinPrice, 32)
-					exchangePrecisionLimit.PriceLimit.Min = float32(minPrice)
+					minPrice, _ := strconv.ParseFloat(filter.MinPrice, 64)
+					exchangePrecisionLimit.PriceLimit.Min = minPrice
 					// update price max
-					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 32)
-					exchangePrecisionLimit.PriceLimit.Max = float32(maxPrice)
+					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 64)
+					exchangePrecisionLimit.PriceLimit.Max = maxPrice
+					exchangePrecisionLimit.Precision.Price = self.precisionFromStepSize(filter.TickSize)
+				}
+
+				if filter.FilterType == "MIN_NOTIONAL" {
+					minNotional, _ := strconv.ParseFloat(filter.MinNotional, 64)
+					exchangePrecisionLimit.MinNotional = minNotional
 				}
 			}
 			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
@@ -153,12 +180,9 @@ func (self *Binance) CancelOrder(id common.ActivityID) error {
 		return err
 	}
 	symbol := idParts[1]
-	result, err := self.interf.CancelOrder(symbol, idNo)
+	_, err = self.interf.CancelOrder(symbol, idNo)
 	if err != nil {
 		return err
-	}
-	if result.Code != 0 {
-		return errors.New("Couldn't cancel order id " + id.EID + " err: " + result.Msg)
 	}
 	return nil
 }
@@ -187,8 +211,8 @@ func (self *Binance) FetchOnePairData(
 			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
 		} else {
 			for _, buy := range resp_data.Bids {
-				quantity, _ := strconv.ParseFloat(buy[1], 64)
-				rate, _ := strconv.ParseFloat(buy[0], 64)
+				quantity, _ := strconv.ParseFloat(buy.Quantity, 64)
+				rate, _ := strconv.ParseFloat(buy.Rate, 64)
 				result.Bids = append(
 					result.Bids,
 					common.PriceEntry{
@@ -198,8 +222,8 @@ func (self *Binance) FetchOnePairData(
 				)
 			}
 			for _, sell := range resp_data.Asks {
-				quantity, _ := strconv.ParseFloat(sell[1], 64)
-				rate, _ := strconv.ParseFloat(sell[0], 64)
+				quantity, _ := strconv.ParseFloat(sell.Quantity, 64)
+				rate, _ := strconv.ParseFloat(sell.Rate, 64)
 				result.Asks = append(
 					result.Asks,
 					common.PriceEntry{
@@ -326,6 +350,55 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	return result, nil
 }
 
+func (self *Binance) FetchOnePairTradeHistory(
+	wait *sync.WaitGroup,
+	data *sync.Map,
+	pair common.TokenPair,
+	timepoint uint64) {
+
+	defer wait.Done()
+	result := []common.TradeHistory{}
+	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, 0, timepoint)
+	if err != nil {
+		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
+	}
+	pairString := pair.PairID()
+	for _, trade := range resp {
+		price, _ := strconv.ParseFloat(trade.Price, 64)
+		quantity, _ := strconv.ParseFloat(trade.Qty, 64)
+		historyType := "sell"
+		if trade.IsBuyer {
+			historyType = "buy"
+		}
+		tradeHistory := common.TradeHistory{
+			strconv.FormatUint(trade.ID, 10),
+			price,
+			quantity,
+			historyType,
+			trade.Time,
+		}
+		result = append(result, tradeHistory)
+	}
+	data.Store(pairString, result)
+}
+
+func (self *Binance) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+	result := map[common.TokenPairID][]common.TradeHistory{}
+	data := sync.Map{}
+	pairs := self.pairs
+	wait := sync.WaitGroup{}
+	for _, pair := range pairs {
+		wait.Add(1)
+		go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
+	}
+	wait.Wait()
+	data.Range(func(key, value interface{}) bool {
+		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+		return true
+	})
+	return result, nil
+}
+
 func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	idParts := strings.Split(id.EID, "|")
 	if len(idParts) != 3 {
@@ -399,14 +472,18 @@ func NewBinance(interf BinanceInterface) *Binance {
 	return &Binance{
 		interf,
 		[]common.TokenPair{
-			common.MustCreateTokenPair("FUN", "ETH"),
-			common.MustCreateTokenPair("MCO", "ETH"),
 			common.MustCreateTokenPair("OMG", "ETH"),
-			common.MustCreateTokenPair("EOS", "ETH"),
 			common.MustCreateTokenPair("KNC", "ETH"),
-			common.MustCreateTokenPair("LINK", "ETH"),
+			common.MustCreateTokenPair("SNT", "ETH"),
+			common.MustCreateTokenPair("EOS", "ETH"),
+			common.MustCreateTokenPair("ELF", "ETH"),
+			common.MustCreateTokenPair("POWR", "ETH"),
+			common.MustCreateTokenPair("MANA", "ETH"),
+			common.MustCreateTokenPair("BAT", "ETH"),
+			common.MustCreateTokenPair("REQ", "ETH"),
+			common.MustCreateTokenPair("GTO", "ETH"),
 		},
-		map[string]ethereum.Address{},
+		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		common.NewExchangeFee(
 			common.TradingFee{
@@ -414,23 +491,31 @@ func NewBinance(interf BinanceInterface) *Binance {
 				"maker": 0.001,
 			},
 			common.NewFundingFee(
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0.01,
-					"EOS":  0.7,
-					"MCO":  0.3,
-					"OMG":  0.3,
-					"KNC":  2.0,
-					"FUN":  80.0,
-					"LINK": 10.0,
+					"EOS":  1,
+					"OMG":  0.7,
+					"KNC":  2.6,
+					"SNT":  38.0,
+					"ELF":  6.2,
+					"POWR": 13.6,
+					"MANA": 89,
+					"BAT":  23,
+					"REQ":  27.8,
+					"GTO":  31,
 				},
-				map[string]float32{
+				map[string]float64{
 					"ETH":  0,
 					"EOS":  0,
-					"MCO":  0,
 					"OMG":  0,
 					"KNC":  0,
-					"FUN":  0,
-					"LINK": 0,
+					"SNT":  0,
+					"ELF":  0,
+					"POWR": 0,
+					"MANA": 0,
+					"BAT":  0,
+					"REQ":  0,
+					"GTO":  0,
 				},
 			),
 		),

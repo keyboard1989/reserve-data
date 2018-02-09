@@ -21,6 +21,8 @@ func GetConfigForRopsten() *Config {
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
+	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -35,9 +37,9 @@ func GetConfigForRopsten() *Config {
 	storage := storage.NewRamStorage()
 	metricStorage := metric.NewRamMetricStorage()
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 
-	fileSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
+	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
 	exchangePool := NewRopstenExchangePool(
 		addressConfig, fileSigner, storage,
@@ -46,20 +48,27 @@ func GetConfigForRopsten() *Config {
 	// endpoint := "http://localhost:8545"
 	// endpoint := "https://ropsten.kyber.network"
 	endpoint := "https://ropsten.infura.io"
+	bkendpoints := []string{
+		"https://api.myetherapi.com/rop",
+	}
 
 	return &Config{
-		ActivityStorage:  storage,
-		DataStorage:      storage,
-		FetcherStorage:   storage,
-		MetricStorage:    metricStorage,
-		FetcherRunner:    fetcherRunner,
-		FetcherExchanges: exchangePool.FetcherExchanges(),
-		Exchanges:        exchangePool.CoreExchanges(),
-		BlockchainSigner: fileSigner,
-		EthereumEndpoint: endpoint,
-		SupportedTokens:  tokens,
-		WrapperAddress:   wrapperAddr,
-		PricingAddress:   pricingAddr,
-		ReserveAddress:   reserveAddr,
+		ActivityStorage:         storage,
+		DataStorage:             storage,
+		FetcherStorage:          storage,
+		MetricStorage:           metricStorage,
+		FetcherRunner:           fetcherRunner,
+		FetcherExchanges:        exchangePool.FetcherExchanges(),
+		Exchanges:               exchangePool.CoreExchanges(),
+		BlockchainSigner:        fileSigner,
+		DepositSigner:           depositSigner,
+		EthereumEndpoint:        endpoint,
+		BackupEthereumEndpoints: bkendpoints,
+		SupportedTokens:         tokens,
+		WrapperAddress:          wrapperAddr,
+		PricingAddress:          pricingAddr,
+		ReserveAddress:          reserveAddr,
+		FeeBurnerAddress:        burnerAddr,
+		NetworkAddress:          networkAddr,
 	}
 }

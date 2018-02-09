@@ -1,11 +1,28 @@
 package exchange
 
+import (
+	"encoding/json"
+)
+
+type Binaprice struct {
+	Quantity string
+	Rate     string
+}
+
+func (self *Binaprice) UnmarshalJSON(text []byte) error {
+	temp := []interface{}{}
+	err := json.Unmarshal(text, &temp)
+	self.Quantity = temp[1].(string)
+	self.Rate = temp[0].(string)
+	return err
+}
+
 type Binaresp struct {
-	LastUpdatedId int64      `json:"lastUpdateId"`
-	Code          int        `json:"code"`
-	Msg           string     `json:"msg"`
-	Bids          [][]string `json:"bids"`
-	Asks          [][]string `json:"asks"`
+	LastUpdatedId int64       `json:"lastUpdateId"`
+	Code          int         `json:"code"`
+	Msg           string      `json:"msg"`
+	Bids          []Binaprice `json:"bids"`
+	Asks          []Binaprice `json:"asks"`
 }
 
 type Binainfo struct {
@@ -31,6 +48,9 @@ type FilterLimit struct {
 	MaxPrice    string `json:"maxPrice"`
 	MinQuantity string `json:"minQty"`
 	MaxQuantity string `json:"maxQty"`
+	StepSize    string `json:"stepSize"`
+	TickSize    string `json:"tickSize"`
+	MinNotional string `json:"minNotional"`
 }
 
 type BinanceSymbol struct {
@@ -53,13 +73,13 @@ type Binatrade struct {
 
 type Binawithdraw struct {
 	Success bool   `json:"success"`
-	Message string `json:"msg"`
+	Msg     string `json:"msg"`
 	ID      string `json:"id"`
 }
 
 type Binaorder struct {
 	Code          int    `json:"code"`
-	Message       string `json:"msg"`
+	Msg           string `json:"msg"`
 	Symbol        string `json:"symbol"`
 	OrderId       uint64 `json:"orderId"`
 	ClientOrderId string `json:"clientOrderId"`
@@ -78,9 +98,9 @@ type Binaorder struct {
 type Binaorders []Binaorder
 
 type Binadepositaddress struct {
+	Success    bool   `json:"success"`
 	Msg        string `json:"msg"`
 	Address    string `json:"address"`
-	Success    bool   `json:"success"`
 	AddressTag string `json:"addressTag"`
 	Asset      string `json:"asset"`
 }
@@ -169,4 +189,29 @@ type Binawithdrawal struct {
 	TxID      string  `json:"txId"`
 	ApplyTime uint64  `json:"applyTime"`
 	Status    int     `json:"status"`
+}
+
+type BinaServerTime struct {
+	ServerTime uint64 `json:"serverTime"`
+}
+
+type BinanceTradeHistory []struct {
+	ID          uint64 `json:"id"`
+	Price       string `json:"price"`
+	Qty         string `json:"qty"`
+	Time        uint64 `json:"time"`
+	IsBuyer     bool   `json:"isBuyer"`
+	IsMaker     bool   `json:"isMaker"`
+	IsBestMatch bool   `json:"isBestMatch"`
+}
+
+type BinaAccountTradeHistory []struct {
+	ID          uint64 `json:"id"`
+	OrderID     uint64 `json:"orderId"`
+	Price       string `json:"price"`
+	Qty         string `json:"qty"`
+	Time        uint64 `json:"time"`
+	IsBuyer     bool   `json:"isBuyer"`
+	IsMaker     bool   `json:"isMaker"`
+	isBestMatch bool   `json:"isBestMatch"`
 }

@@ -27,3 +27,17 @@ func (self TestExchange) CancelOrder(id ActivityID) error {
 func (self TestExchange) MarshalText() (text []byte, err error) {
 	return []byte("bittrex"), nil
 }
+func (self TestExchange) GetExchangeInfo(pair TokenPairID) (ExchangePrecisionLimit, error) {
+	return ExchangePrecisionLimit{}, nil
+}
+func (self TestExchange) GetFee() ExchangeFees {
+	return ExchangeFees{}
+}
+func (self TestExchange) GetInfo() (ExchangeInfo, error) {
+	return ExchangeInfo{}, nil
+}
+func (self TestExchange) TokenAddresses() map[string]ethereum.Address {
+	return map[string]ethereum.Address{}
+}
+func (self TestExchange) UpdateDepositAddress(token Token, address string) {
+}

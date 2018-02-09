@@ -43,9 +43,17 @@ func main() {
 		log.Printf("Running in production mode")
 		config = GetConfigForMainnet()
 		break
+	case "staging":
+		log.Printf("Running in staging mode")
+		config = GetConfigForStaging()
+		break
 	case "simulation":
 		log.Printf("Running in simulation mode")
 		config = GetConfigForSimulation()
+		break
+	case "kovan":
+		log.Printf("Running in kovan mode")
+		config = GetConfigForKovan()
 		break
 	case "ropsten":
 		log.Printf("Running in ropsten mode")
@@ -85,19 +93,37 @@ func main() {
 		panic(err)
 	}
 	infura := ethclient.NewClient(client)
+	bkclients := map[string]*ethclient.Client{}
+	for _, ep := range config.BackupEthereumEndpoints {
+		bkclient, err := ethclient.Dial(ep)
+		if err != nil {
+			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, err)
+		} else {
+			bkclients[ep] = bkclient
+		}
+	}
 
 	// nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
 	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
+	nonceDeposit := nonce.NewTimeWindow(infura, config.DepositSigner)
 
 	bc, err := blockchain.NewBlockchain(
 		client,
 		infura,
+		bkclients,
 		config.WrapperAddress,
 		config.PricingAddress,
+		config.FeeBurnerAddress,
+		config.NetworkAddress,
 		config.ReserveAddress,
 		config.BlockchainSigner,
+		config.DepositSigner,
 		nonceCorpus,
+		nonceDeposit,
 	)
+	if err != nil {
+		panic(err)
+	}
 	for _, token := range config.SupportedTokens {
 		bc.AddToken(token)
 	}
