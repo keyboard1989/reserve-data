@@ -281,17 +281,23 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			if tx.Big().IsInt64() && tx.Big().Int64() == 0 {
 				continue
 			}
-			status, err = self.blockchain.TxStatus(tx)
-			if activity.Action == "set_rates" {
-				actNonce := activity.Result["nonce"]
-				if actNonce != nil {
-					nonce, _ := strconv.ParseUint(actNonce.(string), 10, 64)
-					if nonce < minedNonce {
-						status = "failed"
+			status, err := self.blockchain.TxStatus(tx)
+			switch status {
+			case "":
+				if activity.Action == "set_rates" {
+					actNonce := activity.Result["nonce"]
+					if actNonce != nil {
+						nonce, _ := strconv.ParseUint(actNonce.(string), 10, 64)
+						if nonce < minedNonce {
+							result[activity.ID] = common.ActivityStatus{
+								activity.ExchangeStatus,
+								activity.Result["tx"].(string),
+								"failed",
+								err,
+							}
+						}
 					}
 				}
-			}
-			switch status {
 			case "mined":
 				blockNum, err = self.blockchain.GetBlockNumByTxHash(tx)
 				result[activity.ID] = common.ActivityStatus{
@@ -460,7 +466,7 @@ func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []commo
 			var status string
 			var tx string
 			var blockNum uint64
-			
+
 			id := activity.ID
 			if activity.Action == "trade" {
 				status, err = exchange.OrderStatus(id, timepoint)
