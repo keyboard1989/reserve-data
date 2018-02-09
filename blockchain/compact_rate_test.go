@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type BigIntToCompactRateTestCase struct {
@@ -94,6 +95,16 @@ func TestBigIntToCompactRate(t *testing.T) {
 		RateInput:        big.NewInt(1000),
 		BaseInput:        big.NewInt(3000),
 		ExpectedBase:     1000,
+		ExpectedCompact:  0,
+		ExpectedOverflow: true,
+	}, t)
+	// test random
+	ri, _ := hexutil.DecodeBig("0x3bda3d56119cb5e30") // 69005232528522174000
+	bi, _ := hexutil.DecodeBig("0x3bec3ecbb229e74b0") // 69086322997277390000
+	testOutcome(BigIntToCompactRateTestCase{
+		RateInput:        ri,
+		BaseInput:        bi,
+		ExpectedBase:     0,
 		ExpectedCompact:  0,
 		ExpectedOverflow: true,
 	}, t)

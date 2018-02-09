@@ -33,7 +33,7 @@ const (
 type Blockchain struct {
 	rpcClient     *rpc.Client
 	client        *ethclient.Client
-	wrapper       *ContractWrapper
+	wrapper       *KNWrapperContract
 	pricing       *KNPricingContract
 	reserve       *KNReserveContract
 	rm            ethereum.Address
@@ -87,7 +87,7 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 		}
 	}
 	bulkIndices, indicesInBulk, err := self.wrapper.GetTokenIndicies(
-		nil,
+		nil, nil,
 		self.pricingAddr,
 		tokens,
 	)
@@ -244,7 +244,7 @@ func (self *Blockchain) SetRates(
 	} else {
 		// fix to 50.1 gwei
 		baseBuys, baseSells, _, _, _, err := self.wrapper.GetTokenRates(
-			nil, self.pricingAddr, tokens,
+			nil, nil, self.pricingAddr, tokens,
 		)
 		if err != nil {
 			return nil, err
@@ -387,7 +387,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uin
 		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 	}
 	timestamp := common.GetTimestamp()
-	balances, err := self.wrapper.GetBalances(nil, reserve, tokens)
+	balances, err := self.wrapper.GetBalances(nil, nil, reserve, tokens)
 	returnTime := common.GetTimestamp()
 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
 	if err != nil {
@@ -412,7 +412,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uin
 	return result, nil
 }
 
-func (self *Blockchain) FetchRates(timepoint uint64) (common.AllRateEntry, error) {
+func (self *Blockchain) FetchRates(timepoint uint64, block uint64) (common.AllRateEntry, error) {
 	result := common.AllRateEntry{}
 	tokenAddrs := []ethereum.Address{}
 	validTokens := []common.Token{}
@@ -424,11 +424,12 @@ func (self *Blockchain) FetchRates(timepoint uint64) (common.AllRateEntry, error
 	}
 	timestamp := common.GetTimestamp()
 	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.wrapper.GetTokenRates(
-		nil, self.pricingAddr, tokenAddrs,
+		nil, big.NewInt(int64(block)), self.pricingAddr, tokenAddrs,
 	)
 	returnTime := common.GetTimestamp()
 	result.Timestamp = timestamp
 	result.ReturnTime = returnTime
+	result.BlockNumber = block
 	if err != nil {
 		result.Valid = false
 		result.Error = err.Error()
@@ -449,11 +450,11 @@ func (self *Blockchain) FetchRates(timepoint uint64) (common.AllRateEntry, error
 	}
 }
 
-func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int) (*big.Int, error) {
+func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock *big.Int) (*big.Int, error) {
 	if priceType == "buy" {
-		return self.pricing.GetRate(nil, token, block, true, qty)
+		return self.pricing.GetRate(nil, atBlock, token, block, true, qty)
 	} else {
-		return self.pricing.GetRate(nil, token, block, false, qty)
+		return self.pricing.GetRate(nil, atBlock, token, block, false, qty)
 	}
 }
 
@@ -613,7 +614,7 @@ func NewBlockchain(
 	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
 	nonceDeposit NonceCorpus) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
-	wrapper, err := NewContractWrapper(wrapperAddr, ethereum)
+	wrapper, err := NewKNWrapperContract(wrapperAddr, ethereum)
 	if err != nil {
 		return nil, err
 	}

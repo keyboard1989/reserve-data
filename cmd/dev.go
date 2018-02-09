@@ -13,6 +13,7 @@ import (
 )
 
 func GetConfigForDev() *Config {
+	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
@@ -49,6 +50,7 @@ func GetConfigForDev() *Config {
 
 	// endpoint := "https://ropsten.infura.io"
 	// endpoint := "http://blockchain:8545"
+	// endpoint := "https://kovan.infura.io"
 	endpoint := "https://kovan.infura.io"
 	bkendpoints := []string{
 		"https://kovan.infura.io",

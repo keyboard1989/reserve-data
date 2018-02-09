@@ -7,7 +7,8 @@ import (
 
 type Blockchain interface {
 	FetchBalanceData(addr ethereum.Address, timepoint uint64) (map[string]common.BalanceEntry, error)
-	FetchRates(timepoint uint64) (common.AllRateEntry, error)
+	// fetch current raw rates at specific block
+	FetchRates(timepoint uint64, block uint64) (common.AllRateEntry, error)
 	TxStatus(tx ethereum.Hash) (string, error)
 	CurrentBlock() (uint64, error)
 	SetRateMinedNonce() (uint64, error)

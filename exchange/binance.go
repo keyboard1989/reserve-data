@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -52,6 +53,15 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) {
 	}
 }
 
+func (self *Binance) precisionFromStepSize(stepSize string) int {
+	re := regexp.MustCompile("0*$")
+	parts := strings.Split(re.ReplaceAllString(stepSize, ""), ".")
+	if len(parts) > 1 {
+		return len(parts[1])
+	}
+	return 0
+}
+
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
@@ -69,6 +79,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					// update amount max
 					maxQuantity, _ := strconv.ParseFloat(filter.MaxQuantity, 64)
 					exchangePrecisionLimit.AmountLimit.Max = maxQuantity
+					exchangePrecisionLimit.Precision.Amount = self.precisionFromStepSize(filter.StepSize)
 				}
 
 				if filter.FilterType == "PRICE_FILTER" {
@@ -78,6 +89,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					// update price max
 					maxPrice, _ := strconv.ParseFloat(filter.MaxPrice, 64)
 					exchangePrecisionLimit.PriceLimit.Max = maxPrice
+					exchangePrecisionLimit.Precision.Price = self.precisionFromStepSize(filter.TickSize)
 				}
 
 				if filter.FilterType == "MIN_NOTIONAL" {
@@ -464,7 +476,13 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.MustCreateTokenPair("KNC", "ETH"),
 			common.MustCreateTokenPair("EOS", "ETH"),
 			common.MustCreateTokenPair("SNT", "ETH"),
-			common.MustCreateTokenPair("SALT", "ETH"),
+			// common.MustCreateTokenPair("SALT", "ETH"),
+			common.MustCreateTokenPair("ELF", "ETH"),
+			common.MustCreateTokenPair("POWR", "ETH"),
+			common.MustCreateTokenPair("MANA", "ETH"),
+			common.MustCreateTokenPair("BAT", "ETH"),
+			common.MustCreateTokenPair("REQ", "ETH"),
+			common.MustCreateTokenPair("GTO", "ETH"),
 		},
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
@@ -476,11 +494,16 @@ func NewBinance(interf BinanceInterface) *Binance {
 			common.NewFundingFee(
 				map[string]float64{
 					"ETH":  0.01,
-					"EOS":  0.7,
-					"OMG":  0.3,
-					"KNC":  2.0,
-					"SNT":  34.0,
-					"SALT": 1.3,
+					"EOS":  1,
+					"OMG":  0.7,
+					"KNC":  2.6,
+					"SNT":  38.0,
+					"ELF":  6.2,
+					"POWR": 13.6,
+					"MANA": 89,
+					"BAT":  23,
+					"REQ":  27.8,
+					"GTO":  31,
 				},
 				map[string]float64{
 					"ETH":  0,
@@ -488,7 +511,12 @@ func NewBinance(interf BinanceInterface) *Binance {
 					"OMG":  0,
 					"KNC":  0,
 					"SNT":  0,
-					"SALT": 0,
+					"ELF":  0,
+					"POWR": 0,
+					"MANA": 0,
+					"BAT":  0,
+					"REQ":  0,
+					"GTO":  0,
 				},
 			),
 		),

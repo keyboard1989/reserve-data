@@ -31,9 +31,9 @@ func (self *KNPricingContract) SetQtyStepFunction(opts *bind.TransactOpts, token
 	return self.KNContractBase.BuildTx(opts, "setQtyStepFunction", token, xBuy, yBuy, xSell, ySell)
 }
 
-func (self *KNPricingContract) GetRate(opts *bind.CallOpts, token ethereum.Address, currentBlockNumber *big.Int, buy bool, qty *big.Int) (*big.Int, error) {
+func (self *KNPricingContract) GetRate(opts *bind.CallOpts, atBlock *big.Int, token ethereum.Address, currentBlockNumber *big.Int, buy bool, qty *big.Int) (*big.Int, error) {
 	out := big.NewInt(0)
-	err := self.KNContractBase.Call(opts, out, "getRate", token, currentBlockNumber, buy, qty)
+	err := self.KNContractBase.Call(opts, atBlock, out, "getRate", token, currentBlockNumber, buy, qty)
 	return out, err
 }
 
