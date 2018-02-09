@@ -18,6 +18,11 @@ func GetConfigForMainnet() *Config {
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
 	}
+	feePath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json"
+	feeConfig, err := common.GetFeeFromFile(feePath)
+	if err != nil {
+		log.Fatalf("Fees file cannot found at: %s", feePath, err)
+	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
@@ -44,7 +49,7 @@ func GetConfigForMainnet() *Config {
 	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
 	exchangePool := NewMainnetExchangePool(
-		addressConfig, fileSigner, storage,
+		feeConfig, addressConfig, fileSigner, storage,
 	)
 
 	hmac512auth := http.KNAuthentication{

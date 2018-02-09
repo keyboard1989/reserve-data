@@ -468,50 +468,29 @@ func (self *Binance) OrderStatus(id common.ActivityID, timepoint uint64) (string
 	}
 }
 
-func NewBinance(addressConfig map[string]string, interf BinanceInterface) *Binance {
+func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface) *Binance {
 	pairs := []common.TokenPair{}
-	for tokenID, _ := range addressConfig {
+	fees := common.ExchangeFees{
+		feeConfig.Trading,
+		common.FundingFee{
+			map[string]float64{},
+			map[string]float64{},
+		},
+	}
+	for tokenID := range addressConfig {
 		pair := common.MustCreateTokenPair(tokenID, "ETH")
 		pairs = append(pairs, pair)
+
+		fees.Funding.Deposit[tokenID] = 0
+		if _, exist := feeConfig.Funding.Withdraw[tokenID]; exist {
+			fees.Funding.Withdraw[tokenID] = feeConfig.Funding.Withdraw[tokenID]
+		}
 	}
 	return &Binance{
 		interf,
 		pairs,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
-		common.NewExchangeFee(
-			common.TradingFee{
-				"taker": 0.001,
-				"maker": 0.001,
-			},
-			common.NewFundingFee(
-				map[string]float64{
-					"ETH":  0.01,
-					"EOS":  1,
-					"OMG":  0.7,
-					"KNC":  2.6,
-					"SNT":  38.0,
-					"ELF":  6.2,
-					"POWR": 13.6,
-					"MANA": 89,
-					"BAT":  23,
-					"REQ":  27.8,
-					"GTO":  31,
-				},
-				map[string]float64{
-					"ETH":  0,
-					"EOS":  0,
-					"OMG":  0,
-					"KNC":  0,
-					"SNT":  0,
-					"ELF":  0,
-					"POWR": 0,
-					"MANA": 0,
-					"BAT":  0,
-					"REQ":  0,
-					"GTO":  0,
-				},
-			),
-		),
+		fees,
 	}
 }

@@ -17,6 +17,11 @@ func GetConfigForKovan() *Config {
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
 	}
+	feePath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json"
+	feeConfig, err := common.GetFeeFromFile(feePath)
+	if err != nil {
+		log.Fatalf("Fees file cannot found at: %s", feePath, err)
+	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
@@ -43,7 +48,7 @@ func GetConfigForKovan() *Config {
 	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
 	exchangePool := NewKovanExchangePool(
-		addressConfig, fileSigner, storage,
+		feeConfig, addressConfig, fileSigner, storage,
 	)
 
 	// endpoint := "http://localhost:8545"

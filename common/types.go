@@ -2,8 +2,10 @@ package common
 
 import (
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"math/big"
 	"strconv"
 	"strings"
@@ -138,13 +140,28 @@ type TokenPairPriceLimit struct {
 type TradingFee map[string]float64
 
 type FundingFee struct {
-	Withdraw map[string]float64
-	Deposit  map[string]float64
+	Withdraw map[string]float64 `json:"withdraw_fee"`
+	Deposit  map[string]float64 `json:"deposit_fee"`
 }
 
 type ExchangeFees struct {
-	Trading TradingFee
-	Funding FundingFee
+	Trading TradingFee `json:"trading_fee"`
+	Funding FundingFee `json:"funding_fee"`
+}
+
+type ExchangeFeesConfig struct {
+	Exchanges map[string]ExchangeFees `json:"exchanges"`
+}
+
+func GetFeeFromFile(path string) (ExchangeFeesConfig, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return ExchangeFeesConfig{}, err
+	} else {
+		result := ExchangeFeesConfig{}
+		err := json.Unmarshal(data, &result)
+		return result, err
+	}
 }
 
 func NewExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {

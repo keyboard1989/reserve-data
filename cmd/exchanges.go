@@ -24,6 +24,7 @@ func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *s
 }
 
 func NewSimulationExchangePool(
+	feeConfig common.ExchangeFeesConfig,
 	addressConfig common.AddressConfig,
 	signer *signer.FileSigner,
 	bittrexStorage exchange.BittrexStorage) *ExchangePool {
@@ -46,7 +47,7 @@ func NewSimulationExchangePool(
 			exchanges[bit.ID()] = bit
 		case "binance":
 			endpoint := binance.NewSimulatedBinanceEndpoint(signer)
-			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], endpoint)
+			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -67,7 +68,10 @@ func NewSimulationExchangePool(
 	return &ExchangePool{exchanges}
 }
 
-func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
+func NewDevExchangePool(
+	feeConfig common.ExchangeFeesConfig,
+	addressConfig common.AddressConfig,
+	signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
 	exparams := strings.Split(params, ",")
@@ -86,7 +90,7 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 			exchanges[bit.ID()] = bit
 		case "binance":
 			endpoint := binance.NewDevBinanceEndpoint(signer)
-			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], endpoint)
+			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -107,7 +111,10 @@ func NewDevExchangePool(addressConfig common.AddressConfig, signer *signer.FileS
 	return &ExchangePool{exchanges}
 }
 
-func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
+func NewKovanExchangePool(
+	feeConfig common.ExchangeFeesConfig,
+	addressConfig common.AddressConfig,
+	signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
 	exparams := strings.Split(params, ",")
@@ -126,7 +133,7 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 			exchanges[bit.ID()] = bit
 		case "binance":
 			endpoint := binance.NewKovanBinanceEndpoint(signer)
-			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], endpoint)
+			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -150,7 +157,10 @@ func NewKovanExchangePool(addressConfig common.AddressConfig, signer *signer.Fil
 	return &ExchangePool{exchanges}
 }
 
-func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
+func NewRopstenExchangePool(
+	feeConfig common.ExchangeFeesConfig,
+	addressConfig common.AddressConfig,
+	signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
 	exparams := strings.Split(params, ",")
@@ -169,7 +179,7 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			exchanges[bit.ID()] = bit
 		case "binance":
 			endpoint := binance.NewRopstenBinanceEndpoint(signer)
-			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], endpoint)
+			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -193,7 +203,10 @@ func NewRopstenExchangePool(addressConfig common.AddressConfig, signer *signer.F
 	return &ExchangePool{exchanges}
 }
 
-func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
+func NewMainnetExchangePool(
+	feeConfig common.ExchangeFeesConfig,
+	addressConfig common.AddressConfig,
+	signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
 	exparams := strings.Split(params, ",")
@@ -212,7 +225,7 @@ func NewMainnetExchangePool(addressConfig common.AddressConfig, signer *signer.F
 			exchanges[bit.ID()] = bit
 		case "binance":
 			endpoint := binance.NewRealBinanceEndpoint(signer)
-			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], endpoint)
+			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
