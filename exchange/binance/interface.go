@@ -12,11 +12,11 @@ type Interface interface {
 type RealInterface struct{}
 
 func (self *RealInterface) PublicEndpoint() string {
-	return "https://www.binance.com"
+	return "https://api.binance.com"
 }
 
 func (self *RealInterface) AuthenticatedEndpoint() string {
-	return "https://www.binance.com"
+	return "https://api.binance.com"
 }
 
 func NewRealInterface() *RealInterface {
