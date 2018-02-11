@@ -18,6 +18,7 @@ const (
 	CONFIG_PATH string        = "/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json"
 	TWEI_ADJUST float64       = 1000000000000000000
 	SLEEP_TIME  time.Duration = 60 //sleep time for forever run mode
+	DIFFER_RATE float64       = 0.001
 )
 
 type AllRateHTTPReply struct {
@@ -77,12 +78,12 @@ func CompareRate(oneAct common.ActivityRecord, oneRate common.AllRateResponse, b
 			tokenid, _ := tokenID.(string)
 			val, ok := oneRate.Data[tokenid]
 			if ok {
-				differ := RateDifference(val.BaseBuy*(1+float64(val.CompactBuy)/1000)*TWEI_ADJUST, buys[idx].(float64))
-				if math.Abs(differ) > 0.001 {
+				differ := RateDifference(val.BaseBuy*(1+float64(val.CompactBuy)/1000.0)*TWEI_ADJUST, buys[idx].(float64))
+				if math.Abs(differ) > DIFFER_RATE {
 					fmt.Printf("block %d set a buys rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
 				}
 				differ = RateDifference(val.BaseSell*(1+float64(val.CompactSell)/1000.0)*TWEI_ADJUST, sells[idx].(float64))
-				if math.Abs(differ) > 0.001 {
+				if math.Abs(differ) > DIFFER_RATE {
 					fmt.Printf("block %d set a sell rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
 				}
 			}
@@ -93,10 +94,10 @@ func CompareRate(oneAct common.ActivityRecord, oneRate common.AllRateResponse, b
 func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) {
 	idx := 0
 	for _, oneAct := range acts {
-		if oneAct.Action == "set_rates" {
-			_, ok := oneAct.Params["block"]
+		if (oneAct.Action == "set_rates") && (oneAct.MiningStatus == "mined") {
+			_, ok := oneAct.Result["blockNumber"]
 			if ok {
-				curBlock := uint64(oneAct.Params["block"].(float64))
+				curBlock := uint64(oneAct.Result["blockNumber"].(float64))
 				for (idx < len(rates)) && (curBlock < rates[idx].ToBlockNumber) {
 					idx += 1
 				}
