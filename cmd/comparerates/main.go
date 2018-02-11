@@ -2,25 +2,22 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math"
-	"net/http"
-	"sort"
+	"os"
 	"strconv"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	ihttp "github.com/KyberNetwork/reserve-data/http"
-	"github.com/KyberNetwork/reserve-data/signer"
 )
 
 const (
-	BASE_URL    string = "https://internal-mainnet-core.kyber.network"
-	REQ_SESCRET string = "vtHpz1l0kxLyGc4R1qJBkFlQre5352xGJU9h8UQTwUTz5p6VrxcEslF4KnDI21s1"
-	CONFIG_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json"
+	BASE_URL    string        = "https://internal-mainnet-core.kyber.network"
+	REQ_SESCRET string        = "vtHpz1l0kxLyGc4R1qJBkFlQre5352xGJU9h8UQTwUTz5p6VrxcEslF4KnDI21s1"
+	CONFIG_PATH string        = "/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json"
+	TWEI_ADJUST float64       = 1000000000000000000
+	SLEEP_TIME  time.Duration = 60 //sleep time for forever run mode
 )
 
 type AllRateHTTPReply struct {
@@ -31,88 +28,6 @@ type AllRateHTTPReply struct {
 type AllActionHTTPReply struct {
 	Data    []common.ActivityRecord
 	Success bool
-}
-
-func SortByKey(params map[string]string) map[string]string {
-	//to be implement
-	newParams := make(map[string]string, len(params))
-	keys := make([]string, 0, len(params))
-	for key := range params {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	for _, key := range keys {
-		newParams[key] = params[key]
-	}
-	return newParams
-}
-
-func MakeSign(req *http.Request, message string, nonce string) {
-
-	fmt.Println(message)
-	//fmt.Println(message)
-	fileSigner, _ := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json")
-
-	hmac512auth := ihttp.KNAuthentication{
-		fileSigner.KNSecret,
-		REQ_SESCRET,
-		fileSigner.KNConfiguration,
-		fileSigner.KNConfirmConf,
-	}
-	signed := hmac512auth.KNReadonlySign(message)
-	req.Header.Add("nonce", nonce)
-	req.Header.Add("signed", signed)
-}
-
-func GetResponse(method string, url string,
-	params map[string]string, signNeeded bool, timepoint uint64) ([]byte, error) {
-	params = SortByKey(params)
-	client := &http.Client{
-		Timeout: time.Duration(30 * time.Second),
-	}
-	//create request
-	req, ok := http.NewRequest(method, url, nil)
-	if ok != nil {
-		fmt.Println("can't establish request", ok)
-	}
-	// Add header
-	req.Header.Add("Accept", "application/json")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	// Create raw query
-	q := req.URL.Query()
-	for k, v := range params {
-		q.Add(k, v)
-	}
-	req.URL.RawQuery = q.Encode()
-	if signNeeded {
-		nonce, ok := params["nonce"]
-		if !ok {
-			log.Fatal("there was no nonce")
-		} else {
-			MakeSign(req, q.Encode(), nonce)
-		}
-	}
-	//do the request and return the reply
-	var err error
-	var resp_body []byte
-	resp, err := client.Do(req)
-	if err != nil {
-		return resp_body, err
-	} else {
-		defer resp.Body.Close()
-		switch resp.StatusCode {
-		case 429:
-			err = errors.New("breaking a request rate limit.")
-		case 418:
-			err = errors.New("IP has been auto-banned for continuing to send requests after receiving 429 codes.")
-		case 500:
-			err = errors.New("500 from Binance, its fault.")
-		case 200:
-			resp_body, err = ioutil.ReadAll(resp.Body)
-		}
-		log.Printf("\n request to %s, got response: \n %s \n\n", req.URL, common.TruncStr(resp_body))
-		return resp_body, err
-	}
 }
 
 func GetActivitiesResponse(params map[string]string) (AllActionHTTPReply, error) {
@@ -150,10 +65,10 @@ func GetAllRateResponse(params map[string]string) (AllRateHTTPReply, error) {
 }
 
 func RateDifference(r1, r2 float64) float64 {
-	return (math.Abs(r1-r2) / r1)
+	return ((r2 - r1) / r1)
 }
 
-func Compare(oneAct common.ActivityRecord, oneRate common.AllRateResponse, blockID uint64) {
+func CompareRate(oneAct common.ActivityRecord, oneRate common.AllRateResponse, blockID uint64) {
 	tokenIDs, asrt := oneAct.Params["tokens"].([]interface{})
 	buys, asrt1 := oneAct.Params["buys"].([]interface{})
 	sells, asrt2 := oneAct.Params["sells"].([]interface{})
@@ -162,32 +77,32 @@ func Compare(oneAct common.ActivityRecord, oneRate common.AllRateResponse, block
 			tokenid, _ := tokenID.(string)
 			val, ok := oneRate.Data[tokenid]
 			if ok {
-				differ := RateDifference(val.BaseBuy, buys[idx].(float64)/1000000000000000000)
-				if differ > 0.001 {
-					fmt.Printf("block %d set a buy rate differ %.5f than get rate at token %s \n", blockID, differ, tokenid)
+				differ := RateDifference(val.BaseBuy*(1+float64(val.CompactBuy)/1000)*TWEI_ADJUST, buys[idx].(float64))
+				if math.Abs(differ) > 0.001 {
+					fmt.Printf("block %d set a buys rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
 				}
-				differ = RateDifference(val.BaseSell, sells[idx].(float64)/1000000000000000000)
-				if differ > 0.001 {
-					fmt.Printf("block %d set a sell rate differ %.5f than get rate at token %s \n", blockID, differ, tokenid)
+				differ = RateDifference(val.BaseSell*(1+float64(val.CompactSell)/1000.0)*TWEI_ADJUST, sells[idx].(float64))
+				if math.Abs(differ) > 0.001 {
+					fmt.Printf("block %d set a sell rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
 				}
 			}
 		}
 	}
 }
 
-func CompareRate(acts []common.ActivityRecord, rates []common.AllRateResponse) {
+func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) {
 	idx := 0
 	for _, oneAct := range acts {
 		if oneAct.Action == "set_rates" {
 			_, ok := oneAct.Params["block"]
 			if ok {
 				curBlock := uint64(oneAct.Params["block"].(float64))
-				for (curBlock < rates[idx].ToBlockNumber) && (idx < len(rates)) {
+				for (idx < len(rates)) && (curBlock < rates[idx].ToBlockNumber) {
 					idx += 1
 				}
-				if (curBlock <= rates[idx].BlockNumber) && (curBlock >= rates[idx].ToBlockNumber) {
+				if (idx < len(rates)) && (curBlock <= rates[idx].BlockNumber) && (curBlock >= rates[idx].ToBlockNumber) {
 					fmt.Printf("\n Block %d is found between block %d to block %d \n", curBlock, rates[idx].BlockNumber, rates[idx].ToBlockNumber)
-					Compare(oneAct, rates[idx], curBlock)
+					CompareRate(oneAct, rates[idx], curBlock)
 				} else {
 					fmt.Printf("\n Block %d is not found\n", curBlock)
 				}
@@ -196,18 +111,43 @@ func CompareRate(acts []common.ActivityRecord, rates []common.AllRateResponse) {
 	}
 }
 
-func main() {
-
-	params := make(map[string]string)
-	params["fromTime"] = "1518240610536"
-	params["toTime"] = "1518247610536"
+func doQuery(params map[string]string) {
 	allActionRep, err := GetActivitiesResponse(params)
 	if err != nil {
-		log.Fatal("couldn't get activites: ", err)
+		log.Printf("couldn't get activites: ", err)
+		return
 	}
 	allRateRep, err := GetAllRateResponse(params)
 	if err != nil {
-		log.Fatal("couldn't get all rates: ", err)
+		log.Printf("couldn't get all rates: ", err)
+		return
 	}
-	CompareRate(allActionRep.Data, allRateRep.Data)
+	if (len(allActionRep.Data) < 1) || (len(allRateRep.Data) < 1) {
+		log.Printf("One of the reply was empty")
+		return
+	}
+	CompareRates(allActionRep.Data, allRateRep.Data)
+}
+
+func main() {
+	params := make(map[string]string)
+	params["fromTime"] = os.Getenv("FROMTIME")
+	params["toTime"] = os.Getenv("TOTIME")
+	if len(params["fromTime"]) < 1 {
+		log.Fatal("Wrong usage \n FROMTIME=<timestamp> [TOTIME=<totime>] ./compareRates")
+	}
+	if len(params["toTime"]) < 1 {
+		log.Printf("There was no end time, go to foverer run mode...")
+		for {
+			params["toTime"] = strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
+			doQuery(params)
+			time.Sleep(SLEEP_TIME * time.Second)
+			params["fromTime"] = params["toTime"]
+		}
+
+	} else {
+		log.Printf("Go to single query returning mode")
+		doQuery(params)
+	}
+
 }
