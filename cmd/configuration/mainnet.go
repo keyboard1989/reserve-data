@@ -1,18 +1,19 @@
-package main
+package configuration
 
 import (
 	"log"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
+	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetConfigForSimulation() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
-	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
+func GetConfigForMainnet() *Config {
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
@@ -38,33 +39,34 @@ func GetConfigForSimulation() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	// storage := storage.NewRamStorage()
-	// metricStorage := metric.NewRamMetricStorage()
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db")
 	if err != nil {
 		panic(err)
 	}
-	fetcherRunner := http_runner.NewHttpRunner(8001)
 
-	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
+	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 
-	exchangePool := NewSimulationExchangePool(
+	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json")
+
+	exchangePool := NewMainnetExchangePool(
 		feeConfig, addressConfig, fileSigner, storage,
 	)
 
-	// endpoint := "http://localhost:8545"
-	// endpoint := "https://kovan.infura.io"
-	// endpoint := "https://kovan.kyber.network"
-	endpoint := "http://blockchain:8545"
-	bkendpoints := []string{
-		"http://blockchain:8545",
+	hmac512auth := http.KNAuthentication{
+		fileSigner.KNSecret,
+		fileSigner.KNReadOnly,
+		fileSigner.KNConfiguration,
+		fileSigner.KNConfirmConf,
 	}
 
-	// hmac512auth := http.KNAuthentication{
-	// 	fileSigner.KNSecret,
-	// 	fileSigner.KNReadOnly,
-	// 	fileSigner.KNConfiguration,
-	// }
+	endpoint := "https://mainnet.infura.io"
+	bkendpoints := []string{
+		"https://node.kyber.network",
+		"https://mainnet.infura.io",
+		"https://api.mycryptoapi.com/eth",
+		"https://api.myetherapi.com/eth",
+		"https://mew.giveth.io/",
+	}
 
 	return &Config{
 		ActivityStorage:         storage,
@@ -76,6 +78,8 @@ func GetConfigForSimulation() *Config {
 		Exchanges:               exchangePool.CoreExchanges(),
 		BlockchainSigner:        fileSigner,
 		DepositSigner:           depositSigner,
+		EnableAuthentication:    true,
+		AuthEngine:              hmac512auth,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
 		SupportedTokens:         tokens,

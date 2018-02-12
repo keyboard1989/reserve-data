@@ -1,4 +1,4 @@
-package main
+package configuration
 
 import (
 	"log"
@@ -12,8 +12,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetConfigForDev() *Config {
-	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
+func GetConfigForStaging() *Config {
 	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
@@ -40,32 +39,33 @@ func GetConfigForDev() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db")
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db")
 	if err != nil {
 		panic(err)
 	}
 
 	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 
-	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
+	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json")
 
-	exchangePool := NewDevExchangePool(
+	exchangePool := NewMainnetExchangePool(
 		feeConfig, addressConfig, fileSigner, storage,
 	)
-
-	// endpoint := "https://ropsten.infura.io"
-	// endpoint := "http://blockchain:8545"
-	// endpoint := "https://kovan.infura.io"
-	endpoint := "https://mainnet.infura.io"
-	bkendpoints := []string{
-		"https://mainnet.infura.io",
-	}
 
 	hmac512auth := http.KNAuthentication{
 		fileSigner.KNSecret,
 		fileSigner.KNReadOnly,
 		fileSigner.KNConfiguration,
 		fileSigner.KNConfirmConf,
+	}
+
+	endpoint := "https://mainnet.infura.io"
+	bkendpoints := []string{
+		"https://node.kyber.network",
+		"https://mainnet.infura.io",
+		"https://api.mycryptoapi.com/eth",
+		"https://api.myetherapi.com/eth",
+		"https://mew.giveth.io/",
 	}
 
 	return &Config{
@@ -77,8 +77,8 @@ func GetConfigForDev() *Config {
 		FetcherExchanges:        exchangePool.FetcherExchanges(),
 		Exchanges:               exchangePool.CoreExchanges(),
 		BlockchainSigner:        fileSigner,
-		EnableAuthentication:    true,
 		DepositSigner:           depositSigner,
+		EnableAuthentication:    true,
 		AuthEngine:              hmac512auth,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,

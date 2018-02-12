@@ -11,6 +11,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
+	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
@@ -37,34 +38,34 @@ func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	var config *Config
+	var config *configuration.Config
 	switch os.Getenv("KYBER_ENV") {
 	case "mainnet", "production":
 		log.Printf("Running in production mode")
-		config = GetConfigForMainnet()
+		config = configuration.GetConfigForMainnet()
 		break
 	case "staging":
 		log.Printf("Running in staging mode")
-		config = GetConfigForStaging()
+		config = configuration.GetConfigForStaging()
 		break
 	case "simulation":
 		log.Printf("Running in simulation mode")
-		config = GetConfigForSimulation()
+		config = configuration.GetConfigForSimulation()
 		break
 	case "kovan":
 		log.Printf("Running in kovan mode")
-		config = GetConfigForKovan()
+		config = configuration.GetConfigForKovan()
 		break
 	case "ropsten":
 		log.Printf("Running in ropsten mode")
-		config = GetConfigForRopsten()
+		config = configuration.GetConfigForRopsten()
 		break
 	case "dev":
 		log.Printf("Running in dev mode")
-		config = GetConfigForDev()
+		config = configuration.GetConfigForDev()
 	default:
 		log.Printf("Running in dev mode")
-		config = GetConfigForDev()
+		config = configuration.GetConfigForDev()
 	}
 
 	logPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/log.log"

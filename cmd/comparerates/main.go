@@ -85,7 +85,6 @@ func printInterfaceMap(inf map[string]interface{}) {
 
 func printAction(oneAct common.ActivityRecord) {
 	i := int64(oneAct.Timestamp.ToUint64()) / 1000
-
 	log.Printf("\t Time: %v", time.Unix(i, 0))
 	log.Printf("\t Activity : %v\n", oneAct.Action)
 	log.Printf("\t Destination : %v\n", oneAct.Destination)
@@ -173,6 +172,7 @@ func main() {
 	if len(params["fromTime"]) < 1 {
 		log.Fatal("Wrong usage \n FROMTIME=<timestamp> [TOTIME=<totime>] ./compareRates")
 	}
+
 	if len(params["toTime"]) < 1 {
 		log.Printf("There was no end time, go to foverer run mode...")
 		for {

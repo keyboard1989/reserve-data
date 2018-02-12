@@ -1,4 +1,4 @@
-package main
+package configuration
 
 import (
 	"log"
@@ -7,13 +7,12 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
-	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetConfigForStaging() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json"
+func GetConfigForRopsten() *Config {
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
@@ -24,8 +23,8 @@ func GetConfigForStaging() *Config {
 		log.Fatalf("Fees file cannot found at: %s", feePath, err)
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
-	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
+	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 
@@ -39,33 +38,24 @@ func GetConfigForStaging() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db")
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten.db")
 	if err != nil {
 		panic(err)
 	}
 
 	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 
-	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json")
+	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
-	exchangePool := NewMainnetExchangePool(
+	exchangePool := NewRopstenExchangePool(
 		feeConfig, addressConfig, fileSigner, storage,
 	)
 
-	hmac512auth := http.KNAuthentication{
-		fileSigner.KNSecret,
-		fileSigner.KNReadOnly,
-		fileSigner.KNConfiguration,
-		fileSigner.KNConfirmConf,
-	}
-
-	endpoint := "https://mainnet.infura.io"
+	// endpoint := "http://localhost:8545"
+	// endpoint := "https://ropsten.kyber.network"
+	endpoint := "https://ropsten.infura.io"
 	bkendpoints := []string{
-		"https://node.kyber.network",
-		"https://mainnet.infura.io",
-		"https://api.mycryptoapi.com/eth",
-		"https://api.myetherapi.com/eth",
-		"https://mew.giveth.io/",
+		"https://api.myetherapi.com/rop",
 	}
 
 	return &Config{
@@ -78,8 +68,6 @@ func GetConfigForStaging() *Config {
 		Exchanges:               exchangePool.CoreExchanges(),
 		BlockchainSigner:        fileSigner,
 		DepositSigner:           depositSigner,
-		EnableAuthentication:    true,
-		AuthEngine:              hmac512auth,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
 		SupportedTokens:         tokens,

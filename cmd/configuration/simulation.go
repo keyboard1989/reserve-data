@@ -1,18 +1,18 @@
-package main
+package configuration
 
 import (
 	"log"
-	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/data/fetcher"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetConfigForKovan() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
+func GetConfigForSimulation() *Config {
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
+	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
@@ -23,8 +23,8 @@ func GetConfigForKovan() *Config {
 		log.Fatalf("Fees file cannot found at: %s", feePath, err)
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
-	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 
@@ -38,22 +38,33 @@ func GetConfigForKovan() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan.db")
+	// storage := storage.NewRamStorage()
+	// metricStorage := metric.NewRamMetricStorage()
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db")
 	if err != nil {
 		panic(err)
 	}
-
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+	fetcherRunner := http_runner.NewHttpRunner(8001)
 
 	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
-	exchangePool := NewKovanExchangePool(
+	exchangePool := NewSimulationExchangePool(
 		feeConfig, addressConfig, fileSigner, storage,
 	)
 
 	// endpoint := "http://localhost:8545"
-	endpoint := "https://kovan.infura.io"
-	bkendpoints := []string{}
+	// endpoint := "https://kovan.infura.io"
+	// endpoint := "https://kovan.kyber.network"
+	endpoint := "http://blockchain:8545"
+	bkendpoints := []string{
+		"http://blockchain:8545",
+	}
+
+	// hmac512auth := http.KNAuthentication{
+	// 	fileSigner.KNSecret,
+	// 	fileSigner.KNReadOnly,
+	// 	fileSigner.KNConfiguration,
+	// }
 
 	return &Config{
 		ActivityStorage:         storage,

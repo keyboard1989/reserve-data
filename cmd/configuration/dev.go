@@ -1,4 +1,4 @@
-package main
+package configuration
 
 import (
 	"log"
@@ -7,12 +7,14 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetConfigForRopsten() *Config {
-	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json"
+func GetConfigForDev() *Config {
+	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
+	settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json"
 	addressConfig, err := common.GetAddressConfigFromFile(settingPath)
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Error: %s", settingPath, err)
@@ -23,8 +25,8 @@ func GetConfigForRopsten() *Config {
 		log.Fatalf("Fees file cannot found at: %s", feePath, err)
 	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
-	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 
@@ -38,7 +40,7 @@ func GetConfigForRopsten() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten.db")
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db")
 	if err != nil {
 		panic(err)
 	}
@@ -47,15 +49,23 @@ func GetConfigForRopsten() *Config {
 
 	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json")
 
-	exchangePool := NewRopstenExchangePool(
+	exchangePool := NewDevExchangePool(
 		feeConfig, addressConfig, fileSigner, storage,
 	)
 
-	// endpoint := "http://localhost:8545"
-	// endpoint := "https://ropsten.kyber.network"
-	endpoint := "https://ropsten.infura.io"
+	// endpoint := "https://ropsten.infura.io"
+	// endpoint := "http://blockchain:8545"
+	// endpoint := "https://kovan.infura.io"
+	endpoint := "https://mainnet.infura.io"
 	bkendpoints := []string{
-		"https://api.myetherapi.com/rop",
+		"https://mainnet.infura.io",
+	}
+
+	hmac512auth := http.KNAuthentication{
+		fileSigner.KNSecret,
+		fileSigner.KNReadOnly,
+		fileSigner.KNConfiguration,
+		fileSigner.KNConfirmConf,
 	}
 
 	return &Config{
@@ -67,7 +77,9 @@ func GetConfigForRopsten() *Config {
 		FetcherExchanges:        exchangePool.FetcherExchanges(),
 		Exchanges:               exchangePool.CoreExchanges(),
 		BlockchainSigner:        fileSigner,
+		EnableAuthentication:    true,
 		DepositSigner:           depositSigner,
+		AuthEngine:              hmac512auth,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
 		SupportedTokens:         tokens,
