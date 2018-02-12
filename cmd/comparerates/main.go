@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
@@ -31,12 +32,12 @@ type AllActionHTTPReply struct {
 	Success bool
 }
 
-func GetActivitiesResponse(params map[string]string) (AllActionHTTPReply, error) {
-	timepoint := (time.Now().UnixNano() / int64(time.Millisecond))
-	nonce := strconv.FormatInt(timepoint, 10)
+func GetActivitiesResponse(params map[string]string, config configuration.Config) (AllActionHTTPReply, error) {
+	timepoint := common.GetTimepoint()
+	nonce := strconv.FormatUint(timepoint, 10)
 	var allActionRep AllActionHTTPReply
 	params["nonce"] = nonce
-	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BASE_URL, "activities"), params, true, uint64(timepoint))
+	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BASE_URL, "activities"), params, true, uint64(timepoint), config)
 
 	if err != nil {
 		fmt.Println("can't get response", err)
@@ -49,10 +50,10 @@ func GetActivitiesResponse(params map[string]string) (AllActionHTTPReply, error)
 	return allActionRep, nil
 }
 
-func GetAllRateResponse(params map[string]string) (AllRateHTTPReply, error) {
-	timepoint := (time.Now().UnixNano() / int64(time.Millisecond))
+func GetAllRateResponse(params map[string]string, config configuration.Config) (AllRateHTTPReply, error) {
+	timepoint := common.GetTimepoint()
 	var allRateRep AllRateHTTPReply
-	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BASE_URL, "get-all-rates"), params, false, uint64(timepoint))
+	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BASE_URL, "get-all-rates"), params, false, uint64(timepoint), config)
 
 	if err != nil {
 		fmt.Println("can't get response", err)
@@ -63,6 +64,7 @@ func GetAllRateResponse(params map[string]string) (AllRateHTTPReply, error) {
 		}
 	}
 	return allRateRep, nil
+
 }
 
 func RateDifference(r1, r2 float64) float64 {
@@ -147,13 +149,13 @@ func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) 
 	}
 }
 
-func doQuery(params map[string]string) {
-	allActionRep, err := GetActivitiesResponse(params)
+func doQuery(params map[string]string, config configuration.Config) {
+	allActionRep, err := GetActivitiesResponse(params, config)
 	if err != nil {
 		log.Printf("couldn't get activites: ", err)
 		return
 	}
-	allRateRep, err := GetAllRateResponse(params)
+	allRateRep, err := GetAllRateResponse(params, config)
 	if err != nil {
 		log.Printf("couldn't get all rates: ", err)
 		return
@@ -172,19 +174,52 @@ func main() {
 	if len(params["fromTime"]) < 1 {
 		log.Fatal("Wrong usage \n FROMTIME=<timestamp> [TOTIME=<totime>] ./compareRates")
 	}
+	var config *configuration.Config
+	switch os.Getenv("KYBER_ENV") {
+	case "mainnet", "production":
+		log.Printf("Running in production mode")
+		config = configuration.GetConfigForMainnet()
+		break
+	case "staging":
+		log.Printf("Running in staging mode")
+		config = configuration.GetConfigForStaging()
+		break
+	case "internal_mainnet":
+		log.Printf("Running in internal mainnet mode")
+		config = configuration.GetConfigForInternalMainnet()
+		break
+	case "simulation":
+		log.Printf("Running in simulation mode")
+		config = configuration.GetConfigForSimulation()
+		break
+	case "kovan":
+		log.Printf("Running in kovan mode")
+		config = configuration.GetConfigForKovan()
+		break
+	case "ropsten":
+		log.Printf("Running in ropsten mode")
+		config = configuration.GetConfigForRopsten()
+		break
+	case "dev":
+		log.Printf("Running in dev mode")
+		config = configuration.GetConfigForDev()
+	default:
+		log.Printf("Running in dev mode")
+		config = configuration.GetConfigForDev()
+	}
 
 	if len(params["toTime"]) < 1 {
 		log.Printf("There was no end time, go to foverer run mode...")
 		for {
 			params["toTime"] = strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
-			doQuery(params)
+			doQuery(params, *config)
 			time.Sleep(SLEEP_TIME * time.Second)
 			params["fromTime"] = params["toTime"]
 		}
 
 	} else {
 		log.Printf("Go to single query returning mode")
-		doQuery(params)
+		doQuery(params, *config)
 	}
 
 }

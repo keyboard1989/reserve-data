@@ -8,9 +8,8 @@ import (
 	"sort"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/common"
-	ihttp "github.com/KyberNetwork/reserve-data/http"
-	"github.com/KyberNetwork/reserve-data/signer"
 )
 
 func SortByKey(params map[string]string) map[string]string {
@@ -26,9 +25,9 @@ func SortByKey(params map[string]string) map[string]string {
 	return newParams
 }
 
-func MakeSign(req *http.Request, message string, nonce string) {
+func MakeSign(req *http.Request, message string, nonce string, config configuration.Config) {
 
-	//fmt.Println(message)
+	/*fmt.Println(message)
 	fileSigner, _ := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json")
 
 	hmac512auth := ihttp.KNAuthentication{
@@ -37,13 +36,15 @@ func MakeSign(req *http.Request, message string, nonce string) {
 		fileSigner.KNConfiguration,
 		fileSigner.KNConfirmConf,
 	}
-	signed := hmac512auth.KNReadonlySign(message)
+	hmac512auth.KNReadonlySign(message) */
+	signed := config.AuthEngine.KNSign(message)
+
 	req.Header.Add("nonce", nonce)
 	req.Header.Add("signed", signed)
 }
 
 func GetResponse(method string, url string,
-	params map[string]string, signNeeded bool, timepoint uint64) ([]byte, error) {
+	params map[string]string, signNeeded bool, timepoint uint64, config configuration.Config) ([]byte, error) {
 	params = SortByKey(params)
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
@@ -67,7 +68,7 @@ func GetResponse(method string, url string,
 		if !ok {
 			log.Printf("there was no nonce")
 		} else {
-			MakeSign(req, q.Encode(), nonce)
+			MakeSign(req, q.Encode(), nonce, config)
 		}
 	}
 	//do the request and return the reply
