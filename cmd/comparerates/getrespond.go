@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -80,13 +79,10 @@ func GetResponse(method string, url string,
 	} else {
 		defer resp.Body.Close()
 		switch resp.StatusCode {
-		case 429:
-			err = errors.New("breaking a request rate limit.")
-		case 418:
-			err = errors.New("IP has been auto-banned for continuing to send requests after receiving 429 codes.")
-		case 500:
-			err = errors.New("500 from Binance, its fault.")
 		case 200:
+			resp_body, err = ioutil.ReadAll(resp.Body)
+		default:
+			log.Printf("The reply code %v was unexpected", resp.StatusCode)
 			resp_body, err = ioutil.ReadAll(resp.Body)
 		}
 		log.Printf("\n request to %s, got response: \n %s \n\n", req.URL, common.TruncStr(resp_body))

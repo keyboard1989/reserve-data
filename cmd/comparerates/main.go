@@ -69,10 +69,40 @@ func RateDifference(r1, r2 float64) float64 {
 	return ((r2 - r1) / r1)
 }
 
+func printInterfaceMap(inf map[string]interface{}) {
+	for k, v := range inf {
+		switch v.(type) {
+		case float64:
+			log.Printf("\t\t %s %.5f \n", k, v.(float64))
+		case []interface{}:
+			log.Printf("\t\t %s \n", k)
+			for _, vv := range v.([]interface{}) {
+				log.Printf("\t\t\t %v", vv)
+			}
+		}
+	}
+}
+
+func printAction(oneAct common.ActivityRecord) {
+	i := int64(oneAct.Timestamp.ToUint64()) / 1000
+
+	log.Printf("\t Time: %v", time.Unix(i, 0))
+	log.Printf("\t Activity : %v\n", oneAct.Action)
+	log.Printf("\t Destination : %v\n", oneAct.Destination)
+	log.Printf("\t ExchangeStatus : %v\n", oneAct.ExchangeStatus)
+	log.Printf("\t ID : %v\n", oneAct.ID)
+	log.Printf("\t MiningStatus : %v\n", oneAct.MiningStatus)
+	log.Printf("\t Params : \n")
+	printInterfaceMap(oneAct.Params)
+	log.Printf("\t Result : \n")
+	printInterfaceMap(oneAct.Params)
+}
+
 func CompareRate(oneAct common.ActivityRecord, oneRate common.AllRateResponse, blockID uint64) {
 	tokenIDs, asrt := oneAct.Params["tokens"].([]interface{})
 	buys, asrt1 := oneAct.Params["buys"].([]interface{})
 	sells, asrt2 := oneAct.Params["sells"].([]interface{})
+	warning := false
 	if asrt && asrt1 && asrt2 {
 		for idx, tokenID := range tokenIDs {
 			tokenid, _ := tokenID.(string)
@@ -80,14 +110,20 @@ func CompareRate(oneAct common.ActivityRecord, oneRate common.AllRateResponse, b
 			if ok {
 				differ := RateDifference(val.BaseBuy*(1+float64(val.CompactBuy)/1000.0)*TWEI_ADJUST, buys[idx].(float64))
 				if math.Abs(differ) > DIFFER_RATE {
-					fmt.Printf("block %d set a buys rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
+					defer log.Printf("block %d set a buys rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
+					warning = true
 				}
 				differ = RateDifference(val.BaseSell*(1+float64(val.CompactSell)/1000.0)*TWEI_ADJUST, sells[idx].(float64))
 				if math.Abs(differ) > DIFFER_RATE {
-					fmt.Printf("block %d set a sell rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
+					defer log.Printf("block %d set a sell rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
+					warning = true
 				}
 			}
 		}
+	}
+	if warning {
+		log.Printf("There was different in set rate at block %d \n", blockID)
+		printAction(oneAct)
 	}
 }
 
