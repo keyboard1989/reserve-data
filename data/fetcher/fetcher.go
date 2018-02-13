@@ -271,7 +271,10 @@ func (self *Fetcher) FetchBalanceFromBlockchain(timepoint uint64) (map[string]co
 
 func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {
 	result := map[common.ActivityID]common.ActivityStatus{}
-	minedNonce, _ := self.blockchain.SetRateMinedNonce()
+	minedNonce, nerr := self.blockchain.SetRateMinedNonce()
+	if nerr != nil {
+		log.Printf("Getting mined nonce failed: %s", nerr)
+	}
 	for _, activity := range pendings {
 		if activity.IsBlockchainPending() && (activity.Action == "set_rates" || activity.Action == "deposit" || activity.Action == "withdraw") {
 			var blockNum uint64
@@ -281,7 +284,10 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			if tx.Big().IsInt64() && tx.Big().Int64() == 0 {
 				continue
 			}
-			status, blockNum, _ = self.blockchain.TxStatus(tx)
+			status, blockNum, err = self.blockchain.TxStatus(tx)
+			if err != nil {
+				log.Printf("Getting tx status failed, tx will be considered as pending: %s", err)
+			}
 			switch status {
 			case "":
 				if activity.Action == "set_rates" {
