@@ -383,8 +383,19 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 		} else {
 			receipt, err := self.client.TransactionReceipt(option, hash)
 			if err != nil {
-				// networking issue
-				return "", 0, err
+				if receipt != nil {
+					// incompatibily between geth and parity
+					if receipt.Status == 1 {
+						// successful tx
+						return "mined", tx.BlockNumber().Uint64(), nil
+					} else {
+						// failed tx
+						return "failed", tx.BlockNumber().Uint64(), nil
+					}
+				} else {
+					// networking issue
+					return "", 0, err
+				}
 			} else {
 				if receipt.Status == 1 {
 					// successful tx
