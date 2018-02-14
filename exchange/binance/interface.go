@@ -56,7 +56,7 @@ func (self *RopstenInterface) baseurl() string {
 }
 
 func (self *RopstenInterface) PublicEndpoint() string {
-	return "https://www.binance.com"
+	return "https://api.binance.com"
 }
 
 func (self *RopstenInterface) AuthenticatedEndpoint() string {
@@ -78,7 +78,7 @@ func (self *KovanInterface) baseurl() string {
 }
 
 func (self *KovanInterface) PublicEndpoint() string {
-	return "https://www.binance.com"
+	return "https://api.binance.com"
 }
 
 func (self *KovanInterface) AuthenticatedEndpoint() string {
@@ -92,12 +92,12 @@ func NewKovanInterface() *KovanInterface {
 type DevInterface struct{}
 
 func (self *DevInterface) PublicEndpoint() string {
-	return "https://www.binance.com"
+	return "https://api.binance.com"
 	// return "http://192.168.25.16:5100"
 }
 
 func (self *DevInterface) AuthenticatedEndpoint() string {
-	return "https://www.binance.com"
+	return "https://api.binance.com"
 	// return "http://192.168.25.16:5100"
 }
 
