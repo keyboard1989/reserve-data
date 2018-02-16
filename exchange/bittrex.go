@@ -401,28 +401,7 @@ func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID
 }
 
 func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BittrexInterface, storage BittrexStorage) *Bittrex {
-	pairs := []common.TokenPair{}
-	fees := common.ExchangeFees{
-		feeConfig.Trading,
-		common.FundingFee{
-			map[string]float64{},
-			map[string]float64{},
-		},
-	}
-	for tokenID, _ := range addressConfig {
-		pair := common.MustCreateTokenPair(tokenID, "ETH")
-		pairs = append(pairs, pair)
-		if _, exist := feeConfig.Funding.Withdraw[tokenID]; exist {
-			fees.Funding.Withdraw[tokenID] = feeConfig.Funding.Withdraw[tokenID]
-		} else {
-			panic(tokenID + " is not found in bittrex withdraw fee config file")
-		}
-		if _, exist := feeConfig.Funding.Deposit[tokenID]; exist {
-			fees.Funding.Deposit[tokenID] = feeConfig.Funding.Deposit[tokenID]
-		} else {
-			panic(tokenID + " is not found in bittrex deposit fee config file")
-		}
-	}
+	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "bittrex")
 	return &Bittrex{
 		interf,
 		pairs,

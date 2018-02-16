@@ -469,28 +469,7 @@ func (self *Binance) OrderStatus(id common.ActivityID, timepoint uint64) (string
 }
 
 func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface) *Binance {
-	pairs := []common.TokenPair{}
-	fees := common.ExchangeFees{
-		feeConfig.Trading,
-		common.FundingFee{
-			map[string]float64{},
-			map[string]float64{},
-		},
-	}
-	for tokenID := range addressConfig {
-		pair := common.MustCreateTokenPair(tokenID, "ETH")
-		pairs = append(pairs, pair)
-		if _, exist := feeConfig.Funding.Withdraw[tokenID]; exist {
-			fees.Funding.Withdraw[tokenID] = feeConfig.Funding.Withdraw[tokenID]
-		} else {
-			panic(tokenID + " is not found in binance withdraw fee config file")
-		}
-		if _, exist := feeConfig.Funding.Deposit[tokenID]; exist {
-			fees.Funding.Deposit[tokenID] = feeConfig.Funding.Deposit[tokenID]
-		} else {
-			panic(tokenID + " is not found in binance deposit fee config file")
-		}
-	}
+	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "binance")
 	return &Binance{
 		interf,
 		pairs,
