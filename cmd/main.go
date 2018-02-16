@@ -74,7 +74,7 @@ func main() {
 	}
 	mw := io.MultiWriter(os.Stdout, f)
 	defer f.Close()
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	log.SetOutput(mw)
 
 	fetcher := fetcher.NewFetcher(
