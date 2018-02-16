@@ -81,6 +81,7 @@ func main() {
 		config.FetcherStorage,
 		config.FetcherRunner,
 		config.ReserveAddress,
+		os.Getenv("KYBER_ENV") == "simulation",
 	)
 	for _, ex := range config.Exchanges {
 		common.SupportedExchanges[ex.ID()] = ex

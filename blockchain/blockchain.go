@@ -242,7 +242,6 @@ func (self *Blockchain) SetRates(
 		log.Printf("Getting transaction opts failed, err: %s", err)
 		return nil, err
 	} else {
-		// fix to 50.1 gwei
 		baseBuys, baseSells, _, _, _, err := self.wrapper.GetTokenRates(
 			nil, nil, self.pricingAddr, tokens,
 		)

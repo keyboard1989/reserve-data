@@ -18,18 +18,21 @@ type Fetcher struct {
 	rmaddr                 ethereum.Address
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
+	simulationMode         bool
 }
 
 func NewFetcher(
 	storage Storage,
 	runner FetcherRunner,
-	address ethereum.Address) *Fetcher {
+	address ethereum.Address,
+	simulationMode bool) *Fetcher {
 	return &Fetcher{
-		storage:    storage,
-		exchanges:  []Exchange{},
-		blockchain: nil,
-		runner:     runner,
-		rmaddr:     address,
+		storage:        storage,
+		exchanges:      []Exchange{},
+		blockchain:     nil,
+		runner:         runner,
+		rmaddr:         address,
+		simulationMode: simulationMode,
 	}
 }
 
@@ -116,16 +119,17 @@ func (self *Fetcher) RunRateFetcher() {
 
 func (self *Fetcher) FetchRate(timepoint uint64) {
 	// only fetch rates 5s after the block number is updated
-	if self.currentBlockUpdateTime-timepoint > 5000 {
-		data, err := self.blockchain.FetchRates(timepoint, self.currentBlock-1)
-		if err != nil {
-			log.Printf("Fetching rates from blockchain failed: %s\n", err)
-		}
-		err = self.storage.StoreRate(data, timepoint)
-		// fmt.Printf("balance data: %v\n", data)
-		if err != nil {
-			log.Printf("Storing rates failed: %s\n", err)
-		}
+	if self.simulationMode && self.currentBlockUpdateTime-timepoint <= 5000 {
+		return
+	}
+	data, err := self.blockchain.FetchRates(timepoint, self.currentBlock-1)
+	if err != nil {
+		log.Printf("Fetching rates from blockchain failed: %s\n", err)
+	}
+	err = self.storage.StoreRate(data, timepoint)
+	// fmt.Printf("balance data: %v\n", data)
+	if err != nil {
+		log.Printf("Storing rates failed: %s\n", err)
 	}
 }
 

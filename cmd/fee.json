@@ -1,11 +1,11 @@
 {
     "exchanges": {
         "binance": {
-            "trading_fee": {
+            "Trading": {
                 "taker": 0.001,
                 "maker": 0.001
             },
-            "funding_fee": {
+            "Funding": {
                 "deposit_fee": {
                     "ETH":  0,
                     "EOS":  0,
@@ -35,11 +35,11 @@
             }
         },
         "bittrex": {
-            "trading_fee": {
+            "Trading": {
                 "taker": 0.001,
                 "maker": 0.001
             },
-            "funding_fee": {
+            "Funding": {
                 "deposit_fee": {
                     "ETH":  0,
                     "EOS":  0,
@@ -69,11 +69,11 @@
             }
         },
         "huobi": {
-            "trading_fee": {
+            "Trading": {
                 "taker": 0.002,
                 "maker": 0.002
             },
-            "funding_fee": {
+            "Funding": {
                 "deposit_fee": {
                     "ETH":  0,
                     "EOS":  0,

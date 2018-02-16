@@ -150,8 +150,8 @@ func (self FundingFee) GetTokenFee(token string) float64 {
 }
 
 type ExchangeFees struct {
-	Trading TradingFee `json:"trading_fee"`
-	Funding FundingFee `json:"funding_fee"`
+	Trading TradingFee
+	Funding FundingFee
 }
 
 type ExchangeFeesConfig struct {
