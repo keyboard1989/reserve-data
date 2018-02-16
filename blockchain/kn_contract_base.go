@@ -103,6 +103,8 @@ func (self *KNContractBase) transactTx(opts *bind.TransactOpts, contract *ethere
 		if err != nil {
 			return nil, fmt.Errorf("failed to estimate gas needed: %v", err)
 		}
+		// add gas limit by 50K gas
+		gasLimit.Add(gasLimit, big.NewInt(50000))
 	}
 	// Create the transaction, sign it and schedule it for execution
 	var rawTx *types.Transaction

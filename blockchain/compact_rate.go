@@ -1,7 +1,6 @@
 package blockchain
 
 import (
-	"log"
 	"math/big"
 	"strconv"
 
@@ -33,7 +32,6 @@ func BigIntToCompactRate(rate *big.Int, base *big.Int) (compactrate *CompactRate
 	// using text to round float
 	str := compact.Text('f', 0)
 	intComp, _ := strconv.ParseInt(str, 10, 64)
-	log.Println(intComp)
 	if -128 <= intComp && intComp <= 127 {
 		// capable to change compact
 		return &CompactRate{

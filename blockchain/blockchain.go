@@ -266,7 +266,7 @@ func (self *Blockchain) SetRates(
 				newCBuys[token] = compactBuy.Compact
 			}
 		}
-		buys, sells, indices := BuildCompactBulk(
+		bbuys, bsells, indices := BuildCompactBulk(
 			newCBuys,
 			newCSells,
 			self.tokenIndices,
@@ -276,14 +276,32 @@ func (self *Blockchain) SetRates(
 			// set base tx
 			tx, err = self.pricing.SetBaseRate(
 				opts, baseTokens, newBBuys, newBSells,
-				buys, sells, block, indices)
-			// log.Printf("Setting base rates: tx(%s), err(%v) with baseTokens(%+v), basebuys(%+v), basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",
-			// 	tx.Hash().Hex(), err, baseTokens, newBBuys, newBSells, buys, sells, block.Text(10), indices,
-			// )
+				bbuys, bsells, block, indices)
+			if tx != nil {
+				log.Printf(
+					"broadcasting setbase tx %s, target buys(%s), target sells(%s), old base buy(%s) || old base sell(%s) || new base buy(%s) || new base sell(%s) || new compact buy(%s) || new compact sell(%s) || new buy bulk(%v) || new sell bulk(%v) || indices(%v)",
+					tx.Hash().Hex(),
+					buys, sells,
+					baseBuys, baseSells,
+					newBBuys, newBSells,
+					newCBuys, newCSells,
+					bbuys, bsells, indices,
+				)
+			}
 		} else {
 			// update compact tx
 			tx, err = self.pricing.SetCompactData(
-				opts, buys, sells, block, indices)
+				opts, bbuys, bsells, block, indices)
+			if tx != nil {
+				log.Printf(
+					"broadcasting setcompact tx %s, target buys(%s), target sells(%s), old base buy(%s) || old base sell(%s) || new compact buy(%s) || new compact sell(%s) || new buy bulk(%v) || new sell bulk(%v) || indices(%v)",
+					tx.Hash().Hex(),
+					buys, sells,
+					baseBuys, baseSells,
+					newCBuys, newCSells,
+					bbuys, bsells, indices,
+				)
+			}
 			// log.Printf("Setting compact rates: tx(%s), err(%v) with basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",
 			// 	tx.Hash().Hex(), err, baseTokens, buys, sells, block.Text(10), indices,
 			// )
@@ -383,8 +401,19 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 		} else {
 			receipt, err := self.client.TransactionReceipt(option, hash)
 			if err != nil {
-				// networking issue
-				return "", 0, err
+				if receipt != nil {
+					// incompatibily between geth and parity
+					if receipt.Status == 1 {
+						// successful tx
+						return "mined", tx.BlockNumber().Uint64(), nil
+					} else {
+						// failed tx
+						return "failed", tx.BlockNumber().Uint64(), nil
+					}
+				} else {
+					// networking issue
+					return "", 0, err
+				}
 			} else {
 				if receipt.Status == 1 {
 					// successful tx

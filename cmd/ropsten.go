@@ -7,7 +7,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/storage"
-	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -39,8 +38,10 @@ func GetConfigForRopsten() *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage := storage.NewRamStorage()
-	metricStorage := metric.NewRamMetricStorage()
+	storage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten.db")
+	if err != nil {
+		panic(err)
+	}
 
 	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 
@@ -61,7 +62,7 @@ func GetConfigForRopsten() *Config {
 		ActivityStorage:         storage,
 		DataStorage:             storage,
 		FetcherStorage:          storage,
-		MetricStorage:           metricStorage,
+		MetricStorage:           storage,
 		FetcherRunner:           fetcherRunner,
 		FetcherExchanges:        exchangePool.FetcherExchanges(),
 		Exchanges:               exchangePool.CoreExchanges(),

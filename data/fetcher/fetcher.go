@@ -11,12 +11,13 @@ import (
 )
 
 type Fetcher struct {
-	storage      Storage
-	exchanges    []Exchange
-	blockchain   Blockchain
-	runner       FetcherRunner
-	rmaddr       ethereum.Address
-	currentBlock uint64
+	storage                Storage
+	exchanges              []Exchange
+	blockchain             Blockchain
+	runner                 FetcherRunner
+	rmaddr                 ethereum.Address
+	currentBlock           uint64
+	currentBlockUpdateTime uint64
 }
 
 func NewFetcher(
@@ -34,6 +35,7 @@ func NewFetcher(
 
 func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 	self.blockchain = blockchain
+	self.FetchCurrentBlock(common.GetTimepoint())
 }
 
 func (self *Fetcher) AddExchange(exchange Exchange) {
@@ -113,14 +115,17 @@ func (self *Fetcher) RunRateFetcher() {
 }
 
 func (self *Fetcher) FetchRate(timepoint uint64) {
-	data, err := self.blockchain.FetchRates(timepoint, self.currentBlock)
-	if err != nil {
-		log.Printf("Fetching rates from blockchain failed: %s\n", err)
-	}
-	err = self.storage.StoreRate(data, timepoint)
-	// fmt.Printf("balance data: %v\n", data)
-	if err != nil {
-		log.Printf("Storing rates failed: %s\n", err)
+	// only fetch rates 5s after the block number is updated
+	if self.currentBlockUpdateTime-timepoint > 5000 {
+		data, err := self.blockchain.FetchRates(timepoint, self.currentBlock-1)
+		if err != nil {
+			log.Printf("Fetching rates from blockchain failed: %s\n", err)
+		}
+		err = self.storage.StoreRate(data, timepoint)
+		// fmt.Printf("balance data: %v\n", data)
+		if err != nil {
+			log.Printf("Storing rates failed: %s\n", err)
+		}
 	}
 }
 
@@ -261,6 +266,9 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 	if err != nil {
 		log.Printf("Fetching current block failed: %v. Ignored.", err)
 	} else {
+		// update currentBlockUpdateTime first to avoid race condition
+		// where fetcher is trying to fetch new rate
+		self.currentBlockUpdateTime = common.GetTimepoint()
 		self.currentBlock = block
 	}
 }
@@ -271,7 +279,10 @@ func (self *Fetcher) FetchBalanceFromBlockchain(timepoint uint64) (map[string]co
 
 func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {
 	result := map[common.ActivityID]common.ActivityStatus{}
-	minedNonce, _ := self.blockchain.SetRateMinedNonce()
+	minedNonce, nerr := self.blockchain.SetRateMinedNonce()
+	if nerr != nil {
+		log.Printf("Getting mined nonce failed: %s", nerr)
+	}
 	for _, activity := range pendings {
 		if activity.IsBlockchainPending() && (activity.Action == "set_rates" || activity.Action == "deposit" || activity.Action == "withdraw") {
 			var blockNum uint64
@@ -281,7 +292,10 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			if tx.Big().IsInt64() && tx.Big().Int64() == 0 {
 				continue
 			}
-			status, blockNum, _ = self.blockchain.TxStatus(tx)
+			status, blockNum, err = self.blockchain.TxStatus(tx)
+			if err != nil {
+				log.Printf("Getting tx status failed, tx will be considered as pending: %s", err)
+			}
 			switch status {
 			case "":
 				if activity.Action == "set_rates" {
