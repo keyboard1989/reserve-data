@@ -140,8 +140,8 @@ type TokenPairPriceLimit struct {
 type TradingFee map[string]float64
 
 type FundingFee struct {
-	Withdraw map[string]float64 `json:"withdraw_fee"`
-	Deposit  map[string]float64 `json:"deposit_fee"`
+	Withdraw map[string]float64
+	Deposit  map[string]float64
 }
 
 func (self FundingFee) GetTokenFee(token string) float64 {
