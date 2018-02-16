@@ -412,10 +412,15 @@ func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, 
 	for tokenID, _ := range addressConfig {
 		pair := common.MustCreateTokenPair(tokenID, "ETH")
 		pairs = append(pairs, pair)
-
-		fees.Funding.Deposit[tokenID] = 0
 		if _, exist := feeConfig.Funding.Withdraw[tokenID]; exist {
 			fees.Funding.Withdraw[tokenID] = feeConfig.Funding.Withdraw[tokenID]
+		} else {
+			panic(tokenID + " is not found in bittrex withdraw fee config file")
+		}
+		if _, exist := feeConfig.Funding.Deposit[tokenID]; exist {
+			fees.Funding.Deposit[tokenID] = feeConfig.Funding.Deposit[tokenID]
+		} else {
+			panic(tokenID + " is not found in bittrex deposit fee config file")
 		}
 	}
 	return &Bittrex{
