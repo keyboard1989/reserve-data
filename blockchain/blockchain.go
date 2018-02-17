@@ -71,6 +71,8 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 		ReserveAddress:   self.rm,
 		FeeBurnerAddress: self.burnerAddr,
 		NetworkAddress:   self.networkAddr,
+		PricingOperator:  self.signer.GetAddress(),
+		DepositOperator:  self.depositSigner.GetAddress(),
 	}
 }
 
