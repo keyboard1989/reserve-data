@@ -34,12 +34,12 @@ type AllActionHTTPReply struct {
 
 /* GetActivitiesResponse :
  */
-func GetActivitiesResponse(params map[string]string, config configuration.Config) (AllActionHTTPReply, error) {
+func GetActivitiesResponse(url string, params map[string]string, config configuration.Config) (AllActionHTTPReply, error) {
 	timepoint := common.GetTimepoint()
 	nonce := strconv.FormatUint(timepoint, 10)
 	var allActionRep AllActionHTTPReply
 	params["nonce"] = nonce
-	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BaseURL, "activities"), params, true, uint64(timepoint), config)
+	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", url, "activities"), params, true, uint64(timepoint), config)
 
 	if err != nil {
 		fmt.Println("can't get response", err)
@@ -52,10 +52,10 @@ func GetActivitiesResponse(params map[string]string, config configuration.Config
 	return allActionRep, nil
 }
 
-func GetAllRateResponse(params map[string]string, config configuration.Config) (AllRateHTTPReply, error) {
+func GetAllRateResponse(url string, params map[string]string, config configuration.Config) (AllRateHTTPReply, error) {
 	timepoint := common.GetTimepoint()
 	var allRateRep AllRateHTTPReply
-	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BaseURL, "get-all-rates"), params, false, uint64(timepoint), config)
+	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", url, "get-all-rates"), params, false, uint64(timepoint), config)
 
 	if err != nil {
 		fmt.Println("can't get response", err)
@@ -158,7 +158,7 @@ func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) 
 			if ok {
 				curBlock := uint64(oneAct.Result["blockNumber"].(float64))
 				for (idx < len(rates)) && (curBlock < rates[idx].ToBlockNumber) {
-					idx += 1
+					idx++
 				}
 				if (idx < len(rates)) && (curBlock <= rates[idx].BlockNumber) && (curBlock >= rates[idx].ToBlockNumber) {
 					fmt.Printf("\n Block %d is found between block %d to block %d \n", curBlock, rates[idx].BlockNumber, rates[idx].ToBlockNumber)
@@ -171,13 +171,13 @@ func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) 
 	}
 }
 
-func doQuery(params map[string]string, config configuration.Config) {
-	allActionRep, err := GetActivitiesResponse(params, config)
+func doQuery(url string, params map[string]string, config configuration.Config) {
+	allActionRep, err := GetActivitiesResponse(url, params, config)
 	if err != nil {
 		log.Printf("couldn't get activites: %v", err)
 		return
 	}
-	allRateRep, err := GetAllRateResponse(params, config)
+	allRateRep, err := GetAllRateResponse(url, params, config)
 	if err != nil {
 		log.Printf("couldn't get all rates: %v", err)
 		return
@@ -190,9 +190,14 @@ func doQuery(params map[string]string, config configuration.Config) {
 }
 
 func main() {
+	log.Println("Usage: \n\t KYBER_ENV=<env> [BASE_URL=<serverURL>] FROMTIME=<timestamp> [TOTIME=<totime>] ./comparerates")
 	params := make(map[string]string)
 	params["fromTime"] = os.Getenv("FROMTIME")
 	params["toTime"] = os.Getenv("TOTIME")
+	url := os.Getenv("BASE_URL")
+	if len(url) < 1 {
+		url = BaseURL
+	}
 	if len(params["fromTime"]) < 1 {
 		log.Fatal("Wrong usage \n KYBER_ENV=<env> FROMTIME=<timestamp> [TOTIME=<totime>] ./compareRates")
 	}
@@ -205,10 +210,6 @@ func main() {
 	case "staging":
 		log.Printf("Running in staging mode")
 		config = configuration.GetConfigForStaging()
-		break
-	case "internal_mainnet":
-		log.Printf("Running in internal mainnet mode")
-		config = configuration.GetConfigForInternalMainnet()
 		break
 	case "simulation":
 		log.Printf("Running in simulation mode")
@@ -234,14 +235,14 @@ func main() {
 		log.Printf("There was no end time, go to foverer run mode...")
 		for {
 			params["toTime"] = strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
-			doQuery(params, *config)
+			doQuery(url, params, *config)
 			time.Sleep(SleepTime * time.Second)
 			params["fromTime"] = params["toTime"]
 		}
 
 	} else {
 		log.Printf("Go to single query returning mode")
-		doQuery(params, *config)
+		doQuery(url, params, *config)
 	}
 
 }
