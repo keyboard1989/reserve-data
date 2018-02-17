@@ -14,30 +14,32 @@ import (
 )
 
 const (
-	BASE_URL    string        = "https://internal-mainnet-core.kyber.network"
-	REQ_SESCRET string        = "vtHpz1l0kxLyGc4R1qJBkFlQre5352xGJU9h8UQTwUTz5p6VrxcEslF4KnDI21s1"
-	CONFIG_PATH string        = "/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json"
-	TWEI_ADJUST float64       = 1000000000000000000
-	SLEEP_TIME  time.Duration = 60 //sleep time for forever run mode
-	DIFFER_RATE float64       = 0.001
+	BaseURL    string        = "https://ropsten-core.kyber.network"
+	TweiAdjust float64       = 1000000000000000000
+	SleepTime  time.Duration = 60 //sleep time for forever run mode
+	DifferRate float64       = 0.001
 )
 
+//AllRateHTTPReply To hold all rate response and its request status
 type AllRateHTTPReply struct {
 	Data    []common.AllRateResponse
 	Success bool
 }
 
+//AllActionHTTPReply To hold all activities response and its request status
 type AllActionHTTPReply struct {
 	Data    []common.ActivityRecord
 	Success bool
 }
 
+/* GetActivitiesResponse :
+ */
 func GetActivitiesResponse(params map[string]string, config configuration.Config) (AllActionHTTPReply, error) {
 	timepoint := common.GetTimepoint()
 	nonce := strconv.FormatUint(timepoint, 10)
 	var allActionRep AllActionHTTPReply
 	params["nonce"] = nonce
-	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BASE_URL, "activities"), params, true, uint64(timepoint), config)
+	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BaseURL, "activities"), params, true, uint64(timepoint), config)
 
 	if err != nil {
 		fmt.Println("can't get response", err)
@@ -53,7 +55,7 @@ func GetActivitiesResponse(params map[string]string, config configuration.Config
 func GetAllRateResponse(params map[string]string, config configuration.Config) (AllRateHTTPReply, error) {
 	timepoint := common.GetTimepoint()
 	var allRateRep AllRateHTTPReply
-	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BASE_URL, "get-all-rates"), params, false, uint64(timepoint), config)
+	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", BaseURL, "get-all-rates"), params, false, uint64(timepoint), config)
 
 	if err != nil {
 		fmt.Println("can't get response", err)
@@ -87,7 +89,8 @@ func printInterfaceMap(inf map[string]interface{}) {
 
 func printAction(oneAct common.ActivityRecord) {
 	i := int64(oneAct.Timestamp.ToUint64()) / 1000
-	log.Printf("\t Time: %v", time.Unix(i, 0))
+	log.Printf("\t Time: %v \n", time.Unix(i, 0))
+	log.Printf("\t Timestamp: %v", oneAct.Timestamp)
 	log.Printf("\t Activity : %v\n", oneAct.Action)
 	log.Printf("\t Destination : %v\n", oneAct.Destination)
 	log.Printf("\t ExchangeStatus : %v\n", oneAct.ExchangeStatus)
@@ -97,6 +100,24 @@ func printAction(oneAct common.ActivityRecord) {
 	printInterfaceMap(oneAct.Params)
 	log.Printf("\t Result : \n")
 	printInterfaceMap(oneAct.Params)
+}
+
+func printRateResponse(oneRate common.AllRateResponse) {
+	log.Printf("Data from get_all_rates:\n")
+	log.Printf("All data were the same from Block number %v to Block number %v \n", oneRate.BlockNumber, oneRate.ToBlockNumber)
+	i := int64(oneRate.Timestamp.ToUint64()) / 1000
+	log.Printf("\t Time: %v\n", time.Unix(i, 0))
+	log.Printf("\t TimeStamp %v\n", oneRate.Timestamp)
+	log.Printf("\t Error: %v\n", oneRate.Error)
+	log.Printf("\t Data: \n")
+	for k, v := range oneRate.Data {
+		log.Printf("\t Token\t\t BaseBuy\t\t BaseSell\t Error\t Block\t \n")
+		log.Printf("\t %s \t %v \t %v\t %v\t %v ", k, v.BaseBuy, v.BaseSell, v.Error, v.Block)
+		log.Printf("\t CompactBuy\t CompactSell\t Rate\t Valid\t TimeStamp\n")
+		log.Printf("\t %v\t\t %v\t\t %v\t %v\t %v \n\n", v.CompactBuy, v.CompactSell, v.Rate, v.Valid, v.Timestamp)
+	}
+	log.Printf("\t Valid: %t\n", oneRate.Valid)
+	log.Printf("\t Version: %v \n", oneRate.Version)
 }
 
 func CompareRate(oneAct common.ActivityRecord, oneRate common.AllRateResponse, blockID uint64) {
@@ -109,13 +130,13 @@ func CompareRate(oneAct common.ActivityRecord, oneRate common.AllRateResponse, b
 			tokenid, _ := tokenID.(string)
 			val, ok := oneRate.Data[tokenid]
 			if ok {
-				differ := RateDifference(val.BaseBuy*(1+float64(val.CompactBuy)/1000.0)*TWEI_ADJUST, buys[idx].(float64))
-				if math.Abs(differ) > DIFFER_RATE {
+				differ := RateDifference(val.BaseBuy*(1+float64(val.CompactBuy)/1000.0)*TweiAdjust, buys[idx].(float64))
+				if math.Abs(differ) > DifferRate {
 					defer log.Printf("block %d set a buys rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
 					warning = true
 				}
-				differ = RateDifference(val.BaseSell*(1+float64(val.CompactSell)/1000.0)*TWEI_ADJUST, sells[idx].(float64))
-				if math.Abs(differ) > DIFFER_RATE {
+				differ = RateDifference(val.BaseSell*(1+float64(val.CompactSell)/1000.0)*TweiAdjust, sells[idx].(float64))
+				if math.Abs(differ) > DifferRate {
 					defer log.Printf("block %d set a sell rate differ %.5f%% than get rate at token %s \n", blockID, differ*100, tokenid)
 					warning = true
 				}
@@ -125,6 +146,7 @@ func CompareRate(oneAct common.ActivityRecord, oneRate common.AllRateResponse, b
 	if warning {
 		log.Printf("There was different in set rate at block %d \n", blockID)
 		printAction(oneAct)
+		printRateResponse(oneRate)
 	}
 }
 
@@ -152,12 +174,12 @@ func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) 
 func doQuery(params map[string]string, config configuration.Config) {
 	allActionRep, err := GetActivitiesResponse(params, config)
 	if err != nil {
-		log.Printf("couldn't get activites: ", err)
+		log.Printf("couldn't get activites: %v", err)
 		return
 	}
 	allRateRep, err := GetAllRateResponse(params, config)
 	if err != nil {
-		log.Printf("couldn't get all rates: ", err)
+		log.Printf("couldn't get all rates: %v", err)
 		return
 	}
 	if (len(allActionRep.Data) < 1) || (len(allRateRep.Data) < 1) {
@@ -172,7 +194,7 @@ func main() {
 	params["fromTime"] = os.Getenv("FROMTIME")
 	params["toTime"] = os.Getenv("TOTIME")
 	if len(params["fromTime"]) < 1 {
-		log.Fatal("Wrong usage \n FROMTIME=<timestamp> [TOTIME=<totime>] ./compareRates")
+		log.Fatal("Wrong usage \n KYBER_ENV=<env> FROMTIME=<timestamp> [TOTIME=<totime>] ./compareRates")
 	}
 	var config *configuration.Config
 	switch os.Getenv("KYBER_ENV") {
@@ -213,7 +235,7 @@ func main() {
 		for {
 			params["toTime"] = strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
 			doQuery(params, *config)
-			time.Sleep(SLEEP_TIME * time.Second)
+			time.Sleep(SleepTime * time.Second)
 			params["fromTime"] = params["toTime"]
 		}
 

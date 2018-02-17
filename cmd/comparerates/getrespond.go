@@ -26,17 +26,9 @@ func SortByKey(params map[string]string) map[string]string {
 }
 
 func MakeSign(req *http.Request, message string, nonce string, config configuration.Config) {
-
-	/*fmt.Println(message)
-	fileSigner, _ := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json")
-
-	hmac512auth := ihttp.KNAuthentication{
-		fileSigner.KNSecret,
-		REQ_SESCRET,
-		fileSigner.KNConfiguration,
-		fileSigner.KNConfirmConf,
+	if config.AuthEngine == nil {
+		log.Fatal("the environment doesn't come with AuthEngine object, try stagging env ")
 	}
-	hmac512auth.KNReadonlySign(message) */
 	signed := config.AuthEngine.KNSign(message)
 
 	req.Header.Add("nonce", nonce)
@@ -73,20 +65,20 @@ func GetResponse(method string, url string,
 	}
 	//do the request and return the reply
 	var err error
-	var resp_body []byte
+	var resbody []byte
 	resp, err := client.Do(req)
 	if err != nil {
-		return resp_body, err
+		return resbody, err
 	} else {
 		defer resp.Body.Close()
 		switch resp.StatusCode {
 		case 200:
-			resp_body, err = ioutil.ReadAll(resp.Body)
+			resbody, err = ioutil.ReadAll(resp.Body)
 		default:
 			log.Printf("The reply code %v was unexpected", resp.StatusCode)
-			resp_body, err = ioutil.ReadAll(resp.Body)
+			resbody, err = ioutil.ReadAll(resp.Body)
 		}
-		log.Printf("\n request to %s, got response: \n %s \n\n", req.URL, common.TruncStr(resp_body))
-		return resp_body, err
+		log.Printf("\n request to %s, got response: \n %s \n\n", req.URL, common.TruncStr(resbody))
+		return resbody, err
 	}
 }
