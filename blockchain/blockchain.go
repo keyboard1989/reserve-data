@@ -260,6 +260,8 @@ func (self *Blockchain) SetRates(
 				baseTokens = append(baseTokens, token)
 				newBSells = append(newBSells, sells[i])
 				newBBuys = append(newBBuys, buys[i])
+				newCSells[token] = 0
+				newCBuys[token] = 0
 			} else {
 				newCSells[token] = compactSell.Compact
 				newCBuys[token] = compactBuy.Compact
