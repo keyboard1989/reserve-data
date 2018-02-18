@@ -39,7 +39,8 @@ func main() {
 	runtime.GOMAXPROCS(numCPU)
 
 	var config *configuration.Config
-	switch os.Getenv("KYBER_ENV") {
+	env := os.Getenv("KYBER_ENV")
+	switch env {
 	case "mainnet", "production":
 		log.Printf("Running in production mode")
 		config = configuration.GetConfigForMainnet()
@@ -146,6 +147,7 @@ func main() {
 			":8000",
 			config.EnableAuthentication,
 			config.AuthEngine,
+			env,
 		)
 		server.Run()
 	}

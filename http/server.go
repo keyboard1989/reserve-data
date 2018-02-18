@@ -1346,11 +1346,23 @@ func NewHTTPServer(
 	metric metric.MetricStorage,
 	host string,
 	enableAuth bool,
-	authEngine Authentication) *HTTPServer {
-	raven.SetDSN("https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067")
+	authEngine Authentication,
+	env string) *HTTPServer {
 
 	r := gin.Default()
-	r.Use(sentry.Recovery(raven.DefaultClient, false))
+	sentryCli, err := raven.NewWithTags(
+		"https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067",
+		map[string]string{
+			"env": env,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	r.Use(sentry.Recovery(
+		sentryCli,
+		false,
+	))
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AddAllowHeaders("signed")
 	corsConfig.AllowAllOrigins = true
