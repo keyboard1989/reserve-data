@@ -258,7 +258,7 @@ func (self ReserveCore) SetRates(
 			var oldNonce *big.Int
 			var oldPrice *big.Int
 			var minedNonce uint64
-			minedNonce, err := self.blockchain.SetRateMinedNonce()
+			minedNonce, err = self.blockchain.SetRateMinedNonce()
 			if err != nil {
 				err = errors.New("Couldn't get mined nonce of set rate operator")
 			} else {
