@@ -44,7 +44,7 @@ func GetConfigForMainnet() *Config {
 		panic(err)
 	}
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 5*time.Minute)
 
 	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json")
 
@@ -59,7 +59,8 @@ func GetConfigForMainnet() *Config {
 		fileSigner.KNConfirmConf,
 	}
 
-	endpoint := "https://mainnet.infura.io"
+	endpoint := "https://mainnet.infura.io/gosyW19uQnj0ZrtWjcBF"
+
 	bkendpoints := []string{
 		"https://node.kyber.network",
 		"https://mainnet.infura.io",
