@@ -30,6 +30,11 @@ const (
 	TradeEvent       string = "0x1849bd6a030a1bca28b83437fd3de96f3d27a5d172fa7e9c78e7b61468928a39"
 )
 
+var (
+	Big0   *big.Int = big.NewInt(0)
+	BigMax *big.Int = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
+)
+
 type Blockchain struct {
 	rpcClient     *rpc.Client
 	client        *ethclient.Client
@@ -427,11 +432,21 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uin
 		}
 	} else {
 		for i, tok := range self.tokens {
-			result[tok.ID] = common.BalanceEntry{
-				Valid:      true,
-				Timestamp:  timestamp,
-				ReturnTime: returnTime,
-				Balance:    common.RawBalance(*balances[i]),
+			if balances[i].Cmp(Big0) == 0 || balances[i].Cmp(BigMax) > 0 {
+				result[tok.ID] = common.BalanceEntry{
+					Valid:      false,
+					Error:      "Got strange balances from node. It equals to 0 or is bigger than 10^33",
+					Timestamp:  timestamp,
+					ReturnTime: returnTime,
+					Balance:    common.RawBalance(*balances[i]),
+				}
+			} else {
+				result[tok.ID] = common.BalanceEntry{
+					Valid:      true,
+					Timestamp:  timestamp,
+					ReturnTime: returnTime,
+					Balance:    common.RawBalance(*balances[i]),
+				}
 			}
 		}
 	}
