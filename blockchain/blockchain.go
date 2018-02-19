@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"strconv"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"math/big"
 )
 
 type tbindex struct {
@@ -59,9 +59,12 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 	for _, ex := range common.SupportedExchanges {
 		exs[ex.ID()] = ex.TokenAddresses()
 	}
-	tokens := map[string]ethereum.Address{}
+	tokens := map[string]common.TokenInfo{}
 	for _, t := range self.tokens {
-		tokens[t.ID] = ethereum.HexToAddress(t.Address)
+		tokens[t.ID] = common.TokenInfo{
+			Address:  ethereum.HexToAddress(t.Address),
+			Decimals: t.Decimal,
+		}
 	}
 	return &common.Addresses{
 		Tokens:           tokens,
