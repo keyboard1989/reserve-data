@@ -79,7 +79,7 @@ func (self *BinanceEndpoint) GetResponse(
 		case 200:
 			resp_body, err = ioutil.ReadAll(resp.Body)
 		}
-		log.Printf("request to %s, got response from binance: %s\n", req.URL, common.TruncStr(resp_body))
+		log.Printf("request to %s, got response from binance: %s, err: %v", req.URL, common.TruncStr(resp_body), err)
 		return resp_body, err
 	}
 }
