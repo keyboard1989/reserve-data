@@ -157,6 +157,25 @@ func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string, p
 	}
 }
 
+func (self *HTTPServer) AllPricesVersion(c *gin.Context) {
+	log.Printf("Getting all prices version")
+	data, err := self.app.CurrentPriceVersion(getTimePoint(c, true))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"version": data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) AllPrices(c *gin.Context) {
 	log.Printf("Getting all prices \n")
 	data, err := self.app.GetAllPrices(getTimePoint(c, true))
@@ -207,6 +226,30 @@ func (self *HTTPServer) Price(c *gin.Context) {
 				},
 			)
 		}
+	}
+}
+
+func (self *HTTPServer) AuthDataVersion(c *gin.Context) {
+	log.Printf("Getting current auth data snapshot version")
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+
+	data, err := self.app.CurrentAuthDataVersion(getTimePoint(c, true))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"version": data,
+			},
+		)
 	}
 }
 
@@ -1252,11 +1295,13 @@ func (self *HTTPServer) EnableSetrate(c *gin.Context) {
 }
 
 func (self *HTTPServer) Run() {
+	self.r.GET("/prices-version", self.AllPricesVersion)
 	self.r.GET("/prices", self.AllPrices)
 	self.r.GET("/prices/:base/:quote", self.Price)
 	self.r.GET("/getrates", self.GetRate)
 	self.r.GET("/get-all-rates", self.GetRates)
 
+	self.r.GET("/authdata-version", self.AuthDataVersion)
 	self.r.GET("/authdata", self.AuthData)
 	self.r.GET("/activities", self.GetActivities)
 	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
@@ -1301,11 +1346,23 @@ func NewHTTPServer(
 	metric metric.MetricStorage,
 	host string,
 	enableAuth bool,
-	authEngine Authentication) *HTTPServer {
-	raven.SetDSN("https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067")
+	authEngine Authentication,
+	env string) *HTTPServer {
 
 	r := gin.Default()
-	r.Use(sentry.Recovery(raven.DefaultClient, false))
+	sentryCli, err := raven.NewWithTags(
+		"https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067",
+		map[string]string{
+			"env": env,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+	r.Use(sentry.Recovery(
+		sentryCli,
+		false,
+	))
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AddAllowHeaders("signed")
 	corsConfig.AllowAllOrigins = true

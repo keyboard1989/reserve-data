@@ -25,7 +25,7 @@ data/storage/test_bolt.db
 cmd/faucet/config.json
 cmd/faucet/faucet
 cmd/faucet/faucet_wallet
-
+temp
 build.sh
 cmd/config.json
 cmd/dev.db

@@ -20,11 +20,14 @@ sample:
 {
   "binance_key": "your binance key",
   "binance_secret": "your binance secret",
-  "bittrex_key": "bittrex key",
-  "bittrex_secret": "bittrex secret",
   "kn_secret": "secret key for people to sign their requests to our apis. It is ignored in dev mode.",
+  "kn_readonly": "read only key for people to sign their requests, this key can read everything but cannot execute anything",
+  "kn_configuration": "key for people to sign their requests, this key can read everything and set configuration such as target quantity",
+  "kn_confirm_configuration": "key for people to sign ther requests, this key can read everything and confirm target quantity, enable/disable setrate or rebalance",
   "keystore_path": "path to the JSON keystore file, recommended to be absolute path",
   "passphrase": "passphrase to unlock the JSON keystore"
+  "keystore_deposit_path": "path to the JSON keystore file that will be used to deposit",
+  "passphrase_deposit": "passphrase to unlock the JSON keytore"
 }
 ```
 
