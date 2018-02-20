@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"math/big"
+	"math/rand"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -79,7 +80,9 @@ func (self *BinanceEndpoint) GetResponse(
 		case 200:
 			resp_body, err = ioutil.ReadAll(resp.Body)
 		}
-		log.Printf("request to %s, got response from binance: %s, err: %v", req.URL, common.TruncStr(resp_body), err)
+		if err != nil || len(resp_body) == 0 || rand.Int()%10 == 0 {
+			log.Printf("request to %s, got response from binance (error or throttled to 10%): %s, err: %v", req.URL, common.TruncStr(resp_body), err)
+		}
 		return resp_body, err
 	}
 }

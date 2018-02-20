@@ -468,6 +468,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.
 	} else {
 		for i, tok := range self.tokens {
 			if balances[i].Cmp(Big0) == 0 || balances[i].Cmp(BigMax) > 0 {
+				log.Printf("Fetcher ------> balances of token %s is invalid", tok.ID)
 				result[tok.ID] = common.BalanceEntry{
 					Valid:      false,
 					Error:      "Got strange balances from node. It equals to 0 or is bigger than 10^33",
