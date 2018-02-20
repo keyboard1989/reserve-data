@@ -80,6 +80,39 @@
       "maxPerBlockImbalance": "1925452883",
       "maxTotalImbalance": "1925452883"
     },
+    "RDN": {
+      "name": "Raiden",
+      "decimals": 18,
+      "address": "0x255aa6df07540cb5d3d297f0d0d4d84cb52bc8e6",
+      "minimalRecordResolution": "1000000000000000",
+      "maxPerBlockImbalance": "8000000000000000000000",
+      "maxTotalImbalance": "8000000000000000000000"
+    },
+
+    "APPC": {
+      "name": "AppCoins",
+      "decimals": 18,
+      "address": "0x1a7a8bd9106f2b8d977e08582dc7d24c723ab0db",
+      "minimalRecordResolution": "100000000000000",
+      "maxPerBlockImbalance": "24000000000000000000000",
+      "maxTotalImbalance": "24000000000000000000000"
+    },
+    "ENG": {
+      "name": "Enigma",
+      "decimals": 8,
+      "address": "0xf0ee6b27b759c9893ce4f094b49ad28fd15a23e4",
+      "minimalRecordResolution": "10000",
+      "maxPerBlockImbalance": "800000000000",
+      "maxTotalImbalance": "800000000000"
+    },
+    "SALT": {
+      "name": "Salt",
+      "decimals": 8,
+      "address": "0x4156d3342d5c385a87d264f90653733592000581",
+      "minimalRecordResolution": "10000",
+      "maxPerBlockImbalance": "800000000000",
+      "maxTotalImbalance": "800000000000"
+    },
     "ETH": {
       "name": "Ethereum",
       "decimals": 18,
@@ -98,7 +131,11 @@
       "MANA": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
       "BAT": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
       "REQ": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
-      "GTO": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90"
+      "GTO": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
+      "ENG": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
+      "SALT": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
+      "APPC": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
+      "RDN": "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90"
     }
   },
   "permission": {
