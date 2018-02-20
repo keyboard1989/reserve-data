@@ -44,7 +44,7 @@ func GetConfigForStaging() *Config {
 		panic(err)
 	}
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+	fetcherRunner := fetcher.NewTickerRunner(5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 5*time.Minute)
 
 	fileSigner, depositSigner := signer.NewFileSigner("/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json")
 
