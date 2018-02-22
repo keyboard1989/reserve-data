@@ -11,6 +11,15 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+type SettingPaths struct {
+	settingPath string
+	feePath     string
+	storagePath string
+	signerPath  string
+	endPoint    string
+	bkendpoints []string
+}
+
 type Config struct {
 	ActivityStorage core.ActivityStorage
 	DataStorage     data.Storage
@@ -44,4 +53,17 @@ func (self *Config) MapTokens() map[string]common.Token {
 		result[t.ID] = t
 	}
 	return result
+}
+
+var ConfigPaths = map[string]SettingPaths{
+	"dev": {
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+		"https://mainnet.infura.io",
+		[]string{
+			"https://mainnet.infura.io",
+		},
+	},
 }
