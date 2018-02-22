@@ -595,6 +595,7 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]common.Tr
 					tradeLog.DestAddress = destAddr
 					tradeLog.SrcAmount = srcAmount.Big()
 					tradeLog.DestAmount = destAmount.Big()
+					tradeLog.UserAddress = ethereum.BytesToAddress(l.Topics[1].Bytes())
 				}
 			}
 			prevLog = &logs[i]
