@@ -19,6 +19,7 @@ type Fetcher struct {
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 	simulationMode         bool
+	ethRate                *common.EthRate
 }
 
 func NewFetcher(
@@ -33,6 +34,7 @@ func NewFetcher(
 		runner:         runner,
 		rmaddr:         address,
 		simulationMode: simulationMode,
+		ethRate:        common.NewEthRate(),
 	}
 }
 
@@ -49,9 +51,20 @@ func (self *Fetcher) Stop() error {
 	return self.runner.Stop()
 }
 
+func (self *Fetcher) RunGetEthRate() {
+	tick := time.NewTicker(1 * time.Hour)
+	go func() {
+		for {
+			<-tick.C
+			self.ethRate.UpdateEthRate()
+		}
+	}()
+}
+
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
+	go self.RunGetEthRate()
 	go self.RunOrderbookFetcher()
 	go self.RunAuthDataFetcher()
 	go self.RunRateFetcher()
