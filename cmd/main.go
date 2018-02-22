@@ -19,6 +19,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 func loadTimestamp(path string) []uint64 {
@@ -37,6 +38,16 @@ func loadTimestamp(path string) []uint64 {
 func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
+
+	log.SetOutput(&lumberjack.Logger{
+		Filename:   "/go/src/github/KyberNetwork/reserve-data/log/core.log",
+		MaxSize:    1, // megabytes
+		MaxBackups: 3,
+		MaxAge:     28,   //days
+		Compress:   true, // disabled by default
+	})
+
+	log.Println("Test lumberjack")
 
 	var config *configuration.Config
 	env := os.Getenv("KYBER_ENV")
