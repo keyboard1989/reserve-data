@@ -278,7 +278,7 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 }
 
 func (self *Fetcher) FetchBalanceFromBlockchain(timepoint uint64) (map[string]common.BalanceEntry, error) {
-	return self.blockchain.FetchBalanceData(self.rmaddr, timepoint)
+	return self.blockchain.FetchBalanceData(self.rmaddr, nil, timepoint)
 }
 
 func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {
@@ -335,7 +335,7 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 				}
 			case "lost":
 				elapsed := common.GetTimepoint() - activity.Timestamp.ToUint64()
-				if elapsed > uint64(15*time.Minute/time.Millisecond) && activity.Action == "set_rates" {
+				if elapsed > uint64(15*time.Minute/time.Millisecond) {
 					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %s", activity.Result["tx"].(string), elapsed)
 					result[activity.ID] = common.ActivityStatus{
 						activity.ExchangeStatus,
