@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
@@ -35,19 +36,33 @@ func loadTimestamp(path string) []uint64 {
 	return timestamp
 }
 
+func configLog() {
+	logger := &lumberjack.Logger{
+		Filename: "/go/src/github.com/KyberNetwork/reserve-data/log/core.log",
+		// MaxSize:  1, // megabytes
+		MaxBackups: 0,
+		MaxAge:     0, //days
+		// Compress:   true, // disabled by default
+	}
+
+	mw := io.MultiWriter(os.Stdout, logger)
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
+	log.SetOutput(mw)
+
+	rotateTicker := time.NewTicker(24 * time.Hour)
+	go func() {
+		for {
+			<-rotateTicker.C
+			logger.Rotate()
+		}
+	}()
+}
+
 func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	log.SetOutput(&lumberjack.Logger{
-		Filename:   "/go/src/github/KyberNetwork/reserve-data/log/core.log",
-		MaxSize:    1, // megabytes
-		MaxBackups: 3,
-		MaxAge:     28,   //days
-		Compress:   true, // disabled by default
-	})
-
-	log.Println("Test lumberjack")
+	configLog()
 
 	var config *configuration.Config
 	env := os.Getenv("KYBER_ENV")
@@ -79,16 +94,6 @@ func main() {
 		log.Printf("Running in dev mode")
 		config = configuration.GetConfigForDev()
 	}
-
-	logPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/log.log"
-	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("Couldn't open log file: %v", err)
-	}
-	mw := io.MultiWriter(os.Stdout, f)
-	defer f.Close()
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-	log.SetOutput(mw)
 
 	fetcher := fetcher.NewFetcher(
 		config.FetcherStorage,
