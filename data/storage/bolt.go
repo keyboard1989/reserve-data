@@ -907,14 +907,14 @@ func (self *BoltStorage) AggregateTradeLog(trade common.TradeLog) (err error) {
 		{
 			ASSETS_VOLUME_BUCKET,
 			common.TradeStats{
-				trade.SrcAddress.String():  trade.SrcAmount,
-				trade.DestAddress.String(): trade.DestAmount,
+				strings.ToLower(trade.SrcAddress.String()):  trade.SrcAmount,
+				strings.ToLower(trade.DestAddress.String()): trade.DestAmount,
 			},
 		},
 		{
 			BURN_FEE_BUCKET,
 			common.TradeStats{
-				trade.ReserveAddress.String(): trade.BurnFee,
+				strings.ToLower(trade.ReserveAddress.String()): trade.BurnFee,
 			},
 		},
 		{
@@ -931,15 +931,15 @@ func (self *BoltStorage) AggregateTradeLog(trade common.TradeLog) (err error) {
 	}{
 		{
 			MINUTE_BUCKET,
-			uint64ToBytes(trade.Timestamp / uint64(time.Minute)),
+			getTimestampByFreq(trade.Timestamp, "M"),
 		},
 		{
 			HOUR_BUCKET,
-			uint64ToBytes(trade.Timestamp / uint64(time.Hour)),
+			getTimestampByFreq(trade.Timestamp, "H"),
 		},
 		{
 			DAY_BUCKET,
-			uint64ToBytes(trade.Timestamp / uint64(time.Hour*24)),
+			getTimestampByFreq(trade.Timestamp, "D"),
 		},
 	}
 
@@ -957,18 +957,133 @@ func (self *BoltStorage) AggregateTradeLog(trade common.TradeLog) (err error) {
 			}
 
 			for k, v := range metricIdx.stats {
-				updateStats(stats, k, v)
+				if v != nil {
+					updateStats(stats, k, v)
+				}
 			}
 
 			dataJSON, err := json.Marshal(stats)
 			if err != nil {
 				return err
 			}
-			freqBk.Put(freqIdx.key, dataJSON)
+
+			if err := freqBk.Put(freqIdx.key, dataJSON); err != nil {
+				return err
+			}
 		}
 	}
 
-	return err
+	// Commit the transaction.
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func getBucketNameByFreq(freq string) (bucketName string, err error) {
+	switch freq {
+	case "M":
+		bucketName = MINUTE_BUCKET
+	case "H":
+		bucketName = HOUR_BUCKET
+	case "D":
+		bucketName = DAY_BUCKET
+	default:
+		err = errors.New(fmt.Sprintf("Invalid frequencies"))
+	}
+
+	return
+}
+
+func getTimestampByFreq(t uint64, freq string) (result []byte) {
+	switch freq {
+	case "M":
+		result = uint64ToBytes(t / uint64(time.Minute) * uint64(time.Minute))
+	case "H":
+		result = uint64ToBytes(t / uint64(time.Hour) * uint64(time.Hour))
+	case "D":
+		result = uint64ToBytes(t / uint64(time.Hour*24) * uint64(time.Hour*24))
+	}
+	return
+}
+
+func (self *BoltStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (result []common.TradeStats, err error) {
+	self.db.View(func(tx *bolt.Tx) error {
+		// Get the trade log bucket
+		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
+
+		assetsVolumeBk := tradeStatsBk.Bucket([]byte(ASSETS_VOLUME_BUCKET))
+
+		var freqBkName string
+		freqBkName, err = getBucketNameByFreq(freq)
+		if err != nil {
+			return err
+		}
+
+		freqBk := assetsVolumeBk.Bucket([]byte(freqBkName))
+		c := freqBk.Cursor()
+		min := getTimestampByFreq(fromTime, freq)
+		max := getTimestampByFreq(toTime, freq)
+
+		token, err := common.GetToken(asset)
+		if err != nil {
+			return err
+		}
+
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			stats := common.TradeStats{}
+			err = json.Unmarshal(v, &stats)
+			if err != nil {
+				return err
+			}
+
+			_, ok := stats[token.Address]
+			if ok {
+				record := common.TradeStats{
+					strconv.FormatUint(bytesToUint64(k), 10): stats[token.Address],
+				}
+				result = append([]common.TradeStats{record}, result...)
+			}
+		}
+		return err
+	})
+	return result, err
+}
+
+func (self *BoltStorage) GetBurnFee(fromTime uint64, toTime uint64, freq string, reserveAddr string) (result []common.TradeStats, err error) {
+	self.db.View(func(tx *bolt.Tx) error {
+		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
+		burnFeeBk := tradeStatsBk.Bucket([]byte(BURN_FEE_BUCKET))
+
+		freqBkName, err := getBucketNameByFreq(freq)
+		if err != nil {
+			return err
+		}
+		freqBk := burnFeeBk.Bucket([]byte(freqBkName))
+		c := freqBk.Cursor()
+		min := getTimestampByFreq(fromTime, freq)
+		max := getTimestampByFreq(toTime, freq)
+
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			stats := common.TradeStats{}
+			err = json.Unmarshal(v, &stats)
+			if err != nil {
+				return err
+			}
+
+			_, ok := stats[reserveAddr]
+			if ok {
+				record := common.TradeStats{
+					strconv.FormatUint(bytesToUint64(k), 10): stats[reserveAddr],
+				}
+				result = append([]common.TradeStats{record}, result...)
+			}
+		}
+
+		return err
+	})
+	return result, err
 }
 
 func (self *BoltStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
