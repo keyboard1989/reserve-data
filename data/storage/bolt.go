@@ -408,6 +408,9 @@ func formatTimepointToActivityID(timepoint uint64, id []byte) []byte {
 func (self *BoltStorage) GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
 	result := []common.ActivityRecord{}
 	var err error
+	if (toTime-fromTime)/1000000 > MAX_GET_RATES_PERIOD {
+		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
+	}
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
 		c := b.Cursor()
