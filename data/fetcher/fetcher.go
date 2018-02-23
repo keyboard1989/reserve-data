@@ -19,6 +19,7 @@ type Fetcher struct {
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 	simulationMode         bool
+	ethRate                *common.EthRate
 }
 
 func NewFetcher(
@@ -33,6 +34,7 @@ func NewFetcher(
 		runner:         runner,
 		rmaddr:         address,
 		simulationMode: simulationMode,
+		ethRate:        common.NewEthRate(),
 	}
 }
 
@@ -49,9 +51,20 @@ func (self *Fetcher) Stop() error {
 	return self.runner.Stop()
 }
 
+func (self *Fetcher) RunGetEthRate() {
+	tick := time.NewTicker(1 * time.Hour)
+	go func() {
+		for {
+			<-tick.C
+			self.ethRate.UpdateEthRate()
+		}
+	}()
+}
+
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
+	go self.RunGetEthRate()
 	go self.RunOrderbookFetcher()
 	go self.RunAuthDataFetcher()
 	go self.RunRateFetcher()
@@ -278,7 +291,7 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 }
 
 func (self *Fetcher) FetchBalanceFromBlockchain(timepoint uint64) (map[string]common.BalanceEntry, error) {
-	return self.blockchain.FetchBalanceData(self.rmaddr, timepoint)
+	return self.blockchain.FetchBalanceData(self.rmaddr, nil, timepoint)
 }
 
 func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {
@@ -335,7 +348,7 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 				}
 			case "lost":
 				elapsed := common.GetTimepoint() - activity.Timestamp.ToUint64()
-				if elapsed > uint64(15*time.Minute/time.Millisecond) && activity.Action == "set_rates" {
+				if elapsed > uint64(15*time.Minute/time.Millisecond) {
 					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %s", activity.Result["tx"].(string), elapsed)
 					result[activity.ID] = common.ActivityStatus{
 						activity.ExchangeStatus,
