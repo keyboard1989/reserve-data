@@ -1294,6 +1294,130 @@ func (self *HTTPServer) EnableSetrate(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetPWIEquation(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetPWIEquation()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetPendingPWIEquation(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetPendingPWIEquation()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
+	var err error
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission})
+	if !ok {
+		return
+	}
+	data := postForm.Get("data")
+	for _, dataConfig := range strings.Split(data, "|") {
+		dataParts := strings.Split(dataConfig, "_")
+		token := dataParts[0]
+		// varA, _ := strconv.ParseFloat(dataParts[1], 64)
+		// varB, _ := strconv.ParseFloat(dataParts[2], 64)
+		// varC, _ := strconv.ParseFloat(dataParts[3], 64)
+		_, err = common.GetToken(token)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+		// err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
+		// if err != nil {
+		// 	c.JSON(
+		// 		http.StatusOK,
+		// 		gin.H{"success": false, "reason": err.Error()},
+		// 	)
+		// 	return
+		// }
+	}
+	err = self.metric.StorePendingPWIEquation(data)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) ConfirmPWIEquation(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	postData := postForm.Get("data")
+	err := self.metric.StorePWIEquation(postData)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices-version", self.AllPricesVersion)
 	self.r.GET("/prices", self.AllPrices)
@@ -1336,6 +1460,11 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/setratestatus", self.GetSetrateStatus)
 	self.r.POST("/holdsetrate", self.HoldSetrate)
 	self.r.POST("/enablesetrate", self.EnableSetrate)
+
+	self.r.GET("/pwis-equation", self.GetPWIEquation)
+	self.r.GET("/pending-pwis-equation", self.GetPendingPWIEquation)
+	self.r.GET("/set-pwis-equation", self.SetPWIEquation)
+	self.r.GET("/confirm-pwis-equation", self.ConfirmPWIEquation)
 
 	self.r.Run(self.host)
 }
