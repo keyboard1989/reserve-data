@@ -38,25 +38,12 @@ Allow overwriting some parameter`,
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
 
-	compareRates.Flags().StringVarP(&baseURL, "url", "r", "", "base URL (required)")
+	compareRates.Flags().StringVar(&baseURL, "url", "https://ropsten-core.kyber.network", "base URL, default to https://ropsten-core.kyber.network")
+	compareRates.MarkFlagRequired("url")
 	RootCmd.AddCommand(compareRates)
-}
-func init() {
-
-	// Here you will define your flags and configuration settings.
-
-	// Cobra supports Persistent Flags which will work for this command
-	// and all subcommands, e.g.:
-	// versionCmd.PersistentFlags().String("foo", "", "A help for foo")
-
-	// Cobra supports local flags which will only run when this command
-	// is called directly, e.g.:
-	// versionCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-
 }

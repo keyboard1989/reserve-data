@@ -2,10 +2,12 @@ package configuration
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/http"
@@ -24,18 +26,48 @@ func NewExchangePool(fn func(
 	return fn(feeConfig, addressConfig, signer, bittrexStorage)
 }
 
-// GetConfig: load and set all config with preset params and customize param depends on env
-func GetConfig(setPath SettingPaths, exchangePoolFunc func(
-	common.ExchangeFeesConfig,
-	common.AddressConfig,
-	*signer.FileSigner,
-	exchange.BittrexStorage) *ExchangePool, authEnbl bool) *Config {
-	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
-	addressConfig, err := common.GetAddressConfigFromFile(setPath.settingPath)
+func GetAddressConfig(filePath string, addressOW [5]string) common.AddressConfig {
+	addressConfig, err := common.GetAddressConfigFromFile(filePath)
+	//addressConfig := GetAddressConfigFromViper()
 	if err != nil {
-		log.Fatalf("Config file %s is not found. Error: %s", setPath.settingPath, err)
+		log.Fatalf("Config file %s is not found. Error: %s", filePath, err)
 	}
+	if addressOW[0] != "" {
+		log.Printf("Overwriting wrapper address config with %s \n", addressOW[0])
+		addressConfig.Wrapper = addressOW[0]
+	}
+	if addressOW[1] != "" {
+		log.Printf("Overwriting reserve address config with %s \n", addressOW[1])
+		addressConfig.Wrapper = addressOW[0]
+	}
+	if addressOW[2] != "" {
+		log.Printf("Overwriting pricing address config with %s \n", addressOW[2])
+		addressConfig.Wrapper = addressOW[0]
+	}
+	if addressOW[3] != "" {
+		log.Printf("Overwriting burner address config with %s \n", addressOW[3])
+		addressConfig.Wrapper = addressOW[0]
+	}
+	if addressOW[4] != "" {
+		log.Printf("Overwriting network address config with %s \n", addressOW[4])
+		addressConfig.Wrapper = addressOW[0]
+	}
+	return addressConfig
+}
+
+// GetConfig: load and set all config with preset params and customize param depends on env
+// This is to generalized all the getconfig function.
+func GetConfig(setPath SettingPaths,
+	exchangePoolFunc func(common.ExchangeFeesConfig,
+		common.AddressConfig,
+		*signer.FileSigner,
+		exchange.BittrexStorage) *ExchangePool,
+	authEnbl bool, addressOW [5]string, endpointOW string) *Config {
+
+	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
+	addressConfig := GetAddressConfig(setPath.settingPath, addressOW)
 	feeConfig, err := common.GetFeeFromFile(setPath.feePath)
+
 	if err != nil {
 		log.Fatalf("Fees file %s cannot found at: %s", setPath.feePath, err)
 	}
@@ -59,28 +91,44 @@ func GetConfig(setPath SettingPaths, exchangePoolFunc func(
 	if err != nil {
 		panic(err)
 	}
+	//fetcherRunner := http_runner.NewHttpRunner(8001)
+	var fetcherRunner fetcher.FetcherRunner
 
-	fetcherRunner := fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+	if os.Getenv("KYBER_ENV") == "simulation" {
+		fetcherRunner = http_runner.NewHttpRunner(8001)
+	} else {
+		fetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+	}
 
 	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
 
-	exchangePool := NewExchangePool(
-		exchangePoolFunc, feeConfig, addressConfig, fileSigner, storage,
-	)
+	exchangePool := NewExchangePool(exchangePoolFunc, feeConfig, addressConfig, fileSigner, storage)
 
 	// endpoint := "https://ropsten.infura.io"
 	// endpoint := "http://blockchain:8545"
 	// endpoint := "https://kovan.infura.io"
-	endpoint := setPath.endPoint
-	bkendpoints := setPath.bkendpoints
-
-	hmac512auth := http.KNAuthentication{
-		fileSigner.KNSecret,
-		fileSigner.KNReadOnly,
-		fileSigner.KNConfiguration,
-		fileSigner.KNConfirmConf,
+	var endpoint string
+	if endpointOW != "" {
+		log.Printf("overwriting Endpoint with %s\n", endpointOW)
+		endpoint = endpointOW
+	} else {
+		endpoint = setPath.endPoint
 	}
 
+	bkendpoints := setPath.bkendpoints
+	var hmac512auth http.KNAuthentication
+
+	if authEnbl {
+		hmac512auth = http.KNAuthentication{
+			fileSigner.KNSecret,
+			fileSigner.KNReadOnly,
+			fileSigner.KNConfiguration,
+			fileSigner.KNConfirmConf,
+		}
+
+	} else {
+		log.Printf("\nWARNING: No authentication mode\n")
+	}
 	return &Config{
 		ActivityStorage:         storage,
 		DataStorage:             storage,

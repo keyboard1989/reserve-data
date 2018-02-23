@@ -38,6 +38,8 @@ import (
 
 var noAuthEnable bool
 var servPort int = 8000
+var addressOW [5]string
+var endpointOW string
 
 func loadTimestamp(path string) []uint64 {
 	raw, err := ioutil.ReadFile(path)
@@ -52,42 +54,25 @@ func loadTimestamp(path string) []uint64 {
 	return timestamp
 }
 
+// GetConfig
+
+func GetConfigFromENV(kyberENV string, addressOW [5]string) *configuration.Config {
+	var config *configuration.Config
+	config = configuration.GetConfig(configuration.ConfigPaths[kyberENV],
+		configuration.ExchangeFunction[kyberENV],
+		!noAuthEnable,
+		addressOW,
+		endpointOW)
+	return config
+}
+
 func serverStart(cmd *cobra.Command, args []string) {
-	log.Println(args)
-	log.Println(noAuthEnable)
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 
-	var config *configuration.Config
-	//get configuration
-	switch kyberENV {
-	case "mainnet", "production":
-		log.Printf("Running in production mode")
-		config = configuration.GetConfigForMainnet()
-		break
-	case "staging":
-		log.Printf("Running in staging mode")
-		config = configuration.GetConfigForStaging()
-		break
-	case "simulation":
-		log.Printf("Running in simulation mode")
-		config = configuration.GetConfigForSimulation()
-		break
-	case "kovan":
-		log.Printf("Running in kovan mode")
-		config = configuration.GetConfigForKovan()
-		break
-	case "ropsten":
-		log.Printf("Running in ropsten mode")
-		config = configuration.GetConfigForRopsten()
-		break
-	case "dev":
-		log.Printf("Running in dev mode")
-		config = configuration.GetConfig(configuration.ConfigPaths["dev"], configuration.NewDevExchangePool, !noAuthEnable)
-	default:
-		log.Printf("Running in dev mode")
-		config = configuration.GetConfig(configuration.ConfigPaths["dev"], configuration.NewDevExchangePool, !noAuthEnable)
-	}
+	//get configuration from ENV variable
+	kyberENV := os.Getenv("KYBER_ENV")
+	config := GetConfigFromENV(kyberENV, addressOW)
 
 	//set log file
 	logPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/log.log"
@@ -95,6 +80,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatalf("Couldn't open log file: %v", err)
 	}
+
 	// write to mutiple location :stdout and log path
 	mw := io.MultiWriter(os.Stdout, f)
 	defer f.Close()
@@ -106,7 +92,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.FetcherStorage,
 		config.FetcherRunner,
 		config.ReserveAddress,
-		os.Getenv("KYBER_ENV") == "simulation",
+		kyberENV == "simulation",
 	)
 
 	//set static field supportExchange from common...
@@ -169,10 +155,11 @@ func serverStart(cmd *cobra.Command, args []string) {
 		)
 		app.Run()
 		core := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
+		servPortStr := fmt.Sprintf(":%d", servPort)
 		server := http.NewHTTPServer(
 			app, core,
 			config.MetricStorage,
-			":8000",
+			servPortStr,
 			config.EnableAuthentication,
 			config.AuthEngine,
 		)
@@ -184,7 +171,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 
 // This represents the base command when called without any subcommands
 var startServer = &cobra.Command{
-	Use:   "serve ",
+	Use:   "server ",
 	Short: "initiate the server with specific config",
 	Long: `Start reserve-data core server with preset Environment and
 Allow overwriting some parameter`,
@@ -194,13 +181,15 @@ Allow overwriting some parameter`,
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
-
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
-
-	startServer.Flags().BoolVarP(&noAuthEnable, "noauth", "", false, "enable authentication")
+	startServer.Flags().BoolVarP(&noAuthEnable, "noauth", "", false, "disable authentication")
 	startServer.Flags().IntVarP(&servPort, "port", "p", 8000, "server port")
-
+	startServer.Flags().StringVar(&addressOW[0], "wrapperAddr", "", "wrapper Address, default to configuration file")
+	startServer.Flags().StringVar(&addressOW[1], "reserveAddr", "", "reserve Address, default to configuration file")
+	startServer.Flags().StringVar(&addressOW[2], "pricingAddr", "", "pricing Address, default to configuration file")
+	startServer.Flags().StringVar(&addressOW[3], "burnerAddr", "", "burner Address, default to configuration file")
+	startServer.Flags().StringVar(&addressOW[4], "networkAddr", "", "network Address, default to configuration file")
+	startServer.Flags().StringVar(&endpointOW, "endpoint", "", "endpoint, default to configuration file")
 }

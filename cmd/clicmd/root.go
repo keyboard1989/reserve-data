@@ -16,14 +16,14 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-var kyberENV string
-var kyberEXC string
+var addressConfigFile *string
 
 // This represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -49,26 +49,26 @@ func init() {
 	// Here you will define your flags and configuration settings.
 	// Cobra supports Persistent Flags, which, if defined here,
 	// will be global for your application.
-
-	RootCmd.PersistentFlags().StringVar(&kyberENV, "env", "dev", "kyber Environment tag, default is dev")
-	RootCmd.PersistentFlags().StringVar(&kyberEXC, "exc", "", "kyber supported exchange, default is nil")
+	addressConfigFile = RootCmd.PersistentFlags().String("addressconfig", "", "default config file name")
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	RootCmd.Flags().BoolP("verbose", "v", false, "verbose mode enable")
+
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	if kyberENV != "" { // enable ability to specify config file via fl
-		viper.SetConfigFile(kyberENV)
+
+	if (*addressConfigFile) != "" { // enable ability to specify config file via fl
+		viper.SetConfigName(*addressConfigFile)
 	}
 
-	viper.SetConfigName(".NewCobra") // name of config file (without extension)
-	viper.AddConfigPath("$HOME")     // adding home directory as first search path
-	viper.AutomaticEnv()             // read in environment variables that match
+	viper.SetConfigType("json")
+	viper.AddConfigPath("/go/src/github.com/KyberNetwork/reserve-data/cmd/")
+	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
 	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
+		log.Printf("Using config file: %v \n", viper.ConfigFileUsed())
 	}
 }
