@@ -541,6 +541,8 @@ type TradeLog struct {
 	BurnFee        *big.Int
 }
 
+type TradeStats map[string]*big.Int
+
 type TradeHistory struct {
 	ID        string
 	Price     float64

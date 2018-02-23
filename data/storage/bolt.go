@@ -7,8 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/metric"
@@ -32,6 +35,15 @@ const (
 	SETRATE_CONTROL         string = "setrate_control"
 	MAX_NUMBER_VERSION      int    = 1000
 	MAX_GET_RATES_PERIOD    uint64 = 86400000 //1 days in milisec
+
+	TRADE_STATS_BUCKET   string = "trade_stats"
+	ASSETS_VOLUME_BUCKET string = "assets_volume"
+	BURN_FEE_BUCKET      string = "burn_fee"
+	WALLET_FEE_BUCKET    string = "wallet_fee"
+	USER_VOLUME_BUCKET   string = "user_volume"
+	MINUTE_BUCKET        string = "minute"
+	HOUR_BUCKET          string = "hour"
+	DAY_BUCKET           string = "day"
 )
 
 type BoltStorage struct {
@@ -65,6 +77,19 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(TRADE_HISTORY))
 		tx.CreateBucket([]byte(ENABLE_REBALANCE))
 		tx.CreateBucket([]byte(SETRATE_CONTROL))
+		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
+
+		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
+		metrics := []string{ASSETS_VOLUME_BUCKET, BURN_FEE_BUCKET, WALLET_FEE_BUCKET, USER_VOLUME_BUCKET}
+		frequencies := []string{MINUTE_BUCKET, HOUR_BUCKET, DAY_BUCKET}
+
+		for _, metric := range metrics {
+			tradeStatsBk.CreateBucket([]byte(metric))
+			metricBk := tradeStatsBk.Bucket([]byte(metric))
+			for _, freq := range frequencies {
+				metricBk.CreateBucket([]byte(freq))
+			}
+		}
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
@@ -851,6 +876,98 @@ func (self *BoltStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) e
 		err = b.Put(idByte, dataJson)
 		return err
 	})
+	return err
+}
+
+func updateStats(stats common.TradeStats, key string, value *big.Int) {
+	sum, ok := stats[key]
+	if ok {
+		stats[key] = sum.Add(sum, value)
+	} else {
+		stats[key] = value
+	}
+}
+
+func (self *BoltStorage) AggregateTradeLog(trade common.TradeLog) (err error) {
+	// Start the transaction.
+	tx, err := self.db.Begin(true)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Get the trade log bucket
+	tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
+
+	walletFeeKey := strings.Join([]string{trade.ReserveAddress.String(), trade.WalletAddress.String()}, "_")
+	metricIndexes := []struct {
+		bucketName string
+		stats      common.TradeStats
+	}{
+		{
+			ASSETS_VOLUME_BUCKET,
+			common.TradeStats{
+				trade.SrcAddress.String():  trade.SrcAmount,
+				trade.DestAddress.String(): trade.DestAmount,
+			},
+		},
+		{
+			BURN_FEE_BUCKET,
+			common.TradeStats{
+				trade.ReserveAddress.String(): trade.BurnFee,
+			},
+		},
+		{
+			WALLET_FEE_BUCKET,
+			common.TradeStats{
+				walletFeeKey: trade.WalletFee,
+			},
+		},
+	}
+
+	freqIndexes := []struct {
+		bucketName string
+		key        []byte
+	}{
+		{
+			MINUTE_BUCKET,
+			uint64ToBytes(trade.Timestamp / uint64(time.Minute)),
+		},
+		{
+			HOUR_BUCKET,
+			uint64ToBytes(trade.Timestamp / uint64(time.Hour)),
+		},
+		{
+			DAY_BUCKET,
+			uint64ToBytes(trade.Timestamp / uint64(time.Hour*24)),
+		},
+	}
+
+	for _, metricIdx := range metricIndexes {
+		metricBk := tradeStatsBk.Bucket([]byte(metricIdx.bucketName))
+		for _, freqIdx := range freqIndexes {
+			freqBk := metricBk.Bucket([]byte(freqIdx.bucketName))
+
+			value := freqBk.Get([]byte(freqIdx.key))
+			var stats common.TradeStats
+			if value != nil {
+				json.Unmarshal(value, &stats)
+			} else {
+				stats = make(map[string]*big.Int)
+			}
+
+			for k, v := range metricIdx.stats {
+				updateStats(stats, k, v)
+			}
+
+			dataJSON, err := json.Marshal(stats)
+			if err != nil {
+				return err
+			}
+			freqBk.Put(freqIdx.key, dataJSON)
+		}
+	}
+
 	return err
 }
 
