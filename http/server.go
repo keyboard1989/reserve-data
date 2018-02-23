@@ -1353,10 +1353,14 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 	data := postForm.Get("data")
 	for _, dataConfig := range strings.Split(data, "|") {
 		dataParts := strings.Split(dataConfig, "_")
+		if len(dataParts) != 4 {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "The input data is not correct"},
+			)
+			return
+		}
 		token := dataParts[0]
-		// varA, _ := strconv.ParseFloat(dataParts[1], 64)
-		// varB, _ := strconv.ParseFloat(dataParts[2], 64)
-		// varC, _ := strconv.ParseFloat(dataParts[3], 64)
 		_, err = common.GetToken(token)
 		if err != nil {
 			c.JSON(
@@ -1365,14 +1369,6 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 			)
 			return
 		}
-		// err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
-		// if err != nil {
-		// 	c.JSON(
-		// 		http.StatusOK,
-		// 		gin.H{"success": false, "reason": err.Error()},
-		// 	)
-		// 	return
-		// }
 	}
 	err = self.metric.StorePendingPWIEquation(data)
 	if err != nil {
@@ -1400,6 +1396,31 @@ func (self *HTTPServer) ConfirmPWIEquation(c *gin.Context) {
 	}
 	postData := postForm.Get("data")
 	err := self.metric.StorePWIEquation(postData)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	// postData := postForm.Get("data")
+	err := self.metric.RemovePendingPWIEquation()
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1463,8 +1484,9 @@ func (self *HTTPServer) Run() {
 
 	self.r.GET("/pwis-equation", self.GetPWIEquation)
 	self.r.GET("/pending-pwis-equation", self.GetPendingPWIEquation)
-	self.r.GET("/set-pwis-equation", self.SetPWIEquation)
-	self.r.GET("/confirm-pwis-equation", self.ConfirmPWIEquation)
+	self.r.POST("/set-pwis-equation", self.SetPWIEquation)
+	self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
+	self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
 
 	self.r.Run(self.host)
 }

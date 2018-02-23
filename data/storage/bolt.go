@@ -1018,51 +1018,63 @@ func (self *BoltStorage) StorePendingPWIEquation(data string) error {
 
 func (self *BoltStorage) GetPendingPWIEquation() (metric.PWIEquation, error) {
 	var err error
-	result := metric.PWIEquation{}
-	self.db.View(func(tx *bolt.Tx) error {
+	var result metric.PWIEquation
+	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_PWI_EQUATION))
 		c := b.Cursor()
 		_, v := c.First()
-		if v != nil {
+		if v == nil {
 			return errors.New("There no pending equation")
 		} else {
 			json.Unmarshal(v, &result)
 		}
-		return err
+		return nil
 	})
-	return metric.PWIEquation{}, nil
+	return result, err
 }
 
 func (self *BoltStorage) StorePWIEquation(data string) error {
+	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_PWI_EQUATION))
 		c := b.Cursor()
 		_, v := c.First()
 		if v == nil {
-			return errors.New("There no pending equation")
+			err = errors.New("There no pending equation")
+			return err
 		} else {
 			p := tx.Bucket([]byte(PWI_EQUATION))
 			idByte := uint64ToBytes(common.GetTimepoint())
+			pending := metric.PWIEquation{}
+			json.Unmarshal(v, &pending)
+			if pending.Data != data {
+				err = errors.New("Confirm data does not match pending data")
+				return err
+			}
 			p.Put(idByte, v)
 		}
-		return nil
+		return err
 	})
-	return nil
+	if err == nil {
+		self.RemovePendingPWIEquation()
+	}
+	return err
 }
 
 func (self *BoltStorage) GetPWIEquation() (metric.PWIEquation, error) {
 	var err error
-	result := metric.PWIEquation{}
+	var result metric.PWIEquation
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PWI_EQUATION))
 		c := b.Cursor()
 		_, v := c.Last()
 		if v == nil {
-			return errors.New("There no equation")
+			err = errors.New("There is no equation")
+			return err
 		} else {
 			json.Unmarshal(v, &result)
 		}
-		return nil
+		return err
 	})
 	return result, err
 }
@@ -1075,8 +1087,10 @@ func (self *BoltStorage) RemovePendingPWIEquation() error {
 		k, _ := c.First()
 		if k != nil {
 			b.Delete([]byte(k))
+		} else {
+			err = errors.New("There is no pending data")
 		}
 		return err
 	})
-	return nil
+	return err
 }
