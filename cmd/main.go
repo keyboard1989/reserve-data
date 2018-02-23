@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"time"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
@@ -20,6 +19,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/robfig/cron"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -49,13 +49,9 @@ func configLog() {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 	log.SetOutput(mw)
 
-	rotateTicker := time.NewTicker(24 * time.Hour)
-	go func() {
-		for {
-			<-rotateTicker.C
-			logger.Rotate()
-		}
-	}()
+	c := cron.New()
+	c.AddFunc("@daily", func() { logger.Rotate() })
+	c.Start()
 }
 
 func main() {
