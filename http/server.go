@@ -1294,6 +1294,46 @@ func (self *HTTPServer) EnableSetrate(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetAssetVolume(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{"freq", "asset"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	asset := c.Query("asset")
+	token, err := common.GetToken(asset)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	data, err := self.app.GetAssetVolume(fromTime, toTime, freq, token.ID)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	self.r.GET("/prices-version", self.AllPricesVersion)
 	self.r.GET("/prices", self.AllPrices)
@@ -1336,6 +1376,11 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/setratestatus", self.GetSetrateStatus)
 	self.r.POST("/holdsetrate", self.HoldSetrate)
 	self.r.POST("/enablesetrate", self.EnableSetrate)
+
+	self.r.GET("/get-asset-volume", self.GetAssetVolume)
+	// self.r.GET("/get-burn-fee", self.GetAssetVolume)
+	// self.r.GET("/get-wallet-fee", self.GetAssetVolume)
+	// self.r.GET("/get-user-volume", self.GetAssetVolume)
 
 	self.r.Run(self.host)
 }

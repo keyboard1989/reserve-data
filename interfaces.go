@@ -25,6 +25,8 @@ type ReserveData interface {
 	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
 	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
 
+	GetAssetVolume(fromTime, toTime uint64, freq, asset string) ([]common.TradeStats, error)
+
 	Run() error
 	Stop() error
 }

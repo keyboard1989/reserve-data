@@ -209,6 +209,11 @@ func (self ReserveData) GetTradeHistory(timepoint uint64) (common.AllTradeHistor
 	return data, err
 }
 
+func (self ReserveData) GetAssetVolume(fromTime, toTime uint64, freq, asset string) ([]common.TradeStats, error) {
+	data, err := self.storage.GetAssetVolume(fromTime, toTime, freq, asset)
+	return data, err
+}
+
 func (self ReserveData) Run() error {
 	return self.fetcher.Run()
 }
