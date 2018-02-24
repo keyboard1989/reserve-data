@@ -214,6 +214,21 @@ func (self ReserveData) GetAssetVolume(fromTime, toTime uint64, freq, asset stri
 	return data, err
 }
 
+func (self ReserveData) GetBurnFee(fromTime, toTime uint64, freq, reserveAddr string) ([]common.TradeStats, error) {
+	data, err := self.storage.GetBurnFee(fromTime, toTime, freq, reserveAddr)
+	return data, err
+}
+
+func (self ReserveData) GetWalletFee(fromTime, toTime uint64, freq, reserveAddr, walletAddr string) ([]common.TradeStats, error) {
+	data, err := self.storage.GetWalletFee(fromTime, toTime, freq, reserveAddr, walletAddr)
+	return data, err
+}
+
+func (self ReserveData) GetUserVolume(fromTime, toTime uint64, freq, userAddr string) ([]common.TradeStats, error) {
+	data, err := self.storage.GetUserVolume(fromTime, toTime, freq, userAddr)
+	return data, err
+}
+
 func (self ReserveData) Run() error {
 	return self.fetcher.Run()
 }

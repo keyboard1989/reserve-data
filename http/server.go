@@ -1303,7 +1303,7 @@ func (self *HTTPServer) GetAssetVolume(c *gin.Context) {
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 	freq := c.Query("freq")
 	asset := c.Query("asset")
-	token, err := common.GetToken(asset)
+	data, err := self.app.GetAssetVolume(fromTime, toTime, freq, asset)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1314,7 +1314,84 @@ func (self *HTTPServer) GetAssetVolume(c *gin.Context) {
 		)
 		return
 	}
-	data, err := self.app.GetAssetVolume(fromTime, toTime, freq, token.ID)
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetBurnFee(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{"freq", "reserveAddr"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	reserveAddr := c.Query("reserveAddr")
+	data, err := self.app.GetBurnFee(fromTime, toTime, freq, reserveAddr)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetWalletFee(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{"freq", "reserveAddr", "walletAddr"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	reserveAddr := c.Query("reserveAddr")
+	walletAddr := c.Query("walletAddr")
+	data, err := self.app.GetWalletFee(fromTime, toTime, freq, reserveAddr, walletAddr)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetUserVolume(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{"freq", "userAddress"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	userAddr := c.Query("userAddr")
+	data, err := self.app.GetUserVolume(fromTime, toTime, freq, userAddr)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1378,9 +1455,9 @@ func (self *HTTPServer) Run() {
 	self.r.POST("/enablesetrate", self.EnableSetrate)
 
 	self.r.GET("/get-asset-volume", self.GetAssetVolume)
-	// self.r.GET("/get-burn-fee", self.GetAssetVolume)
-	// self.r.GET("/get-wallet-fee", self.GetAssetVolume)
-	// self.r.GET("/get-user-volume", self.GetAssetVolume)
+	self.r.GET("/get-burn-fee", self.GetBurnFee)
+	self.r.GET("/get-wallet-fee", self.GetWalletFee)
+	self.r.GET("/get-user-volume", self.GetUserVolume)
 
 	self.r.Run(self.host)
 }
