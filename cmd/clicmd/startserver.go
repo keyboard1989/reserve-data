@@ -72,6 +72,9 @@ func serverStart(cmd *cobra.Command, args []string) {
 
 	//get configuration from ENV variable
 	kyberENV := os.Getenv("KYBER_ENV")
+	if kyberENV == "" {
+		kyberENV = "dev"
+	}
 	config := GetConfigFromENV(kyberENV, addressOW)
 
 	//set log file

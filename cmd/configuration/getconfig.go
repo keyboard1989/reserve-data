@@ -63,7 +63,6 @@ func GetConfig(setPath SettingPaths,
 		*signer.FileSigner,
 		exchange.BittrexStorage) *ExchangePool,
 	authEnbl bool, addressOW [5]string, endpointOW string) *Config {
-
 	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	addressConfig := GetAddressConfig(setPath.settingPath, addressOW)
 	feeConfig, err := common.GetFeeFromFile(setPath.feePath)

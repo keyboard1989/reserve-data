@@ -1,11 +1,10 @@
-package main
+package comparerates
 
 import (
 	"encoding/json"
 	"fmt"
 	"log"
 	"math"
-	"os"
 	"strconv"
 	"time"
 
@@ -171,7 +170,7 @@ func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) 
 	}
 }
 
-func doQuery(url string, params map[string]string, config configuration.Config) {
+func DoQuery(url string, params map[string]string, config configuration.Config) {
 	allActionRep, err := GetActivitiesResponse(url, params, config)
 	if err != nil {
 		log.Printf("couldn't get activites: %v", err)
@@ -187,62 +186,4 @@ func doQuery(url string, params map[string]string, config configuration.Config) 
 		return
 	}
 	CompareRates(allActionRep.Data, allRateRep.Data)
-}
-
-func main() {
-	log.Println("Usage: \n\t KYBER_ENV=<env> [BASE_URL=<serverURL>] FROMTIME=<timestamp> [TOTIME=<totime>] ./comparerates")
-	params := make(map[string]string)
-	params["fromTime"] = os.Getenv("FROMTIME")
-	params["toTime"] = os.Getenv("TOTIME")
-	url := os.Getenv("BASE_URL")
-	if len(url) < 1 {
-		url = BaseURL
-	}
-	if len(params["fromTime"]) < 1 {
-		log.Fatal("Wrong usage \n KYBER_ENV=<env> FROMTIME=<timestamp> [TOTIME=<totime>] ./compareRates")
-	}
-	var config *configuration.Config
-	switch os.Getenv("KYBER_ENV") {
-	case "mainnet", "production":
-		log.Printf("Running in production mode")
-		config = configuration.GetConfigForMainnet()
-		break
-	case "staging":
-		log.Printf("Running in staging mode")
-		config = configuration.GetConfigForStaging()
-		break
-	case "simulation":
-		log.Printf("Running in simulation mode")
-		config = configuration.GetConfigForSimulation()
-		break
-	case "kovan":
-		log.Printf("Running in kovan mode")
-		config = configuration.GetConfigForKovan()
-		break
-	case "ropsten":
-		log.Printf("Running in ropsten mode")
-		config = configuration.GetConfigForRopsten()
-		break
-	case "dev":
-		log.Printf("Running in dev mode")
-		config = configuration.GetConfigForDev()
-	default:
-		log.Printf("Running in dev mode")
-		config = configuration.GetConfigForDev()
-	}
-
-	if len(params["toTime"]) < 1 {
-		log.Printf("There was no end time, go to foverer run mode...")
-		for {
-			params["toTime"] = strconv.FormatInt((time.Now().UnixNano() / int64(time.Millisecond)), 10)
-			doQuery(url, params, *config)
-			time.Sleep(SleepTime * time.Second)
-			params["fromTime"] = params["toTime"]
-		}
-
-	} else {
-		log.Printf("Go to single query returning mode")
-		doQuery(url, params, *config)
-	}
-
 }

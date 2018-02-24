@@ -28,7 +28,8 @@ var addressConfigFile *string
 // This represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "./cmd ",
-	Short: "entry point to the application",
+	Short: "entry point to the application, required KYBER_ENV and KYBER_EXCHANGES as environment variables",
+
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 }
