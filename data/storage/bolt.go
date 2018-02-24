@@ -907,6 +907,12 @@ func (self *BoltStorage) aggregateTradeLog(trade common.TradeLog) (err error) {
 				walletFeeKey: trade.WalletFee,
 			},
 		},
+		{
+			USER_VOLUME_BUCKET,
+			common.TradeStats{
+				strings.ToLower(trade.UserAddress.String()): trade.FiatAmount,
+			},
+		},
 	}
 	for _, update := range updates {
 		for _, freq := range []string{"M", "H", "D"} {
