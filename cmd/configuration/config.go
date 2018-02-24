@@ -6,10 +6,11 @@ import (
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
-	"github.com/KyberNetwork/reserve-data/exchange"
+	"github.com/KyberNetwork/reserve-data/exchange/binance"
+	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
+	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
-	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -126,14 +127,38 @@ var ConfigPaths = map[string]SettingPaths{
 	},
 }
 
-var ExchangeFunction = map[string]func(common.ExchangeFeesConfig,
-	common.AddressConfig,
-	*signer.FileSigner,
-	exchange.BittrexStorage) *ExchangePool{
-	"dev":        NewDevExchangePool,
-	"kovan":      NewKovanExchangePool,
-	"mainnet":    NewMainnetExchangePool,
-	"staging":    NewMainnetExchangePool,
-	"simulation": NewSimulationExchangePool,
-	"ropsten":    NewRopstenExchangePool,
+var BittrexInterfaces = map[string]bittrex.Interface{
+	"dev":        bittrex.NewDevInterface(),
+	"kovan":      bittrex.NewKovanInterface(),
+	"mainnet":    bittrex.NewRealInterface(),
+	"staging":    bittrex.NewRealInterface(),
+	"simulation": bittrex.NewSimulatedInterface(),
+	"ropsten":    bittrex.NewRopstenInterface(),
+}
+
+var BinanceInterfaces = map[string]binance.Interface{
+	"dev":        binance.NewDevInterface(),
+	"kovan":      binance.NewKovanInterface(),
+	"mainnet":    binance.NewRealInterface(),
+	"staging":    binance.NewRealInterface(),
+	"simulation": binance.NewSimulatedInterface(),
+	"ropsten":    binance.NewRopstenInterface(),
+}
+
+var HuobiInterfaces = map[string]huobi.Interface{
+	"dev":        huobi.NewDevInterface(),
+	"kovan":      huobi.NewKovanInterface(),
+	"mainnet":    huobi.NewRealInterface(),
+	"staging":    huobi.NewRealInterface(),
+	"simulation": huobi.NewSimulatedInterface(),
+	"ropsten":    huobi.NewRopstenInterface(),
+}
+
+var HuobiAsync = map[string]bool{
+	"dev":        false,
+	"kovan":      true,
+	"mainnet":    true,
+	"staging":    true,
+	"simulation": false,
+	"ropsten":    true,
 }

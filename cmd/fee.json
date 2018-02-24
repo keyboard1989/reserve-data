@@ -17,7 +17,11 @@
                     "MANA": 0,
                     "BAT":  0,
                     "REQ":  0,
-                    "GTO":  0
+                    "GTO":  0,
+                    "SALT": 0,
+                    "APPC": 0,
+                    "RDN": 0,
+                    "ENG": 0
                 },
                 "Withdraw": {
                     "ETH":  0.01,
@@ -30,7 +34,11 @@
                     "MANA": 89,
                     "BAT":  23,
                     "REQ":  27.8,
-                    "GTO":  31
+                    "GTO":  31,
+                    "SALT": 2,
+                    "APPC": 10.8,
+                    "RDN": 2.8,
+                    "ENG": 3.1
                 }
             }
         },
@@ -85,7 +93,11 @@
                     "MANA": 0,
                     "BAT":  0,
                     "REQ":  0,
-                    "GTO":  0
+                    "GTO":  0,
+                    "SALT": 0,
+                    "APPC": 0,
+                    "RDN": 0,
+                    "ENG": 0
                 },
                 "Withdraw": {
                     "ETH":  0.01,

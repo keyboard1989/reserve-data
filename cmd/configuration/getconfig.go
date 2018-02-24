@@ -9,22 +9,10 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
-	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
-
-func NewExchangePool(fn func(
-	common.ExchangeFeesConfig,
-	common.AddressConfig,
-	*signer.FileSigner,
-	exchange.BittrexStorage) *ExchangePool,
-	feeConfig common.ExchangeFeesConfig,
-	addressConfig common.AddressConfig,
-	signer *signer.FileSigner, bittrexStorage exchange.BittrexStorage) *ExchangePool {
-	return fn(feeConfig, addressConfig, signer, bittrexStorage)
-}
 
 func GetAddressConfig(filePath string, addressOW [5]string) common.AddressConfig {
 	addressConfig, err := common.GetAddressConfigFromFile(filePath)
@@ -57,12 +45,8 @@ func GetAddressConfig(filePath string, addressOW [5]string) common.AddressConfig
 
 // GetConfig: load and set all config with preset params and customize param depends on env
 // This is to generalized all the getconfig function.
-func GetConfig(setPath SettingPaths,
-	exchangePoolFunc func(common.ExchangeFeesConfig,
-		common.AddressConfig,
-		*signer.FileSigner,
-		exchange.BittrexStorage) *ExchangePool,
-	authEnbl bool, addressOW [5]string, endpointOW string) *Config {
+func GetConfig(kyberENV string, authEnbl bool, addressOW [5]string, endpointOW string) *Config {
+	setPath := ConfigPaths[kyberENV]
 	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	addressConfig := GetAddressConfig(setPath.settingPath, addressOW)
 	feeConfig, err := common.GetFeeFromFile(setPath.feePath)
@@ -101,7 +85,8 @@ func GetConfig(setPath SettingPaths,
 
 	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
 
-	exchangePool := NewExchangePool(exchangePoolFunc, feeConfig, addressConfig, fileSigner, storage)
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, storage, kyberENV)
+	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	// endpoint := "https://ropsten.infura.io"
 	// endpoint := "http://blockchain:8545"

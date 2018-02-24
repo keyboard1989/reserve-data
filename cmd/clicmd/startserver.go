@@ -43,8 +43,7 @@ func loadTimestamp(path string) []uint64 {
 // GetConfigFromENV: From ENV variable and overwriting instruction, build the config
 func GetConfigFromENV(kyberENV string, addressOW [5]string) *configuration.Config {
 	var config *configuration.Config
-	config = configuration.GetConfig(configuration.ConfigPaths[kyberENV],
-		configuration.ExchangeFunction[kyberENV],
+	config = configuration.GetConfig(kyberENV,
 		!noAuthEnable,
 		addressOW,
 		endpointOW)
