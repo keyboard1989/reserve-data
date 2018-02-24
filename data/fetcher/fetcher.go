@@ -55,8 +55,8 @@ func (self *Fetcher) RunGetEthRate() {
 	tick := time.NewTicker(1 * time.Hour)
 	go func() {
 		for {
-			<-tick.C
 			self.ethRate.UpdateEthRate()
+			<-tick.C
 		}
 	}()
 }
@@ -95,7 +95,7 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 
 // return block number that we just fetched the logs
 func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
-	logs, err := self.blockchain.GetLogs(fromBlock, timepoint)
+	logs, err := self.blockchain.GetLogs(fromBlock, timepoint, self.ethRate.GetEthRate())
 	if err != nil {
 		log.Printf("fetching logs data from block %d failed, error: %v", fromBlock, err)
 		if fromBlock == 0 {

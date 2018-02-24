@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"math/big"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -561,7 +563,7 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint u
 }
 
 // return timestamp increasing array of trade log
-func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]common.TradeLog, error) {
+func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate float64) ([]common.TradeLog, error) {
 	result := []common.TradeLog{}
 	// get all logs from fromBlock to best block
 	logs, err := self.GetRawLogs(fromBlock, 0, timepoint)
@@ -612,6 +614,22 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64) ([]common.Tr
 					tradeLog.SrcAmount = srcAmount.Big()
 					tradeLog.DestAmount = destAmount.Big()
 					tradeLog.UserAddress = ethereum.BytesToAddress(l.Topics[1].Bytes())
+
+					if ethRate != 0 {
+						// fiatAmount = amount * ethRate
+						eth := common.SupportedTokens["ETH"]
+						f := new(big.Float)
+						if strings.ToLower(eth.Address) == strings.ToLower(srcAddr.String()) {
+							f.SetInt(tradeLog.SrcAmount)
+						} else {
+							f.SetInt(tradeLog.DestAmount)
+						}
+
+						tradeLog.FiatAmount = new(big.Int)
+						f = f.Mul(f, new(big.Float).SetFloat64(ethRate))
+						f.Quo(f, new(big.Float).SetFloat64(math.Pow10(18)))
+						f.Int(tradeLog.FiatAmount)
+					}
 				}
 			}
 			prevLog = &logs[i]

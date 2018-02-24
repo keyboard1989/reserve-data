@@ -587,6 +587,7 @@ type TradeLog struct {
 	DestAddress ethereum.Address
 	SrcAmount   *big.Int
 	DestAmount  *big.Int
+	FiatAmount  *big.Int
 
 	ReserveAddress ethereum.Address
 	WalletAddress  ethereum.Address
