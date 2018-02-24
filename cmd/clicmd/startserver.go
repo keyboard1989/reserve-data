@@ -1,17 +1,3 @@
-// Copyright © 2018 NAME HERE <EMAIL ADDRESS>
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-
 package cmd
 
 import (
@@ -54,8 +40,7 @@ func loadTimestamp(path string) []uint64 {
 	return timestamp
 }
 
-// GetConfig
-
+// GetConfigFromENV: From ENV variable and overwriting instruction, build the config
 func GetConfigFromENV(kyberENV string, addressOW [5]string) *configuration.Config {
 	var config *configuration.Config
 	config = configuration.GetConfig(configuration.ConfigPaths[kyberENV],
@@ -122,7 +107,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	// nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
+	//nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
 	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
 	nonceDeposit := nonce.NewTimeWindow(infura, config.DepositSigner)
 	//set block chain
@@ -172,21 +157,16 @@ func serverStart(cmd *cobra.Command, args []string) {
 	}
 }
 
-// This represents the base command when called without any subcommands
 var startServer = &cobra.Command{
 	Use:   "server ",
 	Short: "initiate the server with specific config",
 	Long: `Start reserve-data core server with preset Environment and
 Allow overwriting some parameter`,
-	// Uncomment the following line if your bare application
-	// has an action associated with it:
 	Run: serverStart,
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports Persistent Flags, which, if defined here,
-	// will be global for your application.
+	// start server flags.
 	startServer.Flags().BoolVarP(&noAuthEnable, "noauth", "", false, "disable authentication")
 	startServer.Flags().IntVarP(&servPort, "port", "p", 8000, "server port")
 	startServer.Flags().StringVar(&addressOW[0], "wrapperAddr", "", "wrapper Address, default to configuration file")
@@ -195,4 +175,5 @@ func init() {
 	startServer.Flags().StringVar(&addressOW[3], "burnerAddr", "", "burner Address, default to configuration file")
 	startServer.Flags().StringVar(&addressOW[4], "networkAddr", "", "network Address, default to configuration file")
 	startServer.Flags().StringVar(&endpointOW, "endpoint", "", "endpoint, default to configuration file")
+	RootCmd.AddCommand(startServer)
 }
