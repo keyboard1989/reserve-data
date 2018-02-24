@@ -19,6 +19,8 @@ import (
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/robfig/cron"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 func loadTimestamp(path string) []uint64 {
@@ -34,9 +36,29 @@ func loadTimestamp(path string) []uint64 {
 	return timestamp
 }
 
+func configLog() {
+	logger := &lumberjack.Logger{
+		Filename: "/go/src/github.com/KyberNetwork/reserve-data/log/core.log",
+		// MaxSize:  1, // megabytes
+		MaxBackups: 0,
+		MaxAge:     0, //days
+		// Compress:   true, // disabled by default
+	}
+
+	mw := io.MultiWriter(os.Stdout, logger)
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
+	log.SetOutput(mw)
+
+	c := cron.New()
+	c.AddFunc("@daily", func() { logger.Rotate() })
+	c.Start()
+}
+
 func main() {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
+
+	configLog()
 
 	var config *configuration.Config
 	env := os.Getenv("KYBER_ENV")
@@ -68,16 +90,6 @@ func main() {
 		log.Printf("Running in dev mode")
 		config = configuration.GetConfigForDev()
 	}
-
-	logPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/log.log"
-	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("Couldn't open log file: %v", err)
-	}
-	mw := io.MultiWriter(os.Stdout, f)
-	defer f.Close()
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-	log.SetOutput(mw)
 
 	fetcher := fetcher.NewFetcher(
 		config.FetcherStorage,
