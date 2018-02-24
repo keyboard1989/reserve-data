@@ -876,10 +876,13 @@ func (self *BoltStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64) e
 		err = b.Put(idByte, dataJson)
 		return err
 	})
+	if err == nil {
+		err = self.aggregateTradeLog(stat)
+	}
 	return err
 }
 
-func (self *BoltStorage) AggregateTradeLog(trade common.TradeLog) (err error) {
+func (self *BoltStorage) aggregateTradeLog(trade common.TradeLog) (err error) {
 	walletFeeKey := strings.Join([]string{trade.ReserveAddress.String(), trade.WalletAddress.String()}, "_")
 	updates := []struct {
 		metric     string
