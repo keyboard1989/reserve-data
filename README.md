@@ -619,6 +619,110 @@ response
     "success": true
   }
 ```
+
+### Get pending pwis equation (signing required)
+```
+<host>:8000/pending-pwis-equation
+GET request
+```
+
+response:
+```
+  {
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25","Status":"unconfirmed"}
+  }
+```
+
+### Get pwis equation (signing required)
+```
+<host>:8000/pwis-equation
+GET request
+```
+
+response:
+```
+  {
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25","Status":"confirmed"}
+  }
+```
+response if there no data yet:
+```
+  {
+    "success": false,
+    "reason": "Version doesn't exist: 1517481572058"
+  }
+```
+
+### Set pwis equation (signing required)
+```
+<host>:8000/set-pwis-equation
+POST request
+form params:
+  - data: required, string, must sort by token id by ascending order
+  - action: required, string, set/confirm/cancel, action to set, confirm or cancel target quantity
+  - id: optional, required to confirm target quantity
+  - type: required, number, data type (now it should be 1)
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/set-pwis-equation \
+  -H 'content-type: multipart/form-data' \
+  -F data= EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25 \
+  -F id=1517396850670
+```
+response
+```
+  {
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25","Status":"unconfirmed"}
+  }
+```
+
+### Confirm pwis equation (signing required)
+```
+<host>:8000/confirm-pwis-equation
+POST request
+form params:
+  - data: required, string, must sort by token id by ascending order
+  - id: optional, required to confirm target quantity
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/confirm-pwis-equation \
+  -H 'content-type: multipart/form-data' \
+  -F data= EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25 \
+  -F id=1517396850670
+```
+response
+```
+  {
+    "success": true,
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25","Status":"unconfirmed"}
+  }
+```
+
+### Reject pwis equation (signing required)
+```
+<host>:8000/reject-pwis-equation
+POST request
+```
+eg:
+```
+curl -X POST \
+  http://localhost:8000/reject-pwis-equation \
+  -H 'content-type: multipart/form-data' \
+```
+response
+```
+  {
+    "success": true,
+  }
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 
