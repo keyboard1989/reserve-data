@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/big"
 	"strconv"
 	"time"
 
@@ -16,7 +17,6 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
-	"math/big"
 )
 
 type tbindex struct {
@@ -28,6 +28,11 @@ const (
 	FeeToWalletEvent string = "0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"
 	BurnFeeEvent     string = "0xf838f6ddc89706878e3c3e698e9b5cbfbf2c0e3d3dcd0bd2e00f1ccf313e0185"
 	TradeEvent       string = "0x1849bd6a030a1bca28b83437fd3de96f3d27a5d172fa7e9c78e7b61468928a39"
+)
+
+var (
+	Big0   *big.Int = big.NewInt(0)
+	BigMax *big.Int = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
 )
 
 type Blockchain struct {
@@ -59,9 +64,12 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 	for _, ex := range common.SupportedExchanges {
 		exs[ex.ID()] = ex.TokenAddresses()
 	}
-	tokens := map[string]ethereum.Address{}
+	tokens := map[string]common.TokenInfo{}
 	for _, t := range self.tokens {
-		tokens[t.ID] = ethereum.HexToAddress(t.Address)
+		tokens[t.ID] = common.TokenInfo{
+			Address:  ethereum.HexToAddress(t.Address),
+			Decimals: t.Decimal,
+		}
 	}
 	return &common.Addresses{
 		Tokens:           tokens,
@@ -71,6 +79,8 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 		ReserveAddress:   self.rm,
 		FeeBurnerAddress: self.burnerAddr,
 		NetworkAddress:   self.networkAddr,
+		PricingOperator:  self.signer.GetAddress(),
+		DepositOperator:  self.depositSigner.GetAddress(),
 	}
 }
 
@@ -242,7 +252,6 @@ func (self *Blockchain) SetRates(
 		log.Printf("Getting transaction opts failed, err: %s", err)
 		return nil, err
 	} else {
-		// fix to 50.1 gwei
 		baseBuys, baseSells, _, _, _, err := self.wrapper.GetTokenRates(
 			nil, nil, self.pricingAddr, tokens,
 		)
@@ -261,12 +270,14 @@ func (self *Blockchain) SetRates(
 				baseTokens = append(baseTokens, token)
 				newBSells = append(newBSells, sells[i])
 				newBBuys = append(newBBuys, buys[i])
+				newCSells[token] = 0
+				newCBuys[token] = 0
 			} else {
 				newCSells[token] = compactSell.Compact
 				newCBuys[token] = compactBuy.Compact
 			}
 		}
-		buys, sells, indices := BuildCompactBulk(
+		bbuys, bsells, indices := BuildCompactBulk(
 			newCBuys,
 			newCSells,
 			self.tokenIndices,
@@ -276,14 +287,32 @@ func (self *Blockchain) SetRates(
 			// set base tx
 			tx, err = self.pricing.SetBaseRate(
 				opts, baseTokens, newBBuys, newBSells,
-				buys, sells, block, indices)
-			// log.Printf("Setting base rates: tx(%s), err(%v) with baseTokens(%+v), basebuys(%+v), basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",
-			// 	tx.Hash().Hex(), err, baseTokens, newBBuys, newBSells, buys, sells, block.Text(10), indices,
-			// )
+				bbuys, bsells, block, indices)
+			if tx != nil {
+				log.Printf(
+					"broadcasting setbase tx %s, target buys(%s), target sells(%s), old base buy(%s) || old base sell(%s) || new base buy(%s) || new base sell(%s) || new compact buy(%s) || new compact sell(%s) || new buy bulk(%v) || new sell bulk(%v) || indices(%v)",
+					tx.Hash().Hex(),
+					buys, sells,
+					baseBuys, baseSells,
+					newBBuys, newBSells,
+					newCBuys, newCSells,
+					bbuys, bsells, indices,
+				)
+			}
 		} else {
 			// update compact tx
 			tx, err = self.pricing.SetCompactData(
-				opts, buys, sells, block, indices)
+				opts, bbuys, bsells, block, indices)
+			if tx != nil {
+				log.Printf(
+					"broadcasting setcompact tx %s, target buys(%s), target sells(%s), old base buy(%s) || old base sell(%s) || new compact buy(%s) || new compact sell(%s) || new buy bulk(%v) || new sell bulk(%v) || indices(%v)",
+					tx.Hash().Hex(),
+					buys, sells,
+					baseBuys, baseSells,
+					newCBuys, newCSells,
+					bbuys, bsells, indices,
+				)
+			}
 			// log.Printf("Setting compact rates: tx(%s), err(%v) with basesells(%+v), buys(%+v), sells(%+v), block(%s), indices(%+v)",
 			// 	tx.Hash().Hex(), err, baseTokens, buys, sells, block.Text(10), indices,
 			// )
@@ -383,8 +412,19 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 		} else {
 			receipt, err := self.client.TransactionReceipt(option, hash)
 			if err != nil {
-				// networking issue
-				return "", 0, err
+				if receipt != nil {
+					// incompatibily between geth and parity
+					if receipt.Status == 1 {
+						// successful tx
+						return "mined", tx.BlockNumber().Uint64(), nil
+					} else {
+						// failed tx
+						return "failed", tx.BlockNumber().Uint64(), nil
+					}
+				} else {
+					// networking issue
+					return "", 0, err
+				}
 			} else {
 				if receipt.Status == 1 {
 					// successful tx
@@ -406,14 +446,14 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	}
 }
 
-func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uint64) (map[string]common.BalanceEntry, error) {
+func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.Int, timepoint uint64) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
 	for _, tok := range self.tokens {
 		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 	}
 	timestamp := common.GetTimestamp()
-	balances, err := self.wrapper.GetBalances(nil, nil, reserve, tokens)
+	balances, err := self.wrapper.GetBalances(nil, atBlock, reserve, tokens)
 	returnTime := common.GetTimestamp()
 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
 	if err != nil {
@@ -427,11 +467,22 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, timepoint uin
 		}
 	} else {
 		for i, tok := range self.tokens {
-			result[tok.ID] = common.BalanceEntry{
-				Valid:      true,
-				Timestamp:  timestamp,
-				ReturnTime: returnTime,
-				Balance:    common.RawBalance(*balances[i]),
+			if balances[i].Cmp(Big0) == 0 || balances[i].Cmp(BigMax) > 0 {
+				log.Printf("Fetcher ------> balances of token %s is invalid", tok.ID)
+				result[tok.ID] = common.BalanceEntry{
+					Valid:      false,
+					Error:      "Got strange balances from node. It equals to 0 or is bigger than 10^33",
+					Timestamp:  timestamp,
+					ReturnTime: returnTime,
+					Balance:    common.RawBalance(*balances[i]),
+				}
+			} else {
+				result[tok.ID] = common.BalanceEntry{
+					Valid:      true,
+					Timestamp:  timestamp,
+					ReturnTime: returnTime,
+					Balance:    common.RawBalance(*balances[i]),
+				}
 			}
 		}
 	}
