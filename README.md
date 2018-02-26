@@ -630,7 +630,7 @@ response:
 ```
   {
     "success": true,
-    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25","Status":"unconfirmed"}
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25"}
   }
 ```
 
@@ -644,14 +644,7 @@ response:
 ```
   {
     "success": true,
-    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25","Status":"confirmed"}
-  }
-```
-response if there no data yet:
-```
-  {
-    "success": false,
-    "reason": "Version doesn't exist: 1517481572058"
+    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25"}
   }
 ```
 
@@ -661,9 +654,7 @@ response if there no data yet:
 POST request
 form params:
   - data: required, string, must sort by token id by ascending order
-  - action: required, string, set/confirm/cancel, action to set, confirm or cancel target quantity
   - id: optional, required to confirm target quantity
-  - type: required, number, data type (now it should be 1)
 ```
 eg:
 ```
@@ -677,7 +668,6 @@ response
 ```
   {
     "success": true,
-    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25","Status":"unconfirmed"}
   }
 ```
 
@@ -687,21 +677,18 @@ response
 POST request
 form params:
   - data: required, string, must sort by token id by ascending order
-  - id: optional, required to confirm target quantity
 ```
 eg:
 ```
 curl -X POST \
   http://localhost:8000/confirm-pwis-equation \
   -H 'content-type: multipart/form-data' \
-  -F data= EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25 \
-  -F id=1517396850670
+  -F data= EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25
 ```
 response
 ```
   {
     "success": true,
-    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25","Status":"unconfirmed"}
   }
 ```
 
