@@ -1,3 +1,23 @@
+# 0.4.1 (2018-02-19)
+## Features:
+- Listed more 4 tokens (eng, salt, appc, rdn)
+- Added more tools for monitoring and testing such as deposit/withdraw trigger, rate validator
+
+## Bug fixes:
+- Fixed submit empty setrate for the first one
+- Fixed bug in rare case that panics when core couldn't get mined nonce
+- Fixed incompatibility between geth and parity in tx receipt data
+- Enable microsecond info in log
+
+## improvements:
+- Separated cex token pairs to config
+- Separated cex fee to config
+- Added sanity checks on setrates, deposit, withdraw and trade
+- Added env tag to sentry
+
+## Compatability:
+- This version only works with KyberNetwork smart contracts version 0.3.0 or later
+
 # 0.4.0 (2018-02-08)
 
 ## Features:

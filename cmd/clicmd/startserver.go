@@ -19,7 +19,9 @@ import (
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 var noAuthEnable bool
@@ -50,29 +52,35 @@ func GetConfigFromENV(kyberENV string, addressOW [5]string) *configuration.Confi
 	return config
 }
 
+//set config log
+func configLog() {
+	logger := &lumberjack.Logger{
+		Filename: "/go/src/github.com/KyberNetwork/reserve-data/log/core.log",
+		// MaxSize:  1, // megabytes
+		MaxBackups: 0,
+		MaxAge:     0, //days
+		// Compress:   true, // disabled by default
+	}
+
+	mw := io.MultiWriter(os.Stdout, logger)
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
+	log.SetOutput(mw)
+
+	c := cron.New()
+	c.AddFunc("@daily", func() { logger.Rotate() })
+	c.Start()
+}
+
 func serverStart(cmd *cobra.Command, args []string) {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
-
+	configLog()
 	//get configuration from ENV variable
 	kyberENV := os.Getenv("KYBER_ENV")
 	if kyberENV == "" {
 		kyberENV = "dev"
 	}
 	config := GetConfigFromENV(kyberENV, addressOW)
-
-	//set log file
-	logPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/log.log"
-	f, err := os.OpenFile(logPath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	if err != nil {
-		log.Fatalf("Couldn't open log file: %v", err)
-	}
-
-	// write to mutiple location :stdout and log path
-	mw := io.MultiWriter(os.Stdout, f)
-	defer f.Close()
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-	log.SetOutput(mw)
 
 	//get fetcher based on config and ENV == stimulation.
 	fetcher := fetcher.NewFetcher(
@@ -149,6 +157,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			servPortStr,
 			config.EnableAuthentication,
 			config.AuthEngine,
+			kyberENV,
 		)
 
 		server.Run()

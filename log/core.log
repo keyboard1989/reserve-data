@@ -1,0 +1,539 @@
+2018/02/26 10:40:24.789316 getconfig.go:21: Config file  is not found. Error: open : no such file or directory
+2018/02/26 10:40:34.718210 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/public/getmarkets
+2018/02/26 10:40:35.674143 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/public/getmarkets, got response from bittrex: {"success":true,"message":"","result":[{"MarketCurrency":"LTC","BaseCurrency":"BTC","MarketCurrencyLong":"Litecoin","BaseCurrencyLong":"Bitcoin","MinTradeSize":0.01378854,"MarketName":"BTC-LTC","IsActive":true,"Created":"2014-02-13T00:00:00","Notice":null,...
+2018/02/26 10:40:35.678294 getconfig.go:114: 
+WARNING: No authentication mode
+2018/02/26 10:40:35.679239 blockchain.go:677: wrapper address: 0x865aA8818615BA9DFA8bcB6A1432B0fc506DBd58
+2018/02/26 10:40:35.695743 blockchain.go:682: reserve owner address: 0x760d30979EB313A2d23C53E4Fb55986183B0ffd9
+2018/02/26 10:40:35.696352 blockchain.go:683: reserve address: 0x2C5a182d280EeB5824377B98CD74871f78d6b8BC
+2018/02/26 10:40:35.697759 blockchain.go:688: pricing address: 0xe3E415a7a6c287a95DC68a01ff036828073fD2e6
+2018/02/26 10:40:35.704944 blockchain.go:693: burner address: 0x8a31a527E024150121b4aB33e6b6c24f69846cC9
+2018/02/26 10:40:35.705547 blockchain.go:694: network address: 0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e
+2018/02/26 10:40:37.184105 blockchain.go:113: Token indices: map[0xf0Ee6b27b759C9893Ce4f094b49ad28fd15A23e4:{BulkIndex:0 IndexInBulk:10} 0xbf2179859fc6D5BEE9Bf9158632Dc51678a4100e:{BulkIndex:0 IndexInBulk:4} 0x8f8221aFbB33998d8584A2B05749bA73c37a938a:{BulkIndex:0 IndexInBulk:8} 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:{BulkIndex:1000000 IndexInBulk:1000000} 0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6:{BulkIndex:0 IndexInBulk:13} 0xdd974D5C2e2928deA5F71b9825b8b646686BD200:{BulkIndex:0 IndexInBulk:1} 0x744d70FDBE2Ba4CF95131626614a1763DF805B9E:{BulkIndex:0 IndexInBulk:3} 0x0D8775F648430679A709E98d2b0Cb6250d2887EF:{BulkIndex:0 IndexInBulk:7} 0x86Fa049857E0209aa7D9e616F7eb3b3B78ECfdb0:{BulkIndex:0 IndexInBulk:2} 0x1a7a8BD9106F2B8D977E08582DC7d24c723ab0DB:{BulkIndex:0 IndexInBulk:12} 0x0F5D2fB29fb7d3CFeE444a200298f468908cC942:{BulkIndex:0 IndexInBulk:6} 0xd26114cd6EE289AccF82350c8d8487fedB8A0C07:{BulkIndex:0 IndexInBulk:0} 0xC5bBaE50781Be1669306b9e001EFF57a2957b09d:{BulkIndex:0 IndexInBulk:9} 0x4156D3342D5c385a87D264F90653733592000581:{BulkIndex:0 IndexInBulk:11} 0x595832F8FC6BF59c85C527fEC3740A1b7a361269:{BulkIndex:0 IndexInBulk:5}]
+2018/02/26 10:40:37.490392 fetcher.go:53: Fetcher runner is starting...
+2018/02/26 10:40:37.490611 fetcher.go:60: Fetcher runner is running...
+2018/02/26 10:40:37.490772 debug.go:45: [GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+2018/02/26 10:40:37.490845 debug.go:45: [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+2018/02/26 10:40:37.490893 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:40:37.490830 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:40:37.490720 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:37.491119 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:40:37.491287 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:40:37.539565 debug.go:45: [GIN-debug] GET    /prices-version           --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).AllPricesVersion-fm (5 handlers)
+2018/02/26 10:40:37.539688 debug.go:45: [GIN-debug] GET    /prices                   --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).AllPrices-fm (5 handlers)
+2018/02/26 10:40:37.539756 debug.go:45: [GIN-debug] GET    /prices/:base/:quote      --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Price-fm (5 handlers)
+2018/02/26 10:40:37.539823 debug.go:45: [GIN-debug] GET    /getrates                 --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetRate-fm (5 handlers)
+2018/02/26 10:40:37.539922 debug.go:45: [GIN-debug] GET    /get-all-rates            --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetRates-fm (5 handlers)
+2018/02/26 10:40:37.539984 debug.go:45: [GIN-debug] GET    /authdata-version         --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).AuthDataVersion-fm (5 handlers)
+2018/02/26 10:40:37.540042 debug.go:45: [GIN-debug] GET    /authdata                 --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).AuthData-fm (5 handlers)
+2018/02/26 10:40:37.540100 debug.go:45: [GIN-debug] GET    /activities               --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetActivities-fm (5 handlers)
+2018/02/26 10:40:37.540163 debug.go:45: [GIN-debug] GET    /immediate-pending-activities --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).ImmediatePendingActivities-fm (5 handlers)
+2018/02/26 10:40:37.540223 debug.go:45: [GIN-debug] GET    /tradelogs                --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).TradeLogs-fm (5 handlers)
+2018/02/26 10:40:37.540281 debug.go:45: [GIN-debug] GET    /metrics                  --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Metrics-fm (5 handlers)
+2018/02/26 10:40:37.540343 debug.go:45: [GIN-debug] POST   /metrics                  --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).StoreMetrics-fm (5 handlers)
+2018/02/26 10:40:37.540404 debug.go:45: [GIN-debug] POST   /cancelorder/:exchangeid  --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).CancelOrder-fm (5 handlers)
+2018/02/26 10:40:37.540501 debug.go:45: [GIN-debug] POST   /deposit/:exchangeid      --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Deposit-fm (5 handlers)
+2018/02/26 10:40:37.540561 debug.go:45: [GIN-debug] POST   /withdraw/:exchangeid     --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Withdraw-fm (5 handlers)
+2018/02/26 10:40:37.540620 debug.go:45: [GIN-debug] POST   /trade/:exchangeid        --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Trade-fm (5 handlers)
+2018/02/26 10:40:37.540680 debug.go:45: [GIN-debug] POST   /setrates                 --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).SetRate-fm (5 handlers)
+2018/02/26 10:40:37.540740 debug.go:45: [GIN-debug] GET    /exchangeinfo             --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetExchangeInfo-fm (5 handlers)
+2018/02/26 10:40:37.540804 debug.go:45: [GIN-debug] GET    /exchangeinfo/:exchangeid/:base/:quote --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetPairInfo-fm (5 handlers)
+2018/02/26 10:40:37.540870 debug.go:45: [GIN-debug] GET    /exchangefees             --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetFee-fm (5 handlers)
+2018/02/26 10:40:37.540931 debug.go:45: [GIN-debug] GET    /exchangefees/:exchangeid --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetExchangeFee-fm (5 handlers)
+2018/02/26 10:40:37.540995 debug.go:45: [GIN-debug] GET    /core/addresses           --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetAddress-fm (5 handlers)
+2018/02/26 10:40:37.541061 debug.go:45: [GIN-debug] GET    /tradehistory             --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetTradeHistory-fm (5 handlers)
+2018/02/26 10:40:37.541123 debug.go:45: [GIN-debug] GET    /targetqty                --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetTargetQty-fm (5 handlers)
+2018/02/26 10:40:37.541184 debug.go:45: [GIN-debug] GET    /pendingtargetqty         --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetPendingTargetQty-fm (5 handlers)
+2018/02/26 10:40:37.541243 debug.go:45: [GIN-debug] POST   /settargetqty             --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).SetTargetQty-fm (5 handlers)
+2018/02/26 10:40:37.541303 debug.go:45: [GIN-debug] POST   /confirmtargetqty         --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).ConfirmTargetQty-fm (5 handlers)
+2018/02/26 10:40:37.541365 debug.go:45: [GIN-debug] POST   /canceltargetqty          --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).CancelTargetQty-fm (5 handlers)
+2018/02/26 10:40:37.541446 debug.go:45: [GIN-debug] GET    /timeserver               --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetTimeServer-fm (5 handlers)
+2018/02/26 10:40:37.541506 debug.go:45: [GIN-debug] GET    /rebalancestatus          --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetRebalanceStatus-fm (5 handlers)
+2018/02/26 10:40:37.541567 debug.go:45: [GIN-debug] POST   /holdrebalance            --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).HoldRebalance-fm (5 handlers)
+2018/02/26 10:40:37.541626 debug.go:45: [GIN-debug] POST   /enablerebalance          --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).EnableRebalance-fm (5 handlers)
+2018/02/26 10:40:37.541684 debug.go:45: [GIN-debug] GET    /setratestatus            --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetSetrateStatus-fm (5 handlers)
+2018/02/26 10:40:37.541742 debug.go:45: [GIN-debug] POST   /holdsetrate              --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).HoldSetrate-fm (5 handlers)
+2018/02/26 10:40:37.541800 debug.go:45: [GIN-debug] POST   /enablesetrate            --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).EnableSetrate-fm (5 handlers)
+2018/02/26 10:40:37.541858 debug.go:45: [GIN-debug] Listening and serving HTTP on :8000
+2018/02/26 10:40:39.490841 fetcher.go:140: got signal in auth data channel with timestamp 1519616439490
+2018/02/26 10:40:39.491405 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926415
+2018/02/26 10:40:39.858457 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926415, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:40.490807 fetcher.go:114: got signal in rate channel with timestamp 1519616440490
+2018/02/26 10:40:40.490813 fetcher.go:512: got signal in orderbook channel with timestamp 1519616440490
+2018/02/26 10:40:40.669652 bolt.go:284: Version number: 114
+2018/02/26 10:40:40.670194 bolt.go:286: After prune number version: 114
+2018/02/26 10:40:40.719139 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:40:40.719326 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:40:40.896243 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:41.119411 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:40:41.119857 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:40:41.274705 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:41.275043 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:41.490773 fetcher.go:140: got signal in auth data channel with timestamp 1519616441490
+2018/02/26 10:40:41.491153 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926482
+2018/02/26 10:40:41.902561 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926482, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:42.490822 fetcher.go:68: got signal in block channel with timestamp 1519616442490
+2018/02/26 10:40:42.490945 fetcher.go:227: got signal in trade history channel with timestamp 1519616442490
+2018/02/26 10:40:42.519123 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:40:42.519193 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:40:42.614584 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:42.823963 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:40:42.974777 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:42.975335 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:43.490908 fetcher.go:512: got signal in orderbook channel with timestamp 1519616443490
+2018/02/26 10:40:43.491561 bolt.go:284: Version number: 115
+2018/02/26 10:40:43.492110 bolt.go:286: After prune number version: 115
+2018/02/26 10:40:43.490942 fetcher.go:114: got signal in rate channel with timestamp 1519616443490
+2018/02/26 10:40:43.490953 fetcher.go:140: got signal in auth data channel with timestamp 1519616443490
+2018/02/26 10:40:43.495158 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926548
+2018/02/26 10:40:43.552646 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:40:43.554171 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:40:43.836381 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926548, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:43.842780 fetcher.go:96: blockno: 5155047 - 38
+2018/02/26 10:40:43.843634 bolt.go:852: Storing log: 1519581036000000038
+2018/02/26 10:40:43.930355 fetcher.go:96: blockno: 5155081 - 39
+2018/02/26 10:40:43.930715 bolt.go:852: Storing log: 1519581446000000039
+2018/02/26 10:40:43.963699 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:40:43.963878 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:40:44.208108 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:40:44.208230 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:40:45.585521 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:45.997185 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:45.997277 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:45.997331 fetcher.go:140: got signal in auth data channel with timestamp 1519616445490
+2018/02/26 10:40:45.997622 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926632
+2018/02/26 10:40:46.234509 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926632, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:46.490837 fetcher.go:512: got signal in orderbook channel with timestamp 1519616446490
+2018/02/26 10:40:46.490850 fetcher.go:114: got signal in rate channel with timestamp 1519616446490
+2018/02/26 10:40:46.491290 bolt.go:284: Version number: 116
+2018/02/26 10:40:46.491793 bolt.go:286: After prune number version: 116
+2018/02/26 10:40:46.574835 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:40:46.574951 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:40:46.928585 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:46.997136 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:40:46.997378 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:40:47.374891 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:47.375505 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:47.491015 fetcher.go:140: got signal in auth data channel with timestamp 1519616447490
+2018/02/26 10:40:47.491542 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926682
+2018/02/26 10:40:47.491057 fetcher.go:227: got signal in trade history channel with timestamp 1519616447490
+2018/02/26 10:40:47.491067 fetcher.go:68: got signal in block channel with timestamp 1519616447490
+2018/02/26 10:40:47.530441 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:40:47.530584 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:40:47.731556 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926682, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:47.783206 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:40:48.086106 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:40:48.086228 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:40:48.760159 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:49.152685 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:49.152794 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:49.490695 fetcher.go:114: got signal in rate channel with timestamp 1519616449490
+2018/02/26 10:40:49.490727 fetcher.go:512: got signal in orderbook channel with timestamp 1519616449490
+2018/02/26 10:40:49.490751 fetcher.go:140: got signal in auth data channel with timestamp 1519616449490
+2018/02/26 10:40:49.491469 bolt.go:284: Version number: 117
+2018/02/26 10:40:49.491610 bolt.go:286: After prune number version: 117
+2018/02/26 10:40:49.491700 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926748
+2018/02/26 10:40:49.530432 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:40:49.530535 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:40:49.749316 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926748, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:50.563829 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:40:50.563940 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:40:51.014513 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:51.363876 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:51.363920 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:51.490716 fetcher.go:140: got signal in auth data channel with timestamp 1519616451490
+2018/02/26 10:40:51.490864 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926815
+2018/02/26 10:40:51.826525 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926815, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:52.490949 fetcher.go:227: got signal in trade history channel with timestamp 1519616452490
+2018/02/26 10:40:52.490934 fetcher.go:114: got signal in rate channel with timestamp 1519616452490
+2018/02/26 10:40:52.491000 fetcher.go:512: got signal in orderbook channel with timestamp 1519616452490
+2018/02/26 10:40:52.491041 fetcher.go:68: got signal in block channel with timestamp 1519616452490
+2018/02/26 10:40:52.541757 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:40:52.541902 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:40:52.542025 bolt.go:284: Version number: 118
+2018/02/26 10:40:52.542246 bolt.go:286: After prune number version: 118
+2018/02/26 10:40:52.586109 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:40:52.586220 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:40:52.782068 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:40:53.097289 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:40:53.097430 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:40:53.105289 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:40:53.105420 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:40:53.176765 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:53.619426 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:53.619539 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:53.619598 fetcher.go:140: got signal in auth data channel with timestamp 1519616453490
+2018/02/26 10:40:53.619830 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926886
+2018/02/26 10:40:53.983911 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926886, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:54.589582 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:54.930588 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:54.930672 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:55.490731 fetcher.go:512: got signal in orderbook channel with timestamp 1519616455490
+2018/02/26 10:40:55.490963 bolt.go:284: Version number: 119
+2018/02/26 10:40:55.491051 bolt.go:286: After prune number version: 119
+2018/02/26 10:40:55.490780 fetcher.go:114: got signal in rate channel with timestamp 1519616455490
+2018/02/26 10:40:55.490787 fetcher.go:140: got signal in auth data channel with timestamp 1519616455490
+2018/02/26 10:40:55.492132 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926948
+2018/02/26 10:40:55.541717 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:40:55.541849 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:40:55.730957 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353926948, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:56.363990 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:40:56.364125 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:40:56.442939 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:56.775116 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:56.775287 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:57.490771 fetcher.go:227: got signal in trade history channel with timestamp 1519616457490
+2018/02/26 10:40:57.490772 fetcher.go:140: got signal in auth data channel with timestamp 1519616457490
+2018/02/26 10:40:57.490796 fetcher.go:68: got signal in block channel with timestamp 1519616457490
+2018/02/26 10:40:57.491371 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927015
+2018/02/26 10:40:57.555995 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:40:57.556498 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:40:57.863491 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:40:57.863801 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927015, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:40:58.170976 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:40:58.171122 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:40:58.490808 fetcher.go:512: got signal in orderbook channel with timestamp 1519616458490
+2018/02/26 10:40:58.490910 fetcher.go:114: got signal in rate channel with timestamp 1519616458490
+2018/02/26 10:40:58.491399 bolt.go:284: Version number: 120
+2018/02/26 10:40:58.492033 bolt.go:286: After prune number version: 120
+2018/02/26 10:40:58.564018 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:40:58.564134 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:40:58.682436 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:40:59.030644 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:40:59.030680 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:40:59.097291 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:40:59.097349 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:40:59.490833 fetcher.go:140: got signal in auth data channel with timestamp 1519616459490
+2018/02/26 10:40:59.491414 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927082
+2018/02/26 10:40:59.816909 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927082, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:01.490859 fetcher.go:512: got signal in orderbook channel with timestamp 1519616461490
+2018/02/26 10:41:01.490859 fetcher.go:114: got signal in rate channel with timestamp 1519616461490
+2018/02/26 10:41:01.491272 bolt.go:284: Version number: 121
+2018/02/26 10:41:01.491894 bolt.go:286: After prune number version: 121
+2018/02/26 10:41:01.575347 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:01.575469 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:02.174374 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:02.241871 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:02.241971 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:02.491104 fetcher.go:68: got signal in block channel with timestamp 1519616462490
+2018/02/26 10:41:02.491179 fetcher.go:227: got signal in trade history channel with timestamp 1519616462491
+2018/02/26 10:41:02.553079 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:02.554704 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:02.597401 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:02.597495 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:02.597535 fetcher.go:140: got signal in auth data channel with timestamp 1519616461490
+2018/02/26 10:41:02.597686 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927185
+2018/02/26 10:41:02.886269 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:02.919865 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927185, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:03.194458 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:03.194570 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:03.835384 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:04.175314 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:04.175423 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:04.175481 fetcher.go:140: got signal in auth data channel with timestamp 1519616463490
+2018/02/26 10:41:04.175775 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927238
+2018/02/26 10:41:04.470886 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927238, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:04.490730 fetcher.go:114: got signal in rate channel with timestamp 1519616464490
+2018/02/26 10:41:04.490752 fetcher.go:512: got signal in orderbook channel with timestamp 1519616464490
+2018/02/26 10:41:04.491382 bolt.go:284: Version number: 122
+2018/02/26 10:41:04.491565 bolt.go:286: After prune number version: 122
+2018/02/26 10:41:04.564175 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:04.564304 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:05.136000 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:05.342065 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:05.342206 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:05.486411 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:05.486542 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:05.490807 fetcher.go:140: got signal in auth data channel with timestamp 1519616465490
+2018/02/26 10:41:05.491264 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927282
+2018/02/26 10:41:05.805775 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927282, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:06.472688 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:06.797546 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:06.797584 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:07.490720 fetcher.go:140: got signal in auth data channel with timestamp 1519616467490
+2018/02/26 10:41:07.490744 fetcher.go:68: got signal in block channel with timestamp 1519616467490
+2018/02/26 10:41:07.490948 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927348
+2018/02/26 10:41:07.490987 fetcher.go:512: got signal in orderbook channel with timestamp 1519616467490
+2018/02/26 10:41:07.492148 bolt.go:284: Version number: 123
+2018/02/26 10:41:07.492211 bolt.go:286: After prune number version: 123
+2018/02/26 10:41:07.490723 fetcher.go:227: got signal in trade history channel with timestamp 1519616467490
+2018/02/26 10:41:07.490742 fetcher.go:114: got signal in rate channel with timestamp 1519616467490
+2018/02/26 10:41:07.553137 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:07.553201 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:07.597621 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:07.597738 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:07.732276 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927348, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:07.773321 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:07.841985 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:07.842038 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:08.078900 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:08.079025 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:08.505715 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:08.853188 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:08.853335 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:09.490737 fetcher.go:140: got signal in auth data channel with timestamp 1519616469490
+2018/02/26 10:41:09.491149 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927415
+2018/02/26 10:41:09.745891 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927415, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:10.358625 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:10.490841 fetcher.go:512: got signal in orderbook channel with timestamp 1519616470490
+2018/02/26 10:41:10.491310 fetcher.go:114: got signal in rate channel with timestamp 1519616470491
+2018/02/26 10:41:10.491444 bolt.go:284: Version number: 124
+2018/02/26 10:41:10.491792 bolt.go:286: After prune number version: 124
+2018/02/26 10:41:10.519857 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:10.520035 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:10.719853 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:10.719909 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:11.431001 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:11.431108 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:11.491263 fetcher.go:140: got signal in auth data channel with timestamp 1519616471491
+2018/02/26 10:41:11.491680 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927482
+2018/02/26 10:41:11.800967 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927482, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:12.490778 fetcher.go:68: got signal in block channel with timestamp 1519616472490
+2018/02/26 10:41:12.490812 fetcher.go:227: got signal in trade history channel with timestamp 1519616472490
+2018/02/26 10:41:12.514170 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:12.531014 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:12.531068 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:12.772270 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:12.842094 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:12.842208 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:13.121236 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:13.121802 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:13.490940 fetcher.go:512: got signal in orderbook channel with timestamp 1519616473490
+2018/02/26 10:41:13.491631 bolt.go:284: Version number: 125
+2018/02/26 10:41:13.492203 bolt.go:286: After prune number version: 125
+2018/02/26 10:41:13.491059 fetcher.go:114: got signal in rate channel with timestamp 1519616473490
+2018/02/26 10:41:13.491069 fetcher.go:140: got signal in auth data channel with timestamp 1519616473490
+2018/02/26 10:41:13.495828 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927548
+2018/02/26 10:41:13.531080 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:13.531201 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:13.736403 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927548, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:14.275503 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:14.275594 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:14.319655 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:14.697819 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:14.697930 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:15.490745 fetcher.go:140: got signal in auth data channel with timestamp 1519616475490
+2018/02/26 10:41:15.490907 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927615
+2018/02/26 10:41:15.729305 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927615, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:16.423726 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:16.490708 fetcher.go:512: got signal in orderbook channel with timestamp 1519616476490
+2018/02/26 10:41:16.490824 bolt.go:284: Version number: 126
+2018/02/26 10:41:16.490885 bolt.go:286: After prune number version: 126
+2018/02/26 10:41:16.490733 fetcher.go:114: got signal in rate channel with timestamp 1519616476490
+2018/02/26 10:41:16.531188 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:16.531339 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:16.886723 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:16.886900 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:17.286693 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:17.286779 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:17.490734 fetcher.go:140: got signal in auth data channel with timestamp 1519616477490
+2018/02/26 10:41:17.491253 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927682
+2018/02/26 10:41:17.490812 fetcher.go:227: got signal in trade history channel with timestamp 1519616477490
+2018/02/26 10:41:17.490818 fetcher.go:68: got signal in block channel with timestamp 1519616477490
+2018/02/26 10:41:17.542344 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:17.542399 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:17.835513 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:17.839816 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927682, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:18.139135 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:18.139366 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:18.447527 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:18.842378 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:18.842543 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:19.490797 fetcher.go:114: got signal in rate channel with timestamp 1519616479490
+2018/02/26 10:41:19.490797 fetcher.go:512: got signal in orderbook channel with timestamp 1519616479490
+2018/02/26 10:41:19.491622 bolt.go:284: Version number: 127
+2018/02/26 10:41:19.492202 bolt.go:286: After prune number version: 127
+2018/02/26 10:41:19.490846 fetcher.go:140: got signal in auth data channel with timestamp 1519616479490
+2018/02/26 10:41:19.493664 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927748
+2018/02/26 10:41:19.564617 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:19.565261 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:19.844992 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927748, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:19.864580 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:19.865400 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:20.487752 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:20.842430 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:20.842760 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:21.490824 fetcher.go:140: got signal in auth data channel with timestamp 1519616481490
+2018/02/26 10:41:21.491420 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927815
+2018/02/26 10:41:21.833948 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927815, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:22.452667 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:22.490808 fetcher.go:114: got signal in rate channel with timestamp 1519616482490
+2018/02/26 10:41:22.490985 fetcher.go:512: got signal in orderbook channel with timestamp 1519616482490
+2018/02/26 10:41:22.491343 bolt.go:284: Version number: 128
+2018/02/26 10:41:22.491615 bolt.go:286: After prune number version: 128
+2018/02/26 10:41:22.490929 fetcher.go:68: got signal in block channel with timestamp 1519616482490
+2018/02/26 10:41:22.491676 fetcher.go:227: got signal in trade history channel with timestamp 1519616482490
+2018/02/26 10:41:22.531782 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:22.531902 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:22.575764 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:22.575827 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:22.811011 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:22.875805 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:22.875949 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:22.909136 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:22.909278 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:23.160528 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:23.160643 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:23.490850 fetcher.go:140: got signal in auth data channel with timestamp 1519616483490
+2018/02/26 10:41:23.491528 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927882
+2018/02/26 10:41:23.771947 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927882, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:24.594225 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:25.164748 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:25.164856 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:25.490795 fetcher.go:512: got signal in orderbook channel with timestamp 1519616485490
+2018/02/26 10:41:25.490795 fetcher.go:114: got signal in rate channel with timestamp 1519616485490
+2018/02/26 10:41:25.490819 fetcher.go:140: got signal in auth data channel with timestamp 1519616485490
+2018/02/26 10:41:25.491469 bolt.go:284: Version number: 129
+2018/02/26 10:41:25.492122 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927948
+2018/02/26 10:41:25.492204 bolt.go:286: After prune number version: 129
+2018/02/26 10:41:25.564801 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:25.564930 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:25.820165 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353927948, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:26.109152 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:26.109280 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:26.987867 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:27.331494 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:27.331910 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:27.490688 fetcher.go:140: got signal in auth data channel with timestamp 1519616487490
+2018/02/26 10:41:27.490707 fetcher.go:68: got signal in block channel with timestamp 1519616487490
+2018/02/26 10:41:27.490877 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928015
+2018/02/26 10:41:27.490707 fetcher.go:227: got signal in trade history channel with timestamp 1519616487490
+2018/02/26 10:41:27.520349 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:27.520647 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:27.888433 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928015, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:27.889214 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:28.197898 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:28.197983 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:28.490716 fetcher.go:512: got signal in orderbook channel with timestamp 1519616488490
+2018/02/26 10:41:28.490940 fetcher.go:114: got signal in rate channel with timestamp 1519616488490
+2018/02/26 10:41:28.490976 bolt.go:284: Version number: 130
+2018/02/26 10:41:28.491340 bolt.go:286: After prune number version: 130
+2018/02/26 10:41:28.503519 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:28.531428 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:28.531495 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:28.853652 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:28.853726 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:28.975961 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:28.976124 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:29.490775 fetcher.go:140: got signal in auth data channel with timestamp 1519616489490
+2018/02/26 10:41:29.491187 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928082
+2018/02/26 10:41:29.822081 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928082, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:30.736222 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:31.087061 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:31.087165 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:31.490767 fetcher.go:512: got signal in orderbook channel with timestamp 1519616491490
+2018/02/26 10:41:31.490876 fetcher.go:140: got signal in auth data channel with timestamp 1519616491490
+2018/02/26 10:41:31.491076 bolt.go:284: Version number: 131
+2018/02/26 10:41:31.491257 bolt.go:286: After prune number version: 131
+2018/02/26 10:41:31.491364 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928148
+2018/02/26 10:41:31.490880 fetcher.go:114: got signal in rate channel with timestamp 1519616491490
+2018/02/26 10:41:31.531628 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:31.531807 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:31.746446 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928148, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:31.853757 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:31.853901 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:32.429921 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:32.490825 fetcher.go:68: got signal in block channel with timestamp 1519616492490
+2018/02/26 10:41:32.490824 fetcher.go:227: got signal in trade history channel with timestamp 1519616492490
+2018/02/26 10:41:32.531614 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:32.531858 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:32.753748 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:32.753840 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:32.776171 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:33.089653 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:33.089814 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:33.490872 fetcher.go:140: got signal in auth data channel with timestamp 1519616493490
+2018/02/26 10:41:33.491554 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928215
+2018/02/26 10:41:33.806824 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928215, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:34.426275 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:34.490739 fetcher.go:512: got signal in orderbook channel with timestamp 1519616494490
+2018/02/26 10:41:34.491060 bolt.go:284: Version number: 132
+2018/02/26 10:41:34.491202 bolt.go:286: After prune number version: 132
+2018/02/26 10:41:34.490818 fetcher.go:114: got signal in rate channel with timestamp 1519616494490
+2018/02/26 10:41:34.542749 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:34.542787 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:34.776085 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:34.776197 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:35.188240 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:35.188368 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:35.490862 fetcher.go:140: got signal in auth data channel with timestamp 1519616495490
+2018/02/26 10:41:35.491493 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928282
+2018/02/26 10:41:35.743677 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928282, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:36.572483 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:37.253931 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:37.254041 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:37.490781 fetcher.go:227: got signal in trade history channel with timestamp 1519616497490
+2018/02/26 10:41:37.490804 fetcher.go:140: got signal in auth data channel with timestamp 1519616497490
+2018/02/26 10:41:37.491612 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928348
+2018/02/26 10:41:37.490836 fetcher.go:114: got signal in rate channel with timestamp 1519616497490
+2018/02/26 10:41:37.490840 fetcher.go:512: got signal in orderbook channel with timestamp 1519616497490
+2018/02/26 10:41:37.490886 fetcher.go:68: got signal in block channel with timestamp 1519616497490
+2018/02/26 10:41:37.542842 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:37.542955 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:37.543059 bolt.go:284: Version number: 133
+2018/02/26 10:41:37.543182 bolt.go:286: After prune number version: 133
+2018/02/26 10:41:37.587291 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:37.587406 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:37.798012 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928348, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:37.798105 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:37.842877 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:37.842991 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:38.115916 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:38.116064 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:38.423151 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:38.765174 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:38.765653 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:39.490755 fetcher.go:140: got signal in auth data channel with timestamp 1519616499490
+2018/02/26 10:41:39.491187 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928415
+2018/02/26 10:41:39.752232 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928415, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:40.394862 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:40.490746 fetcher.go:114: got signal in rate channel with timestamp 1519616500490
+2018/02/26 10:41:40.490768 fetcher.go:512: got signal in orderbook channel with timestamp 1519616500490
+2018/02/26 10:41:40.491037 bolt.go:284: Version number: 134
+2018/02/26 10:41:40.491098 bolt.go:286: After prune number version: 134
+2018/02/26 10:41:40.533366 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:40.533591 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:40.809537 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:40.809578 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:41.420727 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:41.420888 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:41.490781 fetcher.go:140: got signal in auth data channel with timestamp 1519616501490
+2018/02/26 10:41:41.491306 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928482
+2018/02/26 10:41:41.790711 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928482, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:42.408709 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:42.490750 fetcher.go:227: got signal in trade history channel with timestamp 1519616502490
+2018/02/26 10:41:42.490769 fetcher.go:68: got signal in block channel with timestamp 1519616502490
+2018/02/26 10:41:42.531856 fetcher.go:229: fetched trade history from exchanges
+2018/02/26 10:41:42.532602 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/26 10:41:42.776089 fetcher.go:71: fetched block from blockchain
+2018/02/26 10:41:42.798520 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:42.798619 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:43.077896 fetcher.go:76: nextBlock: 5155081
+2018/02/26 10:41:43.077934 fetcher.go:66: waiting for signal from block channel
+2018/02/26 10:41:43.490927 fetcher.go:512: got signal in orderbook channel with timestamp 1519616503490
+2018/02/26 10:41:43.491891 bolt.go:284: Version number: 135
+2018/02/26 10:41:43.492047 bolt.go:286: After prune number version: 135
+2018/02/26 10:41:43.491139 fetcher.go:114: got signal in rate channel with timestamp 1519616503490
+2018/02/26 10:41:43.491158 fetcher.go:140: got signal in auth data channel with timestamp 1519616503490
+2018/02/26 10:41:43.493549 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928548
+2018/02/26 10:41:43.542991 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:43.543267 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/26 10:41:43.844720 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928548, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:43.976377 fetcher.go:116: fetched rates from blockchain
+2018/02/26 10:41:43.976490 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/26 10:41:44.483212 blockchain.go:458: Fetcher ------> balances: [14429999567562984423 182200000 868406561006152738407 140499999533214316420 15000000000 13921716677 42698696423403515459 1009850000 506499999822750123553 181924437804743355934 306300000134955027121 1702000000000000000000 1388767598182478114 1820075499622619188355 4471147919563053409753], err: %!s(<nil>)
+2018/02/26 10:41:44.809670 fetcher.go:142: fetched data from exchanges
+2018/02/26 10:41:44.809737 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/26 10:41:45.490799 fetcher.go:140: got signal in auth data channel with timestamp 1519616505490
+2018/02/26 10:41:45.491297 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928615
+2018/02/26 10:41:45.730787 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/account/getbalances?apikey=665ab1c6a04d4e4b855bd13639520c0a&nonce=353928615, got response from bittrex: {"success":true,"message":"","result":[{"Currency":"BAT","Balance":0.00000000,"Available":0.00000000,"Pending":0.00000000,"CryptoAddress":"0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"},{"Currency":"ETH","Balance":0.70438158,"Available":0.70438158,"Pending":...
+2018/02/26 10:41:46.490927 fetcher.go:114: got signal in rate channel with timestamp 1519616506490
+2018/02/26 10:41:46.490927 fetcher.go:512: got signal in orderbook channel with timestamp 1519616506490
+2018/02/26 10:41:46.491571 bolt.go:284: Version number: 136
+2018/02/26 10:41:46.491716 bolt.go:286: After prune number version: 136
+2018/02/26 10:41:46.531985 fetcher.go:514: fetched data from exchanges
+2018/02/26 10:41:46.532193 fetcher.go:510: waiting for signal from runner orderbook channel
