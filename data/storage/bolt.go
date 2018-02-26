@@ -969,17 +969,29 @@ func (self *BoltStorage) setTradeStats(metric, freq string, t uint64, tradeStats
 		if rawStats != nil {
 			json.Unmarshal(rawStats, &stats)
 		} else {
-			stats = make(map[string]*big.Int)
+			stats = common.TradeStats{}
 		}
 
 		for key, value := range tradeStats {
-			if value != nil {
-				sum, ok := stats[key]
-				if ok {
-					stats[key] = sum.Add(sum, value)
-				} else {
-					stats[key] = value
+
+			if v, ok := value.(*big.Int); ok {
+				if v == nil {
+					continue
 				}
+			}
+
+			sum, ok := stats[key]
+			if ok {
+				switch v := value.(type) {
+				case float64:
+					stats[key] = sum.(float64) + v
+				case *big.Int:
+					s := new(big.Int)
+					s.SetUint64(uint64(sum.(float64)))
+					stats[key] = s.Add(s, v)
+				}
+			} else {
+				stats[key] = value
 			}
 		}
 

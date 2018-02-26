@@ -625,10 +625,9 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate floa
 							f.SetInt(tradeLog.DestAmount)
 						}
 
-						tradeLog.FiatAmount = new(big.Int)
 						f = f.Mul(f, new(big.Float).SetFloat64(ethRate))
 						f.Quo(f, new(big.Float).SetFloat64(math.Pow10(18)))
-						f.Int(tradeLog.FiatAmount)
+						tradeLog.FiatAmount, _ = f.Float64()
 					}
 				}
 			}

@@ -587,7 +587,7 @@ type TradeLog struct {
 	DestAddress ethereum.Address
 	SrcAmount   *big.Int
 	DestAmount  *big.Int
-	FiatAmount  *big.Int
+	FiatAmount  float64
 
 	ReserveAddress ethereum.Address
 	WalletAddress  ethereum.Address
@@ -595,7 +595,7 @@ type TradeLog struct {
 	BurnFee        *big.Int
 }
 
-type TradeStats map[string]*big.Int
+type TradeStats map[string]interface{}
 
 type TradeHistory struct {
 	ID        string
