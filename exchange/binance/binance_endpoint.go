@@ -419,9 +419,14 @@ func (self *BinanceEndpoint) UpdateTimeDelta() error {
 
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {
 	endpoint := &BinanceEndpoint{signer, interf, 0}
-	err := endpoint.UpdateTimeDelta()
-	if err != nil {
-		panic(err)
+	switch interf.(type) {
+	case *SimulatedInterface:
+		log.Println("Simulate environment, no updateTime called...")
+	default:
+		err := endpoint.UpdateTimeDelta()
+		if err != nil {
+			panic(err)
+		}
 	}
 	return endpoint
 }
