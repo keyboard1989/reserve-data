@@ -127,31 +127,33 @@ var ConfigPaths = map[string]SettingPaths{
 	},
 }
 
+var Baseurl string = "http://127.0.0.1"
+
 var BittrexInterfaces = map[string]bittrex.Interface{
 	"dev":        bittrex.NewDevInterface(),
-	"kovan":      bittrex.NewKovanInterface(),
+	"kovan":      bittrex.NewKovanInterface(Baseurl),
 	"mainnet":    bittrex.NewRealInterface(),
 	"staging":    bittrex.NewRealInterface(),
-	"simulation": bittrex.NewSimulatedInterface(),
-	"ropsten":    bittrex.NewRopstenInterface(),
+	"simulation": bittrex.NewSimulatedInterface(Baseurl),
+	"ropsten":    bittrex.NewRopstenInterface(Baseurl),
 }
 
 var BinanceInterfaces = map[string]binance.Interface{
 	"dev":        binance.NewDevInterface(),
-	"kovan":      binance.NewKovanInterface(),
+	"kovan":      binance.NewKovanInterface(Baseurl),
 	"mainnet":    binance.NewRealInterface(),
 	"staging":    binance.NewRealInterface(),
-	"simulation": binance.NewSimulatedInterface(),
-	"ropsten":    binance.NewRopstenInterface(),
+	"simulation": binance.NewSimulatedInterface(Baseurl),
+	"ropsten":    binance.NewRopstenInterface(Baseurl),
 }
 
 var HuobiInterfaces = map[string]huobi.Interface{
 	"dev":        huobi.NewDevInterface(),
-	"kovan":      huobi.NewKovanInterface(),
+	"kovan":      huobi.NewKovanInterface(Baseurl),
 	"mainnet":    huobi.NewRealInterface(),
 	"staging":    huobi.NewRealInterface(),
-	"simulation": huobi.NewSimulatedInterface(),
-	"ropsten":    huobi.NewRopstenInterface(),
+	"simulation": huobi.NewSimulatedInterface(Baseurl),
+	"ropsten":    huobi.NewRopstenInterface(Baseurl),
 }
 
 var HuobiAsync = map[string]bool{

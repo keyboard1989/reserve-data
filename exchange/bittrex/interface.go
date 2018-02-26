@@ -2,7 +2,6 @@ package bittrex
 
 import (
 	"fmt"
-	"os"
 )
 
 type Interface interface {
@@ -14,6 +13,15 @@ type Interface interface {
 type RealInterface struct{}
 
 const apiVersion string = "v1.1"
+
+func getOrSetDefaultURL(base_url string) string {
+	if len(base_url) > 1 {
+		return base_url + ":5100"
+	} else {
+		return "http://127.0.0.1:5100"
+	}
+
+}
 
 func (self *RealInterface) PublicEndpoint(timepoint uint64) string {
 	// ignore timepoint because timepoint is only relevant in simulation
@@ -34,14 +42,12 @@ func NewRealInterface() *RealInterface {
 	return &RealInterface{}
 }
 
-type SimulatedInterface struct{}
+type SimulatedInterface struct {
+	base_url string
+}
 
 func (self *SimulatedInterface) baseurl() string {
-	baseurl := "http://127.0.0.1"
-	if len(os.Args) > 1 {
-		baseurl = os.Args[1]
-	}
-	return baseurl + ":5300"
+	return getOrSetDefaultURL(self.base_url)
 }
 
 func (self *SimulatedInterface) PublicEndpoint(timepoint uint64) string {
@@ -56,8 +62,8 @@ func (self *SimulatedInterface) AccountEndpoint(timepoint uint64) string {
 	return fmt.Sprintf("%s/api/%s/account?timestamp=%d", self.baseurl(), apiVersion, timepoint)
 }
 
-func NewSimulatedInterface() *SimulatedInterface {
-	return &SimulatedInterface{}
+func NewSimulatedInterface(flagVariable string) *SimulatedInterface {
+	return &SimulatedInterface{base_url: flagVariable}
 }
 
 type DevInterface struct{}
@@ -81,14 +87,12 @@ func NewDevInterface() *DevInterface {
 	return &DevInterface{}
 }
 
-type RopstenInterface struct{}
+type RopstenInterface struct {
+	base_url string
+}
 
 func (self *RopstenInterface) baseurl() string {
-	baseurl := "http://127.0.0.1"
-	if len(os.Args) > 1 {
-		baseurl = os.Args[1]
-	}
-	return baseurl + ":5300"
+	return getOrSetDefaultURL(self.base_url)
 }
 
 func (self *RopstenInterface) PublicEndpoint(timepoint uint64) string {
@@ -104,18 +108,16 @@ func (self *RopstenInterface) AccountEndpoint(timepoint uint64) string {
 	return fmt.Sprintf("%s/api/%s/account?timestamp=%d", self.baseurl(), apiVersion, timepoint)
 }
 
-func NewRopstenInterface() *RopstenInterface {
-	return &RopstenInterface{}
+func NewRopstenInterface(flagVariable string) *RopstenInterface {
+	return &RopstenInterface{base_url: flagVariable}
 }
 
-type KovanInterface struct{}
+type KovanInterface struct {
+	base_url string
+}
 
 func (self *KovanInterface) baseurl() string {
-	baseurl := "http://127.0.0.1"
-	if len(os.Args) > 1 {
-		baseurl = os.Args[1]
-	}
-	return baseurl + ":5300"
+	return getOrSetDefaultURL(self.base_url)
 }
 
 func (self *KovanInterface) PublicEndpoint(timepoint uint64) string {
@@ -131,6 +133,6 @@ func (self *KovanInterface) AccountEndpoint(timepoint uint64) string {
 	return fmt.Sprintf("%s/api/%s/account?timestamp=%d", self.baseurl(), apiVersion, timepoint)
 }
 
-func NewKovanInterface() *KovanInterface {
-	return &KovanInterface{}
+func NewKovanInterface(flagVariable string) *KovanInterface {
+	return &KovanInterface{base_url: flagVariable}
 }

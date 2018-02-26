@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var addressConfigFile *string
+var EndPointIntf map[string]string
 
 // This represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
