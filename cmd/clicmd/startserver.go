@@ -212,9 +212,9 @@ func init() {
 	startServer.Flags().StringVar(&addressOW[4], "networkAddr", "", "network Address, default to configuration file")
 	startServer.Flags().StringVar(&endpointOW, "endpoint", "", "endpoint, default to configuration file")
 
-	startServer.PersistentFlags().StringVar(&SimURL, "sim_url", "http://127.0.0.1", "simulation end point")
-	startServer.PersistentFlags().StringVar(&RopstenURL, "ropsten_url", "http://127.0.0.1", "simulation end point")
-	startServer.PersistentFlags().StringVar(&KovanURL, "kovan_url", "http://127.0.0.1", "simulation end point")
+	startServer.PersistentFlags().StringVar(&SimURL, "sim_url", "http://127.0.0.1", "simulation base url")
+	startServer.PersistentFlags().StringVar(&RopstenURL, "ropsten_url", "http://127.0.0.1", "ropsten base url")
+	startServer.PersistentFlags().StringVar(&KovanURL, "kovan_url", "http://127.0.0.1", "kovan base url")
 
 	RootCmd.AddCommand(startServer)
 }

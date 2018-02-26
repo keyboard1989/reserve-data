@@ -18,7 +18,7 @@ func GetAddressConfig(filePath string, addressOW [5]string) common.AddressConfig
 	addressConfig, err := common.GetAddressConfigFromFile(filePath)
 	//addressConfig := GetAddressConfigFromViper()
 	if err != nil {
-		log.Fatalf("Config file %s is not found. Error: %s", filePath, err)
+		log.Fatalf("Config file %s is not found. Check that KYBER_ENV is set correctly. Error: %s", filePath, err)
 	}
 	if addressOW[0] != "" {
 		log.Printf("Overwriting wrapper address config with %s \n", addressOW[0])
@@ -49,8 +49,8 @@ func GetConfig(kyberENV string, authEnbl bool, addressOW [5]string, endpointOW s
 	setPath := ConfigPaths[kyberENV]
 	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	addressConfig := GetAddressConfig(setPath.settingPath, addressOW)
-	feeConfig, err := common.GetFeeFromFile(setPath.feePath)
 
+	feeConfig, err := common.GetFeeFromFile(setPath.feePath)
 	if err != nil {
 		log.Fatalf("Fees file %s cannot found at: %s", setPath.feePath, err)
 	}
@@ -102,15 +102,14 @@ func GetConfig(kyberENV string, authEnbl bool, addressOW [5]string, endpointOW s
 	bkendpoints := setPath.bkendpoints
 	var hmac512auth http.KNAuthentication
 
-	if authEnbl {
-		hmac512auth = http.KNAuthentication{
-			fileSigner.KNSecret,
-			fileSigner.KNReadOnly,
-			fileSigner.KNConfiguration,
-			fileSigner.KNConfirmConf,
-		}
+	hmac512auth = http.KNAuthentication{
+		fileSigner.KNSecret,
+		fileSigner.KNReadOnly,
+		fileSigner.KNConfiguration,
+		fileSigner.KNConfirmConf,
+	}
 
-	} else {
+	if !authEnbl {
 		log.Printf("\nWARNING: No authentication mode\n")
 	}
 	return &Config{

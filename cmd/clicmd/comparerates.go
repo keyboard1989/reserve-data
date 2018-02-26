@@ -43,7 +43,6 @@ func compareratestart(cmd *cobra.Command, args []string) {
 
 }
 
-// This represents the base command when called without any subcommands
 var compareRates = &cobra.Command{
 	Use:   "compare ",
 	Short: "compare rate from get_all_rates to setRate activities",
@@ -53,7 +52,6 @@ var compareRates = &cobra.Command{
 
 func init() {
 	//compare rate flags
-
 	compareRates.Flags().StringVar(&baseURL, "url", "https://internal-mainnet-core.kyber.network", "base URL for API query")
 	compareRates.Flags().StringVar(&fromTime, "from_time", "", "begining time for query, required params")
 	compareRates.MarkFlagRequired("from_time")

@@ -7,8 +7,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var EndPointIntf map[string]string
-
 // This represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "./cmd ",
@@ -30,5 +28,7 @@ func init() {
 }
 
 // initConfig reads in config file and ENV variables if set.
+// currently due to the fact that all configuration files are read seperatedly,
+// Viper is not a good choice for this current development. Hence initConfig is empty.
 func initConfig() {
 }
