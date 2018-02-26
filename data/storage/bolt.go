@@ -30,6 +30,8 @@ const (
 	TRADE_HISTORY           string = "trade_history"
 	ENABLE_REBALANCE        string = "enable_rebalance"
 	SETRATE_CONTROL         string = "setrate_control"
+	PENDING_PWI_EQUATION    string = "pending_pwi_equation"
+	PWI_EQUATION            string = "pwi_equation"
 	MAX_NUMBER_VERSION      int    = 1000
 	MAX_GET_RATES_PERIOD    uint64 = 86400000 //1 days in milisec
 )
@@ -65,6 +67,8 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(TRADE_HISTORY))
 		tx.CreateBucket([]byte(ENABLE_REBALANCE))
 		tx.CreateBucket([]byte(SETRATE_CONTROL))
+		tx.CreateBucket([]byte(PENDING_PWI_EQUATION))
+		tx.CreateBucket([]byte(PWI_EQUATION))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db, 0, 0}
@@ -982,6 +986,114 @@ func (self *BoltStorage) StoreSetrateControl(status bool) error {
 		}
 		idByte := uint64ToBytes(common.GetTimepoint())
 		return b.Put(idByte, dataJson)
+	})
+	return err
+}
+
+func (self *BoltStorage) StorePendingPWIEquation(data string) error {
+	var err error
+	timepoint := common.GetTimepoint()
+	saveData := metric.PWIEquation{}
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION))
+		c := b.Cursor()
+		_, v := c.First()
+		if v != nil {
+			err = errors.New("There is another pending equation, please confirm or reject to set new equation")
+			return err
+		} else {
+			idByte := uint64ToBytes(timepoint)
+			saveData.ID = timepoint
+			saveData.Data = data
+			if err != nil {
+				return err
+			}
+			dataJson, err := json.Marshal(saveData)
+			if err != nil {
+				return err
+			}
+			b.Put(idByte, dataJson)
+		}
+		return err
+	})
+	return err
+}
+
+func (self *BoltStorage) GetPendingPWIEquation() (metric.PWIEquation, error) {
+	var err error
+	var result metric.PWIEquation
+	err = self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION))
+		c := b.Cursor()
+		_, v := c.First()
+		if v == nil {
+			return errors.New("There no pending equation")
+		} else {
+			json.Unmarshal(v, &result)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) StorePWIEquation(data string) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION))
+		c := b.Cursor()
+		_, v := c.First()
+		if v == nil {
+			err = errors.New("There no pending equation")
+			return err
+		} else {
+			p := tx.Bucket([]byte(PWI_EQUATION))
+			idByte := uint64ToBytes(common.GetTimepoint())
+			pending := metric.PWIEquation{}
+			json.Unmarshal(v, &pending)
+			if pending.Data != data {
+				err = errors.New("Confirm data does not match pending data")
+				return err
+			}
+			p.Put(idByte, v)
+		}
+		return err
+	})
+	if err == nil {
+		self.RemovePendingPWIEquation()
+	}
+	return err
+}
+
+func (self *BoltStorage) GetPWIEquation() (metric.PWIEquation, error) {
+	var err error
+	var result metric.PWIEquation
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PWI_EQUATION))
+		c := b.Cursor()
+		_, v := c.Last()
+		if v == nil {
+			err = errors.New("There is no equation")
+			return err
+		} else {
+			json.Unmarshal(v, &result)
+		}
+		return err
+	})
+	return result, err
+}
+
+func (self *BoltStorage) RemovePendingPWIEquation() error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION))
+		c := b.Cursor()
+		k, _ := c.First()
+		if k != nil {
+			b.Delete([]byte(k))
+		} else {
+			err = errors.New("There is no pending data")
+		}
+		return err
 	})
 	return err
 }

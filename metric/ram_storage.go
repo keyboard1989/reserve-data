@@ -141,3 +141,23 @@ func (self *RamMetricStorage) StoreSetrateControl(status bool) error {
 	// TODO: update this
 	return nil
 }
+
+func (self *RamMetricStorage) StorePendingPWIEquation(data string) error {
+	return nil
+}
+
+func (self *RamMetricStorage) GetPendingPWIEquation() (PWIEquation, error) {
+	return PWIEquation{}, nil
+}
+
+func (self *RamMetricStorage) StorePWIEquation(data string) error {
+	return nil
+}
+
+func (self *RamMetricStorage) GetPWIEquation() (PWIEquation, error) {
+	return PWIEquation{}, nil
+}
+
+func (self *RamMetricStorage) RemovePendingPWIEquation() error {
+	return nil
+}
