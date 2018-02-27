@@ -10,7 +10,7 @@ import (
 // This represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:     "./cmd",
-	Short:   "entry point to the application, required KYBER_ENV and KYBER_EXCHANGES as environment variables",
+	Short:   "entry point to the application, required KYBER_ENV (default to dev) and KYBER_EXCHANGES as environment variables. if KYBER_EXCHANGE is not set, the core will be run without centralize exchanges",
 	Example: "KYBER_ENV=dev KYBER_EXCHANGES=bittrex ./cmd command [flags]",
 }
 
