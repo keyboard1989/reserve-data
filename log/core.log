@@ -3074,3 +3074,65 @@ WARNING: No authentication mode
 2018/02/27 10:38:15.043041 blockchain.go:688: pricing address: 0xe3E415a7a6c287a95DC68a01ff036828073fD2e6
 2018/02/27 10:38:15.044164 blockchain.go:693: burner address: 0x8a31a527E024150121b4aB33e6b6c24f69846cC9
 2018/02/27 10:38:15.044190 blockchain.go:694: network address: 0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e
+2018/02/27 17:33:28.917513 startserver.go:76: Overwriting base URL with http://simulation.com 
+2018/02/27 17:37:22.681967 startserver.go:76: Overwriting base URL with http://simulation.com 
+2018/02/27 17:41:12.190940 startserver.go:76: Overwriting base URL with http://simulation.com 
+2018/02/27 17:41:12.233413 startserver.go:47: Running in dev mode 
+2018/02/27 17:41:12.429692 getconfig.go:92: 
+WARNING: No authentication mode
+2018/02/27 17:41:12.429757 blockchain.go:677: wrapper address: 0x865aA8818615BA9DFA8bcB6A1432B0fc506DBd58
+2018/02/27 17:41:12.436629 blockchain.go:682: reserve owner address: 0x760d30979EB313A2d23C53E4Fb55986183B0ffd9
+2018/02/27 17:41:12.436662 blockchain.go:683: reserve address: 0x2C5a182d280EeB5824377B98CD74871f78d6b8BC
+2018/02/27 17:41:12.438553 blockchain.go:688: pricing address: 0xe3E415a7a6c287a95DC68a01ff036828073fD2e6
+2018/02/27 17:41:12.445614 blockchain.go:693: burner address: 0x8a31a527E024150121b4aB33e6b6c24f69846cC9
+2018/02/27 17:41:12.445698 blockchain.go:694: network address: 0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e
+2018/02/27 17:41:15.447970 blockchain.go:113: Token indices: map[0x0D8775F648430679A709E98d2b0Cb6250d2887EF:{BulkIndex:0 IndexInBulk:7} 0xd26114cd6EE289AccF82350c8d8487fedB8A0C07:{BulkIndex:0 IndexInBulk:0} 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE:{BulkIndex:1000000 IndexInBulk:1000000} 0x4156D3342D5c385a87D264F90653733592000581:{BulkIndex:0 IndexInBulk:11} 0x8f8221aFbB33998d8584A2B05749bA73c37a938a:{BulkIndex:0 IndexInBulk:8} 0x255Aa6DF07540Cb5d3d297f0D0D4D84cb52bc8e6:{BulkIndex:0 IndexInBulk:13} 0xf0Ee6b27b759C9893Ce4f094b49ad28fd15A23e4:{BulkIndex:0 IndexInBulk:10} 0x86Fa049857E0209aa7D9e616F7eb3b3B78ECfdb0:{BulkIndex:0 IndexInBulk:2} 0xC5bBaE50781Be1669306b9e001EFF57a2957b09d:{BulkIndex:0 IndexInBulk:9} 0x1a7a8BD9106F2B8D977E08582DC7d24c723ab0DB:{BulkIndex:0 IndexInBulk:12} 0x595832F8FC6BF59c85C527fEC3740A1b7a361269:{BulkIndex:0 IndexInBulk:5} 0xbf2179859fc6D5BEE9Bf9158632Dc51678a4100e:{BulkIndex:0 IndexInBulk:4} 0x744d70FDBE2Ba4CF95131626614a1763DF805B9E:{BulkIndex:0 IndexInBulk:3} 0x0F5D2fB29fb7d3CFeE444a200298f468908cC942:{BulkIndex:0 IndexInBulk:6} 0xdd974D5C2e2928deA5F71b9825b8b646686BD200:{BulkIndex:0 IndexInBulk:1}]
+2018/02/27 17:41:15.737862 fetcher.go:53: Fetcher runner is starting...
+2018/02/27 17:41:15.738105 fetcher.go:60: Fetcher runner is running...
+2018/02/27 17:41:15.738425 debug.go:45: [GIN-debug] [WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
+
+2018/02/27 17:41:15.738419 fetcher.go:225: waiting for signal from runner trade history channel
+2018/02/27 17:41:15.738223 fetcher.go:138: waiting for signal from runner auth data channel
+2018/02/27 17:41:15.738251 fetcher.go:510: waiting for signal from runner orderbook channel
+2018/02/27 17:41:15.738284 fetcher.go:112: waiting for signal from runner rate channel
+2018/02/27 17:41:15.738287 fetcher.go:66: waiting for signal from block channel
+2018/02/27 17:41:15.738502 debug.go:45: [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+2018/02/27 17:41:15.791240 debug.go:45: [GIN-debug] GET    /prices-version           --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).AllPricesVersion-fm (5 handlers)
+2018/02/27 17:41:15.791401 debug.go:45: [GIN-debug] GET    /prices                   --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).AllPrices-fm (5 handlers)
+2018/02/27 17:41:15.791483 debug.go:45: [GIN-debug] GET    /prices/:base/:quote      --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Price-fm (5 handlers)
+2018/02/27 17:41:15.791561 debug.go:45: [GIN-debug] GET    /getrates                 --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetRate-fm (5 handlers)
+2018/02/27 17:41:15.791643 debug.go:45: [GIN-debug] GET    /get-all-rates            --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetRates-fm (5 handlers)
+2018/02/27 17:41:15.791712 debug.go:45: [GIN-debug] GET    /authdata-version         --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).AuthDataVersion-fm (5 handlers)
+2018/02/27 17:41:15.791778 debug.go:45: [GIN-debug] GET    /authdata                 --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).AuthData-fm (5 handlers)
+2018/02/27 17:41:15.791835 debug.go:45: [GIN-debug] GET    /activities               --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetActivities-fm (5 handlers)
+2018/02/27 17:41:15.791906 debug.go:45: [GIN-debug] GET    /immediate-pending-activities --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).ImmediatePendingActivities-fm (5 handlers)
+2018/02/27 17:41:15.791967 debug.go:45: [GIN-debug] GET    /tradelogs                --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).TradeLogs-fm (5 handlers)
+2018/02/27 17:41:15.792027 debug.go:45: [GIN-debug] GET    /metrics                  --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Metrics-fm (5 handlers)
+2018/02/27 17:41:15.792083 debug.go:45: [GIN-debug] POST   /metrics                  --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).StoreMetrics-fm (5 handlers)
+2018/02/27 17:41:15.792142 debug.go:45: [GIN-debug] POST   /cancelorder/:exchangeid  --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).CancelOrder-fm (5 handlers)
+2018/02/27 17:41:15.792205 debug.go:45: [GIN-debug] POST   /deposit/:exchangeid      --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Deposit-fm (5 handlers)
+2018/02/27 17:41:15.792268 debug.go:45: [GIN-debug] POST   /withdraw/:exchangeid     --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Withdraw-fm (5 handlers)
+2018/02/27 17:41:15.792333 debug.go:45: [GIN-debug] POST   /trade/:exchangeid        --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).Trade-fm (5 handlers)
+2018/02/27 17:41:15.792395 debug.go:45: [GIN-debug] POST   /setrates                 --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).SetRate-fm (5 handlers)
+2018/02/27 17:41:15.792457 debug.go:45: [GIN-debug] GET    /exchangeinfo             --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetExchangeInfo-fm (5 handlers)
+2018/02/27 17:41:15.792520 debug.go:45: [GIN-debug] GET    /exchangeinfo/:exchangeid/:base/:quote --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetPairInfo-fm (5 handlers)
+2018/02/27 17:41:15.792597 debug.go:45: [GIN-debug] GET    /exchangefees             --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetFee-fm (5 handlers)
+2018/02/27 17:41:15.792668 debug.go:45: [GIN-debug] GET    /exchangefees/:exchangeid --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetExchangeFee-fm (5 handlers)
+2018/02/27 17:41:15.792733 debug.go:45: [GIN-debug] GET    /core/addresses           --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetAddress-fm (5 handlers)
+2018/02/27 17:41:15.792794 debug.go:45: [GIN-debug] GET    /tradehistory             --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetTradeHistory-fm (5 handlers)
+2018/02/27 17:41:15.792896 debug.go:45: [GIN-debug] GET    /targetqty                --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetTargetQty-fm (5 handlers)
+2018/02/27 17:41:15.792973 debug.go:45: [GIN-debug] GET    /pendingtargetqty         --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetPendingTargetQty-fm (5 handlers)
+2018/02/27 17:41:15.793038 debug.go:45: [GIN-debug] POST   /settargetqty             --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).SetTargetQty-fm (5 handlers)
+2018/02/27 17:41:15.793107 debug.go:45: [GIN-debug] POST   /confirmtargetqty         --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).ConfirmTargetQty-fm (5 handlers)
+2018/02/27 17:41:15.793172 debug.go:45: [GIN-debug] POST   /canceltargetqty          --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).CancelTargetQty-fm (5 handlers)
+2018/02/27 17:41:15.793233 debug.go:45: [GIN-debug] GET    /timeserver               --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetTimeServer-fm (5 handlers)
+2018/02/27 17:41:15.793305 debug.go:45: [GIN-debug] GET    /rebalancestatus          --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetRebalanceStatus-fm (5 handlers)
+2018/02/27 17:41:15.793352 debug.go:45: [GIN-debug] POST   /holdrebalance            --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).HoldRebalance-fm (5 handlers)
+2018/02/27 17:41:15.793421 debug.go:45: [GIN-debug] POST   /enablerebalance          --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).EnableRebalance-fm (5 handlers)
+2018/02/27 17:41:15.793475 debug.go:45: [GIN-debug] GET    /setratestatus            --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).GetSetrateStatus-fm (5 handlers)
+2018/02/27 17:41:15.793533 debug.go:45: [GIN-debug] POST   /holdsetrate              --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).HoldSetrate-fm (5 handlers)
+2018/02/27 17:41:15.793606 debug.go:45: [GIN-debug] POST   /enablesetrate            --> github.com/KyberNetwork/reserve-data/http.(*HTTPServer).EnableSetrate-fm (5 handlers)
+2018/02/27 17:41:15.793670 debug.go:45: [GIN-debug] Listening and serving HTTP on :8000
