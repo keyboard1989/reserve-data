@@ -419,50 +419,14 @@ func (self *BinanceEndpoint) UpdateTimeDelta() error {
 
 func NewBinanceEndpoint(signer Signer, interf Interface) *BinanceEndpoint {
 	endpoint := &BinanceEndpoint{signer, interf, 0}
-	err := endpoint.UpdateTimeDelta()
-	if err != nil {
-		panic(err)
-	}
-	return endpoint
-}
-
-func NewRealBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	endpoint := &BinanceEndpoint{signer, NewRealInterface(), 0}
-	err := endpoint.UpdateTimeDelta()
-	if err != nil {
-		panic(err)
-	}
-	return endpoint
-}
-
-func NewSimulatedBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	endpoint := &BinanceEndpoint{signer, NewSimulatedInterface(), 0}
-	return endpoint
-}
-
-func NewRopstenBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	endpoint := &BinanceEndpoint{signer, NewRopstenInterface(), 0}
-	err := endpoint.UpdateTimeDelta()
-	if err != nil {
-		panic(err)
-	}
-	return endpoint
-}
-
-func NewKovanBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	endpoint := &BinanceEndpoint{signer, NewKovanInterface(), 0}
-	err := endpoint.UpdateTimeDelta()
-	if err != nil {
-		panic(err)
-	}
-	return endpoint
-}
-
-func NewDevBinanceEndpoint(signer Signer) *BinanceEndpoint {
-	endpoint := &BinanceEndpoint{signer, NewDevInterface(), 0}
-	err := endpoint.UpdateTimeDelta()
-	if err != nil {
-		panic(err)
+	switch interf.(type) {
+	case *SimulatedInterface:
+		log.Println("Simulate environment, no updateTime called...")
+	default:
+		err := endpoint.UpdateTimeDelta()
+		if err != nil {
+			panic(err)
+		}
 	}
 	return endpoint
 }

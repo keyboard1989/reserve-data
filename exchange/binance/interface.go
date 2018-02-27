@@ -1,15 +1,20 @@
 package binance
 
-import (
-	"os"
-)
-
 type Interface interface {
 	PublicEndpoint() string
 	AuthenticatedEndpoint() string
 }
 
 type RealInterface struct{}
+
+func getOrSetDefaultURL(base_url string) string {
+	if len(base_url) > 1 {
+		return base_url + ":5100"
+	} else {
+		return "http://127.0.0.1:5100"
+	}
+
+}
 
 func (self *RealInterface) PublicEndpoint() string {
 	return "https://api.binance.com"
@@ -23,14 +28,12 @@ func NewRealInterface() *RealInterface {
 	return &RealInterface{}
 }
 
-type SimulatedInterface struct{}
+type SimulatedInterface struct {
+	base_url string
+}
 
 func (self *SimulatedInterface) baseurl() string {
-	baseurl := "http://127.0.0.1"
-	if len(os.Args) > 1 {
-		baseurl = os.Args[1]
-	}
-	return baseurl + ":5100"
+	return getOrSetDefaultURL(self.base_url)
 }
 
 func (self *SimulatedInterface) PublicEndpoint() string {
@@ -41,18 +44,16 @@ func (self *SimulatedInterface) AuthenticatedEndpoint() string {
 	return self.baseurl()
 }
 
-func NewSimulatedInterface() *SimulatedInterface {
-	return &SimulatedInterface{}
+func NewSimulatedInterface(flagVariable string) *SimulatedInterface {
+	return &SimulatedInterface{base_url: flagVariable}
 }
 
-type RopstenInterface struct{}
+type RopstenInterface struct {
+	base_url string
+}
 
 func (self *RopstenInterface) baseurl() string {
-	baseurl := "http://127.0.0.1"
-	if len(os.Args) > 1 {
-		baseurl = os.Args[1]
-	}
-	return baseurl + ":5100"
+	return getOrSetDefaultURL(self.base_url)
 }
 
 func (self *RopstenInterface) PublicEndpoint() string {
@@ -63,18 +64,16 @@ func (self *RopstenInterface) AuthenticatedEndpoint() string {
 	return self.baseurl()
 }
 
-func NewRopstenInterface() *RopstenInterface {
-	return &RopstenInterface{}
+func NewRopstenInterface(flagVariable string) *RopstenInterface {
+	return &RopstenInterface{base_url: flagVariable}
 }
 
-type KovanInterface struct{}
+type KovanInterface struct {
+	base_url string
+}
 
 func (self *KovanInterface) baseurl() string {
-	baseurl := "http://127.0.0.1"
-	if len(os.Args) > 1 {
-		baseurl = os.Args[1]
-	}
-	return baseurl + ":5100"
+	return getOrSetDefaultURL(self.base_url)
 }
 
 func (self *KovanInterface) PublicEndpoint() string {
@@ -85,8 +84,8 @@ func (self *KovanInterface) AuthenticatedEndpoint() string {
 	return self.baseurl()
 }
 
-func NewKovanInterface() *KovanInterface {
-	return &KovanInterface{}
+func NewKovanInterface(flagVariable string) *KovanInterface {
+	return &KovanInterface{base_url: flagVariable}
 }
 
 type DevInterface struct{}
