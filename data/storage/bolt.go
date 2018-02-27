@@ -978,8 +978,8 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, ke
 		// Get trade stats bucket
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		metricBk := tradeStatsBk.Bucket([]byte(metric))
-		metricStats := metricBk.Stats()
-		log.Printf("metric %s bucket stats %+v", metric, metricStats)
+		// metricStats := metricBk.Stats()
+		// log.Printf("metric %s bucket stats %+v", metric, metricStats)
 
 		var freqBkName string
 		freqBkName, err = getBucketNameByFreq(freq)
@@ -988,23 +988,23 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, ke
 		}
 
 		freqBk := metricBk.Bucket([]byte(freqBkName))
-		freqStats := freqBk.Stats()
-		log.Printf("freq %s bucket stats %+v", freqBkName, freqStats)
+		// freqStats := freqBk.Stats()
+		// log.Printf("freq %s bucket stats %+v", freqBkName, freqStats)
 		c := freqBk.Cursor()
 		min := getTimestampByFreq(fromTime, freq)
 		max := getTimestampByFreq(toTime, freq)
-		log.Printf("from %d to %d", min, max)
+		// log.Printf("from %d to %d", min, max)
 
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			stats := common.TradeStats{}
 			err = json.Unmarshal(v, &stats)
-			log.Printf("%v", stats)
+			// log.Printf("%v", stats)
 			if err != nil {
 				return err
 			}
 
 			_, ok := stats[key]
-			log.Printf("key: %s", key)
+			// log.Printf("key: %s", key)
 			if ok {
 				record := common.TradeStats{
 					strconv.FormatUint(bytesToUint64(k), 10): stats[key],
