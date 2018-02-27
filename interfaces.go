@@ -6,6 +6,26 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
+// /getrates
+// /authdata
+// /activities
+// /immediate-pending-activities
+// /metrics
+// /cancelorder/:exchangeid
+// /deposit/:exchangeid
+// /withdraw/:exchangei
+// /trade/:exchangeid
+// /setrates
+// /exchangeinfo
+// /exchangeinfo/:exchangeid/:base/:quote
+// /exchangefees
+// /exchangefees/:exchangeid
+// /core/addresses
+// /targetqty
+// /rebalancestatus
+// /setratestatus
+// /pwis-equation
+
 // all of the functions must support concurrency
 type ReserveData interface {
 	CurrentPriceVersion(timestamp uint64) (common.Version, error)
@@ -24,11 +44,6 @@ type ReserveData interface {
 
 	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
 	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
-
-	GetAssetVolume(fromTime, toTime uint64, freq, asset string) ([]common.TradeStats, error)
-	GetBurnFee(fromTime, toTime uint64, freq, reserveAddr string) ([]common.TradeStats, error)
-	GetWalletFee(fromTime, toTime uint64, freq, reserveAddr, walletAddr string) ([]common.TradeStats, error)
-	GetUserVolume(fromTime, toTime uint64, freq, userAddr string) ([]common.TradeStats, error)
 
 	Run() error
 	Stop() error

@@ -11,6 +11,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
+	statfetcher "github.com/KyberNetwork/reserve-data/stat/fetcher"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -49,22 +50,29 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		tokens = append(tokens, tok)
 	}
 
-	storage, err := storage.NewBoltStorage(setPath.storagePath)
+	dataStorage, err := storage.NewBoltStorage(setPath.dataStoragePath)
+	if err != nil {
+		panic(err)
+	}
+	statStorage, err := storage.NewBoltStorage(setPath.statStoragePath)
 	if err != nil {
 		panic(err)
 	}
 	//fetcherRunner := http_runner.NewHttpRunner(8001)
 	var fetcherRunner fetcher.FetcherRunner
+	var statFetcherRunner statfetcher.FetcherRunner
 
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
+		statFetcherRunner = http_runner.NewHttpRunner(8002)
 	} else {
 		fetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 	}
 
 	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
 
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, storage, kyberENV)
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV)
 	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	// endpoint := "https://ropsten.infura.io"
@@ -92,11 +100,14 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		log.Printf("\nWARNING: No authentication mode\n")
 	}
 	return &Config{
-		ActivityStorage:         storage,
-		DataStorage:             storage,
-		FetcherStorage:          storage,
-		MetricStorage:           storage,
+		ActivityStorage:         dataStorage,
+		DataStorage:             dataStorage,
+		StatStorage:             statStorage,
+		FetcherStorage:          dataStorage,
+		StatFetcherStorage:      statStorage,
+		MetricStorage:           dataStorage,
 		FetcherRunner:           fetcherRunner,
+		StatFetcherRunner:       statFetcherRunner,
 		FetcherExchanges:        exchangePool.FetcherExchanges(),
 		Exchanges:               exchangePool.CoreExchanges(),
 		BlockchainSigner:        fileSigner,
