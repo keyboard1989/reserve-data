@@ -29,7 +29,6 @@ import (
 
 var noAuthEnable bool
 var servPort int = 8000
-var addressOW [5]string
 var endpointOW string
 var SimURL, RopstenURL, KovanURL string
 
@@ -47,12 +46,11 @@ func loadTimestamp(path string) []uint64 {
 }
 
 // GetConfigFromENV: From ENV variable and overwriting instruction, build the config
-func GetConfigFromENV(kyberENV string, addressOW [5]string) *configuration.Config {
+func GetConfigFromENV(kyberENV string) *configuration.Config {
 	log.Printf("Running in %s mode \n", kyberENV)
 	var config *configuration.Config
 	config = configuration.GetConfig(kyberENV,
 		!noAuthEnable,
-		addressOW,
 		endpointOW)
 	return config
 }
@@ -108,7 +106,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if kyberENV == "" {
 		kyberENV = "dev"
 	}
-	config := GetConfigFromENV(kyberENV, addressOW)
+	config := GetConfigFromENV(kyberENV)
 
 	//get fetcher based on config and ENV == stimulation.
 	fetcher := fetcher.NewFetcher(
@@ -205,11 +203,6 @@ func init() {
 	// start server flags.
 	startServer.Flags().BoolVarP(&noAuthEnable, "noauth", "", false, "disable authentication")
 	startServer.Flags().IntVarP(&servPort, "port", "p", 8000, "server port")
-	startServer.Flags().StringVar(&addressOW[0], "wrapperAddr", "", "wrapper Address, default to configuration file")
-	startServer.Flags().StringVar(&addressOW[1], "reserveAddr", "", "reserve Address, default to configuration file")
-	startServer.Flags().StringVar(&addressOW[2], "pricingAddr", "", "pricing Address, default to configuration file")
-	startServer.Flags().StringVar(&addressOW[3], "burnerAddr", "", "burner Address, default to configuration file")
-	startServer.Flags().StringVar(&addressOW[4], "networkAddr", "", "network Address, default to configuration file")
 	startServer.Flags().StringVar(&endpointOW, "endpoint", "", "endpoint, default to configuration file")
 
 	startServer.PersistentFlags().StringVar(&SimURL, "sim_url", "http://127.0.0.1", "simulation base url")

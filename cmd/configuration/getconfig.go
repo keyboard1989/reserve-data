@@ -14,41 +14,20 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func GetAddressConfig(filePath string, addressOW [5]string) common.AddressConfig {
+func GetAddressConfig(filePath string) common.AddressConfig {
 	addressConfig, err := common.GetAddressConfigFromFile(filePath)
-	//addressConfig := GetAddressConfigFromViper()
 	if err != nil {
 		log.Fatalf("Config file %s is not found. Check that KYBER_ENV is set correctly. Error: %s", filePath, err)
-	}
-	if addressOW[0] != "" {
-		log.Printf("Overwriting wrapper address config with %s \n", addressOW[0])
-		addressConfig.Wrapper = addressOW[0]
-	}
-	if addressOW[1] != "" {
-		log.Printf("Overwriting reserve address config with %s \n", addressOW[1])
-		addressConfig.Wrapper = addressOW[0]
-	}
-	if addressOW[2] != "" {
-		log.Printf("Overwriting pricing address config with %s \n", addressOW[2])
-		addressConfig.Wrapper = addressOW[0]
-	}
-	if addressOW[3] != "" {
-		log.Printf("Overwriting burner address config with %s \n", addressOW[3])
-		addressConfig.Wrapper = addressOW[0]
-	}
-	if addressOW[4] != "" {
-		log.Printf("Overwriting network address config with %s \n", addressOW[4])
-		addressConfig.Wrapper = addressOW[0]
 	}
 	return addressConfig
 }
 
 // GetConfig: load and set all config with preset params and customize param depends on env
 // This is to generalized all the getconfig function.
-func GetConfig(kyberENV string, authEnbl bool, addressOW [5]string, endpointOW string) *Config {
+func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	setPath := ConfigPaths[kyberENV]
 	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
-	addressConfig := GetAddressConfig(setPath.settingPath, addressOW)
+	addressConfig := GetAddressConfig(setPath.settingPath)
 
 	feeConfig, err := common.GetFeeFromFile(setPath.feePath)
 	if err != nil {

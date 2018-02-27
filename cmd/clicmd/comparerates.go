@@ -26,7 +26,7 @@ func compareratestart(cmd *cobra.Command, args []string) {
 	params := make(map[string]string)
 	params["fromTime"] = fromTime
 	params["toTime"] = toTime
-	config := GetConfigFromENV(kyberENV, addressOW)
+	config := GetConfigFromENV(kyberENV)
 	if len(params["toTime"]) < 1 {
 		log.Printf("There was no end time, go to foverer run mode...")
 		for {
