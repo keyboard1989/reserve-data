@@ -630,7 +630,7 @@ response:
 ```
   {
     "success": true,
-    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25"}
+    "data":{"id":1517396850670,"data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25"}
   }
 ```
 
@@ -644,7 +644,7 @@ response:
 ```
   {
     "success": true,
-    "data":{"ID":1517396850670,"Timestamp":0,"Data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25"}
+    "data":{"id":1517396850670,"data":"EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25"}
   }
 ```
 
@@ -683,7 +683,7 @@ eg:
 curl -X POST \
   http://localhost:8000/confirm-pwis-equation \
   -H 'content-type: multipart/form-data' \
-  -F data= EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25
+  -F data=EOS_750_500_0.25|ETH_750_500_0.25|KNC_750_500_0.25|OMG_750_500_0.25|SALT_750_500_0.25
 ```
 response
 ```
