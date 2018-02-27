@@ -9,8 +9,9 @@ import (
 
 // This represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "./cmd ",
-	Short: "entry point to the application, required KYBER_ENV and KYBER_EXCHANGES as environment variables",
+	Use:     "./cmd",
+	Short:   "entry point to the application, required KYBER_ENV and KYBER_EXCHANGES as environment variables",
+	Example: "KYBER_ENV=dev KYBER_EXCHANGES=bittrex ./cmd command [flags]",
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.
@@ -25,6 +26,7 @@ func Execute() {
 func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.Flags().BoolP("verbose", "v", false, "verbose mode enable")
+
 }
 
 // initConfig reads in config file and ENV variables if set.

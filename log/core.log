@@ -17,6 +17,7 @@ WARNING: No authentication mode
 2018/02/26 10:40:37.490845 debug.go:45: [GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
  - using env:	export GIN_MODE=release
  - using code:	gin.SetMode(gin.ReleaseMode)
+ //
 
 2018/02/26 10:40:37.490893 fetcher.go:112: waiting for signal from runner rate channel
 2018/02/26 10:40:37.490830 fetcher.go:510: waiting for signal from runner orderbook channel
@@ -3055,3 +3056,21 @@ WARNING: No authentication mode
 2018/02/26 19:27:46.819817 blockchain.go:688: pricing address: 0xe3E415a7a6c287a95DC68a01ff036828073fD2e6
 2018/02/26 19:27:46.856791 blockchain.go:693: burner address: 0x8a31a527E024150121b4aB33e6b6c24f69846cC9
 2018/02/26 19:27:46.856892 blockchain.go:694: network address: 0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e
+2018/02/27 10:12:42.552218 startserver.go:50: Running in dev mode 
+2018/02/27 10:12:43.160035 blockchain.go:677: wrapper address: 0x865aA8818615BA9DFA8bcB6A1432B0fc506DBd58
+2018/02/27 10:12:43.163042 blockchain.go:682: reserve owner address: 0x760d30979EB313A2d23C53E4Fb55986183B0ffd9
+2018/02/27 10:12:43.163075 blockchain.go:683: reserve address: 0x2C5a182d280EeB5824377B98CD74871f78d6b8BC
+2018/02/27 10:12:43.174756 blockchain.go:688: pricing address: 0xe3E415a7a6c287a95DC68a01ff036828073fD2e6
+2018/02/27 10:12:43.182992 blockchain.go:693: burner address: 0x8a31a527E024150121b4aB33e6b6c24f69846cC9
+2018/02/27 10:12:43.183026 blockchain.go:694: network address: 0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e
+2018/02/27 10:38:13.377952 startserver.go:50: Running in dev mode 
+2018/02/27 10:38:13.443681 bittrex_endpoint.go:71: request to bittrex: https://bittrex.com/api/v1.1/public/getmarkets
+2018/02/27 10:38:15.035564 bittrex_endpoint.go:78: request to https://bittrex.com/api/v1.1/public/getmarkets, got response from bittrex: {"success":true,"message":"","result":[{"MarketCurrency":"LTC","BaseCurrency":"BTC","MarketCurrencyLong":"Litecoin","BaseCurrencyLong":"Bitcoin","MinTradeSize":0.01141553,"MarketName":"BTC-LTC","IsActive":true,"Created":"2014-02-13T00:00:00","Notice":null,...
+2018/02/27 10:38:15.041459 getconfig.go:92: 
+WARNING: No authentication mode
+2018/02/27 10:38:15.041531 blockchain.go:677: wrapper address: 0x865aA8818615BA9DFA8bcB6A1432B0fc506DBd58
+2018/02/27 10:38:15.042212 blockchain.go:682: reserve owner address: 0x760d30979EB313A2d23C53E4Fb55986183B0ffd9
+2018/02/27 10:38:15.042242 blockchain.go:683: reserve address: 0x2C5a182d280EeB5824377B98CD74871f78d6b8BC
+2018/02/27 10:38:15.043041 blockchain.go:688: pricing address: 0xe3E415a7a6c287a95DC68a01ff036828073fD2e6
+2018/02/27 10:38:15.044164 blockchain.go:693: burner address: 0x8a31a527E024150121b4aB33e6b6c24f69846cC9
+2018/02/27 10:38:15.044190 blockchain.go:694: network address: 0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e

@@ -196,7 +196,8 @@ var startServer = &cobra.Command{
 	Short: "initiate the server with specific config",
 	Long: `Start reserve-data core server with preset Environment and
 Allow overwriting some parameter`,
-	Run: serverStart,
+	Example: "KYBER_ENV=dev KYBER_EXCHANGES=bittrex ./cmd server --noauth -p 8000",
+	Run:     serverStart,
 }
 
 func init() {
