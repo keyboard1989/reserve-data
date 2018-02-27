@@ -35,9 +35,8 @@ type TokenTargetQty struct {
 }
 
 type PWIEquation struct {
-	ID     uint64 `json:"id"`
-	Data   string `json:"data"`
-	Status string `json:"status"`
+	ID   uint64 `json:"id"`
+	Data string `json:"data"`
 }
 
 type RebalanceControl struct {

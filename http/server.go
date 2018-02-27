@@ -1298,7 +1298,7 @@ func (self *HTTPServer) EnableSetrate(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetPWIEquation(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission, ConfirmConfPermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -1323,7 +1323,7 @@ func (self *HTTPServer) GetPWIEquation(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetPendingPWIEquation(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission, ConfirmConfPermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
