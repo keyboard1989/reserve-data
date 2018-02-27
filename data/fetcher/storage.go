@@ -9,6 +9,7 @@ type Storage interface {
 	StoreRate(data common.AllRateEntry, timepoint uint64) error
 	StoreAuthSnapshot(data *common.AuthDataSnapshot, timepoint uint64) error
 	StoreTradeLog(stat common.TradeLog, timepoint uint64) error
+	SetTradeStats(metric, freq string, t uint64, tradeStats common.TradeStats) error
 	UpdateLogBlock(block uint64, timepoint uint64) error
 	StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error
 

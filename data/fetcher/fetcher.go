@@ -3,6 +3,7 @@ package fetcher
 import (
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -111,6 +112,8 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
 				if err != nil {
 					log.Printf("storing trade log failed, abort storing process and return latest stored log block number, err: %+v", err)
 					return l.BlockNumber
+				} else {
+					self.aggregateTradeLog(l)
 				}
 			}
 			return logs[len(logs)-1].BlockNumber
@@ -118,6 +121,49 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
 			return fromBlock - 1
 		}
 	}
+}
+
+func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
+	walletFeeKey := strings.Join([]string{trade.ReserveAddress.String(), trade.WalletAddress.String()}, "_")
+	updates := []struct {
+		metric     string
+		tradeStats common.TradeStats
+	}{
+		{
+			"assets_volume",
+			common.TradeStats{
+				strings.ToLower(trade.SrcAddress.String()):  trade.SrcAmount,
+				strings.ToLower(trade.DestAddress.String()): trade.DestAmount,
+			},
+		},
+		{
+			"burn_fee",
+			common.TradeStats{
+				strings.ToLower(trade.ReserveAddress.String()): trade.BurnFee,
+			},
+		},
+		{
+			"wallet_fee",
+			common.TradeStats{
+				walletFeeKey: trade.WalletFee,
+			},
+		},
+		{
+			"user_volume",
+			common.TradeStats{
+				strings.ToLower(trade.UserAddress.String()): trade.FiatAmount,
+			},
+		},
+	}
+	for _, update := range updates {
+		for _, freq := range []string{"M", "H", "D"} {
+			err = self.storage.SetTradeStats(update.metric, freq, trade.Timestamp, update.tradeStats)
+			if err != nil {
+				return
+			}
+		}
+	}
+	return
 }
 
 func (self *Fetcher) RunRateFetcher() {
