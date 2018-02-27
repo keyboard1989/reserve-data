@@ -6,9 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"math/big"
-	"net/http"
 	"strconv"
 	"strings"
 	"sync"
@@ -536,44 +534,9 @@ type CoinCapRateResponse []struct {
 }
 
 type EthRate struct {
-	mu    sync.RWMutex
-	Value float64
-}
-
-func NewEthRate() *EthRate {
-	return &EthRate{
-		mu:    sync.RWMutex{},
-		Value: 0,
-	}
-}
-
-func (self *EthRate) UpdateEthRate() error {
-	self.mu.Lock()
-	defer self.mu.Unlock()
-	resp, err := http.Get("https://api.coinmarketcap.com/v1/ticker/?convert=SGD&limit=10")
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	rateResponse := CoinCapRateResponse{}
-	json.Unmarshal(body, &rateResponse)
-	for _, rate := range rateResponse {
-		if rate.Symbol == "ETH" {
-			self.Value, err = strconv.ParseFloat(rate.PriceSGD, 64)
-			if err != nil {
-				log.Println("Cannot get rate: %s", err.Error())
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (self *EthRate) GetEthRate() float64 {
-	self.mu.RLock()
-	defer self.mu.RUnlock()
-	return self.Value
+	Mu  sync.RWMutex
+	Sgd float64
+	Usd float64
 }
 
 type TradeLog struct {
