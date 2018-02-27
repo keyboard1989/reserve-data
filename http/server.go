@@ -648,6 +648,9 @@ func (self *HTTPServer) GetActivities(c *gin.Context) {
 	}
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if toTime == 0 {
+		toTime = common.GetTimepoint()
+	}
 
 	data, err := self.app.GetRecords(fromTime*1000000, toTime*1000000)
 	if err != nil {
@@ -1294,6 +1297,31 @@ func (self *HTTPServer) EnableSetrate(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetPWIEquation(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetPWIEquation()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) GetAssetVolume(c *gin.Context) {
 	_, ok := self.Authenticated(c, []string{"freq", "asset"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
@@ -1304,6 +1332,31 @@ func (self *HTTPServer) GetAssetVolume(c *gin.Context) {
 	freq := c.Query("freq")
 	asset := c.Query("asset")
 	data, err := self.app.GetAssetVolume(fromTime, toTime, freq, asset)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetPendingPWIEquation(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetPendingPWIEquation()
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1352,6 +1405,51 @@ func (self *HTTPServer) GetBurnFee(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
+	var err error
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission})
+	if !ok {
+		return
+	}
+	data := postForm.Get("data")
+	for _, dataConfig := range strings.Split(data, "|") {
+		dataParts := strings.Split(dataConfig, "_")
+		if len(dataParts) != 4 {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": "The input data is not correct"},
+			)
+			return
+		}
+		token := dataParts[0]
+		_, err = common.GetToken(token)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{"success": false, "reason": err.Error()},
+			)
+			return
+		}
+	}
+	err = self.metric.StorePendingPWIEquation(data)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 func (self *HTTPServer) GetWalletFee(c *gin.Context) {
 	_, ok := self.Authenticated(c, []string{"freq", "reserveAddr", "walletAddr"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
@@ -1382,6 +1480,31 @@ func (self *HTTPServer) GetWalletFee(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) ConfirmPWIEquation(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	postData := postForm.Get("data")
+	err := self.metric.StorePWIEquation(postData)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 func (self *HTTPServer) GetUserVolume(c *gin.Context) {
 	_, ok := self.Authenticated(c, []string{"freq", "userAddress"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
@@ -1407,6 +1530,31 @@ func (self *HTTPServer) GetUserVolume(c *gin.Context) {
 		gin.H{
 			"success": true,
 			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	// postData := postForm.Get("data")
+	err := self.metric.RemovePendingPWIEquation()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
 		},
 	)
 }
@@ -1458,6 +1606,12 @@ func (self *HTTPServer) Run() {
 	self.r.GET("/get-burn-fee", self.GetBurnFee)
 	self.r.GET("/get-wallet-fee", self.GetWalletFee)
 	self.r.GET("/get-user-volume", self.GetUserVolume)
+
+	self.r.GET("/pwis-equation", self.GetPWIEquation)
+	self.r.GET("/pending-pwis-equation", self.GetPendingPWIEquation)
+	self.r.POST("/set-pwis-equation", self.SetPWIEquation)
+	self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
+	self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
 
 	self.r.Run(self.host)
 }

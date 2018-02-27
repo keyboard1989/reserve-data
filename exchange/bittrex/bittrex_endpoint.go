@@ -296,23 +296,3 @@ func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token, ti
 func NewBittrexEndpoint(signer Signer, interf Interface) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, interf}
 }
-
-func NewRealBittrexEndpoint(signer Signer) *BittrexEndpoint {
-	return &BittrexEndpoint{signer, NewRealInterface()}
-}
-
-func NewSimulatedBittrexEndpoint(signer Signer) *BittrexEndpoint {
-	return &BittrexEndpoint{signer, NewSimulatedInterface()}
-}
-
-func NewDevBittrexEndpoint(signer Signer) *BittrexEndpoint {
-	return &BittrexEndpoint{signer, NewDevInterface()}
-}
-
-func NewRopstenBittrexEndpoint(signer Signer) *BittrexEndpoint {
-	return &BittrexEndpoint{signer, NewRopstenInterface()}
-}
-
-func NewKovanBittrexEndpoint(signer Signer) *BittrexEndpoint {
-	return &BittrexEndpoint{signer, NewKovanInterface()}
-}

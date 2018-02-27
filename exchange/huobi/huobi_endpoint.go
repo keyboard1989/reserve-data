@@ -374,22 +374,3 @@ func (self *HuobiEndpoint) GetExchangeInfo() (exchange.HuobiExchangeInfo, error)
 func NewHuobiEndpoint(signer Signer, interf Interface) *HuobiEndpoint {
 	return &HuobiEndpoint{signer, interf}
 }
-
-func NewRealHuobiEndpoint(signer Signer) *HuobiEndpoint {
-	return &HuobiEndpoint{signer, NewRealInterface()}
-}
-
-func NewSimulatedHuobiEndpoint(signer Signer) *HuobiEndpoint {
-	return &HuobiEndpoint{signer, NewSimulatedInterface()}
-}
-
-func NewRopstenHuobiEndpoint(signer Signer) *HuobiEndpoint {
-	return &HuobiEndpoint{signer, NewRopstenInterface()}
-}
-func NewKovanHuobiEndpoint(signer Signer) *HuobiEndpoint {
-	return &HuobiEndpoint{signer, NewRopstenInterface()}
-}
-
-func NewDevHuobiEndpoint(signer Signer) *HuobiEndpoint {
-	return &HuobiEndpoint{signer, NewDevInterface()}
-}

@@ -17,6 +17,7 @@
 .glide/
 reserve-data
 config.json
+log/*
 cmd/cmd
 cmd/core.db
 cmd/log.log
