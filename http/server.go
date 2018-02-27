@@ -1324,10 +1324,6 @@ func (self *HTTPServer) GetPWIEquation(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetAssetVolume(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{"freq", "asset"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
-	if !ok {
-		return
-	}
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 	freq := c.Query("freq")
@@ -1378,10 +1374,6 @@ func (self *HTTPServer) GetPendingPWIEquation(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetBurnFee(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{"freq", "reserveAddr"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
-	if !ok {
-		return
-	}
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 	freq := c.Query("freq")
@@ -1452,10 +1444,6 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetWalletFee(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{"freq", "reserveAddr", "walletAddr"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
-	if !ok {
-		return
-	}
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 	freq := c.Query("freq")
@@ -1507,10 +1495,6 @@ func (self *HTTPServer) ConfirmPWIEquation(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetUserVolume(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{"freq", "userAddress"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
-	if !ok {
-		return
-	}
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 	freq := c.Query("freq")
