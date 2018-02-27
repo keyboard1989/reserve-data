@@ -523,22 +523,6 @@ type AllRateResponse struct {
 	ToBlockNumber uint64
 }
 
-type CoinCapRateResponse []struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Symbol   string `json:"symbol"`
-	Rank     string `json:"rank"`
-	PriceUSD string `json:"price_usd"`
-	PriceBTC string `json:"price_btc"`
-	PriceSGD string `json:"price_sgd"`
-}
-
-type EthRate struct {
-	Mu  sync.RWMutex
-	Sgd float64
-	Usd float64
-}
-
 type TradeLog struct {
 	Timestamp        uint64
 	BlockNumber      uint64

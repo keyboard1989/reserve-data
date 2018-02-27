@@ -14,6 +14,22 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+type CoinCapRateResponse []struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Symbol   string `json:"symbol"`
+	Rank     string `json:"rank"`
+	PriceUSD string `json:"price_usd"`
+	PriceBTC string `json:"price_btc"`
+	PriceSGD string `json:"price_sgd"`
+}
+
+type EthRate struct {
+	Mu  sync.RWMutex
+	Sgd float64
+	Usd float64
+}
+
 type Fetcher struct {
 	storage                Storage
 	exchanges              []Exchange
@@ -23,7 +39,7 @@ type Fetcher struct {
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 	simulationMode         bool
-	ethRate                *common.EthRate
+	ethRate                *EthRate
 }
 
 func NewFetcher(
@@ -38,7 +54,7 @@ func NewFetcher(
 		runner:         runner,
 		rmaddr:         address,
 		simulationMode: simulationMode,
-		ethRate: &common.EthRate{
+		ethRate: &EthRate{
 			Mu:  sync.RWMutex{},
 			Sgd: 0,
 			Usd: 0,
@@ -69,7 +85,7 @@ func (self *Fetcher) FetchEthRate() (err error) {
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	rateResponse := common.CoinCapRateResponse{}
+	rateResponse := CoinCapRateResponse{}
 	json.Unmarshal(body, &rateResponse)
 
 	for _, rate := range rateResponse {
