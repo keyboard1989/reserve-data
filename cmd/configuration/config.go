@@ -129,31 +129,32 @@ var ConfigPaths = map[string]SettingPaths{
 
 var Baseurl string = "http://127.0.0.1"
 
-var BittrexInterfaces = map[string]bittrex.Interface{
-	"dev":        bittrex.NewDevInterface(),
-	"kovan":      bittrex.NewKovanInterface(Baseurl),
-	"mainnet":    bittrex.NewRealInterface(),
-	"staging":    bittrex.NewRealInterface(),
-	"simulation": bittrex.NewSimulatedInterface(Baseurl),
-	"ropsten":    bittrex.NewRopstenInterface(Baseurl),
-}
+var BinanceInterfaces = make(map[string]binance.Interface)
+var HuobiInterfaces = make(map[string]huobi.Interface)
+var BittrexInterfaces = make(map[string]bittrex.Interface)
 
-var BinanceInterfaces = map[string]binance.Interface{
-	"dev":        binance.NewDevInterface(),
-	"kovan":      binance.NewKovanInterface(Baseurl),
-	"mainnet":    binance.NewRealInterface(),
-	"staging":    binance.NewRealInterface(),
-	"simulation": binance.NewSimulatedInterface(Baseurl),
-	"ropsten":    binance.NewRopstenInterface(Baseurl),
-}
+func SetInterface(base_url string) {
 
-var HuobiInterfaces = map[string]huobi.Interface{
-	"dev":        huobi.NewDevInterface(),
-	"kovan":      huobi.NewKovanInterface(Baseurl),
-	"mainnet":    huobi.NewRealInterface(),
-	"staging":    huobi.NewRealInterface(),
-	"simulation": huobi.NewSimulatedInterface(Baseurl),
-	"ropsten":    huobi.NewRopstenInterface(Baseurl),
+	BittrexInterfaces["dev"] = bittrex.NewDevInterface()
+	BittrexInterfaces["kovan"] = bittrex.NewKovanInterface(base_url)
+	BittrexInterfaces["mainnet"] = bittrex.NewRealInterface()
+	BittrexInterfaces["staging"] = bittrex.NewRealInterface()
+	BittrexInterfaces["simulation"] = bittrex.NewSimulatedInterface(base_url)
+	BittrexInterfaces["ropsten"] = bittrex.NewRopstenInterface(base_url)
+
+	HuobiInterfaces["dev"] = huobi.NewDevInterface()
+	HuobiInterfaces["kovan"] = huobi.NewKovanInterface(base_url)
+	HuobiInterfaces["mainnet"] = huobi.NewRealInterface()
+	HuobiInterfaces["staging"] = huobi.NewRealInterface()
+	HuobiInterfaces["simulation"] = huobi.NewSimulatedInterface(base_url)
+	HuobiInterfaces["ropsten"] = huobi.NewRopstenInterface(base_url)
+
+	BinanceInterfaces["dev"] = binance.NewDevInterface()
+	BinanceInterfaces["kovan"] = binance.NewKovanInterface(base_url)
+	BinanceInterfaces["mainnet"] = binance.NewRealInterface()
+	BinanceInterfaces["staging"] = binance.NewRealInterface()
+	BinanceInterfaces["simulation"] = binance.NewSimulatedInterface(base_url)
+	BinanceInterfaces["ropsten"] = binance.NewRopstenInterface(base_url)
 }
 
 var HuobiAsync = map[string]bool{

@@ -1226,7 +1226,11 @@ func (self *BoltStorage) StorePWIEquation(data string) error {
 				err = errors.New("Confirm data does not match pending data")
 				return err
 			}
-			p.Put(idByte, v)
+			saveData, err := json.Marshal(pending)
+			if err != nil {
+				return err
+			}
+			p.Put(idByte, saveData)
 		}
 		return err
 	})
