@@ -16,9 +16,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
-	"github.com/KyberNetwork/reserve-data/exchange/binance"
-	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
-	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -30,7 +27,7 @@ import (
 var noAuthEnable bool
 var servPort int = 8000
 var endpointOW string
-var SimURL, RopstenURL, KovanURL string
+var base_url, auth_url string
 
 func loadTimestamp(path string) []uint64 {
 	raw, err := ioutil.ReadFile(path)
@@ -74,38 +71,24 @@ func configLog() {
 	c.Start()
 }
 
-func initInterface() {
-	if SimURL != configuration.Baseurl {
-		log.Printf("Overwriting simulation base URL with %s \n", SimURL)
-		configuration.BinanceInterfaces["simulation"] = binance.NewSimulatedInterface(SimURL)
-		configuration.BittrexInterfaces["simulation"] = bittrex.NewSimulatedInterface(SimURL)
-		configuration.HuobiInterfaces["simulation"] = huobi.NewSimulatedInterface(SimURL)
+func initInterface(kyberENV string) {
+	if base_url != configuration.Baseurl {
+		log.Printf("Overwriting base URL with %s \n", base_url)
 	}
-	if RopstenURL != configuration.Baseurl {
-		log.Printf("Overwriting Ropsten base URL with %s \n", RopstenURL)
-		configuration.BinanceInterfaces["ropsten"] = binance.NewRopstenInterface(RopstenURL)
-		configuration.BittrexInterfaces["ropsten"] = bittrex.NewRopstenInterface(RopstenURL)
-		configuration.HuobiInterfaces["ropsten"] = huobi.NewRopstenInterface(RopstenURL)
-	}
-	if KovanURL != configuration.Baseurl {
-		log.Printf("Overwriting kovan base URL with %s \n", KovanURL)
-		configuration.BinanceInterfaces["kovan"] = binance.NewKovanInterface(KovanURL)
-		configuration.BittrexInterfaces["kovan"] = bittrex.NewKovanInterface(KovanURL)
-		configuration.HuobiInterfaces["kovan"] = huobi.NewKovanInterface(KovanURL)
-	}
-
+	configuration.SetInterface(base_url)
 }
 
 func serverStart(cmd *cobra.Command, args []string) {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 	configLog()
-	initInterface()
+
 	//get configuration from ENV variable
 	kyberENV := os.Getenv("KYBER_ENV")
 	if kyberENV == "" {
 		kyberENV = "dev"
 	}
+	initInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
 
 	//get fetcher based on config and ENV == stimulation.
@@ -205,10 +188,6 @@ func init() {
 	startServer.Flags().BoolVarP(&noAuthEnable, "noauth", "", false, "disable authentication")
 	startServer.Flags().IntVarP(&servPort, "port", "p", 8000, "server port")
 	startServer.Flags().StringVar(&endpointOW, "endpoint", "", "endpoint, default to configuration file")
-
-	startServer.PersistentFlags().StringVar(&SimURL, "sim_url", "http://127.0.0.1", "simulation base url")
-	startServer.PersistentFlags().StringVar(&RopstenURL, "ropsten_url", "http://127.0.0.1", "ropsten base url")
-	startServer.PersistentFlags().StringVar(&KovanURL, "kovan_url", "http://127.0.0.1", "kovan base url")
-
+	startServer.PersistentFlags().StringVar(&base_url, "base_url", "http://127.0.0.1", "base_url for authenticated enpoint")
 	RootCmd.AddCommand(startServer)
 }
