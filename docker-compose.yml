@@ -1,0 +1,13 @@
+version: '2.1'
+
+services:
+  collector:
+    image: kyber_reserve_stats
+    build: .
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/go/src/github.com/KyberNetwork/reserve-data
+    environment:
+      - KYBER_ENV=production
+    command: cmd server --enable-stat --no-core
