@@ -726,14 +726,14 @@ response
 GET request
 
 Url params:
-  - fromTime (nanoseconds - required): from time stamp
-  - toTime (nanoseconds - required: to time stamp
+  - fromTime (millisecond - required): from time stamp
+  - toTime (millisecond - required: to time stamp
   - freq (required): frequency to get data (H/D/M)
   - asset (required): asset name (eg: ETH)
 ```
 
 ```
-curl -x GET http://localhost:8000/get-asset-volume?fromTime=0&&toTime=1519227041000000300&&freq=M&&asset=ETH
+curl -x GET http://localhost:8000/get-asset-volume?fromTime=0&&toTime=1519227041000&&freq=M&&asset=ETH
 ```
 response
 ```
@@ -746,14 +746,14 @@ response
 GET request
 
 Url params:
-  - fromTime (nanoseconds - required): from time stamp
-  - toTime (nanoseconds - required: to time stamp
+  - fromTime (millisecond - required): from time stamp
+  - toTime (millisecond - required: to time stamp
   - freq (required): frequency to get data (H/D/M)
   - reserveAddr (required): reserve address to get burn fee
 ```
 
 ```
-curl -x GET http://localhost:8000/get-burn-fee?fromTime=0&&toTime=1519227041000000300&&freq=M&&reserveAddr=0x2c5a182d280eeb5824377b98cd74871f78d6b8bc
+curl -x GET http://localhost:8000/get-burn-fee?fromTime=0&&toTime=1519227041000&&freq=M&&reserveAddr=0x2c5a182d280eeb5824377b98cd74871f78d6b8bc
 ```
 response
 ```
@@ -766,15 +766,15 @@ response
 GET request
 
 Url params:
-  - fromTime (nanoseconds - required): from time stamp
-  - toTime (nanoseconds - required: to time stamp
+  - fromTime (millisecond - required): from time stamp
+  - toTime (millisecond - required: to time stamp
   - freq (required): frequency to get data (H/D/M)
   - reserveAddr (required): reserve address
   - walletAddr (required): wallet address to get fee
 ```
 
 ```
-curl -x GET http://localhost:8000/get-wallet-fee?fromTime=0&&toTime=1519227041000000300&&freq=M&&reserveAddr=0x2c5a182d280eeb5824377b98cd74871f78d6b8bc&&walletAddr=0x0000000000000000000000000000000000000000
+curl -x GET http://localhost:8000/get-wallet-fee?fromTime=0&&toTime=1519227041000&&freq=M&&reserveAddr=0x2c5a182d280eeb5824377b98cd74871f78d6b8bc&&walletAddr=0x0000000000000000000000000000000000000000
 ```
 response
 ```
@@ -788,14 +788,14 @@ response
 GET request
 
 Url params:
-  - fromTime (nanoseconds - required): from time stamp
-  - toTime (nanoseconds - required: to time stamp
+  - fromTime (millisecond - required): from time stamp
+  - toTime (millisecond - required: to time stamp
   - freq (required): frequency to get data (H/D/M)
   - userAddr (required): user address to get volume
 ```
 
 ```
-curl -x GET http://localhost:8000/get-user-volume?fromTime=0&&toTime=1519227041000000300&&freq=M&&reserveAddr=0x2c5a182d280eeb5824377b98cd74871f78d6b8bc&&userAddr=0x053a9f418f7be3391a2821be23b418a909f42f54
+curl -x GET http://localhost:8000/get-user-volume?fromTime=0&&toTime=1519227041000&&freq=M&&reserveAddr=0x2c5a182d280eeb5824377b98cd74871f78d6b8bc&&userAddr=0x053a9f418f7be3391a2821be23b418a909f42f54
 ```
 response
 ```

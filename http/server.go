@@ -681,8 +681,6 @@ func (self *HTTPServer) TradeLogs(c *gin.Context) {
 		toTime = common.GetTimepoint()
 	}
 
-	log.Printf("Get toTime:  %s", toTime)
-
 	data, err := self.stat.GetTradeLogs(fromTime, toTime)
 	if err != nil {
 		c.JSON(
