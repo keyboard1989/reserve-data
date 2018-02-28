@@ -55,13 +55,13 @@ func (self *Fetcher) Run() error {
 	go self.RunOrderbookFetcher()
 	go self.RunAuthDataFetcher()
 	go self.RunRateFetcher()
-	go self.RunBlockAndLogFetcher()
+	go self.RunBlockFetcher()
 	go self.RunTradeHistoryFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
 }
 
-func (self *Fetcher) RunBlockAndLogFetcher() {
+func (self *Fetcher) RunBlockFetcher() {
 	for {
 		log.Printf("waiting for signal from block channel")
 		t := <-self.runner.GetBlockTicker()
@@ -69,41 +69,6 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 		timepoint := common.TimeToTimepoint(t)
 		self.FetchCurrentBlock(timepoint)
 		log.Printf("fetched block from blockchain")
-		lastBlock, err := self.storage.LastBlock()
-		if err == nil {
-			nextBlock := self.FetchLogs(lastBlock+1, timepoint)
-			self.storage.UpdateLogBlock(nextBlock, timepoint)
-			log.Printf("nextBlock: %d", nextBlock)
-		} else {
-			log.Printf("failed to get last fetched log block, err: %+v", err)
-		}
-	}
-}
-
-// return block number that we just fetched the logs
-func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
-	logs, err := self.blockchain.GetLogs(fromBlock, timepoint)
-	if err != nil {
-		log.Printf("fetching logs data from block %d failed, error: %v", fromBlock, err)
-		if fromBlock == 0 {
-			return 0
-		} else {
-			return fromBlock - 1
-		}
-	} else {
-		if len(logs) > 0 {
-			for _, l := range logs {
-				log.Printf("blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
-				err = self.storage.StoreTradeLog(l, timepoint)
-				if err != nil {
-					log.Printf("storing trade log failed, abort storing process and return latest stored log block number, err: %+v", err)
-					return l.BlockNumber
-				}
-			}
-			return logs[len(logs)-1].BlockNumber
-		} else {
-			return fromBlock - 1
-		}
 	}
 }
 

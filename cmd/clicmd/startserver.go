@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
@@ -17,6 +18,9 @@ import (
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/http"
+	"github.com/KyberNetwork/reserve-data/stat"
+	statfetcher "github.com/KyberNetwork/reserve-data/stat/fetcher"
+	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/robfig/cron"
@@ -28,6 +32,8 @@ var noAuthEnable bool
 var servPort int = 8000
 var endpointOW string
 var base_url, auth_url string
+var enableStat bool
+var noCore bool
 
 func loadTimestamp(path string) []uint64 {
 	raw, err := ioutil.ReadFile(path)
@@ -91,20 +97,35 @@ func serverStart(cmd *cobra.Command, args []string) {
 	initInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
 
-	//get fetcher based on config and ENV == stimulation.
-	fetcher := fetcher.NewFetcher(
-		config.FetcherStorage,
-		config.FetcherRunner,
-		config.ReserveAddress,
-		kyberENV == "simulation",
-	)
+	var dataFetcher *fetcher.Fetcher
+	var statFetcher *statfetcher.Fetcher
+	var rData reserve.ReserveData
+	var rCore reserve.ReserveCore
+	var rStat reserve.ReserveStats
 
 	//set static field supportExchange from common...
 	for _, ex := range config.Exchanges {
 		common.SupportedExchanges[ex.ID()] = ex
 	}
-	for _, ex := range config.FetcherExchanges {
-		fetcher.AddExchange(ex)
+
+	if !noCore {
+		//get fetcher based on config and ENV == simulation.
+		dataFetcher = fetcher.NewFetcher(
+			config.FetcherStorage,
+			config.FetcherRunner,
+			config.ReserveAddress,
+			kyberENV == "simulation",
+		)
+		for _, ex := range config.FetcherExchanges {
+			dataFetcher.AddExchange(ex)
+		}
+	}
+
+	if enableStat {
+		statFetcher = statfetcher.NewFetcher(
+			config.StatFetcherStorage,
+			config.StatFetcherRunner,
+		)
 	}
 
 	//set client & endpoint
@@ -136,6 +157,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.FeeBurnerAddress,
 		config.NetworkAddress,
 		config.ReserveAddress,
+		config.WhitelistAddress,
 		config.BlockchainSigner,
 		config.DepositSigner,
 		nonceCorpus,
@@ -143,6 +165,11 @@ func serverStart(cmd *cobra.Command, args []string) {
 	)
 	if err != nil {
 		panic(err)
+	}
+	// we need to implicitly add old contract addresses to production
+	if kyberENV == "production" || kyberENV == "mainnet" {
+		// bc.AddOldNetwork(...)
+		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
 
 	for _, token := range config.SupportedTokens {
@@ -152,16 +179,26 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if err != nil {
 		fmt.Printf("Can't load and set token indices: %s\n", err)
 	} else {
-		fetcher.SetBlockchain(bc)
-		app := data.NewReserveData(
-			config.DataStorage,
-			fetcher,
-		)
-		app.Run()
-		core := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
+		if !noCore {
+			dataFetcher.SetBlockchain(bc)
+			rData = data.NewReserveData(
+				config.DataStorage,
+				dataFetcher,
+			)
+			rData.Run()
+			rCore = core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
+		}
+		if enableStat {
+			statFetcher.SetBlockchain(bc)
+			rStat = stat.NewReserveStats(
+				config.StatStorage,
+				statFetcher,
+			)
+			rStat.Run()
+		}
 		servPortStr := fmt.Sprintf(":%d", servPort)
 		server := http.NewHTTPServer(
-			app, core,
+			rData, rCore, rStat,
 			config.MetricStorage,
 			servPortStr,
 			config.EnableAuthentication,
@@ -170,7 +207,6 @@ func serverStart(cmd *cobra.Command, args []string) {
 		)
 
 		server.Run()
-
 	}
 }
 
@@ -189,5 +225,7 @@ func init() {
 	startServer.Flags().IntVarP(&servPort, "port", "p", 8000, "server port")
 	startServer.Flags().StringVar(&endpointOW, "endpoint", "", "endpoint, default to configuration file")
 	startServer.PersistentFlags().StringVar(&base_url, "base_url", "http://127.0.0.1", "base_url for authenticated enpoint")
+	startServer.Flags().BoolVarP(&enableStat, "enable-stat", "", false, "enable stat related fetcher and api, event logs will not be fetched")
+	startServer.Flags().BoolVarP(&noCore, "no-core", "", false, "disable core related fetcher and api, this should be used only when we want to run an independent stat server")
 	RootCmd.AddCommand(startServer)
 }

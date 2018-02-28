@@ -11,29 +11,35 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
+	"github.com/KyberNetwork/reserve-data/stat"
+	statfetcher "github.com/KyberNetwork/reserve-data/stat/fetcher"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type SettingPaths struct {
-	settingPath string
-	feePath     string
-	storagePath string
-	signerPath  string
-	endPoint    string
-	bkendpoints []string
+	settingPath     string
+	feePath         string
+	dataStoragePath string
+	statStoragePath string
+	signerPath      string
+	endPoint        string
+	bkendpoints     []string
 }
 
 type Config struct {
-	ActivityStorage core.ActivityStorage
-	DataStorage     data.Storage
-	FetcherStorage  fetcher.Storage
-	MetricStorage   metric.MetricStorage
+	ActivityStorage    core.ActivityStorage
+	DataStorage        data.Storage
+	StatStorage        stat.Storage
+	FetcherStorage     fetcher.Storage
+	StatFetcherStorage statfetcher.Storage
+	MetricStorage      metric.MetricStorage
 
-	FetcherRunner    fetcher.FetcherRunner
-	FetcherExchanges []fetcher.Exchange
-	Exchanges        []common.Exchange
-	BlockchainSigner blockchain.Signer
-	DepositSigner    blockchain.Signer
+	FetcherRunner     fetcher.FetcherRunner
+	StatFetcherRunner statfetcher.FetcherRunner
+	FetcherExchanges  []fetcher.Exchange
+	Exchanges         []common.Exchange
+	BlockchainSigner  blockchain.Signer
+	DepositSigner     blockchain.Signer
 
 	EnableAuthentication bool
 	AuthEngine           http.Authentication
@@ -48,6 +54,7 @@ type Config struct {
 	ReserveAddress   ethereum.Address
 	FeeBurnerAddress ethereum.Address
 	NetworkAddress   ethereum.Address
+	WhitelistAddress ethereum.Address
 }
 
 func (self *Config) MapTokens() map[string]common.Token {
@@ -63,6 +70,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"https://mainnet.infura.io",
 		[]string{
@@ -73,14 +81,31 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"https://kovan.infura.io",
 		[]string{},
+	},
+	"production": {
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
+		"https://mainnet.infura.io",
+		[]string{
+			"https://node.kyber.network",
+			"https://mainnet.infura.io",
+			"https://api.mycryptoapi.com/eth",
+			"https://api.myetherapi.com/eth",
+			"https://mew.giveth.io/",
+		},
 	},
 	"mainnet": {
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
 		"https://mainnet.infura.io",
 		[]string{
@@ -95,6 +120,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
 		"https://mainnet.infura.io",
 		[]string{
@@ -109,6 +135,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"http://blockchain:8545",
 		[]string{
@@ -119,6 +146,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"https://ropsten.infura.io",
 		[]string{

@@ -356,6 +356,10 @@ func BigToFloat(b *big.Int, decimal int64) float64 {
 	return result
 }
 
+func AddrToString(addr ethereum.Address) string {
+	return strings.ToLower(addr.String())
+}
+
 type RawBalance big.Int
 
 func (self *RawBalance) ToFloat(decimal int64) float64 {
@@ -529,16 +533,22 @@ type TradeLog struct {
 	TransactionHash  ethereum.Hash
 	TransactionIndex uint
 
+	UserAddress ethereum.Address
 	SrcAddress  ethereum.Address
 	DestAddress ethereum.Address
 	SrcAmount   *big.Int
 	DestAmount  *big.Int
+	FiatAmount  float64
 
 	ReserveAddress ethereum.Address
 	WalletAddress  ethereum.Address
 	WalletFee      *big.Int
 	BurnFee        *big.Int
 }
+
+type StatTicks map[uint64]float64
+
+type TradeStats map[string]float64
 
 type TradeHistory struct {
 	ID        string

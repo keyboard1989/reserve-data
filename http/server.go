@@ -24,6 +24,7 @@ import (
 type HTTPServer struct {
 	app         reserve.ReserveData
 	core        reserve.ReserveCore
+	stat        reserve.ReserveStats
 	metric      metric.MetricStorage
 	host        string
 	authEnabled bool
@@ -676,11 +677,11 @@ func (self *HTTPServer) TradeLogs(c *gin.Context) {
 		fromTime = 0
 	}
 	toTime, err := strconv.ParseUint(c.Query("toTime"), 10, 64)
-	if err != nil {
-		toTime = uint64(time.Now().UnixNano())
+	if err != nil || toTime == 0 {
+		toTime = common.GetTimepoint()
 	}
 
-	data, err := self.app.GetTradeLogs(fromTime, toTime)
+	data, err := self.stat.GetTradeLogs(fromTime, toTime)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1322,12 +1323,62 @@ func (self *HTTPServer) GetPWIEquation(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetAssetVolume(c *gin.Context) {
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	asset := c.Query("asset")
+	data, err := self.stat.GetAssetVolume(fromTime, toTime, freq, asset)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) GetPendingPWIEquation(c *gin.Context) {
 	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
 	data, err := self.metric.GetPendingPWIEquation()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetBurnFee(c *gin.Context) {
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	reserveAddr := c.Query("reserveAddr")
+	data, err := self.stat.GetBurnFee(fromTime, toTime, freq, reserveAddr)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1392,6 +1443,32 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetWalletFee(c *gin.Context) {
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	reserveAddr := c.Query("reserveAddr")
+	walletAddr := c.Query("walletAddr")
+	data, err := self.stat.GetWalletFee(fromTime, toTime, freq, reserveAddr, walletAddr)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) ConfirmPWIEquation(c *gin.Context) {
 	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
 	if !ok {
@@ -1413,6 +1490,54 @@ func (self *HTTPServer) ConfirmPWIEquation(c *gin.Context) {
 		http.StatusOK,
 		gin.H{
 			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) ExceedDailyLimit(c *gin.Context) {
+	addr := c.Param("addr")
+	log.Printf("Checking daily limit for %s", addr)
+	exceeded, err := self.stat.ExceedDailyLimit(addr)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    exceeded,
+			},
+		)
+	}
+}
+
+func (self *HTTPServer) GetUserVolume(c *gin.Context) {
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	userAddr := c.Query("userAddr")
+	data, err := self.stat.GetUserVolume(fromTime, toTime, freq, userAddr)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
 		},
 	)
 }
@@ -1443,53 +1568,63 @@ func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
 }
 
 func (self *HTTPServer) Run() {
-	self.r.GET("/prices-version", self.AllPricesVersion)
-	self.r.GET("/prices", self.AllPrices)
-	self.r.GET("/prices/:base/:quote", self.Price)
-	self.r.GET("/getrates", self.GetRate)
-	self.r.GET("/get-all-rates", self.GetRates)
+	if self.core != nil && self.app != nil {
+		self.r.GET("/prices-version", self.AllPricesVersion)
+		self.r.GET("/prices", self.AllPrices)
+		self.r.GET("/prices/:base/:quote", self.Price)
+		self.r.GET("/getrates", self.GetRate)
+		self.r.GET("/get-all-rates", self.GetRates)
 
-	self.r.GET("/authdata-version", self.AuthDataVersion)
-	self.r.GET("/authdata", self.AuthData)
-	self.r.GET("/activities", self.GetActivities)
-	self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
-	self.r.GET("/tradelogs", self.TradeLogs)
-	self.r.GET("/metrics", self.Metrics)
-	self.r.POST("/metrics", self.StoreMetrics)
+		self.r.GET("/authdata-version", self.AuthDataVersion)
+		self.r.GET("/authdata", self.AuthData)
+		self.r.GET("/activities", self.GetActivities)
+		self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
+		self.r.GET("/metrics", self.Metrics)
+		self.r.POST("/metrics", self.StoreMetrics)
 
-	self.r.POST("/cancelorder/:exchangeid", self.CancelOrder)
-	self.r.POST("/deposit/:exchangeid", self.Deposit)
-	self.r.POST("/withdraw/:exchangeid", self.Withdraw)
-	self.r.POST("/trade/:exchangeid", self.Trade)
-	self.r.POST("/setrates", self.SetRate)
-	self.r.GET("/exchangeinfo", self.GetExchangeInfo)
-	self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
-	self.r.GET("/exchangefees", self.GetFee)
-	self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
-	self.r.GET("/core/addresses", self.GetAddress)
-	self.r.GET("/tradehistory", self.GetTradeHistory)
+		self.r.POST("/cancelorder/:exchangeid", self.CancelOrder)
+		self.r.POST("/deposit/:exchangeid", self.Deposit)
+		self.r.POST("/withdraw/:exchangeid", self.Withdraw)
+		self.r.POST("/trade/:exchangeid", self.Trade)
+		self.r.POST("/setrates", self.SetRate)
+		self.r.GET("/exchangeinfo", self.GetExchangeInfo)
+		self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
+		self.r.GET("/exchangefees", self.GetFee)
+		self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
+		self.r.GET("/core/addresses", self.GetAddress)
+		self.r.GET("/tradehistory", self.GetTradeHistory)
 
-	self.r.GET("/targetqty", self.GetTargetQty)
-	self.r.GET("/pendingtargetqty", self.GetPendingTargetQty)
-	self.r.POST("/settargetqty", self.SetTargetQty)
-	self.r.POST("/confirmtargetqty", self.ConfirmTargetQty)
-	self.r.POST("/canceltargetqty", self.CancelTargetQty)
+		self.r.GET("/targetqty", self.GetTargetQty)
+		self.r.GET("/pendingtargetqty", self.GetPendingTargetQty)
+		self.r.POST("/settargetqty", self.SetTargetQty)
+		self.r.POST("/confirmtargetqty", self.ConfirmTargetQty)
+		self.r.POST("/canceltargetqty", self.CancelTargetQty)
 
-	self.r.GET("/timeserver", self.GetTimeServer)
+		self.r.GET("/timeserver", self.GetTimeServer)
 
-	self.r.GET("/rebalancestatus", self.GetRebalanceStatus)
-	self.r.POST("/holdrebalance", self.HoldRebalance)
-	self.r.POST("/enablerebalance", self.EnableRebalance)
+		self.r.GET("/rebalancestatus", self.GetRebalanceStatus)
+		self.r.POST("/holdrebalance", self.HoldRebalance)
+		self.r.POST("/enablerebalance", self.EnableRebalance)
 
-	self.r.GET("/setratestatus", self.GetSetrateStatus)
-	self.r.POST("/holdsetrate", self.HoldSetrate)
-	self.r.POST("/enablesetrate", self.EnableSetrate)
+		self.r.GET("/setratestatus", self.GetSetrateStatus)
+		self.r.POST("/holdsetrate", self.HoldSetrate)
+		self.r.POST("/enablesetrate", self.EnableSetrate)
 
-	self.r.GET("/pwis-equation", self.GetPWIEquation)
-	self.r.GET("/pending-pwis-equation", self.GetPendingPWIEquation)
-	self.r.POST("/set-pwis-equation", self.SetPWIEquation)
-	self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
-	self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
+		self.r.GET("/pwis-equation", self.GetPWIEquation)
+		self.r.GET("/pending-pwis-equation", self.GetPendingPWIEquation)
+		self.r.POST("/set-pwis-equation", self.SetPWIEquation)
+		self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
+		self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
+	}
+
+	if self.stat != nil {
+		self.r.GET("/richguy/:addr", self.ExceedDailyLimit)
+		self.r.GET("/tradelogs", self.TradeLogs)
+		self.r.GET("/get-asset-volume", self.GetAssetVolume)
+		self.r.GET("/get-burn-fee", self.GetBurnFee)
+		self.r.GET("/get-wallet-fee", self.GetWalletFee)
+		self.r.GET("/get-user-volume", self.GetUserVolume)
+	}
 
 	self.r.Run(self.host)
 }
@@ -1497,6 +1632,7 @@ func (self *HTTPServer) Run() {
 func NewHTTPServer(
 	app reserve.ReserveData,
 	core reserve.ReserveCore,
+	stat reserve.ReserveStats,
 	metric metric.MetricStorage,
 	host string,
 	enableAuth bool,
@@ -1524,6 +1660,6 @@ func NewHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, core, metric, host, enableAuth, authEngine, r,
+		app, core, stat, metric, host, enableAuth, authEngine, r,
 	}
 }
