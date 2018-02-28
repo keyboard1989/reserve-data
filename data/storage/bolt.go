@@ -272,8 +272,8 @@ func (self *BoltStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntr
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(RATE_BUCKET))
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime * 1000000)
-		max := uint64ToBytes(toTime * 1000000)
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
 
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			data := common.AllRateEntry{}
@@ -852,8 +852,8 @@ func (self *BoltStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(LOG_BUCKET))
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := uint64ToBytes(fromTime * 1000000)
+		max := uint64ToBytes(toTime * 1000000)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.TradeLog{}
 			err = json.Unmarshal(v, &record)
