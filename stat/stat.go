@@ -3,6 +3,7 @@ package stat
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -44,8 +45,8 @@ func validateTimeWindow(fromTime, toTime uint64, freq string) (uint64, uint64, e
 	return from, to, nil
 }
 
-func (self ReserveStats) GetAssetVolume(fromTime, toTime uint64, freq, asset string) ([]common.TradeStats, error) {
-	data := []common.TradeStats{}
+func (self ReserveStats) GetAssetVolume(fromTime, toTime uint64, freq, asset string) (common.StatTicks, error) {
+	data := common.StatTicks{}
 
 	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, freq)
 	if err != nil {
@@ -61,8 +62,8 @@ func (self ReserveStats) GetAssetVolume(fromTime, toTime uint64, freq, asset str
 	return data, err
 }
 
-func (self ReserveStats) GetBurnFee(fromTime, toTime uint64, freq, reserveAddr string) ([]common.TradeStats, error) {
-	data := []common.TradeStats{}
+func (self ReserveStats) GetBurnFee(fromTime, toTime uint64, freq, reserveAddr string) (common.StatTicks, error) {
+	data := common.StatTicks{}
 
 	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, freq)
 	if err != nil {
@@ -73,8 +74,8 @@ func (self ReserveStats) GetBurnFee(fromTime, toTime uint64, freq, reserveAddr s
 	return data, err
 }
 
-func (self ReserveStats) GetWalletFee(fromTime, toTime uint64, freq, reserveAddr, walletAddr string) ([]common.TradeStats, error) {
-	data := []common.TradeStats{}
+func (self ReserveStats) GetWalletFee(fromTime, toTime uint64, freq, reserveAddr, walletAddr string) (common.StatTicks, error) {
+	data := common.StatTicks{}
 
 	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, freq)
 	if err != nil {
@@ -85,8 +86,8 @@ func (self ReserveStats) GetWalletFee(fromTime, toTime uint64, freq, reserveAddr
 	return data, err
 }
 
-func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr string) ([]common.TradeStats, error) {
-	data := []common.TradeStats{}
+func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr string) (common.StatTicks, error) {
+	data := common.StatTicks{}
 
 	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, freq)
 	if err != nil {
@@ -99,6 +100,34 @@ func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr s
 
 func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
 	return self.storage.GetTradeLogs(fromTime, toTime)
+}
+
+func GetDailyCap(addr string) float64 {
+	return 15000.0
+}
+
+func (self ReserveStats) ExceedDailyLimit(addr string) (bool, error) {
+	today := common.GetTimepoint() / uint64(24*time.Hour/time.Millisecond) * uint64(24*time.Hour/time.Millisecond)
+	volumeStats, err := self.GetUserVolume(today-1, today, "D", addr)
+	if err != nil {
+		return false, err
+	} else {
+		log.Printf("volumes: %+v", volumeStats)
+		if len(volumeStats) == 0 {
+			return false, nil
+		} else if len(volumeStats) > 1 {
+			return false, errors.New("Got more than 1 day stats. This is a bug in GetUserVolume")
+		} else {
+			for _, volume := range volumeStats {
+				if volume >= GetDailyCap(addr) {
+					return true, nil
+				} else {
+					return false, nil
+				}
+			}
+			return false, errors.New("This is supposed not to happen")
+		}
+	}
 }
 
 func (self ReserveStats) Run() error {

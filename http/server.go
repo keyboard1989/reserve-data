@@ -1494,6 +1494,29 @@ func (self *HTTPServer) ConfirmPWIEquation(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) ExceedDailyLimit(c *gin.Context) {
+	addr := c.Param("addr")
+	log.Printf("Checking daily limit for %s", addr)
+	exceeded, err := self.stat.ExceedDailyLimit(addr)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    exceeded,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) GetUserVolume(c *gin.Context) {
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
@@ -1595,6 +1618,7 @@ func (self *HTTPServer) Run() {
 	}
 
 	if self.stat != nil {
+		self.r.GET("/richguy/:addr", self.ExceedDailyLimit)
 		self.r.GET("/tradelogs", self.TradeLogs)
 		self.r.GET("/get-asset-volume", self.GetAssetVolume)
 		self.r.GET("/get-burn-fee", self.GetBurnFee)

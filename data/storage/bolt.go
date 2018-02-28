@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/big"
 	"strconv"
 	"strings"
 	"sync"
@@ -933,22 +932,9 @@ func (self *BoltStorage) SetTradeStats(metric, freq string, t uint64, tradeStats
 
 		for key, value := range tradeStats {
 
-			if v, ok := value.(*big.Int); ok {
-				if v == nil {
-					continue
-				}
-			}
-
 			sum, ok := stats[key]
 			if ok {
-				switch v := value.(type) {
-				case float64:
-					stats[key] = sum.(float64) + v
-				case *big.Int:
-					s := new(big.Int)
-					s.SetUint64(uint64(sum.(float64)))
-					stats[key] = s.Add(s, v)
-				}
+				stats[key] = sum + value
 			} else {
 				stats[key] = value
 			}
@@ -968,8 +954,8 @@ func (self *BoltStorage) SetTradeStats(metric, freq string, t uint64, tradeStats
 	return
 }
 
-func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, key string) ([]common.TradeStats, error) {
-	result := []common.TradeStats{}
+func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, key string) (common.StatTicks, error) {
+	result := common.StatTicks{}
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
 		// Get trade stats bucket
@@ -1007,10 +993,7 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, ke
 			// log.Printf("key: %s", key)
 			if ok {
 				timestamp := bytesToUint64(k) / 1000000 // to milis
-				record := common.TradeStats{
-					strconv.FormatUint(timestamp, 10): stats[key],
-				}
-				result = append([]common.TradeStats{record}, result...)
+				result[timestamp] = stats[key]
 			}
 		}
 		return nil
@@ -1018,17 +1001,17 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, ke
 	return result, err
 }
 
-func (self *BoltStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) ([]common.TradeStats, error) {
+func (self *BoltStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {
 	result, err := self.getTradeStats(fromTime, toTime, freq, ASSETS_VOLUME_BUCKET, asset)
 	return result, err
 }
 
-func (self *BoltStorage) GetBurnFee(fromTime uint64, toTime uint64, freq string, reserveAddr string) (result []common.TradeStats, err error) {
+func (self *BoltStorage) GetBurnFee(fromTime uint64, toTime uint64, freq string, reserveAddr string) (result common.StatTicks, err error) {
 	result, err = self.getTradeStats(fromTime, toTime, freq, BURN_FEE_BUCKET, strings.ToLower(reserveAddr))
 	return
 }
 
-func (self *BoltStorage) GetWalletFee(fromTime uint64, toTime uint64, freq string, reserveAddr string, walletAddr string) (result []common.TradeStats, err error) {
+func (self *BoltStorage) GetWalletFee(fromTime uint64, toTime uint64, freq string, reserveAddr string, walletAddr string) (result common.StatTicks, err error) {
 	key := strings.Join([]string{
 		strings.ToLower(reserveAddr),
 		strings.ToLower(walletAddr),
@@ -1037,7 +1020,7 @@ func (self *BoltStorage) GetWalletFee(fromTime uint64, toTime uint64, freq strin
 	return
 }
 
-func (self *BoltStorage) GetUserVolume(fromTime uint64, toTime uint64, freq string, userAddr string) (result []common.TradeStats, err error) {
+func (self *BoltStorage) GetUserVolume(fromTime uint64, toTime uint64, freq string, userAddr string) (result common.StatTicks, err error) {
 	result, err = self.getTradeStats(fromTime, toTime, freq, USER_VOLUME_BUCKET, strings.ToLower(userAddr))
 	return
 }
