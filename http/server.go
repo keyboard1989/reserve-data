@@ -677,8 +677,8 @@ func (self *HTTPServer) TradeLogs(c *gin.Context) {
 		fromTime = 0
 	}
 	toTime, err := strconv.ParseUint(c.Query("toTime"), 10, 64)
-	if err != nil {
-		toTime = uint64(time.Now().UnixNano())
+	if err != nil || toTime == 0 {
+		toTime = common.GetTimepoint()
 	}
 
 	data, err := self.stat.GetTradeLogs(fromTime, toTime)

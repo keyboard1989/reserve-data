@@ -846,11 +846,14 @@ func (self *BoltStorage) LastBlock() (uint64, error) {
 func (self *BoltStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
 	result := []common.TradeLog{}
 	var err error
+	if toTime-fromTime > MAX_GET_RATES_PERIOD {
+		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
+	}
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(LOG_BUCKET))
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := uint64ToBytes(fromTime * 1000000)
+		max := uint64ToBytes(toTime * 1000000)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.TradeLog{}
 			err = json.Unmarshal(v, &record)
