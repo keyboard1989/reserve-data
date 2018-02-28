@@ -356,6 +356,10 @@ func BigToFloat(b *big.Int, decimal int64) float64 {
 	return result
 }
 
+func AddrToString(addr ethereum.Address) string {
+	return strings.ToLower(addr.String())
+}
+
 type RawBalance big.Int
 
 func (self *RawBalance) ToFloat(decimal int64) float64 {
