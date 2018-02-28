@@ -81,22 +81,14 @@ func NewExchangePool(
 			exchanges[bin.ID()] = bin
 		case "huobi":
 			huobi := exchange.NewHuobi(huobi.NewHuobiEndpoint(signer, getHuobiInterface(kyberENV)))
-			if HuobiAsync[kyberENV] {
-				wait := sync.WaitGroup{}
-				for tokenID, addr := range addressConfig.Exchanges["huobi"] {
-					wait.Add(1)
-					go AsyncUpdateDepositAddress(huobi, tokenID, addr, &wait)
-				}
-				wait.Wait()
-				huobi.UpdatePairsPrecision()
-				exchanges[huobi.ID()] = huobi
-			} else {
-				for tokenID, addr := range addressConfig.Exchanges["huobi"] {
-					huobi.UpdateDepositAddress(common.MustGetToken(tokenID), addr)
-				}
-				huobi.UpdatePairsPrecision()
-				exchanges[huobi.ID()] = huobi
+			wait := sync.WaitGroup{}
+			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
+				wait.Add(1)
+				go AsyncUpdateDepositAddress(huobi, tokenID, addr, &wait)
 			}
+			wait.Wait()
+			huobi.UpdatePairsPrecision()
+			exchanges[huobi.ID()] = huobi
 		}
 	}
 	return &ExchangePool{exchanges}
