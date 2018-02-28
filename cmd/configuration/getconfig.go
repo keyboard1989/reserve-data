@@ -22,10 +22,30 @@ func GetAddressConfig(filePath string) common.AddressConfig {
 	return addressConfig
 }
 
+func GetConfigPaths(kyberENV string) SettingPaths {
+	switch kyberENV {
+	case "mainnet", "production":
+		return (ConfigPaths["mainnet"])
+	case "dev":
+		return (ConfigPaths["dev"])
+	case "kovan":
+		return (ConfigPaths["kovan"])
+	case "staging":
+		return (ConfigPaths["staging"])
+	case "simulation":
+		return (ConfigPaths["simulation"])
+	case "ropsten":
+		return (ConfigPaths["ropsten"])
+	default:
+		log.Println("Environment setting paths is not found, using dev...")
+		return (ConfigPaths["dev"])
+	}
+}
+
 // GetConfig: load and set all config with preset params and customize param depends on env
 // This is to generalized all the getconfig function.
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
-	setPath := ConfigPaths[kyberENV]
+	setPath := GetConfigPaths(kyberENV)
 	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	addressConfig := GetAddressConfig(setPath.settingPath)
 
