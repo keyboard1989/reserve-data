@@ -103,7 +103,7 @@ func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 }
 
 func GetDailyCap(addr string) float64 {
-	return 15000.0
+	return 24000.0
 }
 
 func (self ReserveStats) ExceedDailyLimit(addr string) (bool, error) {
