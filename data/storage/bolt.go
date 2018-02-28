@@ -895,10 +895,7 @@ func getBucketNameByFreq(freq string) (bucketName string, err error) {
 		bucketName = HOUR_BUCKET
 	case "d", "D":
 		bucketName = DAY_BUCKET
-	default:
-		err = errors.New(fmt.Sprintf("Invalid frequencies"))
 	}
-
 	return
 }
 
@@ -991,9 +988,12 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, ke
 		// freqStats := freqBk.Stats()
 		// log.Printf("freq %s bucket stats %+v", freqBkName, freqStats)
 		c := freqBk.Cursor()
-		min := getTimestampByFreq(fromTime, freq)
-		max := getTimestampByFreq(toTime, freq)
+		// min := getTimestampByFreq(fromTime, freq)
+		// max := getTimestampByFreq(toTime, freq)
 		// log.Printf("from %d to %d", min, max)
+
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
 
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			stats := common.TradeStats{}
@@ -1006,8 +1006,9 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, ke
 			_, ok := stats[key]
 			// log.Printf("key: %s", key)
 			if ok {
+				timestamp := bytesToUint64(k) / 1000000 // to milis
 				record := common.TradeStats{
-					strconv.FormatUint(bytesToUint64(k), 10): stats[key],
+					strconv.FormatUint(timestamp, 10): stats[key],
 				}
 				result = append([]common.TradeStats{record}, result...)
 			}
@@ -1018,11 +1019,7 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, ke
 }
 
 func (self *BoltStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) ([]common.TradeStats, error) {
-	token, err := common.GetToken(asset)
-	if err != nil {
-		return []common.TradeStats{}, errors.New(fmt.Sprintf("assets %s is not supported", asset))
-	}
-	result, err := self.getTradeStats(fromTime, toTime, freq, ASSETS_VOLUME_BUCKET, strings.ToLower(token.Address))
+	result, err := self.getTradeStats(fromTime, toTime, freq, ASSETS_VOLUME_BUCKET, asset)
 	return result, err
 }
 

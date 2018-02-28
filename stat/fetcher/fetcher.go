@@ -173,7 +173,33 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
 }
 
 func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
-	walletFeeKey := strings.Join([]string{trade.ReserveAddress.String(), trade.WalletAddress.String()}, "_")
+	srcAddr := common.AddrToString(trade.SrcAddress)
+	dstAddr := common.AddrToString(trade.DestAddress)
+	reserveAddr := common.AddrToString(trade.ReserveAddress)
+	walletAddr := common.AddrToString(trade.WalletAddress)
+	userAddr := common.AddrToString(trade.UserAddress)
+
+	walletFeeKey := strings.Join([]string{reserveAddr, walletAddr}, "_")
+
+	var srcAmount, destAmount, burnFee, walletFee float64
+	for _, token := range common.SupportedTokens {
+		if strings.ToLower(token.Address) == srcAddr {
+			srcAmount = common.BigToFloat(trade.SrcAmount, token.Decimal)
+		}
+
+		if strings.ToLower(token.Address) == dstAddr {
+			destAmount = common.BigToFloat(trade.DestAmount, token.Decimal)
+		}
+	}
+
+	eth := common.SupportedTokens["ETH"]
+	if trade.BurnFee != nil {
+		burnFee = common.BigToFloat(trade.BurnFee, eth.Decimal)
+	}
+	if trade.WalletFee != nil {
+		walletFee = common.BigToFloat(trade.WalletFee, eth.Decimal)
+	}
+
 	updates := []struct {
 		metric     string
 		tradeStats common.TradeStats
@@ -181,26 +207,26 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 		{
 			"assets_volume",
 			common.TradeStats{
-				strings.ToLower(trade.SrcAddress.String()):  trade.SrcAmount,
-				strings.ToLower(trade.DestAddress.String()): trade.DestAmount,
+				srcAddr: srcAmount,
+				dstAddr: destAmount,
 			},
 		},
 		{
 			"burn_fee",
 			common.TradeStats{
-				strings.ToLower(trade.ReserveAddress.String()): trade.BurnFee,
+				reserveAddr: burnFee,
 			},
 		},
 		{
 			"wallet_fee",
 			common.TradeStats{
-				walletFeeKey: trade.WalletFee,
+				walletFeeKey: walletFee,
 			},
 		},
 		{
 			"user_volume",
 			common.TradeStats{
-				strings.ToLower(trade.UserAddress.String()): trade.FiatAmount,
+				userAddr: trade.FiatAmount,
 			},
 		},
 	}
