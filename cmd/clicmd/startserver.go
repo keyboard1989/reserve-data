@@ -20,6 +20,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/stat"
 	statfetcher "github.com/KyberNetwork/reserve-data/stat/fetcher"
+	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/robfig/cron"
@@ -156,6 +157,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.FeeBurnerAddress,
 		config.NetworkAddress,
 		config.ReserveAddress,
+		config.WhitelistAddress,
 		config.BlockchainSigner,
 		config.DepositSigner,
 		nonceCorpus,
@@ -163,6 +165,11 @@ func serverStart(cmd *cobra.Command, args []string) {
 	)
 	if err != nil {
 		panic(err)
+	}
+	// we need to implicitly add old contract addresses to production
+	if kyberENV == "production" || kyberENV == "mainnet" {
+		// bc.AddOldNetwork(...)
+		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
 
 	for _, token := range config.SupportedTokens {

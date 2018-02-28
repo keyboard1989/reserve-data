@@ -39,6 +39,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
+	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -122,5 +123,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		ReserveAddress:          reserveAddr,
 		FeeBurnerAddress:        burnerAddr,
 		NetworkAddress:          networkAddr,
+		WhitelistAddress:        whitelistAddr,
 	}
 }

@@ -54,6 +54,7 @@ type Config struct {
 	ReserveAddress   ethereum.Address
 	FeeBurnerAddress ethereum.Address
 	NetworkAddress   ethereum.Address
+	WhitelistAddress ethereum.Address
 }
 
 func (self *Config) MapTokens() map[string]common.Token {

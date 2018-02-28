@@ -48,6 +48,9 @@ type Blockchain struct {
 	pricingAddr   ethereum.Address
 	burnerAddr    ethereum.Address
 	networkAddr   ethereum.Address
+	whitelistAddr ethereum.Address
+	oldNetworks   []ethereum.Address
+	oldBurners    []ethereum.Address
 	signer        Signer
 	depositSigner Signer
 	tokens        []common.Token
@@ -55,6 +58,14 @@ type Blockchain struct {
 	nonce         NonceCorpus
 	nonceDeposit  NonceCorpus
 	broadcaster   *Broadcaster
+}
+
+func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
+	self.oldNetworks = append(self.oldNetworks, addr)
+}
+
+func (self *Blockchain) AddOldBurners(addr ethereum.Address) {
+	self.oldBurners = append(self.oldBurners, addr)
 }
 
 func (self *Blockchain) AddToken(t common.Token) {
@@ -543,13 +554,16 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint u
 	if toBlock != 0 {
 		to = big.NewInt(int64(toBlock))
 	}
+	// we have to track events from network and fee burner contracts
+	// including their old contracts
+	addresses := []ethereum.Address{}
+	addresses = append(addresses, self.networkAddr, self.burnerAddr)
+	addresses = append(addresses, self.oldNetworks...)
+	addresses = append(addresses, self.oldBurners...)
 	param := ether.FilterQuery{
 		big.NewInt(int64(fromBlock)),
 		to,
-		[]ethereum.Address{
-			self.networkAddr,
-			self.burnerAddr,
-		},
+		addresses,
 		[][]ethereum.Hash{
 			[]ethereum.Hash{
 				ethereum.HexToHash(TradeEvent),
@@ -687,32 +701,33 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate floa
 
 func NewBlockchain(
 	client *rpc.Client,
-	ethereum *ethclient.Client,
+	etherCli *ethclient.Client,
 	clients map[string]*ethclient.Client,
-	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr ethereum.Address,
+	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
 	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
 	nonceDeposit NonceCorpus) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
-	wrapper, err := NewKNWrapperContract(wrapperAddr, ethereum)
+	wrapper, err := NewKNWrapperContract(wrapperAddr, etherCli)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("reserve owner address: %s", signer.GetAddress().Hex())
 	log.Printf("reserve address: %s", reserveAddr.Hex())
-	reserve, err := NewKNReserveContract(reserveAddr, ethereum)
+	reserve, err := NewKNReserveContract(reserveAddr, etherCli)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("pricing address: %s", pricingAddr.Hex())
-	pricing, err := NewKNPricingContract(pricingAddr, ethereum)
+	pricing, err := NewKNPricingContract(pricingAddr, etherCli)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("burner address: %s", burnerAddr.Hex())
 	log.Printf("network address: %s", networkAddr.Hex())
+	log.Printf("whitelist address: %s", whitelistAddr.Hex())
 	return &Blockchain{
 		rpcClient:     client,
-		client:        ethereum,
+		client:        etherCli,
 		wrapper:       wrapper,
 		pricing:       pricing,
 		reserve:       reserve,
@@ -721,6 +736,9 @@ func NewBlockchain(
 		pricingAddr:   pricingAddr,
 		burnerAddr:    burnerAddr,
 		networkAddr:   networkAddr,
+		whitelistAddr: whitelistAddr,
+		oldNetworks:   []ethereum.Address{},
+		oldBurners:    []ethereum.Address{},
 		signer:        signer,
 		depositSigner: depositSigner,
 		tokens:        []common.Token{},

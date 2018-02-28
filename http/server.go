@@ -681,7 +681,7 @@ func (self *HTTPServer) TradeLogs(c *gin.Context) {
 		toTime = uint64(time.Now().UnixNano())
 	}
 
-	data, err := self.app.GetTradeLogs(fromTime, toTime)
+	data, err := self.stat.GetTradeLogs(fromTime, toTime)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

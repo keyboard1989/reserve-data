@@ -36,6 +36,10 @@ func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr s
 	return data, err
 }
 
+func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
+	return self.storage.GetTradeLogs(fromTime, toTime)
+}
+
 func (self ReserveStats) Run() error {
 	return self.fetcher.Run()
 }

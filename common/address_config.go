@@ -29,6 +29,7 @@ type AddressConfig struct {
 	Wrapper   string              `json:"wrapper"`
 	Pricing   string              `json:"pricing"`
 	FeeBurner string              `json:"feeburner"`
+	Whitelist string              `json:"whitelist"`
 }
 
 func GetAddressConfigFromFile(path string) (AddressConfig, error) {
