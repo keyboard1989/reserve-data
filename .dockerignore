@@ -2,3 +2,4 @@ cmd/log.log
 cmd/log.log.*
 cmd/*.db
 cmd/*.db.*
+log/*
