@@ -201,6 +201,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			)
 			rStat.Run()
 		}
+
 		servPortStr := fmt.Sprintf(":%d", servPort)
 		server := http.NewHTTPServer(
 			rData, rCore, rStat,
