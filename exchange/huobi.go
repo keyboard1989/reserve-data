@@ -416,5 +416,6 @@ func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, in
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,
+		true,
 	}
 }
