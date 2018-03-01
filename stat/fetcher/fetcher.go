@@ -19,13 +19,10 @@ type CoinCapRateResponse []struct {
 	Symbol   string `json:"symbol"`
 	Rank     string `json:"rank"`
 	PriceUSD string `json:"price_usd"`
-	PriceBTC string `json:"price_btc"`
-	PriceSGD string `json:"price_sgd"`
 }
 
 type EthRate struct {
 	Mu  sync.RWMutex
-	Sgd float64
 	Usd float64
 }
 
@@ -47,7 +44,6 @@ func NewFetcher(
 		runner:     runner,
 		ethRate: &EthRate{
 			Mu:  sync.RWMutex{},
-			Sgd: 0,
 			Usd: 0,
 		},
 	}
@@ -61,7 +57,7 @@ func (self *Fetcher) FetchEthRate() (err error) {
 	self.ethRate.Mu.Lock()
 	defer self.ethRate.Mu.Unlock()
 
-	resp, err := http.Get("https://api.coinmarketcap.com/v1/ticker/?convert=SGD&limit=10")
+	resp, err := http.Get("https://api.coinmarketcap.com/v1/ticker/?convert=USD&limit=10")
 	if err != nil {
 		return err
 	}
@@ -72,12 +68,6 @@ func (self *Fetcher) FetchEthRate() (err error) {
 
 	for _, rate := range rateResponse {
 		if rate.Symbol == "ETH" {
-			self.ethRate.Sgd, err = strconv.ParseFloat(rate.PriceSGD, 64)
-			if err != nil {
-				log.Println("Cannot get sgd rate: %s", err.Error())
-				return err
-			}
-
 			self.ethRate.Usd, err = strconv.ParseFloat(rate.PriceUSD, 64)
 			if err != nil {
 				log.Println("Cannot get usd rate: %s", err.Error())
@@ -93,7 +83,7 @@ func (self *Fetcher) FetchEthRate() (err error) {
 func (self *Fetcher) GetEthRate() float64 {
 	self.ethRate.Mu.Lock()
 	defer self.ethRate.Mu.Unlock()
-	return self.ethRate.Sgd
+	return self.ethRate.Usd
 }
 
 func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
