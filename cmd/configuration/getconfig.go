@@ -93,7 +93,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 	}
 	imrunner := intermediator.NewTickerRunner(5 * time.Second)
-	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
+	fileSigner, depositSigner, intermediatorSigner := signer.NewFileSigner(setPath.signerPath)
 
 	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV)
 	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
@@ -136,6 +136,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		BlockchainSigner:        fileSigner,
 		EnableAuthentication:    authEnbl,
 		DepositSigner:           depositSigner,
+		IntermediateSigner:      intermediatorSigner,
 		AuthEngine:              hmac512auth,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,

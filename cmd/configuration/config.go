@@ -35,12 +35,13 @@ type Config struct {
 	StatFetcherStorage statfetcher.Storage
 	MetricStorage      metric.MetricStorage
 
-	FetcherRunner     fetcher.FetcherRunner
-	StatFetcherRunner statfetcher.FetcherRunner
-	FetcherExchanges  []fetcher.Exchange
-	Exchanges         []common.Exchange
-	BlockchainSigner  blockchain.Signer
-	DepositSigner     blockchain.Signer
+	FetcherRunner      fetcher.FetcherRunner
+	StatFetcherRunner  statfetcher.FetcherRunner
+	FetcherExchanges   []fetcher.Exchange
+	Exchanges          []common.Exchange
+	BlockchainSigner   blockchain.Signer
+	DepositSigner      blockchain.Signer
+	IntermediateSigner blockchain.Signer
 
 	EnableAuthentication bool
 	AuthEngine           http.Authentication
