@@ -14,6 +14,7 @@ import (
 	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/metric"
+	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	raven "github.com/getsentry/raven-go"
 	"github.com/gin-contrib/cors"
@@ -1497,7 +1498,18 @@ func (self *HTTPServer) ConfirmPWIEquation(c *gin.Context) {
 func (self *HTTPServer) ExceedDailyLimit(c *gin.Context) {
 	addr := c.Param("addr")
 	log.Printf("Checking daily limit for %s", addr)
-	exceeded, err := self.stat.ExceedDailyLimit(addr)
+	address := ethereum.HexToAddress(addr)
+	if address.Big().Cmp(ethereum.Big0) == 0 {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "address is not valid",
+			},
+		)
+		return
+	}
+	exceeded, err := self.stat.ExceedDailyLimit(address)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1567,6 +1579,104 @@ func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetCapByAddress(c *gin.Context) {
+	addr := c.Param("addr")
+	address := ethereum.HexToAddress(addr)
+	if address.Big().Cmp(ethereum.Big0) == 0 {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "address is not valid",
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetCapByAddress(address)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
+func (self *HTTPServer) GetCapByUser(c *gin.Context) {
+	user := c.Param("user")
+	data, err := self.stat.GetCapByUser(user)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
+func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
+	var err error
+	postForm, ok := self.Authenticated(c, []string{"user", "addresses"}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	user := postForm.Get("user")
+	addresses := postForm.Get("addresses")
+	addrs := []ethereum.Address{}
+	for _, addr := range strings.Split(addresses, "-") {
+		a := ethereum.HexToAddress(addr)
+		if a.Big().Cmp(ethereum.Big0) == 0 {
+			c.JSON(
+				http.StatusOK,
+				gin.H{
+					"success": false,
+					"reason":  fmt.Sprintf("address(%s) is not valid", addr),
+				},
+			)
+			return
+		} else {
+			addrs = append(addrs, a)
+		}
+	}
+	err = self.stat.UpdateUserAddresses(user, addrs)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -1618,12 +1728,15 @@ func (self *HTTPServer) Run() {
 	}
 
 	if self.stat != nil {
+		self.r.GET("/cap-by-address/:addr", self.GetCapByAddress)
+		self.r.GET("/cap-by-user/:user", self.GetCapByUser)
 		self.r.GET("/richguy/:addr", self.ExceedDailyLimit)
 		self.r.GET("/tradelogs", self.TradeLogs)
 		self.r.GET("/get-asset-volume", self.GetAssetVolume)
 		self.r.GET("/get-burn-fee", self.GetBurnFee)
 		self.r.GET("/get-wallet-fee", self.GetWalletFee)
 		self.r.GET("/get-user-volume", self.GetUserVolume)
+		self.r.POST("/update-user-addresses", self.UpdateUserAddresses)
 	}
 
 	self.r.Run(self.host)

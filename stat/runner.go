@@ -1,4 +1,4 @@
-package fetcher
+package stat
 
 import (
 	"time"

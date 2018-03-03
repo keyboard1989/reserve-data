@@ -4,27 +4,26 @@ import (
 	"math/big"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-// /getrates
-// /authdata
-// /activities
-// /immediate-pending-activities
-// /metrics
-// /cancelorder/:exchangeid
-// /deposit/:exchangeid
-// /withdraw/:exchangei
-// /trade/:exchangeid
-// /setrates
-// /exchangeinfo
-// /exchangeinfo/:exchangeid/:base/:quote
-// /exchangefees
-// /exchangefees/:exchangeid
-// /core/addresses
-// /targetqty
-// /rebalancestatus
-// /setratestatus
-// /pwis-equation
+// all of the functions must support concurrency
+type ReserveStats interface {
+	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
+	GetAssetVolume(fromTime, toTime uint64, freq, asset string) (common.StatTicks, error)
+	GetBurnFee(fromTime, toTime uint64, freq, reserveAddr string) (common.StatTicks, error)
+	GetWalletFee(fromTime, toTime uint64, freq, reserveAddr, walletAddr string) (common.StatTicks, error)
+	GetUserVolume(fromTime, toTime uint64, freq, userAddr string) (common.StatTicks, error)
+
+	GetCapByUser(userID string) (*common.UserCap, error)
+	GetCapByAddress(addr ethereum.Address) (*common.UserCap, error)
+	ExceedDailyLimit(addr ethereum.Address) (bool, error)
+
+	UpdateUserAddresses(userID string, addresses []ethereum.Address) error
+
+	Run() error
+	Stop() error
+}
 
 // all of the functions must support concurrency
 type ReserveData interface {

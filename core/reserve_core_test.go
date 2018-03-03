@@ -79,6 +79,10 @@ func (self testBlockchain) SetRates(
 	return tx, nil
 }
 
+func (self testBlockchain) SetRateMinedNonce() (uint64, error) {
+	return 0, nil
+}
+
 func (self testBlockchain) GetAddresses() *common.Addresses {
 	return &common.Addresses{}
 }
@@ -97,6 +101,10 @@ func (self testActivityStorage) Record(
 	mstatus string,
 	timepoint uint64) error {
 	return nil
+}
+
+func (self testActivityStorage) PendingSetrate(minedNonce uint64) (*common.ActivityRecord, error) {
+	return nil, nil
 }
 
 func (self testActivityStorage) HasPendingDeposit(

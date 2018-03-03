@@ -24,3 +24,9 @@ func LogDataToBurnFeeParams(data []byte) (ethereum.Address, ethereum.Hash) {
 	burnFees := ethereum.BytesToHash(data[32:64])
 	return reserveAddr, burnFees
 }
+
+func LogDataToCatLog(data []byte) (ethereum.Address, string) {
+	address := ethereum.BytesToAddress(data[0:32])
+	cat := ethereum.BytesToHash(data[32:64])
+	return address, cat.Hex()
+}

@@ -8,14 +8,15 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type ReserveStats struct {
 	storage Storage
-	fetcher Fetcher
+	fetcher *Fetcher
 }
 
-func NewReserveStats(storage Storage, fetcher Fetcher) *ReserveStats {
+func NewReserveStats(storage Storage, fetcher *Fetcher) *ReserveStats {
 	return &ReserveStats{
 		storage: storage,
 		fetcher: fetcher,
@@ -102,38 +103,77 @@ func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 	return self.storage.GetTradeLogs(fromTime, toTime)
 }
 
-func GetDailyCap(addr string) float64 {
-	return 15000.0
-}
-
-func (self ReserveStats) ExceedDailyLimit(addr string) (bool, error) {
-	today := common.GetTimepoint() / uint64(24*time.Hour/time.Millisecond) * uint64(24*time.Hour/time.Millisecond)
-	volumeStats, err := self.GetUserVolume(today-1, today, "D", addr)
-	if err != nil {
-		return false, err
-	} else {
-		log.Printf("volumes: %+v", volumeStats)
-		if len(volumeStats) == 0 {
-			return false, nil
-		} else if len(volumeStats) > 1 {
-			return false, errors.New("Got more than 1 day stats. This is a bug in GetUserVolume")
-		} else {
-			for _, volume := range volumeStats {
-				if volume >= GetDailyCap(addr) {
-					return true, nil
-				} else {
-					return false, nil
-				}
-			}
-			return false, errors.New("This is supposed not to happen")
-		}
-	}
-}
-
 func (self ReserveStats) Run() error {
 	return self.fetcher.Run()
 }
 
 func (self ReserveStats) Stop() error {
 	return self.fetcher.Stop()
+}
+
+func (self ReserveStats) GetCapByAddress(addr ethereum.Address) (*common.UserCap, error) {
+	category, err := self.storage.GetCategory(addr.Hex())
+	if err != nil {
+		return nil, err
+	}
+	if category == "0x4" {
+		return common.KycedCap(), nil
+	} else {
+		return common.NonKycedCap(), nil
+	}
+}
+
+func (self ReserveStats) GetCapByUser(userID string) (*common.UserCap, error) {
+	addresses, err := self.storage.GetAddressesOfUser(userID)
+	if err != nil {
+		return nil, err
+	}
+	if len(addresses) == 0 {
+		log.Printf("Couldn't find any associated addresses. User %s is not kyced.", userID)
+		return common.NonKycedCap(), nil
+	} else {
+		return self.GetCapByAddress(ethereum.HexToAddress(addresses[0]))
+	}
+}
+
+func (self ReserveStats) UpdateUserAddresses(userID string, addrs []ethereum.Address) error {
+	addresses := []string{}
+	for _, addr := range addrs {
+		addresses = append(addresses, addr.Hex())
+	}
+	return self.storage.UpdateUserAddresses(userID, addresses)
+}
+
+func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error) {
+	user, err := self.storage.GetUserOfAddress(address.Hex())
+	if err != nil {
+		return false, err
+	}
+	addrs, err := self.storage.GetAddressesOfUser(user)
+	if err != nil {
+		return false, err
+	}
+	today := common.GetTimepoint() / uint64(24*time.Hour/time.Millisecond) * uint64(24*time.Hour/time.Millisecond)
+	var totalVolume float64 = 0.0
+	for _, addr := range addrs {
+		volumeStats, err := self.GetUserVolume(today-1, today, "D", addr)
+		if err == nil {
+			log.Printf("volumes: %+v", volumeStats)
+			if len(volumeStats) == 0 {
+			} else if len(volumeStats) > 1 {
+				log.Printf("Got more than 1 day stats. This is a bug in GetUserVolume")
+			} else {
+				for _, volume := range volumeStats {
+					totalVolume += volume
+					break
+				}
+			}
+		}
+	}
+	cap, err := self.GetCapByAddress(address)
+	if err == nil && totalVolume >= cap.DailyLimit {
+		return true, nil
+	} else {
+		return false, nil
+	}
 }
