@@ -24,20 +24,30 @@ func TearDownBolt(name string) {
 	)
 }
 
-func TestBoltAsStatStorage(t *testing.T) {
+func doOneTest(f func(tester *stat.StorageTest, t *testing.T), t *testing.T) {
 	dbname := "test1.db"
 	tester, err := SetupBoltStorageTester(dbname)
 	if err != nil {
 		t.Fatalf("Testing bolt as a stat storage: init failed(%s)", err)
 	}
 	defer TearDownBolt(dbname)
-	if err = tester.TestStoreCatLog(); err != nil {
-		t.Fatalf("Testing bolt as a stat storage: test store cat log failed(%s)", err)
-	}
-	if err = tester.TestStoreCatLogThenUpdateUserAddresses(); err != nil {
-		t.Fatalf("Testing bolt as a stat storage: test store cat log and then update user addresses failed(%s)", err)
-	}
-	if err = tester.TestUpdateUserAddressesThenStoreCatLog(); err != nil {
-		t.Fatalf("Testing bolt as a stat storage: test update user addresses and then store cat log failed(%s)", err)
-	}
+	f(tester, t)
+}
+
+func TestBoltAsStatStorage(t *testing.T) {
+	doOneTest(func(tester *stat.StorageTest, t *testing.T) {
+		if err := tester.TestStoreCatLog(); err != nil {
+			t.Fatalf("Testing bolt as a stat storage: test store cat log failed(%s)", err)
+		}
+	}, t)
+	doOneTest(func(tester *stat.StorageTest, t *testing.T) {
+		if err := tester.TestStoreCatLogThenUpdateUserAddresses(); err != nil {
+			t.Fatalf("Testing bolt as a stat storage: test store cat log and then update user addresses failed(%s)", err)
+		}
+	}, t)
+	doOneTest(func(tester *stat.StorageTest, t *testing.T) {
+		if err := tester.TestUpdateUserAddressesThenStoreCatLog(); err != nil {
+			t.Fatalf("Testing bolt as a stat storage: test update user addresses and then store cat log failed(%s)", err)
+		}
+	}, t)
 }
