@@ -37,4 +37,7 @@ func TestBoltAsStatStorage(t *testing.T) {
 	if err = tester.TestStoreCatLogThenUpdateUserAddresses(); err != nil {
 		t.Fatalf("Testing bolt as a stat storage: test store cat log and then update user addresses failed(%s)", err)
 	}
+	if err = tester.TestUpdateUserAddressesThenStoreCatLog(); err != nil {
+		t.Fatalf("Testing bolt as a stat storage: test update user addresses and then store cat log failed(%s)", err)
+	}
 }

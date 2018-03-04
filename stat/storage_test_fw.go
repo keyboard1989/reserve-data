@@ -78,6 +78,52 @@ func (self *StorageTest) TestStoreCatLog() error {
 	return nil
 }
 
+func (self *StorageTest) TestUpdateUserAddressesThenStoreCatLog() error {
+	email := "victor@kyber.network"
+	addr1 := "0x8180a5ca4e3b94045e05a9313777955f7518d757"
+	addr2 := "0xcbac9e86e0b7160f1a8e4835ad01dd51c514afce"
+	cat := "0x4a"
+
+	self.storage.UpdateUserAddresses(
+		email, []string{addr1, addr2},
+	)
+	self.storage.StoreCatLog(NewCatLog(addr1, cat))
+	self.storage.StoreCatLog(NewCatLog(addr2, cat))
+
+	gotAddresses, err := self.storage.GetAddressesOfUser(email)
+	if err != nil {
+		return err
+	}
+	expectedAddresses := map[string]bool{
+		addr1: true,
+		addr2: true,
+	}
+	if len(gotAddresses) != len(expectedAddresses) {
+		return errors.New(
+			fmt.Sprintf("Expected to get %d addresses, got %d addresses", len(expectedAddresses), len(gotAddresses)))
+	}
+	for _, addr := range gotAddresses {
+		if _, found := expectedAddresses[addr]; !found {
+			return errors.New(fmt.Sprintf("Expected to find %s, got not found", addr))
+		}
+	}
+	gotUser, err := self.storage.GetUserOfAddress(addr1)
+	if err != nil {
+		return err
+	}
+	if gotUser != email {
+		return errors.New(fmt.Sprintf("Expected to get %s, got %s", email, gotUser))
+	}
+	gotUser, err = self.storage.GetUserOfAddress(addr2)
+	if err != nil {
+		return err
+	}
+	if gotUser != email {
+		return errors.New(fmt.Sprintf("Expected to get %s, got %s", email, gotUser))
+	}
+	return nil
+}
+
 func (self *StorageTest) TestStoreCatLogThenUpdateUserAddresses() error {
 	email := "Victor@kyber.network"
 	lowercaseEmail := "victor@kyber.network"
