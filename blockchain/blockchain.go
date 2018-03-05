@@ -607,17 +607,19 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, timepoint uint
 				if tradeLog != nil {
 					result = append(result, *tradeLog)
 				}
-				// start new TradeLog
-				tradeLog = &common.TradeLog{}
-				tradeLog.BlockNumber = l.BlockNumber
-				tradeLog.TransactionHash = l.TxHash
-				tradeLog.TransactionIndex = l.TxIndex
-				tradeLog.Timestamp, err = self.InterpretTimestamp(
-					tradeLog.BlockNumber,
-					tradeLog.TransactionIndex,
-				)
-				if err != nil {
-					return result, err
+				if len(l.Topics) > 0 && l.Topics[0].Hex() != UserCatEvent {
+					// start new TradeLog
+					tradeLog = &common.TradeLog{}
+					tradeLog.BlockNumber = l.BlockNumber
+					tradeLog.TransactionHash = l.TxHash
+					tradeLog.TransactionIndex = l.TxIndex
+					tradeLog.Timestamp, err = self.InterpretTimestamp(
+						tradeLog.BlockNumber,
+						tradeLog.TransactionIndex,
+					)
+					if err != nil {
+						return result, err
+					}
 				}
 			}
 			if len(l.Topics) == 0 {
