@@ -35,7 +35,7 @@ type Config struct {
 	MetricStorage      metric.MetricStorage
 
 	FetcherRunner      fetcher.FetcherRunner
-	StatFetcherRunner  statfetcher.FetcherRunner
+	StatFetcherRunner  stat.FetcherRunner
 	FetcherExchanges   []fetcher.Exchange
 	Exchanges          []common.Exchange
 	BlockchainSigner   blockchain.Signer

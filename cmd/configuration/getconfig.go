@@ -12,6 +12,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
+	"github.com/KyberNetwork/reserve-data/stat"
 	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -61,7 +62,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
-	imtorAddr := ethereum.HexToAddress("0x778599Dd7893C8166D313F0F9B5F6cbF7536c293")
+	imtorAddr := ethereum.HexToAddress(addressConfig.Imtor)
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -83,7 +84,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	}
 	//fetcherRunner := http_runner.NewHttpRunner(8001)
 	var fetcherRunner fetcher.FetcherRunner
-	var statFetcherRunner statfetcher.FetcherRunner
+	var statFetcherRunner stat.FetcherRunner
 	var imrunner intermediator.IntermediatorRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
