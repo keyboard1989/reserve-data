@@ -123,6 +123,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if enableStat {
 		statFetcher = stat.NewFetcher(
 			config.StatFetcherStorage,
+			stat.NewCMCEthUSDRate(),
 			config.StatFetcherRunner,
 		)
 	}

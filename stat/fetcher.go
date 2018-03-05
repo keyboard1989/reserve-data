@@ -1,14 +1,9 @@
 package stat
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"strconv"
 	"strings"
-	"sync"
-	"time"
+	// "sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
 )
