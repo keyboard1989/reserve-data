@@ -62,9 +62,13 @@ func run(verify *Verification) {
 			log.Panic(err.Error())
 		}
 	case "getauthdata":
-		authData, _ := verify.GetAuthData(common.GetTimepoint())
-		authdataString, _ := json.Marshal(authData)
-		log.Println("Authdata", string(authdataString))
+		authData, err := verify.GetAuthData(common.GetTimepoint())
+		if err != nil {
+			log.Println(err.Error())
+			os.Exit(1)
+		}
+		authDataJSON, _ := json.Marshal(authData)
+		log.Println("Authdata: ", string(authDataJSON))
 	default:
 		printUsage()
 		os.Exit(1)

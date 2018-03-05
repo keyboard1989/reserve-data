@@ -35,12 +35,13 @@ type Config struct {
 	StatFetcherStorage statfetcher.Storage
 	MetricStorage      metric.MetricStorage
 
-	FetcherRunner     fetcher.FetcherRunner
-	StatFetcherRunner statfetcher.FetcherRunner
-	FetcherExchanges  []fetcher.Exchange
-	Exchanges         []common.Exchange
-	BlockchainSigner  blockchain.Signer
-	DepositSigner     blockchain.Signer
+	FetcherRunner      fetcher.FetcherRunner
+	StatFetcherRunner  statfetcher.FetcherRunner
+	FetcherExchanges   []fetcher.Exchange
+	Exchanges          []common.Exchange
+	BlockchainSigner   blockchain.Signer
+	DepositSigner      blockchain.Signer
+	IntermediateSigner blockchain.Signer
 
 	EnableAuthentication bool
 	AuthEngine           http.Authentication
@@ -135,7 +136,7 @@ var ConfigPaths = map[string]SettingPaths{
 		},
 	},
 	"simulation": {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/halink.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",

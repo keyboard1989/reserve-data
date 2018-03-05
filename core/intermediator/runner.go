@@ -43,6 +43,6 @@ func NewTickerRunner(sduration time.Duration) *TickerRunner {
 	return &TickerRunner{
 		sduration,
 		nil,
-		make(chan bool, 5),
+		make(chan bool, 1),
 	}
 }

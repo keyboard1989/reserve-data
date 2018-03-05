@@ -2,6 +2,7 @@ package intermediator
 
 import (
 	"log"
+	"math/big"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
@@ -13,6 +14,7 @@ type Intermediator struct {
 	runner        IntermediatorRunner
 	currentStatus []common.ActivityRecord
 	intaddr       ethereum.Address
+	blockchain    Blockchain
 }
 
 func unchanged(pre map[common.ActivityID]common.ActivityRecord, post common.ActivityRecord) bool {
@@ -30,11 +32,11 @@ func unchanged(pre map[common.ActivityID]common.ActivityRecord, post common.Acti
 	return true
 }
 
-func (self *Intermediator) GetAccountBalance() float64 {
-	return (0.0)
+func (self *Intermediator) FetchAccountBalanceFromBlockchain(timepoint uint64) (map[string]common.BalanceEntry, error) {
+	return self.blockchain.FetchBalanceData(self.intaddr, nil, timepoint)
 }
 
-func (self *Intermediator) CheckAccStatusFromBlockChain() {
+func (self *Intermediator) CheckAccStatusFromBlockChain(timepoint uint64) {
 	pendings, err := self.storage.GetPendingActivities()
 	if err != nil {
 		log.Printf("Intermediator: Getting pending activites failed: %s\n", err)
@@ -58,34 +60,82 @@ func (self *Intermediator) CheckAccStatusFromBlockChain() {
 	// 4. changed comapre to the last get pending activities.
 	for _, pending := range pendings {
 		if pending.Action == "deposit" && pending.MiningStatus == "mined" && pending.ExchangeStatus == "" && !unchanged(compare_map, pending) {
-			token := pending.Params["token"]
-			log.Printf("Intermediator: Found a status change at activity %v, which deposit token %v \n", pending.ID, token)
-			if self.GetAccountBalance() > 100 {
-				self.DepositToHuobi()
+			tokenID, ok1 := pending.Params["token"].(string)
+			exchangeID, ok2 := pending.Params["exchange"].(string)
+			if (!ok1) || (!ok2) {
+				log.Println("Intermediator: Activity record is malformed, cannot read the exchange/ token")
 			}
+			log.Printf("Intermediator: Found a status change at activity %v, which deposit token %v \n", pending.ID, tokenID)
+			accBalance, err := self.FetchAccountBalanceFromBlockchain(timepoint)
+			if err != nil {
+				log.Printf("Intermediator: can not get account balance %v", err)
+			}
+			sentAmount, ok := pending.Params["amount"].(float64)
+			if !ok {
+				log.Println("Intermediator: Activity record is malformed, cannot read the exchange amount")
+			}
+			if accBalance[tokenID].ToBalanceResponse(10).Balance > sentAmount {
+				//get token and exchange object from IDs in the activity
+				token, err := common.GetToken(tokenID)
+				if err != nil {
+					log.Printf("Intermediator: Token is not supported: %v", err)
+				}
+				exchange, err := common.GetExchange(exchangeID)
+				if err != nil {
+					log.Printf("Intermediator: Exchange is not supported: %v", err)
+				}
+				self.DepositToExchange(token, exchange, sentAmount)
+			}
+
 		}
 	}
-
+	self.currentStatus = pendings
 }
 
-func (self *Intermediator) DepositToHuobi() {
+func (self *Intermediator) DepositToExchange(token common.Token, exchange common.Exchange, amount float64) {
+	exchangeAddress, supported := exchange.Address(token)
+	if !supported {
+		log.Printf("ERROR: Intermediator: Token %s is not supported on Exchange %v", token.ID, exchange.ID)
+		return
+	}
+	FAmount := big.NewFloat(amount)
+	FDecimal := (big.NewFloat(0)).SetInt(big.NewInt(token.Decimal))
+	FAmount.Mul(FAmount, FDecimal)
+	IAmount := big.NewInt(0)
+	FAmount.Int(IAmount)
 
+	tx, err := self.blockchain.SendFromAccountToExchange(IAmount, exchangeAddress)
+	if err != nil {
+		log.Printf("ERROR: Intermediator: Can not send transaction to exchange: %v", err)
+		return
+	}
+	log.Printf("Intermediator: Transaction submitted. Tx is: \n %v ", tx)
 }
 
 func (self *Intermediator) RunStatusChecker() {
-	log.Printf("Intermediator: deposit_huobi:waiting for signal from status checker channel")
-	t := <-self.runner.GetStatusTicker()
-	log.Printf("Intermediator: deposit_huobi: got signal from status checker with timestamp %d", common.TimeToTimepoint(t))
-	self.CheckAccStatusFromBlockChain()
-
+	for {
+		log.Printf("Intermediator: waiting for signal from status checker channel")
+		t := <-self.runner.GetStatusTicker()
+		log.Printf("Intermediator: got signal from status checker with timestamp %d", common.TimeToTimepoint(t))
+		/*
+			accBalance, err := self.FetchAccountBalanceFromBlockchain(common.TimeToTimepoint(t))
+			if err != nil {
+				log.Printf("Intermediator: can not get account balance %v", err)
+			}
+			log.Printf("Intermediator: account balance %.10f", accBalance["ETH"].ToBalanceResponse(10).Balance)
+		*/
+		self.CheckAccStatusFromBlockChain(common.TimeToTimepoint(t))
+	}
 }
 
 func (self *Intermediator) Run() error {
 	log.Printf("Intermediator: deposit_huobi: Account Status checker is running... \n")
+	//log.Printf("Intermediator: Blockchain client is: %v", self.blockchain.client )
+	self.runner.Start()
 	go self.RunStatusChecker()
 	return nil
 }
 
-func NewIntermediator(storage fetcher.Storage, runner IntermediatorRunner, address ethereum.Address) *Intermediator {
-	return &Intermediator{storage, runner, nil, address}
+func NewIntermediator(storage fetcher.Storage, runner IntermediatorRunner, address ethereum.Address, blockchain Blockchain) *Intermediator {
+	return &Intermediator{storage, runner, nil, address, blockchain}
 }

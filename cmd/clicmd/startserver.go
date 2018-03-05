@@ -148,6 +148,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	//nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
 	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
 	nonceDeposit := nonce.NewTimeWindow(infura, config.DepositSigner)
+	nonceIntemediate := nonce.NewTimeWindow(infura, config.IntermediateSigner)
 	//set block chain
 	bc, err := blockchain.NewBlockchain(
 		client,
@@ -161,13 +162,14 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.WhitelistAddress,
 		config.BlockchainSigner,
 		config.DepositSigner,
+		config.IntermediateSigner,
 		nonceCorpus,
 		nonceDeposit,
+		nonceIntemediate,
 	)
 	if err != nil {
 		panic(err)
 	}
-	log.Printf("\n\n\n\n\n blockchain rpc client is %v", *bc.rpcClient)
 	// we need to implicitly add old contract addresses to production
 	if kyberENV == "production" || kyberENV == "mainnet" {
 		// bc.AddOldNetwork(...)
