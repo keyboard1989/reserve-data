@@ -1,14 +1,9 @@
 package stat
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"strconv"
 	"strings"
-	"sync"
-	"time"
+	// "sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
 )
@@ -21,31 +16,24 @@ type CoinCapRateResponse []struct {
 	PriceUSD string `json:"price_usd"`
 }
 
-type EthRate struct {
-	Mu  sync.RWMutex
-	Usd float64
-}
-
 type Fetcher struct {
 	storage                Storage
 	blockchain             Blockchain
 	runner                 FetcherRunner
-	ethRate                *EthRate
+	ethRate                EthUSDRate
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 }
 
 func NewFetcher(
 	storage Storage,
+	ethUSDRate EthUSDRate,
 	runner FetcherRunner) *Fetcher {
 	return &Fetcher{
 		storage:    storage,
 		blockchain: nil,
 		runner:     runner,
-		ethRate: &EthRate{
-			Mu:  sync.RWMutex{},
-			Usd: 0,
-		},
+		ethRate:    ethUSDRate,
 	}
 }
 
@@ -53,37 +41,8 @@ func (self *Fetcher) Stop() error {
 	return self.runner.Stop()
 }
 
-func (self *Fetcher) FetchEthRate() (err error) {
-	self.ethRate.Mu.Lock()
-	defer self.ethRate.Mu.Unlock()
-
-	resp, err := http.Get("https://api.coinmarketcap.com/v1/ticker/?convert=USD&limit=10")
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	body, err := ioutil.ReadAll(resp.Body)
-	rateResponse := CoinCapRateResponse{}
-	json.Unmarshal(body, &rateResponse)
-
-	for _, rate := range rateResponse {
-		if rate.Symbol == "ETH" {
-			self.ethRate.Usd, err = strconv.ParseFloat(rate.PriceUSD, 64)
-			if err != nil {
-				log.Println("Cannot get usd rate: %s", err.Error())
-				return err
-			}
-		}
-	}
-
-	return nil
-
-}
-
-func (self *Fetcher) GetEthRate() float64 {
-	self.ethRate.Mu.Lock()
-	defer self.ethRate.Mu.Unlock()
-	return self.ethRate.Usd
+func (self *Fetcher) GetEthRate(timepoint uint64) float64 {
+	return self.ethRate.GetUSDRate(timepoint)
 }
 
 func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
@@ -91,23 +50,9 @@ func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 	self.FetchCurrentBlock(common.GetTimepoint())
 }
 
-func (self *Fetcher) RunGetEthRate() {
-	tick := time.NewTicker(1 * time.Hour)
-	go func() {
-		for {
-			err := self.FetchEthRate()
-			if err != nil {
-				log.Println(err)
-			}
-			<-tick.C
-		}
-	}()
-}
-
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
-	go self.RunGetEthRate()
 	go self.RunBlockAndLogFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
@@ -135,7 +80,7 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 // return block number that we just fetched the logs
 func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
 	log.Printf("fetching logs data from block %d", fromBlock)
-	logs, err := self.blockchain.GetLogs(fromBlock, timepoint, self.GetEthRate())
+	logs, err := self.blockchain.GetLogs(fromBlock, timepoint, self.GetEthRate(common.GetTimepoint()))
 	if err != nil {
 		log.Printf("fetching logs data from block %d failed, error: %v", fromBlock, err)
 		if fromBlock == 0 {
