@@ -12,7 +12,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
-	statfetcher "github.com/KyberNetwork/reserve-data/stat/fetcher"
+	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -77,7 +77,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	if err != nil {
 		panic(err)
 	}
-	statStorage, err := storage.NewBoltStorage(setPath.statStoragePath)
+	statStorage, err := statstorage.NewBoltStorage(setPath.statStoragePath)
 	if err != nil {
 		panic(err)
 	}

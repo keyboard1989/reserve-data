@@ -20,7 +20,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/stat"
-	statfetcher "github.com/KyberNetwork/reserve-data/stat/fetcher"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -99,7 +98,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	config := GetConfigFromENV(kyberENV)
 
 	var dataFetcher *fetcher.Fetcher
-	var statFetcher *statfetcher.Fetcher
+	var statFetcher *stat.Fetcher
 	var rData reserve.ReserveData
 	var rCore reserve.ReserveCore
 	var rStat reserve.ReserveStats
@@ -123,8 +122,9 @@ func serverStart(cmd *cobra.Command, args []string) {
 	}
 
 	if enableStat {
-		statFetcher = statfetcher.NewFetcher(
+		statFetcher = stat.NewFetcher(
 			config.StatFetcherStorage,
+			stat.NewCMCEthUSDRate(),
 			config.StatFetcherRunner,
 		)
 	}

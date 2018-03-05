@@ -527,6 +527,21 @@ type AllRateResponse struct {
 	ToBlockNumber uint64
 }
 
+type KNLog interface {
+	BlockNo() uint64
+	Type() string
+}
+
+type SetCatLog struct {
+	Timestamp   uint64
+	BlockNumber uint64
+	Address     ethereum.Address
+	Category    string
+}
+
+func (self SetCatLog) BlockNo() uint64 { return self.BlockNumber }
+func (self SetCatLog) Type() string    { return "SetCatLog" }
+
 type TradeLog struct {
 	Timestamp        uint64
 	BlockNumber      uint64
@@ -545,6 +560,9 @@ type TradeLog struct {
 	WalletFee      *big.Int
 	BurnFee        *big.Int
 }
+
+func (self TradeLog) BlockNo() uint64 { return self.BlockNumber }
+func (self TradeLog) Type() string    { return "TradeLog" }
 
 type StatTicks map[uint64]float64
 
