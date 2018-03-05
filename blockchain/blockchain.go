@@ -590,10 +590,10 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint u
 }
 
 // return timestamp increasing array of trade log
-func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate float64) ([]common.KNLog, error) {
+func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, timepoint uint64, ethRate float64) ([]common.KNLog, error) {
 	result := []common.KNLog{}
 	// get all logs from fromBlock to best block
-	logs, err := self.GetRawLogs(fromBlock, 0, timepoint)
+	logs, err := self.GetRawLogs(fromBlock, toBlock, timepoint)
 	if err != nil {
 		return result, err
 	}

@@ -23,17 +23,20 @@ type Fetcher struct {
 	ethRate                EthUSDRate
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
+	deployBlock            uint64
 }
 
 func NewFetcher(
 	storage Storage,
 	ethUSDRate EthUSDRate,
-	runner FetcherRunner) *Fetcher {
+	runner FetcherRunner,
+	deployBlock uint64) *Fetcher {
 	return &Fetcher{
-		storage:    storage,
-		blockchain: nil,
-		runner:     runner,
-		ethRate:    ethUSDRate,
+		storage:     storage,
+		blockchain:  nil,
+		runner:      runner,
+		ethRate:     ethUSDRate,
+		deployBlock: deployBlock,
 	}
 }
 
@@ -42,7 +45,9 @@ func (self *Fetcher) Stop() error {
 }
 
 func (self *Fetcher) GetEthRate(timepoint uint64) float64 {
-	return self.ethRate.GetUSDRate(timepoint)
+	rate := self.ethRate.GetUSDRate(timepoint)
+	log.Printf("ETH-USD rate: %f", rate)
+	return rate
 }
 
 func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
@@ -67,8 +72,24 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 		self.FetchCurrentBlock(timepoint)
 		log.Printf("fetched block from blockchain")
 		lastBlock, err := self.storage.LastBlock()
+		if lastBlock == 0 {
+			lastBlock = self.deployBlock
+		}
 		if err == nil {
-			nextBlock := self.FetchLogs(lastBlock+1, timepoint)
+			toBlock := lastBlock + 1 + 1440 // 1440 is considered as 6 hours
+			if toBlock > self.currentBlock {
+				// set toBlock to 0 so we will fetch to last block
+				toBlock = 0
+			}
+			nextBlock := self.FetchLogs(lastBlock+1, toBlock, timepoint)
+			if nextBlock == lastBlock && toBlock != 0 {
+				// in case that we are querying old blocks (6 hours in the past)
+				// and got no logs. we will still continue with next block
+				// It is not the case if toBlock == 0, means we are querying
+				// best window, we should keep querying it in order not to
+				// miss any logs due to node inconsistency
+				nextBlock = toBlock + 1
+			}
 			self.storage.UpdateLogBlock(nextBlock, timepoint)
 			log.Printf("nextBlock: %d", nextBlock)
 		} else {
@@ -78,9 +99,9 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 }
 
 // return block number that we just fetched the logs
-func (self *Fetcher) FetchLogs(fromBlock uint64, timepoint uint64) uint64 {
+func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint64) uint64 {
 	log.Printf("fetching logs data from block %d", fromBlock)
-	logs, err := self.blockchain.GetLogs(fromBlock, timepoint, self.GetEthRate(common.GetTimepoint()))
+	logs, err := self.blockchain.GetLogs(fromBlock, toBlock, timepoint, self.GetEthRate(common.GetTimepoint()))
 	if err != nil {
 		log.Printf("fetching logs data from block %d failed, error: %v", fromBlock, err)
 		if fromBlock == 0 {
