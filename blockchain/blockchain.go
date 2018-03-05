@@ -38,26 +38,28 @@ var (
 )
 
 type Blockchain struct {
-	rpcClient     *rpc.Client
-	client        *ethclient.Client
-	wrapper       *KNWrapperContract
-	pricing       *KNPricingContract
-	reserve       *KNReserveContract
-	rm            ethereum.Address
-	wrapperAddr   ethereum.Address
-	pricingAddr   ethereum.Address
-	burnerAddr    ethereum.Address
-	networkAddr   ethereum.Address
-	whitelistAddr ethereum.Address
-	oldNetworks   []ethereum.Address
-	oldBurners    []ethereum.Address
-	signer        Signer
-	depositSigner Signer
-	tokens        []common.Token
-	tokenIndices  map[string]tbindex
-	nonce         NonceCorpus
-	nonceDeposit  NonceCorpus
-	broadcaster   *Broadcaster
+	rpcClient          *rpc.Client
+	client             *ethclient.Client
+	wrapper            *KNWrapperContract
+	pricing            *KNPricingContract
+	reserve            *KNReserveContract
+	rm                 ethereum.Address
+	wrapperAddr        ethereum.Address
+	pricingAddr        ethereum.Address
+	burnerAddr         ethereum.Address
+	networkAddr        ethereum.Address
+	whitelistAddr      ethereum.Address
+	oldNetworks        []ethereum.Address
+	oldBurners         []ethereum.Address
+	signer             Signer
+	depositSigner      Signer
+	intermediateSigner Signer
+	tokens             []common.Token
+	tokenIndices       map[string]tbindex
+	nonce              NonceCorpus
+	nonceDeposit       NonceCorpus
+	nonceIntermediate  NonceCorpus
+	broadcaster        *Broadcaster
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
@@ -85,15 +87,16 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 		}
 	}
 	return &common.Addresses{
-		Tokens:           tokens,
-		Exchanges:        exs,
-		WrapperAddress:   self.wrapperAddr,
-		PricingAddress:   self.pricingAddr,
-		ReserveAddress:   self.rm,
-		FeeBurnerAddress: self.burnerAddr,
-		NetworkAddress:   self.networkAddr,
-		PricingOperator:  self.signer.GetAddress(),
-		DepositOperator:  self.depositSigner.GetAddress(),
+		Tokens:               tokens,
+		Exchanges:            exs,
+		WrapperAddress:       self.wrapperAddr,
+		PricingAddress:       self.pricingAddr,
+		ReserveAddress:       self.rm,
+		FeeBurnerAddress:     self.burnerAddr,
+		NetworkAddress:       self.networkAddr,
+		PricingOperator:      self.signer.GetAddress(),
+		DepositOperator:      self.depositSigner.GetAddress(),
+		IntermediateOperator: self.intermediateSigner.GetAddress(),
 	}
 }
 
@@ -704,8 +707,8 @@ func NewBlockchain(
 	etherCli *ethclient.Client,
 	clients map[string]*ethclient.Client,
 	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
-	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
-	nonceDeposit NonceCorpus) (*Blockchain, error) {
+	signer Signer, depositSigner Signer, intermediateSigner Signer, nonceCorpus NonceCorpus,
+	nonceDeposit NonceCorpus, nonceIntermediate NonceCorpus) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper, err := NewKNWrapperContract(wrapperAddr, etherCli)
 	if err != nil {
@@ -725,25 +728,28 @@ func NewBlockchain(
 	log.Printf("burner address: %s", burnerAddr.Hex())
 	log.Printf("network address: %s", networkAddr.Hex())
 	log.Printf("whitelist address: %s", whitelistAddr.Hex())
+	log.Printf("intermediate address: %s", intermediateSigner.GetAddress().Hex())
 	return &Blockchain{
-		rpcClient:     client,
-		client:        etherCli,
-		wrapper:       wrapper,
-		pricing:       pricing,
-		reserve:       reserve,
-		rm:            reserveAddr,
-		wrapperAddr:   wrapperAddr,
-		pricingAddr:   pricingAddr,
-		burnerAddr:    burnerAddr,
-		networkAddr:   networkAddr,
-		whitelistAddr: whitelistAddr,
-		oldNetworks:   []ethereum.Address{},
-		oldBurners:    []ethereum.Address{},
-		signer:        signer,
-		depositSigner: depositSigner,
-		tokens:        []common.Token{},
-		nonce:         nonceCorpus,
-		nonceDeposit:  nonceDeposit,
-		broadcaster:   NewBroadcaster(clients),
+		rpcClient:          client,
+		client:             etherCli,
+		wrapper:            wrapper,
+		pricing:            pricing,
+		reserve:            reserve,
+		rm:                 reserveAddr,
+		wrapperAddr:        wrapperAddr,
+		pricingAddr:        pricingAddr,
+		burnerAddr:         burnerAddr,
+		networkAddr:        networkAddr,
+		whitelistAddr:      whitelistAddr,
+		oldNetworks:        []ethereum.Address{},
+		oldBurners:         []ethereum.Address{},
+		signer:             signer,
+		depositSigner:      depositSigner,
+		intermediateSigner: intermediateSigner,
+		tokens:             []common.Token{},
+		nonce:              nonceCorpus,
+		nonceDeposit:       nonceDeposit,
+		nonceIntermediate:  nonceIntermediate,
+		broadcaster:        NewBroadcaster(clients),
 	}, nil
 }

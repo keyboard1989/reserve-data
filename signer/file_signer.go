@@ -34,7 +34,7 @@ type FileSigner struct {
 	KNReadOnly      string `json:"kn_readonly"`
 	KNConfiguration string `json:"kn_configuration"`
 	KNConfirmConf   string `json:"kn_confirm_configuration"`
-	KeystoreI       string `json:"keystore_intermediate_account"`
+	KeystoreI       string `json:"keystore_intermediator_path"`
 	PassphraseI     string `json:"passphrase_intermediate_account"`
 	opts            *bind.TransactOpts
 }
