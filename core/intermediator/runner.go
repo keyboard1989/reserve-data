@@ -7,9 +7,7 @@ import (
 // Runner to trigger fetcher
 type IntermediatorRunner interface {
 	GetStatusTicker() <-chan time.Time
-	// Start must be non-blocking and must only return after runner
-	// gets to ready state before GetOrderbookTicker() and
-	// GetAuthDataTicker() get called
+
 	Start() error
 	// Stop should only be invoked when the runner is already running
 	Stop() error
