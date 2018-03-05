@@ -61,7 +61,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
-	imtorAddr := ethereum.HexToAddress(addressConfig.Imtor)
+	imtorAddr := ethereum.HexToAddress("0x778599Dd7893C8166D313F0F9B5F6cbF7536c293")
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -84,15 +84,17 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	//fetcherRunner := http_runner.NewHttpRunner(8001)
 	var fetcherRunner fetcher.FetcherRunner
 	var statFetcherRunner statfetcher.FetcherRunner
-
+	var imrunner intermediator.IntermediatorRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
 		statFetcherRunner = http_runner.NewHttpRunner(8002)
+		imrunner = http_runner.NewHttpRunner(8003)
 	} else {
 		fetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+		imrunner = intermediator.NewTickerRunner(5 * time.Second)
 	}
-	imrunner := intermediator.NewTickerRunner(5 * time.Second)
+
 	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
 
 	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV)

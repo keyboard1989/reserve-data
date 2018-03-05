@@ -167,6 +167,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic(err)
 	}
+	log.Printf("\n\n\n\n\n blockchain rpc client is %v", *bc.rpcClient)
 	// we need to implicitly add old contract addresses to production
 	if kyberENV == "production" || kyberENV == "mainnet" {
 		// bc.AddOldNetwork(...)
@@ -187,7 +188,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 				dataFetcher,
 			)
 
-			imtor := intermediator.NewIntermediator(config.FetcherStorage, config.ImtorRunner, config.ImtorAddress)
+			imtor := intermediator.NewIntermediator(config.FetcherStorage, config.ImtorRunner, config.ImtorAddress, bc)
 			imtor.Run()
 
 			rData.Run()
