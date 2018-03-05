@@ -12,7 +12,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/KyberNetwork/reserve-data/stat"
-	statfetcher "github.com/KyberNetwork/reserve-data/stat/fetcher"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -31,11 +30,11 @@ type Config struct {
 	DataStorage        data.Storage
 	StatStorage        stat.Storage
 	FetcherStorage     fetcher.Storage
-	StatFetcherStorage statfetcher.Storage
+	StatFetcherStorage stat.Storage
 	MetricStorage      metric.MetricStorage
 
 	FetcherRunner     fetcher.FetcherRunner
-	StatFetcherRunner statfetcher.FetcherRunner
+	StatFetcherRunner stat.FetcherRunner
 	FetcherExchanges  []fetcher.Exchange
 	Exchanges         []common.Exchange
 	BlockchainSigner  blockchain.Signer

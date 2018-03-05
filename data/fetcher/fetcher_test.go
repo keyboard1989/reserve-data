@@ -9,15 +9,15 @@ func TestUnchangedFunc(t *testing.T) {
 	// test different len
 	a1 := map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	b1 := map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 		common.ActivityID{2, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	if unchanged(a1, b1) != false {
@@ -26,12 +26,12 @@ func TestUnchangedFunc(t *testing.T) {
 	// test different id
 	a1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	b1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{2, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	if unchanged(a1, b1) != false {
@@ -40,12 +40,12 @@ func TestUnchangedFunc(t *testing.T) {
 	// test different exchange status
 	a1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"", "0x123", "mined", nil,
+			"", "0x123", 0, "mined", nil,
 		},
 	}
 	b1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	if unchanged(a1, b1) != false {
@@ -54,12 +54,12 @@ func TestUnchangedFunc(t *testing.T) {
 	// test different mining status
 	a1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	b1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "", nil,
+			"done", "0x123", 0, "", nil,
 		},
 	}
 	if unchanged(a1, b1) != false {
@@ -68,12 +68,12 @@ func TestUnchangedFunc(t *testing.T) {
 	// test different tx
 	a1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	b1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x124", "mined", nil,
+			"done", "0x124", 0, "mined", nil,
 		},
 	}
 	if unchanged(a1, b1) != false {
@@ -82,12 +82,12 @@ func TestUnchangedFunc(t *testing.T) {
 	// test identical statuses
 	a1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	b1 = map[common.ActivityID]common.ActivityStatus{
 		common.ActivityID{1, "1"}: common.ActivityStatus{
-			"done", "0x123", "mined", nil,
+			"done", "0x123", 0, "mined", nil,
 		},
 	}
 	if unchanged(a1, b1) != true {

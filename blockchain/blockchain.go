@@ -30,6 +30,7 @@ const (
 	FeeToWalletEvent string = "0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"
 	BurnFeeEvent     string = "0xf838f6ddc89706878e3c3e698e9b5cbfbf2c0e3d3dcd0bd2e00f1ccf313e0185"
 	TradeEvent       string = "0x1849bd6a030a1bca28b83437fd3de96f3d27a5d172fa7e9c78e7b61468928a39"
+	UserCatEvent     string = "0x0aeb0f7989a09b8cccf58cea1aefa196ccf738cb14781d6910448dd5649d0e6e"
 )
 
 var (
@@ -557,7 +558,7 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint u
 	// we have to track events from network and fee burner contracts
 	// including their old contracts
 	addresses := []ethereum.Address{}
-	addresses = append(addresses, self.networkAddr, self.burnerAddr)
+	addresses = append(addresses, self.networkAddr, self.burnerAddr, self.whitelistAddr)
 	addresses = append(addresses, self.oldNetworks...)
 	addresses = append(addresses, self.oldBurners...)
 	param := ether.FilterQuery{
@@ -569,6 +570,7 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint u
 				ethereum.HexToHash(TradeEvent),
 				ethereum.HexToHash(BurnFeeEvent),
 				ethereum.HexToHash(FeeToWalletEvent),
+				ethereum.HexToHash(UserCatEvent),
 			},
 		},
 	}
@@ -577,8 +579,8 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint u
 }
 
 // return timestamp increasing array of trade log
-func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate float64) ([]common.TradeLog, error) {
-	result := []common.TradeLog{}
+func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate float64) ([]common.KNLog, error) {
+	result := []common.KNLog{}
 	// get all logs from fromBlock to best block
 	logs, err := self.GetRawLogs(fromBlock, 0, timepoint)
 	if err != nil {
@@ -612,6 +614,21 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate floa
 			} else {
 				topic := l.Topics[0]
 				switch topic.Hex() {
+				case UserCatEvent:
+					addr, cat := LogDataToCatLog(l.Data)
+					t, err := self.InterpretTimestamp(
+						l.BlockNumber,
+						l.TxIndex,
+					)
+					if err != nil {
+						return result, err
+					}
+					result = append(result, common.SetCatLog{
+						Timestamp:   t,
+						BlockNumber: l.BlockNumber,
+						Address:     addr,
+						Category:    cat,
+					})
 				case FeeToWalletEvent:
 					reserveAddr, walletAddr, walletFee := LogDataToFeeWalletParams(l.Data)
 					tradeLog.ReserveAddress = reserveAddr
