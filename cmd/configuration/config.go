@@ -54,6 +54,8 @@ type Config struct {
 	FeeBurnerAddress ethereum.Address
 	NetworkAddress   ethereum.Address
 	WhitelistAddress ethereum.Address
+
+	ChainType string
 }
 
 func (self *Config) MapTokens() map[string]common.Token {

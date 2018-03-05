@@ -59,6 +59,7 @@ type Blockchain struct {
 	nonce         NonceCorpus
 	nonceDeposit  NonceCorpus
 	broadcaster   *Broadcaster
+	chainType     string
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
@@ -416,17 +417,6 @@ func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Has
 	return json, json.BlockNumber == nil, nil
 }
 
-func (self *Blockchain) TransactionReceipt(ctx context.Context, txHash ethereum.Hash) (*Receipt, error) {
-	var r *Receipt
-	err := self.rpcClient.CallContext(ctx, &r, "eth_getTransactionReceipt", txHash)
-	if err == nil {
-		if r == nil {
-			return nil, ether.NotFound
-		}
-	}
-	return r, err
-}
-
 func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	option := context.Background()
 	tx, pending, err := self.TransactionByHash(option, hash)
@@ -435,16 +425,25 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 		if pending {
 			return "", 0, nil
 		} else {
-			receipt, err := self.TransactionReceipt(option, hash)
+			receipt, err := self.client.TransactionReceipt(option, hash)
 			if err != nil {
+				// incompatibily between geth and parity
+				// so even err is not nil, receipt is still there
+				// and have valid fields
 				if receipt != nil {
-					// incompatibily between geth and parity
-					if receipt.Status == 1 {
-						// successful tx
-						return "mined", tx.BlockNumber().Uint64(), nil
+					// only byzantium has status field at the moment
+					// mainnet, ropsten are byzantium, other chains such as
+					// devchain, kovan are not
+					if self.chainType == "byzantium" {
+						if receipt.Status == 1 {
+							// successful tx
+							return "mined", tx.BlockNumber().Uint64(), nil
+						} else {
+							// failed tx
+							return "failed", tx.BlockNumber().Uint64(), nil
+						}
 					} else {
-						// failed tx
-						return "failed", tx.BlockNumber().Uint64(), nil
+						return "mined", tx.BlockNumber().Uint64(), nil
 					}
 				} else {
 					// networking issue
@@ -735,7 +734,8 @@ func NewBlockchain(
 	clients map[string]*ethclient.Client,
 	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
 	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
-	nonceDeposit NonceCorpus) (*Blockchain, error) {
+	nonceDeposit NonceCorpus,
+	chainType string) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper, err := NewKNWrapperContract(wrapperAddr, etherCli)
 	if err != nil {
@@ -775,5 +775,6 @@ func NewBlockchain(
 		nonce:         nonceCorpus,
 		nonceDeposit:  nonceDeposit,
 		broadcaster:   NewBroadcaster(clients),
+		chainType:     chainType,
 	}, nil
 }

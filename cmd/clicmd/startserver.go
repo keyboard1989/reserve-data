@@ -167,6 +167,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.DepositSigner,
 		nonceCorpus,
 		nonceDeposit,
+		config.ChainType,
 	)
 	if err != nil {
 		panic(err)
