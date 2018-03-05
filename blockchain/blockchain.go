@@ -416,6 +416,17 @@ func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Has
 	return json, json.BlockNumber == nil, nil
 }
 
+func (self *Blockchain) TransactionReceipt(ctx context.Context, txHash ethereum.Hash) (*Receipt, error) {
+	var r *Receipt
+	err := self.rpcClient.CallContext(ctx, &r, "eth_getTransactionReceipt", txHash)
+	if err == nil {
+		if r == nil {
+			return nil, ether.NotFound
+		}
+	}
+	return r, err
+}
+
 func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	option := context.Background()
 	tx, pending, err := self.TransactionByHash(option, hash)
@@ -424,7 +435,7 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 		if pending {
 			return "", 0, nil
 		} else {
-			receipt, err := self.client.TransactionReceipt(option, hash)
+			receipt, err := self.TransactionReceipt(option, hash)
 			if err != nil {
 				if receipt != nil {
 					// incompatibily between geth and parity
