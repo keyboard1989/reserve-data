@@ -97,7 +97,7 @@ func (self *Intermediator) CheckAccStatusFromBlockChain(timepoint uint64) {
 			log.Printf("Intermediator: base sentAmount is %.5f, token decimal is %d", sentAmount, token.Decimal)
 			log.Printf("Intermediator: Sent amount is %.5f , balance is %.5f", sentAmount, accBalance[tokenID].ToBalanceResponse(token.Decimal).Balance)
 
-			if accBalance[tokenID].ToBalanceResponse(token.Decimal).Balance > sentAmount {
+			if accBalance[tokenID].ToBalanceResponse(token.Decimal).Balance >= sentAmount {
 				//get token and exchange object from IDs in the activity
 				self.DepositToExchange(token, exchange, sentAmount)
 			} else {

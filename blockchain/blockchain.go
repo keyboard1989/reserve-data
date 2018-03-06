@@ -372,7 +372,7 @@ func (self *Blockchain) SetRates(
 
 func packData(method string, params ...interface{}) ([]byte, error) {
 	file, err := os.Open(
-		"/go/src/github.com/KyberNetwork/reserve-bundle/dev-chain/smart-contracts/contracts/abi/ERC20.abi")
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/ERC20.abi")
 	if err != nil {
 		return nil, err
 	}
@@ -380,8 +380,9 @@ func packData(method string, params ...interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := packabi.Pack(method, params)
+	data, err := packabi.Pack(method, params...)
 	if err != nil {
+		log.Println("Intermediator: Can not pack the data")
 		return nil, err
 	}
 	return data, nil
@@ -397,8 +398,17 @@ func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchange
 	if err != nil {
 		return nil, err
 	}
-	msg := ether.CallMsg{From: opts.From, To: &exchangeAddress, Data: data}
+	log.Printf("Intermediator: Data is %v", data)
+	msg := ether.CallMsg{From: opts.From, To: &exchangeAddress, Value: big.NewInt(0), Data: data}
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
+	if err != nil {
+		log.Printf("Intermediator: Can not estimate gas %v", err)
+		return nil, err
+	}
+	log.Println("Intermediator: gas limit estimated is : %d", gasLimit)
+	if gasLimit.Cmp(big.NewInt(21000)) < 0 {
+		gasLimit = big.NewInt(21000)
+	}
 	//build tx, sign and send
 	tx := types.NewTransaction(opts.Nonce.Uint64(), exchangeAddress, amount, gasLimit, opts.GasPrice, nil)
 	signTX, err := self.intermediateSigner.Sign(tx)
