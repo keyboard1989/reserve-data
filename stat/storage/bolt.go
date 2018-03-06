@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	KYC_CATEGORY         string = "0x0000000000000000000000000000000000000000000000000000000000000004"
 	MAX_NUMBER_VERSION   int    = 1000
 	MAX_GET_RATES_PERIOD uint64 = 86400000 //1 days in milisec
 
@@ -458,7 +459,7 @@ func (self *BoltStorage) UpdateUserAddresses(user string, addrs []string) error 
 			b.Put([]byte(address), []byte{1})
 			cat := catBk.Get([]byte(address))
 			log.Printf("category of %s: %s", address, cat)
-			if string(cat) != "0x4" {
+			if string(cat) != KYC_CATEGORY {
 				pendingBk.Put([]byte(address), []byte{1})
 			}
 		}

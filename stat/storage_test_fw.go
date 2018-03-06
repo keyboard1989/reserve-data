@@ -83,7 +83,7 @@ func (self *StorageTest) TestUpdateUserAddressesThenStoreCatLog() error {
 	addr1 := "0x8180a5ca4e3b94045e05a9313777955f7518d757"
 	addr2 := "0xcbac9e86e0b7160f1a8e4835ad01dd51c514afce"
 	addr3 := "0x0ccd5bd8eb6822d357d7aef833274502e8b4b8ac"
-	cat := "0x4"
+	cat := "0x0000000000000000000000000000000000000000000000000000000000000004"
 
 	self.storage.UpdateUserAddresses(
 		email, []string{addr1, addr3},
