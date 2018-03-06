@@ -10,5 +10,6 @@ import (
 
 type Blockchain interface {
 	FetchBalanceData(addr ethereum.Address, atBlock *big.Int, timepoint uint64) (map[string]common.BalanceEntry, error)
-	SendFromAccountToExchange(amount *big.Int, exchangeAddress ethereum.Address) (*types.Transaction, error)
+	SendETHFromAccountToExchange(amount *big.Int, exchangeAddress ethereum.Address) (*types.Transaction, error)
+	SendTokenFromAccountToExchange(amount *big.Int, exchangeAddress ethereum.Address) (*types.Transaction, error)
 }

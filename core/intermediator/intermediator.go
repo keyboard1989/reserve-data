@@ -8,6 +8,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type Intermediator struct {
@@ -72,6 +73,7 @@ func (self *Intermediator) CheckAccStatusFromBlockChain(timepoint uint64) {
 			tokenID, ok1 := pending.Params["token"].(string)
 			exchangeID, ok2 := pending.Params["exchange"].(string)
 			sentAmountStr, _ := pending.Params["amount"].(string)
+			log.Printf("Intermediator: sentAmountStr= %s", sentAmountStr)
 			sentAmount, ok4 := strconv.ParseFloat(sentAmountStr, 64)
 			if ok4 != nil {
 				log.Println("Intermediator: Activity record is malformed, cannot read the exchange amount")
@@ -92,14 +94,15 @@ func (self *Intermediator) CheckAccStatusFromBlockChain(timepoint uint64) {
 			if err != nil {
 				log.Printf("Intermediator: Exchange is not supported: %v", err)
 			}
-			log.Printf("Sent amount is %.5f , balance is %.5f", sentAmount, accBalance[tokenID].ToBalanceResponse(token.Decimal).Balance)
+			log.Printf("Intermediator: base sentAmount is %.5f, token decimal is %d", sentAmount, token.Decimal)
+			log.Printf("Intermediator: Sent amount is %.5f , balance is %.5f", sentAmount, accBalance[tokenID].ToBalanceResponse(token.Decimal).Balance)
 
 			if accBalance[tokenID].ToBalanceResponse(token.Decimal).Balance > sentAmount {
 				//get token and exchange object from IDs in the activity
-
 				self.DepositToExchange(token, exchange, sentAmount)
+			} else {
+				log.Printf("Intermediator: Insufficient Amount ")
 			}
-
 		}
 	}
 
@@ -108,6 +111,7 @@ func (self *Intermediator) CheckAccStatusFromBlockChain(timepoint uint64) {
 
 func (self *Intermediator) DepositToExchange(token common.Token, exchange common.Exchange, amount float64) {
 	exchangeAddress, supported := exchange.Address(token)
+	log.Println()
 	if !supported {
 		log.Printf("ERROR: Intermediator: Token %s is not supported on Exchange %v", token.ID, exchange.ID)
 		return
@@ -117,8 +121,13 @@ func (self *Intermediator) DepositToExchange(token common.Token, exchange common
 	FAmount.Mul(FAmount, FDecimal)
 	IAmount := big.NewInt(0)
 	FAmount.Int(IAmount)
-
-	tx, err := self.blockchain.SendFromAccountToExchange(IAmount, exchangeAddress)
+	var tx *types.Transaction
+	var err error
+	if token.ID == "ETH" {
+		tx, err = self.blockchain.SendETHFromAccountToExchange(IAmount, exchangeAddress)
+	} else {
+		tx, err = self.blockchain.SendTokenFromAccountToExchange(IAmount, exchangeAddress)
+	}
 	if err != nil {
 		log.Printf("ERROR: Intermediator: Can not send transaction to exchange: %v", err)
 		return

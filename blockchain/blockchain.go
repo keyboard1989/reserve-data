@@ -7,12 +7,14 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ether "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -368,22 +370,71 @@ func (self *Blockchain) SetRates(
 	}
 }
 
-func (self *Blockchain) SendFromAccountToExchange(amount *big.Int, exchangeAddress ethereum.Address) (*types.Transaction, error) {
+func packData(method string, params ...interface{}) ([]byte, error) {
+	file, err := os.Open(
+		"/go/src/github.com/KyberNetwork/reserve-bundle/dev-chain/smart-contracts/contracts/abi/ERC20.abi")
+	if err != nil {
+		return nil, err
+	}
+	packabi, err := abi.JSON(file)
+	if err != nil {
+		return nil, err
+	}
+	data, err := packabi.Pack(method, params)
+	if err != nil {
+		return nil, err
+	}
+	return data, nil
+}
+
+func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchangeAddress ethereum.Address) (*types.Transaction, error) {
+
 	opts, cancel, err := self.getIntermediateTransactOpts(nil, nil)
 	ctx := opts.Context
 	defer cancel()
-	tx := types.NewTransaction(opts.Nonce.Uint64(), exchangeAddress, amount, opts.GasLimit, opts.GasPrice, nil)
+	//build msg and get gas limit
+	data, err := packData("transfer", exchangeAddress, amount)
+	if err != nil {
+		return nil, err
+	}
+	msg := ether.CallMsg{From: opts.From, To: &exchangeAddress, Data: data}
+	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
+	//build tx, sign and send
+	tx := types.NewTransaction(opts.Nonce.Uint64(), exchangeAddress, amount, gasLimit, opts.GasPrice, nil)
 	signTX, err := self.intermediateSigner.Sign(tx)
 	if err != nil {
 		log.Println("Intermediator: Can not sign the transaction")
 		return nil, err
 	}
-	err = self.client.SendTransaction(ctx, tx)
+	err = self.client.SendTransaction(ctx, signTX)
 	if err != nil {
 		log.Println("ERROR: Can't send the transaction")
 		return nil, err
 	}
-	return signTX, nil
+	return tx, nil
+}
+
+func (self *Blockchain) SendETHFromAccountToExchange(amount *big.Int, exchangeAddress ethereum.Address) (*types.Transaction, error) {
+
+	opts, cancel, err := self.getIntermediateTransactOpts(nil, nil)
+	ctx := opts.Context
+	defer cancel()
+	//build msg and get gas limit
+	msg := ether.CallMsg{From: opts.From, To: &exchangeAddress, Value: amount, Data: nil}
+	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
+	//build tx, sign and send
+	tx := types.NewTransaction(opts.Nonce.Uint64(), exchangeAddress, amount, gasLimit, opts.GasPrice, nil)
+	signTX, err := self.intermediateSigner.Sign(tx)
+	if err != nil {
+		log.Println("Intermediator: Can not sign the transaction")
+		return nil, err
+	}
+	err = self.client.SendTransaction(ctx, signTX)
+	if err != nil {
+		log.Println("ERROR: Can't send the transaction")
+		return nil, err
+	}
+	return tx, nil
 }
 
 func (self *Blockchain) Send(
