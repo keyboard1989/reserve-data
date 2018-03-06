@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -97,7 +98,7 @@ func (self *Verification) GetResponse(
 	} else {
 		defer resp.Body.Close()
 		resp_body, err = ioutil.ReadAll(resp.Body)
-		Info.Printf("request to %s, got response: %s\n", req.URL, common.TruncStr(resp_body))
+		Info.Printf("request to %s, got response: %s\n", req.URL, resp_body)
 		return resp_body, err
 	}
 }
@@ -117,12 +118,15 @@ func (self *Verification) GetPendingActivities(timepoint uint64) ([]common.Activ
 	return result, err
 }
 
-func (self *Verification) GetActivities(timepoint uint64) ([]common.ActivityRecord, error) {
+func (self *Verification) GetActivities(timepoint, fromTime, toTime uint64) ([]common.ActivityRecord, error) {
 	result := []common.ActivityRecord{}
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.base_url+"/activities",
-		map[string]string{},
+		map[string]string{
+			"fromTime": strconv.FormatUint(fromTime, 10),
+			"toTime":   strconv.FormatUint(toTime, 10),
+		},
 		true,
 		timepoint,
 	)
@@ -233,7 +237,9 @@ func (self *Verification) CheckPendingAuthData(activityID common.ActivityID, tim
 }
 
 func (self *Verification) CheckActivities(activityID common.ActivityID, timepoint uint64) {
-	activities, err := self.GetActivities(timepoint)
+	toTime := common.GetTimepoint()
+	fromTime := toTime - 3600000
+	activities, err := self.GetActivities(timepoint, fromTime, toTime)
 	if err != nil {
 		Error.Println(err.Error())
 	}

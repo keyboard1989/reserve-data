@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -62,13 +61,25 @@ func run(verify *Verification) {
 			log.Panic(err.Error())
 		}
 	case "getauthdata":
-		authData, err := verify.GetAuthData(common.GetTimepoint())
+		_, err := verify.GetAuthData(common.GetTimepoint())
 		if err != nil {
 			log.Println(err.Error())
 			os.Exit(1)
 		}
-		authDataJSON, _ := json.Marshal(authData)
-		log.Println("Authdata: ", string(authDataJSON))
+	case "getpendingactivities":
+		_, err := verify.GetPendingActivities(common.GetTimepoint())
+		if err != nil {
+			log.Println(err.Error())
+			os.Exit(1)
+		}
+	case "getactivities":
+		toTime := common.GetTimepoint()
+		fromTime := toTime - 3600000
+		_, err := verify.GetActivities(common.GetTimepoint(), fromTime, toTime)
+		if err != nil {
+			log.Println(err.Error())
+			os.Exit(1)
+		}
 	default:
 		printUsage()
 		os.Exit(1)

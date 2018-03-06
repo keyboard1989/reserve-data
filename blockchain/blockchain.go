@@ -61,6 +61,7 @@ type Blockchain struct {
 	nonceDeposit       NonceCorpus
 	nonceIntermediate  NonceCorpus
 	broadcaster        *Broadcaster
+	chainType          string
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
@@ -778,7 +779,8 @@ func NewBlockchain(
 	clients map[string]*ethclient.Client,
 	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
 	signer Signer, depositSigner Signer, intermediateSigner Signer, nonceCorpus NonceCorpus,
-	nonceDeposit NonceCorpus, nonceIntermediate NonceCorpus) (*Blockchain, error) {
+	nonceDeposit NonceCorpus, nonceIntermediate NonceCorpus,
+	chainType string) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper, err := NewKNWrapperContract(wrapperAddr, etherCli)
 	if err != nil {
