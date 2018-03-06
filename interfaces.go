@@ -18,6 +18,7 @@ type ReserveStats interface {
 	GetCapByUser(userID string) (*common.UserCap, error)
 	GetCapByAddress(addr ethereum.Address) (*common.UserCap, error)
 	ExceedDailyLimit(addr ethereum.Address) (bool, error)
+	GetPendingAddresses() ([]string, error)
 
 	UpdateUserAddresses(userID string, addresses []ethereum.Address) error
 

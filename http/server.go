@@ -1634,6 +1634,27 @@ func (self *HTTPServer) GetCapByUser(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) GetPendingAddresses(c *gin.Context) {
+	data, err := self.stat.GetPendingAddresses()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 	var err error
 	postForm, ok := self.Authenticated(c, []string{"user", "addresses"}, []Permission{ConfirmConfPermission})
@@ -1737,6 +1758,7 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-wallet-fee", self.GetWalletFee)
 		self.r.GET("/get-user-volume", self.GetUserVolume)
 		self.r.POST("/update-user-addresses", self.UpdateUserAddresses)
+		self.r.GET("/get-pending-addresses", self.GetPendingAddresses)
 	}
 
 	self.r.Run(self.host)

@@ -103,6 +103,10 @@ func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 	return self.storage.GetTradeLogs(fromTime, toTime)
 }
 
+func (self ReserveStats) GetPendingAddresses() ([]string, error) {
+	return self.storage.GetPendingAddresses()
+}
+
 func (self ReserveStats) Run() error {
 	return self.fetcher.Run()
 }
