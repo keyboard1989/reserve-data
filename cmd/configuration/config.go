@@ -58,6 +58,8 @@ type Config struct {
 	WhitelistAddress ethereum.Address
 	ImtorAddress     ethereum.Address
 	ImtorRunner      intermediator.IntermediatorRunner
+
+	ChainType string
 }
 
 func (self *Config) MapTokens() map[string]common.Token {
@@ -95,9 +97,9 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"https://mainnet.infura.io",
+		"https://semi-node.kyber.network",
 		[]string{
-			"https://node.kyber.network",
+			"https://semi-node.kyber.network",
 			"https://mainnet.infura.io",
 			"https://api.mycryptoapi.com/eth",
 			"https://api.myetherapi.com/eth",
@@ -110,9 +112,9 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"https://mainnet.infura.io",
+		"https://semi-node.kyber.network",
 		[]string{
-			"https://node.kyber.network",
+			"https://semi-node.kyber.network",
 			"https://mainnet.infura.io",
 			"https://api.mycryptoapi.com/eth",
 			"https://api.myetherapi.com/eth",
@@ -125,9 +127,9 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
-		"https://mainnet.infura.io",
+		"https://semi-node.kyber.network",
 		[]string{
-			"https://node.kyber.network",
+			"https://semi-node.kyber.network",
 			"https://mainnet.infura.io",
 			"https://api.mycryptoapi.com/eth",
 			"https://api.myetherapi.com/eth",

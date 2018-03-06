@@ -462,17 +462,6 @@ func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Has
 	return json, json.BlockNumber == nil, nil
 }
 
-func (self *Blockchain) TransactionReceipt(ctx context.Context, txHash ethereum.Hash) (*Receipt, error) {
-	var r *Receipt
-	err := self.rpcClient.CallContext(ctx, &r, "eth_getTransactionReceipt", txHash)
-	if err == nil {
-		if r == nil {
-			return nil, ether.NotFound
-		}
-	}
-	return r, err
-}
-
 func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	option := context.Background()
 	tx, pending, err := self.TransactionByHash(option, hash)
@@ -481,18 +470,24 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 		if pending {
 			return "", 0, nil
 		} else {
-			receipt, err := self.TransactionReceipt(option, hash)
+			receipt, err := self.client.TransactionReceipt(option, hash)
 			if err != nil {
 				log.Println("Get receipt err: ", err.Error())
+				log.Printf("Receipt: %+v", receipt)
 				if receipt != nil {
-					log.Printf("Receipt: %+v", receipt)
-					// incompatibily between geth and parity
-					if receipt.Status == 1 {
-						// successful tx
-						return "mined", tx.BlockNumber().Uint64(), nil
+					// only byzantium has status field at the moment
+					// mainnet, ropsten are byzantium, other chains such as
+					// devchain, kovan are not
+					if self.chainType == "byzantium" {
+						if receipt.Status == 1 {
+							// successful tx
+							return "mined", tx.BlockNumber().Uint64(), nil
+						} else {
+							// failed tx
+							return "failed", tx.BlockNumber().Uint64(), nil
+						}
 					} else {
-						// failed tx
-						return "failed", tx.BlockNumber().Uint64(), nil
+						return "mined", tx.BlockNumber().Uint64(), nil
 					}
 				} else {
 					// networking issue
@@ -638,10 +633,10 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint u
 }
 
 // return timestamp increasing array of trade log
-func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate float64) ([]common.KNLog, error) {
+func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, timepoint uint64, ethRate float64) ([]common.KNLog, error) {
 	result := []common.KNLog{}
 	// get all logs from fromBlock to best block
-	logs, err := self.GetRawLogs(fromBlock, 0, timepoint)
+	logs, err := self.GetRawLogs(fromBlock, toBlock, timepoint)
 	if err != nil {
 		return result, err
 	}
@@ -655,17 +650,19 @@ func (self *Blockchain) GetLogs(fromBlock uint64, timepoint uint64, ethRate floa
 				if tradeLog != nil {
 					result = append(result, *tradeLog)
 				}
-				// start new TradeLog
-				tradeLog = &common.TradeLog{}
-				tradeLog.BlockNumber = l.BlockNumber
-				tradeLog.TransactionHash = l.TxHash
-				tradeLog.TransactionIndex = l.TxIndex
-				tradeLog.Timestamp, err = self.InterpretTimestamp(
-					tradeLog.BlockNumber,
-					tradeLog.TransactionIndex,
-				)
-				if err != nil {
-					return result, err
+				if len(l.Topics) > 0 && l.Topics[0].Hex() != UserCatEvent {
+					// start new TradeLog
+					tradeLog = &common.TradeLog{}
+					tradeLog.BlockNumber = l.BlockNumber
+					tradeLog.TransactionHash = l.TxHash
+					tradeLog.TransactionIndex = l.TxIndex
+					tradeLog.Timestamp, err = self.InterpretTimestamp(
+						tradeLog.BlockNumber,
+						tradeLog.TransactionIndex,
+					)
+					if err != nil {
+						return result, err
+					}
 				}
 			}
 			if len(l.Topics) == 0 {

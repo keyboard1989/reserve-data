@@ -25,6 +25,25 @@ func GetAddressConfig(filePath string) common.AddressConfig {
 	return addressConfig
 }
 
+func GetChainType(kyberENV string) string {
+	switch kyberENV {
+	case "mainnet", "production":
+		return "byzantium"
+	case "dev":
+		return "homestead"
+	case "kovan":
+		return "homestead"
+	case "staging":
+		return "byzantium"
+	case "simulation":
+		return "homestead"
+	case "ropsten":
+		return "byzantium"
+	default:
+		return "homestead"
+	}
+}
+
 func GetConfigPaths(kyberENV string) SettingPaths {
 	switch kyberENV {
 	case "mainnet", "production":
@@ -124,6 +143,9 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	if !authEnbl {
 		log.Printf("\nWARNING: No authentication mode\n")
 	}
+
+	chainType := GetChainType(kyberENV)
+
 	return &Config{
 		ActivityStorage:         dataStorage,
 		DataStorage:             dataStorage,
@@ -151,5 +173,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		WhitelistAddress:        whitelistAddr,
 		ImtorAddress:            imtorAddr,
 		ImtorRunner:             imrunner,
+		ChainType:               chainType,
 	}
 }

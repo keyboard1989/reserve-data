@@ -122,10 +122,15 @@ func serverStart(cmd *cobra.Command, args []string) {
 	}
 
 	if enableStat {
+		var deployBlock uint64
+		if kyberENV == "mainnet" || kyberENV == "production" {
+			deployBlock = 5069586
+		}
 		statFetcher = stat.NewFetcher(
 			config.StatFetcherStorage,
 			stat.NewCMCEthUSDRate(),
 			config.StatFetcherRunner,
+			deployBlock,
 		)
 	}
 
@@ -166,6 +171,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		nonceCorpus,
 		nonceDeposit,
 		nonceIntemediate,
+		config.ChainType,
 	)
 	if err != nil {
 		panic(err)
