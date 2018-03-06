@@ -21,6 +21,9 @@ type Storage interface {
 	GetAddressesOfUser(user string) ([]string, error)
 	// returns lowercased user identity of the address
 	GetUserOfAddress(addr string) (string, error)
+	// returns all of addresses that's not pushed to the chain
+	// for kyced category
+	GetPendingAddresses() ([]string, error)
 
 	UpdateLogBlock(block uint64, timepoint uint64) error
 	StoreTradeLog(stat common.TradeLog, timepoint uint64) error

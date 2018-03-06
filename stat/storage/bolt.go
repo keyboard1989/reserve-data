@@ -29,9 +29,10 @@ const (
 	HOUR_BUCKET          string = "hour"
 	DAY_BUCKET           string = "day"
 
-	ADDRESS_CATEGORY string = "address_category"
-	ADDRESS_ID       string = "address_id"
-	ID_ADDRESSES     string = "id_addresses"
+	ADDRESS_CATEGORY  string = "address_category"
+	ADDRESS_ID        string = "address_id"
+	ID_ADDRESSES      string = "id_addresses"
+	PENDING_ADDRESSES string = "pending_addresses"
 )
 
 type BoltStorage struct {
@@ -56,6 +57,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(ID_ADDRESSES))
 		tx.CreateBucket([]byte(ADDRESS_CATEGORY))
 		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
+		tx.CreateBucket([]byte(PENDING_ADDRESSES))
 
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		metrics := []string{ASSETS_VOLUME_BUCKET, BURN_FEE_BUCKET, WALLET_FEE_BUCKET, USER_VOLUME_BUCKET}
@@ -402,6 +404,20 @@ func (self *BoltStorage) GetCategory(addr string) (string, error) {
 	return result, err
 }
 
+func (self *BoltStorage) GetPendingAddresses() ([]string, error) {
+	var err error
+	result := []string{}
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_ADDRESSES))
+		b.ForEach(func(k, v []byte) error {
+			result = append(result, string(k))
+			return nil
+		})
+		return nil
+	})
+	return result, err
+}
+
 func (self *BoltStorage) UpdateUserAddresses(user string, addrs []string) error {
 	user = strings.ToLower(user)
 	addresses := []string{}
@@ -421,7 +437,17 @@ func (self *BoltStorage) UpdateUserAddresses(user string, addrs []string) error 
 			b = tx.Bucket([]byte(ADDRESS_ID))
 			b.Put([]byte(address), []byte(user))
 		}
+		// remove old addresses from pending bucket
+		pendingBk := tx.Bucket([]byte(PENDING_ADDRESSES))
+		oldAddrs, err := self.GetAddressesOfUser(user)
+		if err != nil {
+			return err
+		}
+		for _, oldAddr := range oldAddrs {
+			pendingBk.Delete([]byte(oldAddr))
+		}
 		// update addresses bucket for real user
+		// add new addresses to pending bucket
 		b := tx.Bucket([]byte(ID_ADDRESSES))
 		b, err = b.CreateBucketIfNotExists([]byte(user))
 		if err != nil {
@@ -429,6 +455,7 @@ func (self *BoltStorage) UpdateUserAddresses(user string, addrs []string) error 
 		}
 		for _, address := range addresses {
 			b.Put([]byte(address), []byte{1})
+			pendingBk.Put([]byte(address), []byte{1})
 		}
 		return nil
 	})
@@ -459,6 +486,9 @@ func (self *BoltStorage) StoreCatLog(l common.SetCatLog) error {
 		// add user to map
 		b = tx.Bucket([]byte(ADDRESS_ID))
 		b.Put(addrBytes, user)
+		// remove address from pending list
+		b = tx.Bucket([]byte(PENDING_ADDRESSES))
+		b.Delete(addrBytes)
 		return nil
 	})
 	return err
