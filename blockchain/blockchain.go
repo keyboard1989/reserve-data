@@ -483,7 +483,9 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 		} else {
 			receipt, err := self.TransactionReceipt(option, hash)
 			if err != nil {
+				log.Println("Get receipt err: ", err.Error())
 				if receipt != nil {
+					log.Printf("Receipt: %+v", receipt)
 					// incompatibily between geth and parity
 					if receipt.Status == 1 {
 						// successful tx
