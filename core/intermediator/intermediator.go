@@ -3,6 +3,7 @@ package intermediator
 import (
 	"log"
 	"math/big"
+	"strconv"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
@@ -37,6 +38,7 @@ func (self *Intermediator) FetchAccountBalanceFromBlockchain(timepoint uint64) (
 }
 
 func (self *Intermediator) CheckAccStatusFromBlockChain(timepoint uint64) {
+	log.Printf("Intermediator: Get pending....")
 	pendings, err := self.storage.GetPendingActivities()
 	if err != nil {
 		log.Printf("Intermediator: Getting pending activites failed: %s\n", err)
@@ -53,15 +55,27 @@ func (self *Intermediator) CheckAccStatusFromBlockChain(timepoint uint64) {
 			compare_map[act.ID] = act
 		}
 	}
+
+	log.Printf("Intermediator: check pending....")
+
 	//loop through the pendings, only concern the action which statisfy the following conditions:
 	// 1. is deposit.
 	// 2. mining status is mined.
 	// 3. exchange status is empty
 	// 4. changed comapre to the last get pending activities.
 	for _, pending := range pendings {
+		log.Printf("Intermediator: action is %v", pending)
+		log.Printf("Intermediator: exchange status is %v", pending.ExchangeStatus)
+		log.Printf("Intermediator: mining status is %v", pending.MiningStatus)
+		log.Printf("Intermediator: amount is: %v ", pending.Params["amount"])
 		if pending.Action == "deposit" && pending.MiningStatus == "mined" && pending.ExchangeStatus == "" && !unchanged(compare_map, pending) {
 			tokenID, ok1 := pending.Params["token"].(string)
 			exchangeID, ok2 := pending.Params["exchange"].(string)
+			sentAmountStr, _ := pending.Params["amount"].(string)
+			sentAmount, ok4 := strconv.ParseFloat(sentAmountStr, 64)
+			if ok4 != nil {
+				log.Println("Intermediator: Activity record is malformed, cannot read the exchange amount")
+			}
 			if (!ok1) || (!ok2) {
 				log.Println("Intermediator: Activity record is malformed, cannot read the exchange/ token")
 			}
@@ -70,25 +84,25 @@ func (self *Intermediator) CheckAccStatusFromBlockChain(timepoint uint64) {
 			if err != nil {
 				log.Printf("Intermediator: can not get account balance %v", err)
 			}
-			sentAmount, ok := pending.Params["amount"].(float64)
-			if !ok {
-				log.Println("Intermediator: Activity record is malformed, cannot read the exchange amount")
+			token, err := common.GetToken(tokenID)
+			if err != nil {
+				log.Printf("Intermediator: Token is not supported: %v", err)
 			}
-			if accBalance[tokenID].ToBalanceResponse(10).Balance > sentAmount {
+			exchange, err := common.GetExchange(exchangeID)
+			if err != nil {
+				log.Printf("Intermediator: Exchange is not supported: %v", err)
+			}
+			log.Printf("Sent amount is %.5f , balance is %.5f", sentAmount, accBalance[tokenID].ToBalanceResponse(token.Decimal).Balance)
+
+			if accBalance[tokenID].ToBalanceResponse(token.Decimal).Balance > sentAmount {
 				//get token and exchange object from IDs in the activity
-				token, err := common.GetToken(tokenID)
-				if err != nil {
-					log.Printf("Intermediator: Token is not supported: %v", err)
-				}
-				exchange, err := common.GetExchange(exchangeID)
-				if err != nil {
-					log.Printf("Intermediator: Exchange is not supported: %v", err)
-				}
+
 				self.DepositToExchange(token, exchange, sentAmount)
 			}
 
 		}
 	}
+
 	self.currentStatus = pendings
 }
 
