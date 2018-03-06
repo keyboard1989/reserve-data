@@ -453,9 +453,14 @@ func (self *BoltStorage) UpdateUserAddresses(user string, addrs []string) error 
 		if err != nil {
 			return err
 		}
+		catBk := tx.Bucket([]byte(ADDRESS_CATEGORY))
 		for _, address := range addresses {
 			b.Put([]byte(address), []byte{1})
-			pendingBk.Put([]byte(address), []byte{1})
+			cat := catBk.Get([]byte(address))
+			log.Printf("category of %s: %s", address, cat)
+			if string(cat) != "0x4" {
+				pendingBk.Put([]byte(address), []byte{1})
+			}
 		}
 		return nil
 	})
