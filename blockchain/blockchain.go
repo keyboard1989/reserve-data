@@ -513,7 +513,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.
 	return result, nil
 }
 
-func (self *Blockchain) FetchRates(timepoint uint64, block uint64) (common.AllRateEntry, error) {
+func (self *Blockchain) FetchRates(timepoint uint64, atBlock uint64, currentBlock uint64) (common.AllRateEntry, error) {
 	result := common.AllRateEntry{}
 	tokenAddrs := []ethereum.Address{}
 	validTokens := []common.Token{}
@@ -525,12 +525,12 @@ func (self *Blockchain) FetchRates(timepoint uint64, block uint64) (common.AllRa
 	}
 	timestamp := common.GetTimestamp()
 	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.wrapper.GetTokenRates(
-		nil, big.NewInt(int64(block)), self.pricingAddr, tokenAddrs,
+		nil, big.NewInt(int64(atBlock)), self.pricingAddr, tokenAddrs,
 	)
 	returnTime := common.GetTimestamp()
 	result.Timestamp = timestamp
 	result.ReturnTime = returnTime
-	result.BlockNumber = block
+	result.BlockNumber = currentBlock
 	if err != nil {
 		result.Valid = false
 		result.Error = err.Error()

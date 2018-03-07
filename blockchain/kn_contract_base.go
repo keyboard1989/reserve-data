@@ -54,7 +54,7 @@ func (self *KNContractBase) Call(opts *bind.CallOpts, atBlock *big.Int, result i
 	}
 	if err == nil && len(output) == 0 {
 		// Make sure we have a contract to operate on, and bail out otherwise.
-		if atBlock.Cmp(ethereum.Big0) == 0 {
+		if atBlock == nil || atBlock.Cmp(ethereum.Big0) == 0 {
 			code, err = self.client.CodeAt(ctx, self.address, nil)
 		} else {
 			code, err = self.client.CodeAt(ctx, self.address, atBlock)

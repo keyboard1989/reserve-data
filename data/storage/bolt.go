@@ -297,12 +297,14 @@ func (self *BoltStorage) StoreAuthSnapshot(
 		if err != nil {
 			return err
 		}
-		return b.Put(uint64ToBytes(timepoint), dataJson)
+		err = b.Put(uint64ToBytes(timepoint), dataJson)
+		return err
 	})
 	return err
 }
 
 func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) error {
+	log.Printf("Storing rate data to bolt: data(%v), timespoint(%v)", data, timepoint)
 	var err error
 	var lastEntryjson common.AllRateEntry
 	self.db.Update(func(tx *bolt.Tx) error {

@@ -90,13 +90,14 @@ func (self *Fetcher) FetchRate(timepoint uint64) {
 	var err error
 	var data common.AllRateEntry
 	if self.simulationMode {
-		data, err = self.blockchain.FetchRates(timepoint, 0)
+		data, err = self.blockchain.FetchRates(timepoint, 0, self.currentBlock)
 	} else {
-		data, err = self.blockchain.FetchRates(timepoint, self.currentBlock-1)
+		data, err = self.blockchain.FetchRates(timepoint, self.currentBlock-1, self.currentBlock)
 	}
 	if err != nil {
 		log.Printf("Fetching rates from blockchain failed: %s\n", err)
 	}
+	log.Printf("Got rates from blockchain: %+v", data)
 	err = self.storage.StoreRate(data, timepoint)
 	// fmt.Printf("balance data: %v\n", data)
 	if err != nil {
