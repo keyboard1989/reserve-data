@@ -46,10 +46,20 @@ func (self *KNContractBase) Call(opts *bind.CallOpts, atBlock *big.Int, result i
 		output []byte
 	)
 	// not support pending calling yet
-	output, err = self.client.CallContract(ctx, msg, atBlock)
+	if atBlock.Cmp(ethereum.Big0) == 0 {
+		// calling in pending state
+		output, err = self.client.CallContract(ctx, msg, nil)
+	} else {
+		output, err = self.client.CallContract(ctx, msg, atBlock)
+	}
 	if err == nil && len(output) == 0 {
 		// Make sure we have a contract to operate on, and bail out otherwise.
-		if code, err = self.client.CodeAt(ctx, self.address, nil); err != nil {
+		if atBlock.Cmp(ethereum.Big0) == 0 {
+			code, err = self.client.CodeAt(ctx, self.address, nil)
+		} else {
+			code, err = self.client.CodeAt(ctx, self.address, atBlock)
+		}
+		if err != nil {
 			return err
 		} else if len(code) == 0 {
 			return bind.ErrNoCode

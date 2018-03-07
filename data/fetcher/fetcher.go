@@ -90,7 +90,7 @@ func (self *Fetcher) FetchRate(timepoint uint64) {
 	var err error
 	var data common.AllRateEntry
 	if self.simulationMode {
-		data, err = self.blockchain.FetchRates(timepoint, self.currentBlock)
+		data, err = self.blockchain.FetchRates(timepoint, 0)
 	} else {
 		data, err = self.blockchain.FetchRates(timepoint, self.currentBlock-1)
 	}
