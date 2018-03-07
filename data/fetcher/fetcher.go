@@ -87,7 +87,13 @@ func (self *Fetcher) FetchRate(timepoint uint64) {
 	if !self.simulationMode && self.currentBlockUpdateTime-timepoint <= 5000 {
 		return
 	}
-	data, err := self.blockchain.FetchRates(timepoint, self.currentBlock-1)
+	var err error
+	var data common.AllRateEntry
+	if self.simulationMode {
+		data, err = self.blockchain.FetchRates(timepoint, self.currentBlock)
+	} else {
+		data, err = self.blockchain.FetchRates(timepoint, self.currentBlock-1)
+	}
 	if err != nil {
 		log.Printf("Fetching rates from blockchain failed: %s\n", err)
 	}
