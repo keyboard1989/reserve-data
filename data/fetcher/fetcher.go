@@ -84,7 +84,7 @@ func (self *Fetcher) RunRateFetcher() {
 
 func (self *Fetcher) FetchRate(timepoint uint64) {
 	// only fetch rates 5s after the block number is updated
-	if self.simulationMode && self.currentBlockUpdateTime-timepoint <= 5000 {
+	if !self.simulationMode && self.currentBlockUpdateTime-timepoint <= 5000 {
 		return
 	}
 	data, err := self.blockchain.FetchRates(timepoint, self.currentBlock-1)
