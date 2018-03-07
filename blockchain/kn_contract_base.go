@@ -46,7 +46,7 @@ func (self *KNContractBase) Call(opts *bind.CallOpts, atBlock *big.Int, result i
 		output []byte
 	)
 	// not support pending calling yet
-	if atBlock.Cmp(ethereum.Big0) == 0 {
+	if atBlock == nil || atBlock.Cmp(ethereum.Big0) == 0 {
 		// calling in pending state
 		output, err = self.client.CallContract(ctx, msg, nil)
 	} else {
