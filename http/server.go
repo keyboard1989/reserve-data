@@ -1666,18 +1666,19 @@ func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 	addrs := []ethereum.Address{}
 	for _, addr := range strings.Split(addresses, "-") {
 		a := ethereum.HexToAddress(addr)
-		if a.Big().Cmp(ethereum.Big0) == 0 {
-			c.JSON(
-				http.StatusOK,
-				gin.H{
-					"success": false,
-					"reason":  fmt.Sprintf("address(%s) is not valid", addr),
-				},
-			)
-			return
-		} else {
+		if a.Big().Cmp(ethereum.Big0) != 0 {
 			addrs = append(addrs, a)
 		}
+	}
+	if len(addrs) == 0 {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  fmt.Sprintf("user %s doesn't have any valid addresses in %s", user, addresses),
+			},
+		)
+		return
 	}
 	err = self.stat.UpdateUserAddresses(user, addrs)
 	if err != nil {
