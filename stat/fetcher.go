@@ -68,6 +68,7 @@ func (self *Fetcher) RunReserveRatesFetcher() {
 		log.Printf("waiting for signal from reserve rate channel")
 		t := <-self.runner.GetReserveRatesTicker()
 		log.Printf("got signal in reserve rate channel with timstamp %d", common.GetTimepoint())
+		common.TimeToTimepoint(t)
 		self.FetchReserveRates()
 		log.Printf("fetched reserve rate from blockchain")
 	}
