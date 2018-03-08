@@ -551,6 +551,10 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	}
 }
 
+func (self *Blockchain) GetReserveRates() {
+
+}
+
 func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock *big.Int) (*big.Int, error) {
 	if priceType == "buy" {
 		return self.pricing.GetRate(nil, atBlock, token, block, true, qty)

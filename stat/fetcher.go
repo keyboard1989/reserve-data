@@ -63,6 +63,21 @@ func (self *Fetcher) Run() error {
 	return nil
 }
 
+func (self *Fetcher) RunReserveRatesFetcher() {
+	for {
+		log.Printf("waiting for signal from reserve rate channel")
+		t := <-self.runner.GetReserveRatesTicker()
+		log.Printf("got signal in reserve rate channel with timstamp %d", common.GetTimepoint())
+		self.FetchReserveRates()
+		log.Printf("fetched reserve rate from blockchain")
+	}
+}
+
+func (self *Fetcher) FetchReserveRates() {
+	log.Printf("Fetching reserve and sanity rate from blockchain")
+	self.blockchain.GetReserveRates()
+}
+
 func (self *Fetcher) RunBlockAndLogFetcher() {
 	for {
 		log.Printf("waiting for signal from block channel")

@@ -20,17 +20,19 @@ type FetcherRunner interface {
 }
 
 type TickerRunner struct {
-	oduration time.Duration
-	aduration time.Duration
-	rduration time.Duration
-	bduration time.Duration
-	tduration time.Duration
-	oclock    *time.Ticker
-	aclock    *time.Ticker
-	rclock    *time.Ticker
-	bclock    *time.Ticker
-	tclock    *time.Ticker
-	signal    chan bool
+	oduration  time.Duration
+	aduration  time.Duration
+	rduration  time.Duration
+	bduration  time.Duration
+	tduration  time.Duration
+	rsduration time.Duration
+	oclock     *time.Ticker
+	aclock     *time.Ticker
+	rclock     *time.Ticker
+	bclock     *time.Ticker
+	tclock     *time.Ticker
+	rsclock    *time.Ticker
+	signal     chan bool
 }
 
 func (self *TickerRunner) GetBlockTicker() <-chan time.Time {
@@ -63,6 +65,12 @@ func (self *TickerRunner) GetTradeHistoryTicker() <-chan time.Time {
 	}
 	return self.tclock.C
 }
+func (self *TickerRunner) GetReserveRatesTicker() <-chan time.Time {
+	if self.rsclock == nil {
+		<-self.signal
+	}
+	return self.rsclock.C
+}
 
 func (self *TickerRunner) Start() error {
 	self.oclock = time.NewTicker(self.oduration)
@@ -75,6 +83,8 @@ func (self *TickerRunner) Start() error {
 	self.signal <- true
 	self.tclock = time.NewTicker(self.tduration)
 	self.signal <- true
+	self.rsclock = time.NewTicker(self.rsduration)
+	self.signal <- true
 	return nil
 }
 
@@ -84,21 +94,25 @@ func (self *TickerRunner) Stop() error {
 	self.rclock.Stop()
 	self.bclock.Stop()
 	self.tclock.Stop()
+	self.rsclock.Stop()
 	return nil
 }
 
-func NewTickerRunner(oduration, aduration, rduration, bduration, tduration time.Duration) *TickerRunner {
+func NewTickerRunner(
+	oduration, aduration, rduration, bduration, tduration, rsduration time.Duration) *TickerRunner {
 	return &TickerRunner{
 		oduration,
 		aduration,
 		rduration,
 		bduration,
 		tduration,
+		rsduration,
 		nil,
 		nil,
 		nil,
 		nil,
 		nil,
-		make(chan bool, 5),
+		nil,
+		make(chan bool, 6),
 	}
 }
