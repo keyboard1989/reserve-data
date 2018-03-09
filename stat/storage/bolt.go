@@ -34,6 +34,7 @@ const (
 	ADDRESS_ID        string = "address_id"
 	ID_ADDRESSES      string = "id_addresses"
 	PENDING_ADDRESSES string = "pending_addresses"
+	RESERVE_RATES     string = "reserve_rates"
 )
 
 type BoltStorage struct {
@@ -59,6 +60,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(ADDRESS_CATEGORY))
 		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
 		tx.CreateBucket([]byte(PENDING_ADDRESSES))
+		tx.CreateBucket([]byte(RESERVE_RATES))
 
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		metrics := []string{ASSETS_VOLUME_BUCKET, BURN_FEE_BUCKET, WALLET_FEE_BUCKET, USER_VOLUME_BUCKET}
@@ -498,4 +500,35 @@ func (self *BoltStorage) StoreCatLog(l common.SetCatLog) error {
 		return nil
 	})
 	return err
+}
+
+func (self *BoltStorage) StoreReserveRates(reserveRates common.ReserveRates, timepoint uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(RESERVE_RATES))
+		idByte := uint64ToBytes(timepoint)
+		dataJson, err := json.Marshal(reserveRates)
+		if err != nil {
+			return err
+		}
+		b.Put(idByte, dataJson)
+		return nil
+	})
+	return err
+}
+
+func (self *BoltStorage) GetReserveRates(timepoint uint64) (common.ReserveRates, error) {
+	var err error
+	var result common.ReserveRates
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(RESERVE_RATES))
+		c := b.Cursor()
+		_, data := c.Seek(uint64ToBytes(timepoint))
+		if data == nil {
+			return errors.New(fmt.Sprintf("There is no data before timepoint: %d", timepoint))
+		}
+		err := json.Unmarshal(data, &result)
+		return err
+	})
+	return result, err
 }

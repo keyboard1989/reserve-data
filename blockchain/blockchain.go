@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -551,8 +552,37 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	}
 }
 
-func (self *Blockchain) GetReserveRates() {
+func setRateEntry(reserveRate, sanityRate *big.Int) common.ReserveRateEntry {
+	rRate, _ := new(big.Float).SetInt(reserveRate).Float64()
+	sRate, _ := new(big.Float).SetInt(sanityRate).Float64()
+	rateEntry := common.ReserveRateEntry{
+		ReserveRate: rRate / math.Pow10(18),
+		SanityRate:  sRate / math.Pow10(18),
+	}
+	return rateEntry
+}
 
+func (self *Blockchain) GetReserveRates(
+	atBlock uint64, reserveAddress ethereum.Address,
+	srcAddresses, destAddr []ethereum.Address) (common.ReserveTokenRateEntry, error) {
+	result := common.ReserveTokenRateEntry{}
+	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock-1)), reserveAddress, srcAddresses, destAddr)
+	if err != nil {
+		return result, err
+	}
+	index := 0
+	for _, token := range common.SupportedTokens {
+		if token.ID != "ETH" {
+			rateEntry := setRateEntry(reserveRate[index*2], sanityRate[index*2])
+			result[fmt.Sprintf("%s-ETH", token.ID)] = rateEntry
+			rateEntry = setRateEntry(reserveRate[index*2+1], sanityRate[index*2+1])
+			result[fmt.Sprintf("ETH-%s", token.ID)] = rateEntry
+			index++
+		}
+	}
+	dataJSON, _ := json.Marshal(result)
+	log.Printf("Reserve token rate entry: %s", dataJSON)
+	return result, err
 }
 
 func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock *big.Int) (*big.Int, error) {

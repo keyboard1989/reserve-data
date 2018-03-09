@@ -6,6 +6,7 @@ import (
 	// "sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type CoinCapRateResponse []struct {
@@ -24,19 +25,22 @@ type Fetcher struct {
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 	deployBlock            uint64
+	reserveAddress         ethereum.Address
 }
 
 func NewFetcher(
 	storage Storage,
 	ethUSDRate EthUSDRate,
 	runner FetcherRunner,
-	deployBlock uint64) *Fetcher {
+	deployBlock uint64,
+	reserve ethereum.Address) *Fetcher {
 	return &Fetcher{
-		storage:     storage,
-		blockchain:  nil,
-		runner:      runner,
-		ethRate:     ethUSDRate,
-		deployBlock: deployBlock,
+		storage:        storage,
+		blockchain:     nil,
+		runner:         runner,
+		ethRate:        ethUSDRate,
+		deployBlock:    deployBlock,
+		reserveAddress: reserve,
 	}
 }
 
@@ -59,6 +63,7 @@ func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
 	go self.RunBlockAndLogFetcher()
+	go self.RunReserveRatesFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
 }
@@ -68,15 +73,38 @@ func (self *Fetcher) RunReserveRatesFetcher() {
 		log.Printf("waiting for signal from reserve rate channel")
 		t := <-self.runner.GetReserveRatesTicker()
 		log.Printf("got signal in reserve rate channel with timstamp %d", common.GetTimepoint())
-		common.TimeToTimepoint(t)
-		self.FetchReserveRates()
+		timepoint := common.TimeToTimepoint(t)
+		self.FetchReserveRates(timepoint)
 		log.Printf("fetched reserve rate from blockchain")
 	}
 }
 
-func (self *Fetcher) FetchReserveRates() {
+func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	log.Printf("Fetching reserve and sanity rate from blockchain")
-	self.blockchain.GetReserveRates()
+	var srcAddresses []ethereum.Address
+	var destAddresses []ethereum.Address
+	ETH := common.MustGetToken("ETH")
+	for _, token := range common.SupportedTokens {
+		if token.ID != "ETH" {
+			srcAddresses = append(srcAddresses, ethereum.HexToAddress(token.Address), ethereum.HexToAddress(ETH.Address))
+			destAddresses = append(destAddresses, ethereum.HexToAddress(ETH.Address), ethereum.HexToAddress(token.Address))
+		}
+	}
+	result := common.ReserveRates{}
+	tokenRate, err := self.blockchain.GetReserveRates(self.currentBlock, self.reserveAddress, srcAddresses, destAddresses)
+	if err != nil {
+		log.Printf("Cannot get reserve rate from blockchain: %s", err.Error())
+	}
+	result.BlockNumber = self.currentBlock
+	result.Timestamp = timepoint
+	result.Reserves = map[string]common.ReserveTokenRateEntry{
+		string(self.reserveAddress.Hex()): tokenRate,
+	}
+	err = self.storage.StoreReserveRates(result, timepoint)
+	if err != nil {
+		log.Printf("Cannot store reserve rate log: %s", err.Error())
+	}
+	log.Printf("Stored reserve rate log")
 }
 
 func (self *Fetcher) RunBlockAndLogFetcher() {

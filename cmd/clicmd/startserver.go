@@ -131,6 +131,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			stat.NewCMCEthUSDRate(),
 			config.StatFetcherRunner,
 			deployBlock,
+			config.ReserveAddress,
 		)
 	}
 
