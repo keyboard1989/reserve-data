@@ -423,7 +423,7 @@ func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 				}
 			}
 		}
-		return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from binance and activity ID are not consistently designed")
+		return "", errors.New("Deposit is not found in deposit list returned from Binance. This shouldn't happen unless tx returned from binance and activity ID are not consistently designed")
 	}
 }
 
