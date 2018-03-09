@@ -30,5 +30,5 @@ type Storage interface {
 	SetTradeStats(metric, freq string, t uint64, tradeStats common.TradeStats) error
 	StoreReserveRates(rate common.ReserveRates, timepoint uint64) error
 
-	GetReserveRates(timepoint uint64) (common.ReserveRates, error)
+	GetReserveRates(fromTime, toTime uint64, reserveAddr string) ([]common.ReserveRates, error)
 }

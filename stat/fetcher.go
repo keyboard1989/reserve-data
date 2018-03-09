@@ -101,10 +101,12 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 		string(self.reserveAddress.Hex()): tokenRate,
 	}
 	err = self.storage.StoreReserveRates(result, timepoint)
+	log.Printf("Reserve rate to store: %v", result)
 	if err != nil {
 		log.Printf("Cannot store reserve rate log: %s", err.Error())
+	} else {
+		log.Printf("Stored reserve rate log")
 	}
-	log.Printf("Stored reserve rate log")
 }
 
 func (self *Fetcher) RunBlockAndLogFetcher() {

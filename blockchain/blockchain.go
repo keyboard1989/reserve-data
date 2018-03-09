@@ -566,7 +566,7 @@ func (self *Blockchain) GetReserveRates(
 	atBlock uint64, reserveAddress ethereum.Address,
 	srcAddresses, destAddr []ethereum.Address) (common.ReserveTokenRateEntry, error) {
 	result := common.ReserveTokenRateEntry{}
-	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock-1)), reserveAddress, srcAddresses, destAddr)
+	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock)), reserveAddress, srcAddresses, destAddr)
 	if err != nil {
 		return result, err
 	}

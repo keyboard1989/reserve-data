@@ -140,6 +140,14 @@ func (self ReserveStats) GetCapByUser(userID string) (*common.UserCap, error) {
 	}
 }
 
+func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr string) ([]common.ReserveRates, error) {
+	var result []common.ReserveRates
+	var err error
+	result, err = self.storage.GetReserveRates(fromTime, toTime, reserveAddr)
+	log.Printf("Get reserve rate: %v", result)
+	return result, err
+}
+
 func (self ReserveStats) UpdateUserAddresses(userID string, addrs []ethereum.Address) error {
 	addresses := []string{}
 	for _, addr := range addrs {

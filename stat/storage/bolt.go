@@ -152,7 +152,7 @@ func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	return err
 }
 
-func (self *BoltStorage) UpdateLogBlock(block uint64, timepoint uint64) error {
+func (self *BoltStorage) UpdateLogBlock(block, timepoint uint64) error {
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.block = block
@@ -340,17 +340,20 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq, metric, ke
 	return result, err
 }
 
-func (self *BoltStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {
+func (self *BoltStorage) GetAssetVolume(
+	fromTime, toTime uint64, freq, asset string) (common.StatTicks, error) {
 	result, err := self.getTradeStats(fromTime, toTime, freq, ASSETS_VOLUME_BUCKET, asset)
 	return result, err
 }
 
-func (self *BoltStorage) GetBurnFee(fromTime uint64, toTime uint64, freq string, reserveAddr string) (result common.StatTicks, err error) {
+func (self *BoltStorage) GetBurnFee(
+	fromTime, toTime uint64, freq, reserveAddr string) (result common.StatTicks, err error) {
 	result, err = self.getTradeStats(fromTime, toTime, freq, BURN_FEE_BUCKET, strings.ToLower(reserveAddr))
 	return
 }
 
-func (self *BoltStorage) GetWalletFee(fromTime uint64, toTime uint64, freq string, reserveAddr string, walletAddr string) (result common.StatTicks, err error) {
+func (self *BoltStorage) GetWalletFee(
+	fromTime, toTime uint64, freq, reserveAddr, walletAddr string) (result common.StatTicks, err error) {
 	key := strings.Join([]string{
 		strings.ToLower(reserveAddr),
 		strings.ToLower(walletAddr),
@@ -359,7 +362,8 @@ func (self *BoltStorage) GetWalletFee(fromTime uint64, toTime uint64, freq strin
 	return
 }
 
-func (self *BoltStorage) GetUserVolume(fromTime uint64, toTime uint64, freq string, userAddr string) (result common.StatTicks, err error) {
+func (self *BoltStorage) GetUserVolume(
+	fromTime, toTime uint64, freq, userAddr string) (result common.StatTicks, err error) {
 	result, err = self.getTradeStats(fromTime, toTime, freq, USER_VOLUME_BUCKET, strings.ToLower(userAddr))
 	return
 }
@@ -517,17 +521,25 @@ func (self *BoltStorage) StoreReserveRates(reserveRates common.ReserveRates, tim
 	return err
 }
 
-func (self *BoltStorage) GetReserveRates(timepoint uint64) (common.ReserveRates, error) {
+func (self *BoltStorage) GetReserveRates(fromTime, toTime uint64, reserveAddr string) ([]common.ReserveRates, error) {
 	var err error
-	var result common.ReserveRates
+	var result []common.ReserveRates
+	if toTime-fromTime > MAX_GET_RATES_PERIOD {
+		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
+	}
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(RESERVE_RATES))
 		c := b.Cursor()
-		_, data := c.Seek(uint64ToBytes(timepoint))
-		if data == nil {
-			return errors.New(fmt.Sprintf("There is no data before timepoint: %d", timepoint))
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			rates := common.ReserveRates{}
+			err := json.Unmarshal(v, &rates)
+			if err != nil {
+				return err
+			}
+			result = append(result, rates)
 		}
-		err := json.Unmarshal(data, &result)
 		return err
 	})
 	return result, err
