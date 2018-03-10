@@ -562,8 +562,10 @@ type TradeLog struct {
 }
 
 type ReserveRateEntry struct {
-	ReserveRate float64
-	SanityRate  float64
+	BuyReserveRate  float64
+	BuySanityRate   float64
+	SellReserveRate float64
+	SellSanityRate  float64
 }
 
 type ReserveTokenRateEntry map[string]ReserveRateEntry
