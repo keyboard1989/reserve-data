@@ -176,7 +176,7 @@ func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error
 				log.Printf("Got more than 1 day stats. This is a bug in GetUserVolume")
 			} else {
 				for _, volume := range volumeStats {
-					totalVolume += volume
+					totalVolume += volume.(float64)
 					break
 				}
 			}

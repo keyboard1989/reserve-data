@@ -205,16 +205,25 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 	walletAddr := common.AddrToString(trade.WalletAddress)
 	userAddr := common.AddrToString(trade.UserAddress)
 
-	walletFeeKey := strings.Join([]string{reserveAddr, walletAddr}, "_")
-
-	var srcAmount, destAmount, burnFee, walletFee float64
+	var srcAmount, destAmount, ethAmount, burnFee, walletFee float64
+	var tokenAddr string
 	for _, token := range common.SupportedTokens {
 		if strings.ToLower(token.Address) == srcAddr {
 			srcAmount = common.BigToFloat(trade.SrcAmount, token.Decimal)
+			if token.IsETH() {
+				ethAmount = srcAmount
+			} else {
+				tokenAddr = strings.ToLower(token.Address)
+			}
 		}
 
 		if strings.ToLower(token.Address) == dstAddr {
 			destAmount = common.BigToFloat(trade.DestAmount, token.Decimal)
+			if token.IsETH() {
+				ethAmount = destAmount
+			} else {
+				tokenAddr = strings.ToLower(token.Address)
+			}
 		}
 	}
 
@@ -226,42 +235,21 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 		walletFee = common.BigToFloat(trade.WalletFee, eth.Decimal)
 	}
 
-	updates := []struct {
-		metric     string
-		tradeStats common.TradeStats
-	}{
-		{
-			"assets_volume",
-			common.TradeStats{
-				srcAddr: srcAmount,
-				dstAddr: destAmount,
-			},
-		},
-		{
-			"burn_fee",
-			common.TradeStats{
-				reserveAddr: burnFee,
-			},
-		},
-		{
-			"wallet_fee",
-			common.TradeStats{
-				walletFeeKey: walletFee,
-			},
-		},
-		{
-			"user_volume",
-			common.TradeStats{
-				userAddr: trade.FiatAmount,
-			},
-		},
+	updates := common.TradeStats{
+		strings.Join([]string{"assets_volume", srcAddr}, "_"):              srcAmount,
+		strings.Join([]string{"assets_volume", dstAddr}, "_"):              destAmount,
+		strings.Join([]string{"assets_eth_amount", tokenAddr}, "_"):        ethAmount,
+		strings.Join([]string{"assets_usd_amount", srcAddr}, "_"):          trade.FiatAmount,
+		strings.Join([]string{"assets_usd_amount", dstAddr}, "_"):          trade.FiatAmount,
+		strings.Join([]string{"burn_fee", reserveAddr}, "_"):               burnFee,
+		strings.Join([]string{"wallet_fee", reserveAddr, walletAddr}, "_"): walletFee,
+		strings.Join([]string{"user_volume", userAddr}, "_"):               trade.FiatAmount,
 	}
-	for _, update := range updates {
-		for _, freq := range []string{"M", "H", "D"} {
-			err = self.storage.SetTradeStats(update.metric, freq, trade.Timestamp, update.tradeStats)
-			if err != nil {
-				return
-			}
+
+	for _, freq := range []string{"M", "H", "D"} {
+		err = self.storage.SetTradeStats(freq, trade.Timestamp, updates)
+		if err != nil {
+			return
 		}
 	}
 	return
