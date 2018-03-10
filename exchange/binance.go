@@ -140,8 +140,8 @@ func (self *Binance) Name() string {
 	return "binance"
 }
 
-func (self *Binance) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
-	result, err := self.interf.OrderStatus(symbol, id, timepoint)
+func (self *Binance) QueryOrder(symbol string, id uint64) (done float64, remaining float64, finished bool, err error) {
+	result, err := self.interf.OrderStatus(symbol, id)
 	if err != nil {
 		return 0, 0, false, err
 	} else {
@@ -161,7 +161,6 @@ func (self *Binance) Trade(tradeType string, base common.Token, quote common.Tok
 		done, remaining, finished, err := self.QueryOrder(
 			base.ID+quote.ID,
 			result.OrderID,
-			timepoint+20,
 		)
 		id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
 		return id, done, remaining, finished, err
@@ -457,7 +456,7 @@ func (self *Binance) OrderStatus(id common.ActivityID, timepoint uint64) (string
 		panic(err)
 	}
 	symbol := parts[1]
-	order, err := self.interf.OrderStatus(symbol, orderID, timepoint)
+	order, err := self.interf.OrderStatus(symbol, orderID)
 	if err != nil {
 		return "", err
 	}
