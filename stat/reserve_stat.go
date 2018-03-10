@@ -140,10 +140,10 @@ func (self ReserveStats) GetCapByUser(userID string) (*common.UserCap, error) {
 	}
 }
 
-func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr string) ([]common.ReserveRates, error) {
+func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error) {
 	var result []common.ReserveRates
 	var err error
-	result, err = self.storage.GetReserveRates(fromTime, toTime, reserveAddr)
+	result, err = self.storage.GetReserveRates(fromTime, toTime, reserveAddr.Hex())
 	log.Printf("Get reserve rate: %v", result)
 	return result, err
 }

@@ -1705,13 +1705,13 @@ func (self *HTTPServer) GetReserveRate(c *gin.Context) {
 	if toTime == 0 {
 		toTime = common.GetTimepoint()
 	}
-	reserveAddr := c.Query("reserveAddr")
-	if reserveAddr == "" {
+	reserveAddr := ethereum.HexToAddress(c.Query("reserveAddr"))
+	if reserveAddr.Big().Cmp(ethereum.Big0) == 0 {
 		c.JSON(
 			http.StatusOK,
 			gin.H{
 				"success": false,
-				"reason":  "Reserve address is required",
+				"reason":  "Reserve address is invalid",
 			},
 		)
 		return

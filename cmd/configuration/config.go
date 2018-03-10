@@ -69,14 +69,14 @@ func (self *Config) MapTokens() map[string]common.Token {
 
 var ConfigPaths = map[string]SettingPaths{
 	"dev": {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
-		"https://mainnet.infura.io",
+		"https://semi-node.kyber.network",
 		[]string{
-			"https://mainnet.infura.io",
+			"https://semi-node.kyber.network",
 		},
 	},
 	"kovan": {
