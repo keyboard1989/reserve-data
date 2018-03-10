@@ -199,7 +199,7 @@ func (self *BitfinexEndpoint) Withdraw(token common.Token, amount *big.Int, addr
 	}
 }
 
-func (self *BitfinexEndpoint) GetInfo(timepoint uint64) (exchange.Bitfinfo, error) {
+func (self *BitfinexEndpoint) GetInfo() (exchange.Bitfinfo, error) {
 	result := exchange.Bitfinfo{}
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second)}
