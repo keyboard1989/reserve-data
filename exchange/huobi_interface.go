@@ -9,18 +9,18 @@ import (
 
 type HuobiInterface interface {
 	GetDepthOnePair(
-		pair common.TokenPair, timepoint uint64) (HuobiDepth, error)
+		pair common.TokenPair) (HuobiDepth, error)
 
 	OpenOrdersForOnePair(
-		pair common.TokenPair, timepoint uint64) (HuobiOrder, error)
+		pair common.TokenPair) (HuobiOrder, error)
 
-	GetInfo(timepoint uint64) (HuobiInfo, error)
+	GetInfo() (HuobiInfo, error)
 
 	GetExchangeInfo() (HuobiExchangeInfo, error)
 
 	GetDepositAddress(token string) (HuobiDepositAddress, error)
 
-	GetAccountTradeHistory(base, quote common.Token, timepoint uint64) (HuobiTradeHistory, error)
+	GetAccountTradeHistory(base, quote common.Token) (HuobiTradeHistory, error)
 
 	Withdraw(
 		token common.Token,
@@ -41,5 +41,5 @@ type HuobiInterface interface {
 	WithdrawHistory() (HuobiWithdraws, error)
 
 	OrderStatus(
-		symbol string, id uint64, timepoint uint64) (HuobiOrder, error)
+		symbol string, id uint64) (HuobiOrder, error)
 }
