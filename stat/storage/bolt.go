@@ -16,15 +16,17 @@ import (
 )
 
 const (
-	KYC_CATEGORY         string = "0x0000000000000000000000000000000000000000000000000000000000000004"
-	MAX_NUMBER_VERSION   int    = 1000
-	MAX_GET_RATES_PERIOD uint64 = 86400000 //1 days in milisec
+	KYC_CATEGORY       string = "0x0000000000000000000000000000000000000000000000000000000000000004"
+	MAX_NUMBER_VERSION int    = 1000
 
 	LOG_BUCKET         string = "logs"
 	TRADE_STATS_BUCKET string = "trade_stats"
 	MINUTE_BUCKET      string = "minute"
 	HOUR_BUCKET        string = "hour"
 	DAY_BUCKET         string = "day"
+
+	USER_ADDRESS_BUCKET       string = "user_address"
+	DAILY_USER_ADDRESS_BUCKET string = "daily_user_address"
 
 	ADDRESS_CATEGORY  string = "address_category"
 	ADDRESS_ID        string = "address_id"
@@ -57,6 +59,8 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
 		tx.CreateBucket([]byte(PENDING_ADDRESSES))
 		tx.CreateBucket([]byte(RESERVE_RATES))
+		tx.CreateBucket([]byte(USER_ADDRESS_BUCKET))
+		tx.CreateBucket([]byte(DAILY_USER_ADDRESS_BUCKET))
 
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		frequencies := []string{MINUTE_BUCKET, HOUR_BUCKET, DAY_BUCKET}
@@ -172,9 +176,6 @@ func (self *BoltStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) {
 func (self *BoltStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
 	result := []common.TradeLog{}
 	var err error
-	if toTime-fromTime > MAX_GET_RATES_PERIOD {
-		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
-	}
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(LOG_BUCKET))
 		c := b.Cursor()
@@ -320,6 +321,71 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq string) (ma
 	return result, err
 }
 
+func (self *BoltStorage) SaveUserAddress(timestamp uint64, addr string) (common.TradeStats, error) {
+	stats := common.TradeStats{}
+	var err error
+	var kycEd bool
+
+	self.db.Update(func(tx *bolt.Tx) error {
+		user, err := self.GetUserOfAddress(addr)
+		if err != nil {
+			return err
+		}
+		kycEd = (user != addr && user != "")
+
+		// CHECK IF USER HAD TRADED EVER BEFORE
+		userAddrBk := tx.Bucket([]byte(USER_ADDRESS_BUCKET))
+		v := userAddrBk.Get([]byte(addr))
+		if v == nil {
+			stats["first_trade_ever"] = 1
+			stats["first_trade_in_day"] = 1
+			if kycEd {
+				stats["kyced_in_day"] = 1
+			}
+
+			if err := userAddrBk.Put([]byte(addr), []byte("1")); err != nil {
+				return err
+			}
+
+			return nil
+		}
+
+		// IF USER HAD TRADED, CHECK IF USER HAD TRADED IN DAY BEFORE
+		dailyUserAddrBk := tx.Bucket([]byte(DAILY_USER_ADDRESS_BUCKET))
+
+		timestamp := getTimestampByFreq(timestamp, "D")
+		raw := dailyUserAddrBk.Get(timestamp)
+
+		var addrTradedInDay map[string]bool
+		if raw != nil {
+			json.Unmarshal(raw, &addrTradedInDay)
+		} else {
+			addrTradedInDay = map[string]bool{}
+		}
+
+		if _, traded := addrTradedInDay[addr]; !traded {
+			stats["first_trade_in_day"] = 1
+			if kycEd {
+				stats["kyced_in_day"] = 1
+			}
+
+			addrTradedInDay[addr] = true
+			dataJSON, err := json.Marshal(addrTradedInDay)
+			if err != nil {
+				return err
+			}
+
+			if err := dailyUserAddrBk.Put(timestamp, dataJSON); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	return stats, err
+}
+
 func (self *BoltStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {
 	result := common.StatTicks{}
 
@@ -376,6 +442,38 @@ func (self *BoltStorage) GetUserVolume(fromTime uint64, toTime uint64, freq stri
 	return result, err
 }
 
+func (self *BoltStorage) GetTradeSummary(fromTime uint64, toTime uint64) (common.StatTicks, error) {
+	result := common.StatTicks{}
+
+	stats, err := self.getTradeStats(fromTime, toTime, "D")
+	if err != nil {
+		return result, err
+	}
+
+	for timestamp, stat := range stats {
+		tradeCount := float64(stat["trade_count"])
+		var avgEth, avgUsd float64
+		if tradeCount > 0 {
+			avgEth = float64(stat["eth_volume"]) / tradeCount
+			avgUsd = float64(stat["usd_volume"]) / tradeCount
+		}
+
+		result[timestamp] = map[string]float64{
+			"total_eth_volume":     stat["eth_volume"],
+			"total_usd_amount":     stat["usd_volume"],
+			"total_burn_fee":       stat["burn_fee"],
+			"unique_addresses":     stat["first_trade_in_day"],
+			"new_unique_addresses": stat["first_trade_ever"],
+			"kyced_addresses":      stat["kyced_in_day"],
+			"total_trade":          tradeCount,
+			"eth_per_trade":        avgEth,
+			"usd_per_trade":        avgUsd,
+		}
+	}
+
+	return result, err
+}
+
 func (self *BoltStorage) GetAddressesOfUser(user string) ([]string, error) {
 	var err error
 	result := []string{}
@@ -400,6 +498,9 @@ func (self *BoltStorage) GetUserOfAddress(addr string) (string, error) {
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(ADDRESS_ID))
 		id := b.Get([]byte(addr))
+		if id == nil {
+			log.Println("Get user = nil for user address %s", addr)
+		}
 		result = string(id)
 		return nil
 	})
@@ -539,9 +640,6 @@ func (self *BoltStorage) StoreReserveRates(reserveAddr string, reserveRates comm
 func (self *BoltStorage) GetReserveRates(fromTime, toTime uint64, reserveAddr string) ([]common.ReserveRates, error) {
 	var err error
 	var result []common.ReserveRates
-	if toTime-fromTime > MAX_GET_RATES_PERIOD {
-		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
-	}
 	self.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(reserveAddr))
 		if err != nil {

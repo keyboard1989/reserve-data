@@ -252,6 +252,26 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 			return
 		}
 	}
+
+	// total stats on trading
+	updates = common.TradeStats{
+		"eth_volume":  ethAmount,
+		"usd_volume":  trade.FiatAmount,
+		"burn_fee":    burnFee,
+		"trade_count": 1,
+	}
+	err = self.storage.SetTradeStats("D", trade.Timestamp, updates)
+	if err != nil {
+		return
+	}
+
+	// stats on user
+	user_stats, err := self.storage.SaveUserAddress(trade.Timestamp, userAddr)
+	err = self.storage.SetTradeStats("D", trade.Timestamp, user_stats)
+	if err != nil {
+		return
+	}
+
 	return
 }
 
