@@ -567,11 +567,12 @@ func (self *Blockchain) GetReserveRates(
 	srcAddresses, destAddr []ethereum.Address, data *sync.Map, wg *sync.WaitGroup) (common.ReserveTokenRateEntry, error) {
 	defer wg.Done()
 	result := common.ReserveTokenRateEntry{}
+	rates := common.ReserveRates{}
+	rates.Timestamp = common.GetTimepoint()
 	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock)), reserveAddress, srcAddresses, destAddr)
 	if err != nil {
 		return result, err
 	}
-	rates := common.ReserveRates{}
 	rates.BlockNumber = atBlock
 	rates.ReturnTime = common.GetTimepoint()
 	index := 0
