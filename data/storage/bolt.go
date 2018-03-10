@@ -313,7 +313,7 @@ func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) e
 		c := b.Cursor()
 		_, lastEntry := c.Last()
 		json.Unmarshal(lastEntry, &lastEntryjson)
-		if lastEntryjson.BlockNumber != data.BlockNumber {
+		if lastEntryjson.BlockNumber < data.BlockNumber {
 			dataJson, err = json.Marshal(data)
 			if err != nil {
 				return err

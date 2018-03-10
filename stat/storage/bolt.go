@@ -514,7 +514,7 @@ func (self *BoltStorage) StoreReserveRates(reserveAddr string, reserveRates comm
 		var prevDataJSON common.ReserveRates
 		_, prevData := c.Last()
 		json.Unmarshal(prevData, &prevDataJSON)
-		if prevDataJSON.BlockNumber != reserveRates.BlockNumber {
+		if prevDataJSON.BlockNumber < reserveRates.BlockNumber {
 			idByte := uint64ToBytes(timepoint)
 			dataJson, err := json.Marshal(reserveRates)
 			if err != nil {

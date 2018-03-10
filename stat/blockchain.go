@@ -1,8 +1,6 @@
 package stat
 
 import (
-	"sync"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -10,5 +8,5 @@ import (
 type Blockchain interface {
 	CurrentBlock() (uint64, error)
 	GetLogs(fromBlock uint64, toBlock uint64, ethRate float64) ([]common.KNLog, error)
-	GetReserveRates(atBlock uint64, reserveAddress ethereum.Address, srcAddresses, destAddresses []ethereum.Address, data *sync.Map, wg *sync.WaitGroup) (common.ReserveTokenRateEntry, error)
+	GetReserveRates(atBlock uint64, reserveAddress ethereum.Address, srcAddresses, destAddresses []ethereum.Address) (common.ReserveRates, error)
 }

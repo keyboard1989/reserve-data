@@ -9,7 +9,6 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -553,25 +552,24 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 }
 
 func setRateEntry(reserveRate, sanityRate *big.Int) common.ReserveRateEntry {
-	rRate, _ := new(big.Float).SetInt(reserveRate).Float64()
-	sRate, _ := new(big.Float).SetInt(sanityRate).Float64()
+	rRate := common.BigToFloat(reserveRate, 18)
+	sRate := common.BigToFloat(sanityRate, 18)
 	rateEntry := common.ReserveRateEntry{
-		ReserveRate: rRate / math.Pow10(18),
-		SanityRate:  sRate / math.Pow10(18),
+		ReserveRate: rRate,
+		SanityRate:  sRate,
 	}
 	return rateEntry
 }
 
 func (self *Blockchain) GetReserveRates(
 	atBlock uint64, reserveAddress ethereum.Address,
-	srcAddresses, destAddr []ethereum.Address, data *sync.Map, wg *sync.WaitGroup) (common.ReserveTokenRateEntry, error) {
-	defer wg.Done()
+	srcAddresses, destAddr []ethereum.Address) (common.ReserveRates, error) {
 	result := common.ReserveTokenRateEntry{}
 	rates := common.ReserveRates{}
 	rates.Timestamp = common.GetTimepoint()
 	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock)), reserveAddress, srcAddresses, destAddr)
 	if err != nil {
-		return result, err
+		return rates, err
 	}
 	rates.BlockNumber = atBlock
 	rates.ReturnTime = common.GetTimepoint()
@@ -586,8 +584,7 @@ func (self *Blockchain) GetReserveRates(
 		}
 	}
 	rates.Data = result
-	data.Store(string(reserveAddress.Hex()), rates)
-	return result, err
+	return rates, err
 }
 
 func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock *big.Int) (*big.Int, error) {
