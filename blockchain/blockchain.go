@@ -567,10 +567,10 @@ func (self *Blockchain) GetReserveRates(
 	for _, token := range common.SupportedTokens {
 		rateEntry := common.ReserveRateEntry{}
 		if token.ID != "ETH" {
-			rateEntry.BuyReserveRate = common.BigToFloat(reserveRate[index*2], 18)
-			rateEntry.BuySanityRate = common.BigToFloat(sanityRate[index*2], 18)
-			rateEntry.SellReserveRate = common.BigToFloat(reserveRate[index*2+1], 18)
-			rateEntry.SellSanityRate = common.BigToFloat(sanityRate[index*2+1], 18)
+			rateEntry.BuyReserveRate = common.BigToFloat(reserveRate[index*2+1], 18)
+			rateEntry.BuySanityRate = common.BigToFloat(sanityRate[index*2+1], 18)
+			rateEntry.SellReserveRate = common.BigToFloat(reserveRate[index*2], 18)
+			rateEntry.SellSanityRate = common.BigToFloat(sanityRate[index*2], 18)
 			result[fmt.Sprintf("ETH-%s", token.ID)] = rateEntry
 			index++
 		}
