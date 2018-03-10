@@ -506,16 +506,23 @@ func (self *BoltStorage) StoreCatLog(l common.SetCatLog) error {
 	return err
 }
 
-func (self *BoltStorage) StoreReserveRates(reserveRates common.ReserveRates, timepoint uint64) error {
+func (self *BoltStorage) StoreReserveRates(reserveAddr string, reserveRates common.ReserveRates, timepoint uint64) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(RESERVE_RATES))
-		idByte := uint64ToBytes(timepoint)
-		dataJson, err := json.Marshal(reserveRates)
-		if err != nil {
-			return err
+		b, _ := tx.CreateBucketIfNotExists([]byte(reserveAddr))
+		c := b.Cursor()
+		var prevDataJSON common.ReserveRates
+		_, prevData := c.Last()
+		json.Unmarshal(prevData, &prevDataJSON)
+		if prevDataJSON.BlockNumber != reserveRates.BlockNumber {
+			idByte := uint64ToBytes(timepoint)
+			dataJson, err := json.Marshal(reserveRates)
+			if err != nil {
+				return err
+			}
+			b.Put(idByte, dataJson)
+			log.Printf("Save rates to db %s successfully", reserveAddr)
 		}
-		b.Put(idByte, dataJson)
 		return nil
 	})
 	return err
@@ -527,8 +534,12 @@ func (self *BoltStorage) GetReserveRates(fromTime, toTime uint64, reserveAddr st
 	if toTime-fromTime > MAX_GET_RATES_PERIOD {
 		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
 	}
-	self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(RESERVE_RATES))
+	self.db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(reserveAddr))
+		if err != nil {
+			log.Println("Cannot get bucket: ", err.Error())
+			return err
+		}
 		c := b.Cursor()
 		min := uint64ToBytes(fromTime)
 		max := uint64ToBytes(toTime)

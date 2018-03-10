@@ -3,6 +3,7 @@ package stat
 import (
 	"log"
 	"strings"
+	"sync"
 	// "sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -90,23 +91,21 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 			destAddresses = append(destAddresses, ethereum.HexToAddress(ETH.Address), ethereum.HexToAddress(token.Address))
 		}
 	}
-	result := common.ReserveRates{}
-	tokenRate, err := self.blockchain.GetReserveRates(self.currentBlock, self.reserveAddress, srcAddresses, destAddresses)
-	if err != nil {
-		log.Printf("Cannot get reserve rate from blockchain: %s", err.Error())
+	supportedReserves := []string{"0x2C5a182d280EeB5824377B98CD74871f78d6b8BC", "0x2C5a182d280EeB5824377B98CD74871f78d6b8BC"}
+	data := sync.Map{}
+	wg := sync.WaitGroup{}
+	for _, addr := range supportedReserves {
+		wg.Add(1)
+		reserveAddr := ethereum.HexToAddress(addr)
+		go self.blockchain.GetReserveRates(self.currentBlock, reserveAddr, srcAddresses, destAddresses, &data, &wg)
 	}
-	result.BlockNumber = self.currentBlock
-	result.Timestamp = timepoint
-	result.Reserves = map[string]common.ReserveTokenRateEntry{
-		string(self.reserveAddress.Hex()): tokenRate,
-	}
-	err = self.storage.StoreReserveRates(result, timepoint)
-	log.Printf("Reserve rate to store: %v", result)
-	if err != nil {
-		log.Printf("Cannot store reserve rate log: %s", err.Error())
-	} else {
-		log.Printf("Stored reserve rate log")
-	}
+	wg.Wait()
+	data.Range(func(key, value interface{}) bool {
+		reserveAddr := key.(string)
+		rates := value.(common.ReserveRates)
+		self.storage.StoreReserveRates(reserveAddr, rates, common.GetTimepoint())
+		return true
+	})
 }
 
 func (self *Fetcher) RunBlockAndLogFetcher() {

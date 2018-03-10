@@ -562,16 +562,17 @@ type TradeLog struct {
 }
 
 type ReserveRateEntry struct {
-	ReserveRate float64 `json:"reserve_rate"`
-	SanityRate  float64 `json:"sanity_rate"`
+	ReserveRate float64
+	SanityRate  float64
 }
 
 type ReserveTokenRateEntry map[string]ReserveRateEntry
 
 type ReserveRates struct {
-	Timestamp   uint64                           `json:"timestamp"`
-	BlockNumber uint64                           `json:"blocknumber"`
-	Reserves    map[string]ReserveTokenRateEntry `reserves`
+	Timestamp   uint64
+	ReturnTime  uint64
+	BlockNumber uint64
+	Data        ReserveTokenRateEntry
 }
 
 func (self TradeLog) BlockNo() uint64 { return self.BlockNumber }

@@ -2,7 +2,6 @@ package blockchain
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -10,6 +9,7 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -564,12 +564,16 @@ func setRateEntry(reserveRate, sanityRate *big.Int) common.ReserveRateEntry {
 
 func (self *Blockchain) GetReserveRates(
 	atBlock uint64, reserveAddress ethereum.Address,
-	srcAddresses, destAddr []ethereum.Address) (common.ReserveTokenRateEntry, error) {
+	srcAddresses, destAddr []ethereum.Address, data *sync.Map, wg *sync.WaitGroup) (common.ReserveTokenRateEntry, error) {
+	defer wg.Done()
 	result := common.ReserveTokenRateEntry{}
 	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock)), reserveAddress, srcAddresses, destAddr)
 	if err != nil {
 		return result, err
 	}
+	rates := common.ReserveRates{}
+	rates.BlockNumber = atBlock
+	rates.ReturnTime = common.GetTimepoint()
 	index := 0
 	for _, token := range common.SupportedTokens {
 		if token.ID != "ETH" {
@@ -580,8 +584,8 @@ func (self *Blockchain) GetReserveRates(
 			index++
 		}
 	}
-	dataJSON, _ := json.Marshal(result)
-	log.Printf("Reserve token rate entry: %s", dataJSON)
+	rates.Data = result
+	data.Store(string(reserveAddress.Hex()), rates)
 	return result, err
 }
 
