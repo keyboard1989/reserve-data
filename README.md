@@ -708,7 +708,10 @@ response
   {
     "success": true,
   }
+```
+
 ### Get trade logs
+
 ```
 <host>:8000/tradelogs
 GET request
