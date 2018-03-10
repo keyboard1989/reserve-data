@@ -28,4 +28,7 @@ type Storage interface {
 	UpdateLogBlock(block uint64, timepoint uint64) error
 	StoreTradeLog(stat common.TradeLog, timepoint uint64) error
 	SetTradeStats(metric, freq string, t uint64, tradeStats common.TradeStats) error
+	StoreReserveRates(reserveAddr string, rate common.ReserveRates, timepoint uint64) error
+
+	GetReserveRates(fromTime, toTime uint64, reserveAddr string) ([]common.ReserveRates, error)
 }

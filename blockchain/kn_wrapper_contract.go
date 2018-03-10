@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"log"
 	"math/big"
 	"os"
 
@@ -33,7 +34,10 @@ func (self *KNWrapperContract) GetTokenIndicies(opts *bind.CallOpts, atBlock *bi
 	return *ret0, *ret1, err
 }
 
-func (self *KNWrapperContract) GetTokenRates(opts *bind.CallOpts, atBlock *big.Int, ratesContract ethereum.Address, tokenList []ethereum.Address) ([]*big.Int, []*big.Int, []int8, []int8, []*big.Int, error) {
+func (self *KNWrapperContract) GetTokenRates(
+	opts *bind.CallOpts, atBlock *big.Int,
+	ratesContract ethereum.Address,
+	tokenList []ethereum.Address) ([]*big.Int, []*big.Int, []int8, []int8, []*big.Int, error) {
 	var (
 		ret0 = new([]*big.Int)
 		ret1 = new([]*big.Int)
@@ -49,7 +53,29 @@ func (self *KNWrapperContract) GetTokenRates(opts *bind.CallOpts, atBlock *big.I
 		ret4,
 	}
 	err := self.KNContractBase.Call(opts, atBlock, out, "getTokenRates", ratesContract, tokenList)
+	log.Printf("Token rates: %v, %v, %v, %v, %v", *ret0, *ret1, *ret2, *ret3, *ret4)
 	return *ret0, *ret1, *ret2, *ret3, *ret4, err
+}
+
+func (self *KNWrapperContract) GetReserveRates(
+	opts *bind.CallOpts, atBlock *big.Int,
+	reserveAddress ethereum.Address,
+	srcAddresses []ethereum.Address,
+	destAddresses []ethereum.Address) ([]*big.Int, []*big.Int, error) {
+	var (
+		ret0 = new([]*big.Int)
+		ret1 = new([]*big.Int)
+	)
+	out := &[]interface{}{
+		ret0,
+		ret1,
+	}
+	err := self.KNContractBase.Call(opts, atBlock, out, "getReserveRate", reserveAddress, srcAddresses, destAddresses)
+	log.Printf("Reserve rates: %v, %v", *ret0, *ret1)
+	if err != nil {
+		log.Println("cannot get reserve rates: ", err.Error())
+	}
+	return *ret0, *ret1, err
 }
 
 func NewKNWrapperContract(address ethereum.Address, client *ethclient.Client) (*KNWrapperContract, error) {

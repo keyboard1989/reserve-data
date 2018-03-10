@@ -80,6 +80,10 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
+	thirdpartyReserves := []ethereum.Address{}
+	for _, address := range addressConfig.ThirdPartyReserves {
+		thirdpartyReserves = append(thirdpartyReserves, ethereum.HexToAddress(address))
+	}
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -107,8 +111,8 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
 		statFetcherRunner = http_runner.NewHttpRunner(8002)
 	} else {
-		fetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
-		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+		fetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 5*time.Second)
+		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 5*time.Second)
 	}
 
 	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
@@ -167,6 +171,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		FeeBurnerAddress:        burnerAddr,
 		NetworkAddress:          networkAddr,
 		WhitelistAddress:        whitelistAddr,
+		ThirdPartyReserves:      thirdpartyReserves,
 		ChainType:               chainType,
 	}
 }

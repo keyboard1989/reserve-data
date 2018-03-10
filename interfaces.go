@@ -20,6 +20,8 @@ type ReserveStats interface {
 	ExceedDailyLimit(addr ethereum.Address) (bool, error)
 	GetPendingAddresses() ([]string, error)
 
+	GetReserveRates(fromTime, toTime uint64, reserveAddr string) ([]common.ReserveRates, error)
+
 	UpdateUserAddresses(userID string, addresses []ethereum.Address) error
 
 	Run() error

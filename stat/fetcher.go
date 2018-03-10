@@ -3,9 +3,11 @@ package stat
 import (
 	"log"
 	"strings"
+	"sync"
 	// "sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type CoinCapRateResponse []struct {
@@ -24,19 +26,25 @@ type Fetcher struct {
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 	deployBlock            uint64
+	reserveAddress         ethereum.Address
+	thirdPartyReserves     []ethereum.Address
 }
 
 func NewFetcher(
 	storage Storage,
 	ethUSDRate EthUSDRate,
 	runner FetcherRunner,
-	deployBlock uint64) *Fetcher {
+	deployBlock uint64,
+	reserve ethereum.Address,
+	thirdPartyReserves []ethereum.Address) *Fetcher {
 	return &Fetcher{
-		storage:     storage,
-		blockchain:  nil,
-		runner:      runner,
-		ethRate:     ethUSDRate,
-		deployBlock: deployBlock,
+		storage:            storage,
+		blockchain:         nil,
+		runner:             runner,
+		ethRate:            ethUSDRate,
+		deployBlock:        deployBlock,
+		reserveAddress:     reserve,
+		thirdPartyReserves: thirdPartyReserves,
 	}
 }
 
@@ -59,8 +67,58 @@ func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
 	go self.RunBlockAndLogFetcher()
+	go self.RunReserveRatesFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
+}
+
+func (self *Fetcher) RunReserveRatesFetcher() {
+	for {
+		log.Printf("waiting for signal from reserve rate channel")
+		t := <-self.runner.GetReserveRatesTicker()
+		log.Printf("got signal in reserve rate channel with timstamp %d", common.GetTimepoint())
+		timepoint := common.TimeToTimepoint(t)
+		self.FetchReserveRates(timepoint)
+		log.Printf("fetched reserve rate from blockchain")
+	}
+}
+
+func (self *Fetcher) GetReserveRates(
+	currentBlock uint64, reserveAddr ethereum.Address,
+	srcAddr, destAddr []ethereum.Address, data *sync.Map, wg *sync.WaitGroup) {
+	defer wg.Done()
+	rates, err := self.blockchain.GetReserveRates(currentBlock, reserveAddr, srcAddr, destAddr)
+	if err != nil {
+		log.Println(err.Error())
+	}
+	data.Store(string(reserveAddr.Hex()), rates)
+}
+
+func (self *Fetcher) FetchReserveRates(timepoint uint64) {
+	log.Printf("Fetching reserve and sanity rate from blockchain")
+	var srcAddresses []ethereum.Address
+	var destAddresses []ethereum.Address
+	ETH := common.MustGetToken("ETH")
+	for _, token := range common.SupportedTokens {
+		if token.ID != "ETH" {
+			srcAddresses = append(srcAddresses, ethereum.HexToAddress(token.Address), ethereum.HexToAddress(ETH.Address))
+			destAddresses = append(destAddresses, ethereum.HexToAddress(ETH.Address), ethereum.HexToAddress(token.Address))
+		}
+	}
+	supportedReserves := append(self.thirdPartyReserves, self.reserveAddress)
+	data := sync.Map{}
+	wg := sync.WaitGroup{}
+	for _, reserveAddr := range supportedReserves {
+		wg.Add(1)
+		go self.GetReserveRates(self.currentBlock, reserveAddr, srcAddresses, destAddresses, &data, &wg)
+	}
+	wg.Wait()
+	data.Range(func(key, value interface{}) bool {
+		reserveAddr := key.(string)
+		rates := value.(common.ReserveRates)
+		self.storage.StoreReserveRates(reserveAddr, rates, common.GetTimepoint())
+		return true
+	})
 }
 
 func (self *Fetcher) RunBlockAndLogFetcher() {
