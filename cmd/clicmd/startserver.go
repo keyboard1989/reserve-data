@@ -132,6 +132,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			config.StatFetcherRunner,
 			deployBlock,
 			config.ReserveAddress,
+			config.ThirdPartyReserves,
 		)
 	}
 

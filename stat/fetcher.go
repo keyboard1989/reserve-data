@@ -27,6 +27,7 @@ type Fetcher struct {
 	currentBlockUpdateTime uint64
 	deployBlock            uint64
 	reserveAddress         ethereum.Address
+	thirdPartyReserves     []ethereum.Address
 }
 
 func NewFetcher(
@@ -34,14 +35,16 @@ func NewFetcher(
 	ethUSDRate EthUSDRate,
 	runner FetcherRunner,
 	deployBlock uint64,
-	reserve ethereum.Address) *Fetcher {
+	reserve ethereum.Address,
+	thirdPartyReserves []ethereum.Address) *Fetcher {
 	return &Fetcher{
-		storage:        storage,
-		blockchain:     nil,
-		runner:         runner,
-		ethRate:        ethUSDRate,
-		deployBlock:    deployBlock,
-		reserveAddress: reserve,
+		storage:            storage,
+		blockchain:         nil,
+		runner:             runner,
+		ethRate:            ethUSDRate,
+		deployBlock:        deployBlock,
+		reserveAddress:     reserve,
+		thirdPartyReserves: thirdPartyReserves,
 	}
 }
 
@@ -91,12 +94,11 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 			destAddresses = append(destAddresses, ethereum.HexToAddress(ETH.Address), ethereum.HexToAddress(token.Address))
 		}
 	}
-	supportedReserves := []string{"0x2C5a182d280EeB5824377B98CD74871f78d6b8BC", "0x2C5a182d280EeB5824377B98CD74871f78d6b8BC"}
+	supportedReserves := append(self.thirdPartyReserves, self.reserveAddress)
 	data := sync.Map{}
 	wg := sync.WaitGroup{}
-	for _, addr := range supportedReserves {
+	for _, reserveAddr := range supportedReserves {
 		wg.Add(1)
-		reserveAddr := ethereum.HexToAddress(addr)
 		go self.blockchain.GetReserveRates(self.currentBlock, reserveAddr, srcAddresses, destAddresses, &data, &wg)
 	}
 	wg.Wait()

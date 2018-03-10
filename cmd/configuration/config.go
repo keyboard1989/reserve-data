@@ -48,12 +48,13 @@ type Config struct {
 
 	SupportedTokens []common.Token
 
-	WrapperAddress   ethereum.Address
-	PricingAddress   ethereum.Address
-	ReserveAddress   ethereum.Address
-	FeeBurnerAddress ethereum.Address
-	NetworkAddress   ethereum.Address
-	WhitelistAddress ethereum.Address
+	WrapperAddress     ethereum.Address
+	PricingAddress     ethereum.Address
+	ReserveAddress     ethereum.Address
+	FeeBurnerAddress   ethereum.Address
+	NetworkAddress     ethereum.Address
+	WhitelistAddress   ethereum.Address
+	ThirdPartyReserves []ethereum.Address
 
 	ChainType string
 }

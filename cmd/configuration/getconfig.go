@@ -80,6 +80,10 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
+	thirdpartyReserves := []ethereum.Address{}
+	for _, address := range addressConfig.ThirdPartyReserves {
+		thirdpartyReserves = append(thirdpartyReserves, ethereum.HexToAddress(address))
+	}
 
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
@@ -167,6 +171,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		FeeBurnerAddress:        burnerAddr,
 		NetworkAddress:          networkAddr,
 		WhitelistAddress:        whitelistAddr,
+		ThirdPartyReserves:      thirdpartyReserves,
 		ChainType:               chainType,
 	}
 }
