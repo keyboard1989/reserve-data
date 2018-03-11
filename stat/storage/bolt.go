@@ -25,8 +25,9 @@ const (
 	HOUR_BUCKET        string = "hour"
 	DAY_BUCKET         string = "day"
 
-	USER_ADDRESS_BUCKET       string = "user_address"
-	DAILY_USER_ADDRESS_BUCKET string = "daily_user_address"
+	ADDRESS_BUCKET       string = "address"
+	DAILY_ADDRESS_BUCKET string = "daily_address"
+	DAILY_USER_BUCKET    string = "daily_user"
 
 	ADDRESS_CATEGORY  string = "address_category"
 	ADDRESS_ID        string = "address_id"
@@ -59,8 +60,9 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
 		tx.CreateBucket([]byte(PENDING_ADDRESSES))
 		tx.CreateBucket([]byte(RESERVE_RATES))
-		tx.CreateBucket([]byte(USER_ADDRESS_BUCKET))
-		tx.CreateBucket([]byte(DAILY_USER_ADDRESS_BUCKET))
+		tx.CreateBucket([]byte(ADDRESS_BUCKET))
+		tx.CreateBucket([]byte(DAILY_ADDRESS_BUCKET))
+		tx.CreateBucket([]byte(DAILY_USER_BUCKET))
 
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		frequencies := []string{MINUTE_BUCKET, HOUR_BUCKET, DAY_BUCKET}
@@ -327,56 +329,80 @@ func (self *BoltStorage) SaveUserAddress(timestamp uint64, addr string) (common.
 	var kycEd bool
 
 	self.db.Update(func(tx *bolt.Tx) error {
-		user, err := self.GetUserOfAddress(addr)
-		if err != nil {
-			return err
-		}
-		kycEd = (user != addr && user != "")
-
 		// CHECK IF USER HAD TRADED EVER BEFORE
-		userAddrBk := tx.Bucket([]byte(USER_ADDRESS_BUCKET))
-		v := userAddrBk.Get([]byte(addr))
+		addrBk := tx.Bucket([]byte(ADDRESS_BUCKET))
+		v := addrBk.Get([]byte(addr))
 		if v == nil {
 			stats["first_trade_ever"] = 1
 			stats["first_trade_in_day"] = 1
-			if kycEd {
-				stats["kyced_in_day"] = 1
-			}
 
-			if err := userAddrBk.Put([]byte(addr), []byte("1")); err != nil {
+			if err := addrBk.Put([]byte(addr), []byte("1")); err != nil {
 				return err
 			}
-
-			return nil
-		}
-
-		// IF USER HAD TRADED, CHECK IF USER HAD TRADED IN DAY BEFORE
-		dailyUserAddrBk := tx.Bucket([]byte(DAILY_USER_ADDRESS_BUCKET))
-
-		timestamp := getTimestampByFreq(timestamp, "D")
-		raw := dailyUserAddrBk.Get(timestamp)
-
-		var addrTradedInDay map[string]bool
-		if raw != nil {
-			json.Unmarshal(raw, &addrTradedInDay)
 		} else {
-			addrTradedInDay = map[string]bool{}
-		}
+			// IF USER HAD TRADED, CHECK IF USER HAD TRADED IN DAY BEFORE
+			dailyAddrBk := tx.Bucket([]byte(DAILY_ADDRESS_BUCKET))
 
-		if _, traded := addrTradedInDay[addr]; !traded {
-			stats["first_trade_in_day"] = 1
-			if kycEd {
-				stats["kyced_in_day"] = 1
+			timestamp := getTimestampByFreq(timestamp, "D")
+			raw := dailyAddrBk.Get(timestamp)
+
+			var addrTradedInDay map[string]bool
+			if raw != nil {
+				json.Unmarshal(raw, &addrTradedInDay)
+			} else {
+				addrTradedInDay = map[string]bool{}
 			}
 
-			addrTradedInDay[addr] = true
-			dataJSON, err := json.Marshal(addrTradedInDay)
+			if _, traded := addrTradedInDay[addr]; !traded {
+				stats["first_trade_in_day"] = 1
+
+				addrTradedInDay[addr] = true
+				dataJSON, err := json.Marshal(addrTradedInDay)
+				if err != nil {
+					return err
+				}
+
+				if err := dailyAddrBk.Put(timestamp, dataJSON); err != nil {
+					return err
+				}
+			}
+		}
+
+		// CHECK IF KYCED USER HAD TRADED IN DAY BEFORE
+		// MEANS: first trade from addr in day, user is kyced and also first trade from user in day
+		if stats["first_trade_in_day"] == 1 {
+			user, err := self.GetUserOfAddress(addr)
 			if err != nil {
 				return err
 			}
+			kycEd = (user != addr && user != "")
 
-			if err := dailyUserAddrBk.Put(timestamp, dataJSON); err != nil {
-				return err
+			if kycEd {
+				dailyUserBk := tx.Bucket([]byte(DAILY_USER_BUCKET))
+
+				timestamp := getTimestampByFreq(timestamp, "D")
+				raw := dailyUserBk.Get(timestamp)
+
+				var userTradedInDay map[string]bool
+				if raw != nil {
+					json.Unmarshal(raw, &userTradedInDay)
+				} else {
+					userTradedInDay = map[string]bool{}
+				}
+
+				if _, traded := userTradedInDay[user]; !traded {
+					stats["kyced_in_day"] = 1
+
+					userTradedInDay[user] = true
+					dataJSON, err := json.Marshal(userTradedInDay)
+					if err != nil {
+						return err
+					}
+
+					if err := dailyUserBk.Put(timestamp, dataJSON); err != nil {
+						return err
+					}
+				}
 			}
 		}
 
