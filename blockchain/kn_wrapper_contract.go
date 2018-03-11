@@ -53,7 +53,6 @@ func (self *KNWrapperContract) GetTokenRates(
 		ret4,
 	}
 	err := self.KNContractBase.Call(opts, atBlock, out, "getTokenRates", ratesContract, tokenList)
-	log.Printf("Token rates: %v, %v, %v, %v, %v", *ret0, *ret1, *ret2, *ret3, *ret4)
 	return *ret0, *ret1, *ret2, *ret3, *ret4, err
 }
 
@@ -71,7 +70,6 @@ func (self *KNWrapperContract) GetReserveRates(
 		ret1,
 	}
 	err := self.KNContractBase.Call(opts, atBlock, out, "getReserveRate", reserveAddress, srcAddresses, destAddresses)
-	log.Printf("Reserve rates: %v, %v", *ret0, *ret1)
 	if err != nil {
 		log.Println("cannot get reserve rates: ", err.Error())
 	}

@@ -520,7 +520,10 @@ func (self *BoltStorage) StoreReserveRates(reserveAddr string, reserveRates comm
 			if err != nil {
 				return err
 			}
-			b.Put(idByte, dataJson)
+			err = b.Put(idByte, dataJson)
+			if err != nil {
+				return err
+			}
 			log.Printf("Save rates to db %s successfully", reserveAddr)
 		}
 		return nil

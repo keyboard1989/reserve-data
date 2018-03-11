@@ -553,29 +553,36 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 
 func (self *Blockchain) GetReserveRates(
 	atBlock uint64, reserveAddress ethereum.Address,
-	srcAddresses, destAddr []ethereum.Address) (common.ReserveRates, error) {
+	tokens []common.Token) (common.ReserveRates, error) {
 	result := common.ReserveTokenRateEntry{}
 	rates := common.ReserveRates{}
 	rates.Timestamp = common.GetTimepoint()
-	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock)), reserveAddress, srcAddresses, destAddr)
+
+	ETH := common.MustGetToken("ETH")
+	srcAddresses := []ethereum.Address{}
+	destAddresses := []ethereum.Address{}
+	for _, token := range tokens {
+		srcAddresses = append(srcAddresses, ethereum.HexToAddress(token.Address), ethereum.HexToAddress(ETH.Address))
+		destAddresses = append(destAddresses, ethereum.HexToAddress(ETH.Address), ethereum.HexToAddress(token.Address))
+	}
+
+	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock)), reserveAddress, srcAddresses, destAddresses)
 	if err != nil {
 		return rates, err
 	}
+
 	rates.BlockNumber = atBlock
 	rates.ReturnTime = common.GetTimepoint()
-	index := 0
-	for _, token := range common.SupportedTokens {
+	for index, token := range tokens {
 		rateEntry := common.ReserveRateEntry{}
-		if token.ID != "ETH" {
-			rateEntry.BuyReserveRate = common.BigToFloat(reserveRate[index*2+1], 18)
-			rateEntry.BuySanityRate = common.BigToFloat(sanityRate[index*2+1], 18)
-			rateEntry.SellReserveRate = common.BigToFloat(reserveRate[index*2], 18)
-			rateEntry.SellSanityRate = common.BigToFloat(sanityRate[index*2], 18)
-			result[fmt.Sprintf("ETH-%s", token.ID)] = rateEntry
-			index++
-		}
+		rateEntry.BuyReserveRate = common.BigToFloat(reserveRate[index*2+1], 18)
+		rateEntry.BuySanityRate = common.BigToFloat(sanityRate[index*2+1], 18)
+		rateEntry.SellReserveRate = common.BigToFloat(reserveRate[index*2], 18)
+		rateEntry.SellSanityRate = common.BigToFloat(sanityRate[index*2], 18)
+		result[fmt.Sprintf("ETH-%s", token.ID)] = rateEntry
 	}
 	rates.Data = result
+
 	return rates, err
 }
 
