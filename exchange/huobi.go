@@ -9,11 +9,19 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
+	"github.com/KyberNetwork/reserve-data/signer"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 const HUOBI_EPSILON float64 = 0.0000000001 // 10e-10
+
+type Intermediator struct {
+	signer signer.FileSigner
+	nonce  nonce.TimeWindow
+}
 
 type Huobi struct {
 	interf       HuobiInterface
@@ -348,6 +356,7 @@ func (self *Huobi) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][
 }
 
 func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
+	//check if the first transaction go through.
 	idParts := strings.Split(id.EID, "|")
 	txID := idParts[0]
 	deposits, err := self.interf.DepositHistory()
@@ -403,39 +412,50 @@ func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	}
 }
 
-func NewHuobi(interf HuobiInterface) *Huobi {
+func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface) *Huobi {
+	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
 	return &Huobi{
 		interf,
-		[]common.TokenPair{
-			common.MustCreateTokenPair("OMG", "ETH"),
-			// common.MustCreateTokenPair("EOS", "ETH"),
-			// common.MustCreateTokenPair("KNC", "ETH"),
-			// common.MustCreateTokenPair("SNT", "ETH"),
-			// common.MustCreateTokenPair("SALT", "ETH"),
-		},
+		pairs,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
-		common.NewExchangeFee(
-			common.TradingFee{
-				"taker": 0.002,
-				"maker": 0.002,
-			},
-			common.NewFundingFee(
-				map[string]float64{
-					// "ETH":  0.01,
-					// "EOS":  0.5,
-					"OMG": 0.1,
-					// "KNC": 1.0,
-					// "SNT":  50.0,
-				},
-				map[string]float64{
-					"ETH": 0,
-					// "EOS":  0,
-					"OMG": 0,
-					// "KNC": 0,
-					// "SNT":  0,
-				},
-			),
-		),
+		fees,
 	}
 }
+
+// func NewHuobi(interf HuobiInterface) *Huobi {
+// 	return &Huobi{
+// 		interf,
+// 		[]common.TokenPair{
+// 			common.MustCreateTokenPair("OMG", "ETH"),
+// 			// common.MustCreateTokenPair("EOS", "ETH"),
+// 			// common.MustCreateTokenPair("KNC", "ETH"),
+// 			// common.MustCreateTokenPair("SNT", "ETH"),
+// 			// common.MustCreateTokenPair("SALT", "ETH"),
+// 		},
+// 		common.NewExchangeAddresses(),
+// 		common.NewExchangeInfo(),
+// 		common.NewExchangeFee(
+// 			common.TradingFee{
+// 				"taker": 0.002,
+// 				"maker": 0.002,
+// 			},
+// 			common.NewFundingFee(
+// 				map[string]float64{
+// 					// "ETH":  0.01,
+// 					// "EOS":  0.5,
+// 					"OMG": 0.1,
+// 					// "KNC": 1.0,
+// 					// "SNT":  50.0,
+// 				},
+// 				map[string]float64{
+// 					"ETH": 0,
+// 					// "EOS":  0,
+// 					"OMG": 0,
+// 					// "KNC": 0,
+// 					// "SNT":  0,
+// 				},
+// 			),
+// 		),
+// 	}
+// }
