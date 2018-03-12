@@ -163,6 +163,10 @@ func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr et
 	for _, rate := range rates {
 		if !isDuplicate(rate, latest) {
 			result = append(result, rate)
+		} else {
+			if len(result) > 0 {
+				result[len(result)-1].ToBlockNumber = rate.BlockNumber
+			}
 		}
 		latest = rate
 	}

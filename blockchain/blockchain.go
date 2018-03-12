@@ -552,7 +552,7 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 }
 
 func (self *Blockchain) GetReserveRates(
-	atBlock uint64, reserveAddress ethereum.Address,
+	atBlock, currentBlock uint64, reserveAddress ethereum.Address,
 	tokens []common.Token) (common.ReserveRates, error) {
 	result := common.ReserveTokenRateEntry{}
 	rates := common.ReserveRates{}
@@ -572,6 +572,7 @@ func (self *Blockchain) GetReserveRates(
 	}
 
 	rates.BlockNumber = atBlock
+	rates.ToBlockNumber = currentBlock
 	rates.ReturnTime = common.GetTimepoint()
 	for index, token := range tokens {
 		rateEntry := common.ReserveRateEntry{}
