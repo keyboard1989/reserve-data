@@ -17,6 +17,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
+	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/stat"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -153,6 +154,13 @@ func serverStart(cmd *cobra.Command, args []string) {
 	//nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
 	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
 	nonceDeposit := nonce.NewTimeWindow(infura, config.DepositSigner)
+	nonceIntermediator := nonce.NewTimeWindow(infura, config.IntermediatorSigner)
+	//set block chain for Huobi if presence
+	if _, err := common.GetExchange("huobi"); err != nil {
+		log.Println("Setting blockchain object for huobi..").
+			config.Exchanges["huobi"].interf.blockchain = huobi.NewBlockchain(client, infura, config.IntermediateSigner, nonceIntermediator, config.ChainType)
+	}
+
 	//set block chain
 	bc, err := blockchain.NewBlockchain(
 		client,

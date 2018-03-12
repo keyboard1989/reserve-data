@@ -110,10 +110,12 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		fetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 	}
+	baseSigner := signer.GetBaseSigner(setPath.signerPath)
+	fileSigner := signer.NewFileSigner(baseSigner, baseSigner.Keystore, baseSigner.Passphrase)
+	depositSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreD, baseSigner.PassphraseD)
+	intermediatorSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreI, baseSigner.PassphraseI)
 
-	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
-
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV)
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner)
 	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	// endpoint := "https://ropsten.infura.io"
@@ -168,5 +170,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		NetworkAddress:          networkAddr,
 		WhitelistAddress:        whitelistAddr,
 		ChainType:               chainType,
+		IntermediatorSigner:     intermediatorSigner,
 	}
 }
