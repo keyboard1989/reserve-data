@@ -13,10 +13,24 @@ import (
 	"github.com/KyberNetwork/reserve-data/signer"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 const HUOBI_EPSILON float64 = 0.0000000001 // 10e-10
+
+type NonceCorpus interface {
+	GetAddress() ethereum.Address
+	GetNextNonce() (*big.Int, error)
+	MinedNonce() (*big.Int, error)
+}
+
+type Signer interface {
+	GetAddress() ethereum.Address
+	Sign(*types.Transaction) (*types.Transaction, error)
+	GetTransactOpts() *bind.TransactOpts
+}
 
 type Intermediator struct {
 	signer signer.FileSigner
@@ -24,11 +38,12 @@ type Intermediator struct {
 }
 
 type Huobi struct {
-	interf       HuobiInterface
-	pairs        []common.TokenPair
-	addresses    *common.ExchangeAddresses
-	exchangeInfo *common.ExchangeInfo
-	fees         common.ExchangeFees
+	interf               HuobiInterface
+	pairs                []common.TokenPair
+	addresses            *common.ExchangeAddresses
+	exchangeInfo         *common.ExchangeInfo
+	fees                 common.ExchangeFees
+	currentDepositstatus map[common.ActivityID]types.Transaction
 }
 
 func (self *Huobi) MarshalText() (text []byte, err error) {
@@ -355,23 +370,79 @@ func (self *Huobi) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][
 	return result, nil
 }
 
-func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	//check if the first transaction go through.
+func getDepositInfo(id common.ActivityID) (string, float64, string) {
 	idParts := strings.Split(id.EID, "|")
 	txID := idParts[0]
-	deposits, err := self.interf.DepositHistory()
-	if err != nil && deposits.Status != "ok" {
-		return "", err
+	sentAmount, err := strconv.ParseFloat(idParts[2], 64)
+	if err != nil {
+		log.Println("The ID is malform, cannot get Amount from EID")
 	}
-	for _, deposit := range deposits.Data {
-		if deposit.TxHash == txID {
-			if deposit.State == "safe" {
-				return "done", nil
+	tokenID := idParts[1]
+	return txID, sentAmount, tokenID
+}
+
+func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
+	txID, sentAmount, tokenID := getDepositInfo(id)
+	tx2, ok := self.currentDepositstatus[id]
+	if !ok {
+		log.Printf("tx ID from the activity ID is: %v", txID)
+		//if the transaction is not in the current Deposit status, check the 1st tx first.
+		status, _, err := self.interf.GetTxStatus(ethereum.HexToHash(txID))
+		if err != nil {
+			log.Println("Can not get TX status")
+		}
+		if status == "mined" {
+			//if it is mined, send 2nd tx.
+			log.Println("found a new deposit status, which deposit %.5f %s. Proccxeed to send it to Huobi", sentAmount, tokenID)
+			//check if the token is supported
+			token, err := common.GetToken(tokenID)
+			if err != nil {
+				log.Printf(" Token %s is not supported", tokenID)
+				return "", err
 			}
+			exchangeAddress, ok := self.Address(token)
+			if !ok {
+				log.Print(" Wrong token address configuration ")
+				return "", errors.New("Wrong token address configuration")
+			}
+			tx2, err := self.interf.Send2ndTransaction(sentAmount, token, exchangeAddress)
+			if err != nil {
+				log.Println("can't send 2nd transaction to the exchange")
+				return "failed", err
+			}
+			self.currentDepositstatus[id] = *tx2
+		} else {
 			return "", nil
 		}
+	} else {
+		status, _, err := self.interf.GetTxStatus(tx2.Hash())
+		if err != nil {
+			log.Println("Can not get TX status")
+			return "", nil
+		}
+		if status == "mined" {
+			log.Println("2nd Transaction is mined. Processed to check the Deposit history")
+			tx2ID := tx2.Hash().Hex()
+			deposits, err := self.interf.DepositHistory()
+			if err != nil && deposits.Status != "ok" {
+				return "", err
+			}
+			for _, deposit := range deposits.Data {
+				if deposit.TxHash == tx2ID {
+					if deposit.State == "safe" {
+						delete(self.currentDepositstatus, id)
+						return "done", nil
+					}
+					return "", nil
+				}
+			}
+			return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and activity ID are not consistently designed")
+		} else if status == "failed" || status == "lost" {
+			delete(self.currentDepositstatus, id)
+			return "failed", nil
+		}
 	}
-	return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and activity ID are not consistently designed")
+	return "", nil
 }
 
 func (self *Huobi) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
@@ -412,14 +483,23 @@ func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	}
 }
 
+// func (self *Huobi) SetBlockchain(client *rpc.Client,
+// 	etherCli *ethclient.Client,
+// 	intermediateSigner Signer, nonceIntermediate NonceCorpus,
+// 	chainType string) {
+// 	self.interf.SetBlockchain(client, etherCli, intermediateSigner, nonceIntermediate, chainType)
+// }
+
 func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface) *Huobi {
 	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
+
 	return &Huobi{
 		interf,
 		pairs,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,
+		map[common.ActivityID]types.Transaction{},
 	}
 }
 

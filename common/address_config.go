@@ -21,15 +21,16 @@ type TokenInfo struct {
 }
 
 type AddressConfig struct {
-	Tokens    map[string]token    `json:"tokens"`
-	Exchanges map[string]exchange `json:"exchanges"`
-	Bank      string              `json:"bank"`
-	Reserve   string              `json:"reserve"`
-	Network   string              `json:"network"`
-	Wrapper   string              `json:"wrapper"`
-	Pricing   string              `json:"pricing"`
-	FeeBurner string              `json:"feeburner"`
-	Whitelist string              `json:"whitelist"`
+	Tokens        map[string]token    `json:"tokens"`
+	Exchanges     map[string]exchange `json:"exchanges"`
+	Bank          string              `json:"bank"`
+	Reserve       string              `json:"reserve"`
+	Network       string              `json:"network"`
+	Wrapper       string              `json:"wrapper"`
+	Pricing       string              `json:"pricing"`
+	FeeBurner     string              `json:"feeburner"`
+	Whitelist     string              `json:"whitelist"`
+	Intermediator string              `json:"intermediator"`
 }
 
 func GetAddressConfigFromFile(path string) (AddressConfig, error) {

@@ -80,7 +80,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
-
+	intermediatorAddr := ethereum.HexToAddress(addressConfig.Intermediator)
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
 	for id, t := range addressConfig.Tokens {
@@ -115,9 +115,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	depositSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreD, baseSigner.PassphraseD)
 	intermediatorSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreI, baseSigner.PassphraseI)
 
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner)
-	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
-
 	// endpoint := "https://ropsten.infura.io"
 	// endpoint := "http://blockchain:8545"
 	// endpoint := "https://kovan.infura.io"
@@ -128,6 +125,8 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	} else {
 		endpoint = setPath.endPoint
 	}
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint)
+	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	bkendpoints := setPath.bkendpoints
 	var hmac512auth http.KNAuthentication
@@ -171,5 +170,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		WhitelistAddress:        whitelistAddr,
 		ChainType:               chainType,
 		IntermediatorSigner:     intermediatorSigner,
+		IntermediatorAddress:    intermediatorAddr,
 	}
 }

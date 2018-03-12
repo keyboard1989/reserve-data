@@ -51,7 +51,8 @@ func NewExchangePool(
 	addressConfig common.AddressConfig,
 	signer *signer.FileSigner,
 	bittrexStorage exchange.BittrexStorage, kyberENV string,
-	intermediatorSigner *signer.FileSigner) *ExchangePool {
+	intermediatorSigner *signer.FileSigner,
+	ethEndpoint string) *ExchangePool {
 
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
@@ -81,7 +82,7 @@ func NewExchangePool(
 			bin.UpdatePairsPrecision()
 			exchanges[bin.ID()] = bin
 		case "huobi":
-			endpoint := huobi.NewHuobiEndpoint(signer, getHuobiInterface(kyberENV))
+			endpoint := huobi.NewHuobiEndpoint(signer, getHuobiInterface(kyberENV), ethEndpoint, intermediatorSigner)
 			huobi := exchange.NewHuobi(addressConfig.Exchanges["huobi"], feeConfig.Exchanges["huobi"], endpoint)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["huobi"] {

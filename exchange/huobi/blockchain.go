@@ -8,7 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
+	"github.com/KyberNetwork/reserve-data/exchange"
+	"github.com/KyberNetwork/reserve-data/signer"
 	ether "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -35,29 +37,15 @@ type rpcTransaction struct {
 	txExtraInfo
 }
 
-type NonceCorpus interface {
-	GetAddress() ethereum.Address
-	GetNextNonce() (*big.Int, error)
-	MinedNonce() (*big.Int, error)
-}
-
-type Signer interface {
-	GetAddress() ethereum.Address
-	Sign(*types.Transaction) (*types.Transaction, error)
-	GetTransactOpts() *bind.TransactOpts
-}
-
 type Blockchain struct {
 	rpcClient          *rpc.Client
 	client             *ethclient.Client
-	intermediateSigner Signer
-	tokens             []common.Token
-	tokenIndices       map[string]tbindex
-	nonceIntermediate  NonceCorpus
+	intermediateSigner exchange.Signer
+	nonceIntermediate  exchange.NonceCorpus
 	chainType          string
 }
 
-func getNextNonce(n NonceCorpus) (*big.Int, error) {
+func getNextNonce(n exchange.NonceCorpus) (*big.Int, error) {
 	var nonce *big.Int
 	var err error
 	for i := 0; i < 3; i++ {
@@ -198,7 +186,16 @@ func (self *Blockchain) SendETHFromAccountToExchange(amount *big.Int, exchangeAd
 
 func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Hash) (tx *rpcTransaction, isPending bool, err error) {
 	var json *rpcTransaction
+	log.Printf("hash is %s", hash.Hex())
 	err = self.rpcClient.CallContext(ctx, &json, "eth_getTransactionByHash", hash)
+	log.Printf("json tx is %v", json.tx)
+	log.Print("json txextra is %v", json.txExtraInfo)
+	log.Print("json block is %v", json.BlockHash)
+	log.Print("json from is %v", json.From)
+	if json.tx == nil {
+		return nil, true, nil
+	}
+	log.Printf("json tx is : %v", json.tx)
 	if err != nil {
 		return nil, false, err
 	} else if json == nil {
@@ -261,17 +258,20 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	}
 }
 
-func NewBlockchain(
-	client *rpc.Client,
-	etherCli *ethclient.Client,
-	intermediateSigner Signer, nonceIntermediate NonceCorpus,
-	chainType string) (*Blockchain, error) {
+func NewBlockchain(intermediateSigner *signer.FileSigner, ethEndpoint string) (*Blockchain, error) {
 	log.Printf("intermediate address: %s", intermediateSigner.GetAddress().Hex())
+	//set client & endpoint
+	client, err := rpc.Dial(ethEndpoint)
+	if err != nil {
+		log.Println("ERROR: can't dial to etherum Endpoin ")
+	}
+	infura := ethclient.NewClient(client)
+	intermediatenonce := nonce.NewTimeWindow(infura, intermediateSigner)
+
 	return &Blockchain{
 		rpcClient:          client,
-		client:             etherCli,
+		client:             infura,
 		intermediateSigner: intermediateSigner,
-		tokens:             []common.Token{},
-		nonceIntermediate:  nonceIntermediate,
+		nonceIntermediate:  intermediatenonce,
 	}, nil
 }
