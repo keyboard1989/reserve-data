@@ -22,7 +22,7 @@ type ReserveStats interface {
 
 	GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error)
 
-	UpdateUserAddresses(userID string, addresses []ethereum.Address) error
+	UpdateUserAddresses(userID string, addresses []ethereum.Address, timestamps []uint64) error
 
 	Run() error
 	Stop() error

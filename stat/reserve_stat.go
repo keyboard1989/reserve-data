@@ -12,8 +12,10 @@ import (
 )
 
 type ReserveStats struct {
-	storage Storage
-	fetcher *Fetcher
+	statStorage StatStorage
+	logStorage  LogStorage
+	userStorage UserStorage
+	fetcher     *Fetcher
 }
 
 func NewReserveStats(storage Storage, fetcher *Fetcher) *ReserveStats {
@@ -128,7 +130,7 @@ func (self ReserveStats) GetCapByAddress(addr ethereum.Address) (*common.UserCap
 }
 
 func (self ReserveStats) GetCapByUser(userID string) (*common.UserCap, error) {
-	addresses, err := self.storage.GetAddressesOfUser(userID)
+	addresses, _, err := self.storage.GetAddressesOfUser(userID)
 	if err != nil {
 		return nil, err
 	}
@@ -148,20 +150,20 @@ func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr et
 	return result, err
 }
 
-func (self ReserveStats) UpdateUserAddresses(userID string, addrs []ethereum.Address) error {
+func (self ReserveStats) UpdateUserAddresses(userID string, addrs []ethereum.Address, timestamps []uint64) error {
 	addresses := []string{}
 	for _, addr := range addrs {
 		addresses = append(addresses, addr.Hex())
 	}
-	return self.storage.UpdateUserAddresses(userID, addresses)
+	return self.storage.UpdateUserAddresses(userID, addresses, timestamps)
 }
 
 func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error) {
-	user, err := self.storage.GetUserOfAddress(address.Hex())
+	user, _, err := self.storage.GetUserOfAddress(address.Hex())
 	if err != nil {
 		return false, err
 	}
-	addrs, err := self.storage.GetAddressesOfUser(user)
+	addrs, _, err := self.storage.GetAddressesOfUser(user)
 	if err != nil {
 		return false, err
 	}
