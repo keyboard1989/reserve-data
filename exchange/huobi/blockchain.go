@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"math/big"
-	"net/rpc"
 	"os"
 	"time"
 
@@ -14,13 +13,26 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 type tbindex struct {
 	BulkIndex   uint64
 	IndexInBulk uint64
+}
+
+type txExtraInfo struct {
+	BlockNumber *string
+	BlockHash   ethereum.Hash
+	From        ethereum.Address
+}
+
+type rpcTransaction struct {
+	tx *types.Transaction
+	txExtraInfo
 }
 
 type NonceCorpus interface {
@@ -55,6 +67,27 @@ func getNextNonce(n NonceCorpus) (*big.Int, error) {
 		}
 	}
 	return nonce, err
+}
+
+func (tx *rpcTransaction) BlockNumber() *big.Int {
+	if tx.txExtraInfo.BlockNumber == nil {
+		return big.NewInt(0)
+	} else {
+		blockno, err := hexutil.DecodeBig(*tx.txExtraInfo.BlockNumber)
+		if err != nil {
+			log.Printf("Error decoding block number: %v", err)
+			return big.NewInt(0)
+		} else {
+			return blockno
+		}
+	}
+}
+
+func ensureContext(ctx context.Context) context.Context {
+	if ctx == nil {
+		return context.TODO()
+	}
+	return ctx
 }
 
 func donothing() {}
