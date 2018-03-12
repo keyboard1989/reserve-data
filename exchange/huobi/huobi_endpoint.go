@@ -26,8 +26,9 @@ type HuobiEndpoint struct {
 
 func (self *HuobiEndpoint) fillRequest(req *http.Request, signNeeded bool) {
 	if req.Method == "POST" || req.Method == "PUT" || req.Method == "DELETE" {
-		// req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 		req.Header.Add("Content-Type", "application/json")
+	} else {
+		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	}
 	if signNeeded {
 		q := req.URL.Query()

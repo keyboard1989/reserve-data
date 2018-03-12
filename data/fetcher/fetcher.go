@@ -455,15 +455,18 @@ func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []commo
 			var blockNum uint64
 
 			id := activity.ID
+			txHash := activity.Result["tx"].(string)
+			amount := activity.Params["amount"].(float64)
+			currency := activity.Params["token"].(string)
 			if activity.Action == "trade" {
 				status, err = exchange.OrderStatus(id, timepoint)
 			} else if activity.Action == "deposit" {
-				status, err = exchange.DepositStatus(id, timepoint)
+				status, err = exchange.DepositStatus(id, txHash, currency, amount, timepoint)
 				log.Printf("Got deposit status for %v: (%s), error(%v)", activity, status, err)
 			} else if activity.Action == "withdraw" {
 				log.Printf("Activity: %+v", activity)
 				tx = activity.Result["tx"].(string)
-				status, tx, err = exchange.WithdrawStatus(id, timepoint)
+				status, tx, err = exchange.WithdrawStatus(id, txHash, currency, amount, timepoint)
 				log.Printf("Got withdraw status for %v: (%s), error(%v)", activity, status, err)
 			} else {
 				continue

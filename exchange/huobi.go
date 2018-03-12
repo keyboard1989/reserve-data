@@ -345,15 +345,14 @@ func (self *Huobi) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][
 	return result, nil
 }
 
-func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	idParts := strings.Split(id.EID, "|")
-	txID := idParts[0]
+func (self *Huobi) DepositStatus(
+	id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, error) {
 	deposits, err := self.interf.DepositHistory()
 	if err != nil && deposits.Status != "ok" {
 		return "", err
 	}
 	for _, deposit := range deposits.Data {
-		if deposit.TxHash == txID {
+		if deposit.TxHash == txHash {
 			if deposit.State == "safe" {
 				return "done", nil
 			}
@@ -363,7 +362,8 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 	return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and activity ID are not consistently designed")
 }
 
-func (self *Huobi) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
+func (self *Huobi) WithdrawStatus(
+	id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, string, error) {
 	withdrawID, _ := strconv.ParseUint(id.EID, 10, 64)
 	withdraws, err := self.interf.WithdrawHistory()
 	if err != nil {
@@ -401,39 +401,13 @@ func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	}
 }
 
-func NewHuobi(interf HuobiInterface) *Huobi {
+func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface) *Huobi {
+	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
 	return &Huobi{
 		interf,
-		[]common.TokenPair{
-			common.MustCreateTokenPair("OMG", "ETH"),
-			// common.MustCreateTokenPair("EOS", "ETH"),
-			// common.MustCreateTokenPair("KNC", "ETH"),
-			// common.MustCreateTokenPair("SNT", "ETH"),
-			// common.MustCreateTokenPair("SALT", "ETH"),
-		},
+		pairs,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
-		common.NewExchangeFee(
-			common.TradingFee{
-				"taker": 0.002,
-				"maker": 0.002,
-			},
-			common.NewFundingFee(
-				map[string]float64{
-					// "ETH":  0.01,
-					// "EOS":  0.5,
-					"OMG": 0.1,
-					// "KNC": 1.0,
-					// "SNT":  50.0,
-				},
-				map[string]float64{
-					"ETH": 0,
-					// "EOS":  0,
-					"OMG": 0,
-					// "KNC": 0,
-					// "SNT":  0,
-				},
-			),
-		),
+		fees,
 	}
 }

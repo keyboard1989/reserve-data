@@ -166,7 +166,8 @@ func bitttimestampToUint64(input string) uint64 {
 	return uint64(t.UnixNano() / int64(time.Millisecond))
 }
 
-func (self *Bittrex) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
+func (self *Bittrex) DepositStatus(
+	id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, error) {
 	timestamp := id.Timepoint
 	idParts := strings.Split(id.EID, "|")
 	if len(idParts) != 3 {
@@ -175,7 +176,6 @@ func (self *Bittrex) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 		// 2. id is not constructed correctly in a form of uuid + "|" + token + "|" + amount
 		return "", errors.New("Invalid deposit id")
 	}
-	currency := idParts[1]
 	amount, err := strconv.ParseFloat(idParts[2], 64)
 	if err != nil {
 		panic(err)
@@ -224,7 +224,8 @@ func (self *Bittrex) CancelOrder(id common.ActivityID) error {
 	}
 }
 
-func (self *Bittrex) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
+func (self *Bittrex) WithdrawStatus(
+	id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, string, error) {
 	idParts := strings.Split(id.EID, "|")
 	if len(idParts) != 2 {
 		// here, the exchange id part in id is malformed
@@ -233,7 +234,6 @@ func (self *Bittrex) WithdrawStatus(id common.ActivityID, timepoint uint64) (str
 		return "", "", errors.New("Invalid withdraw id")
 	}
 	uuid := idParts[0]
-	currency := idParts[1]
 	histories, err := self.interf.WithdrawHistory(currency, timepoint)
 	if err != nil {
 		return "", "", err
