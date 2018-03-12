@@ -256,8 +256,8 @@
         },
         "bittrex": {
             "Trading": {
-                "taker": 0.001,
-                "maker": 0.001
+                "taker": 0.0025,
+                "maker": 0.0025
             },
             "Funding": {
                 "Deposit": {
