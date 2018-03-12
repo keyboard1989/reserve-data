@@ -2,6 +2,7 @@ package huobi
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -43,6 +44,13 @@ type Blockchain struct {
 	intermediateSigner exchange.Signer
 	nonceIntermediate  exchange.NonceCorpus
 	chainType          string
+}
+
+func (tx *rpcTransaction) UnmarshalJSON(msg []byte) error {
+	if err := json.Unmarshal(msg, &tx.tx); err != nil {
+		return err
+	}
+	return json.Unmarshal(msg, &tx.txExtraInfo)
 }
 
 func getNextNonce(n exchange.NonceCorpus) (*big.Int, error) {
@@ -127,13 +135,14 @@ func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchange
 	opts, cancel, err := self.getIntermediateTransactOpts(nil, nil)
 	ctx := opts.Context
 	defer cancel()
+	log.Printf("amount is %d", amount)
+	log.Printf("exchange address is %d", exchangeAddress.Hex())
 	data, err := packData("transfer", exchangeAddress, amount)
 	if err != nil {
 		return nil, err
 	}
 
 	msg := ether.CallMsg{From: opts.From, To: &tokenAddress, Value: big.NewInt(0), Data: data}
-	log.Printf("msg in hex is  %x", msg)
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
 	if err != nil {
 		log.Printf("Intermediator: Can not estimate gas %v", err)
@@ -188,14 +197,6 @@ func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Has
 	var json *rpcTransaction
 	log.Printf("hash is %s", hash.Hex())
 	err = self.rpcClient.CallContext(ctx, &json, "eth_getTransactionByHash", hash)
-	log.Printf("json tx is %v", json.tx)
-	log.Print("json txextra is %v", json.txExtraInfo)
-	log.Print("json block is %v", json.BlockHash)
-	log.Print("json from is %v", json.From)
-	if json.tx == nil {
-		return nil, true, nil
-	}
-	log.Printf("json tx is : %v", json.tx)
 	if err != nil {
 		return nil, false, err
 	} else if json == nil {
@@ -257,6 +258,49 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 		}
 	}
 }
+
+// func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.Int, timepoint uint64, token common.Token) (map[string]common.BalanceEntry, error) {
+// 	result := map[string]common.BalanceEntry{}
+// 	tokens := []ethereum.Address{}
+// 	tokens = append(tokens, ethereum.HexToAddress(token.Address))
+// 	timestamp := common.GetTimestamp()
+// 	balances, err := self.wrapper.GetBalances(nil, atBlock, reserve, tokens)
+// 	returnTime := common.GetTimestamp()
+// 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
+
+// 	if err != nil {
+
+// 		for tokenID, _ := range common.SupportedTokens {
+// 			result[token.ID] = common.BalanceEntry{
+// 				Valid:      false,
+// 				Error:      err.Error(),
+// 				Timestamp:  timestamp,
+// 				ReturnTime: returnTime,
+// 			}
+// 		}
+// 	} else {
+// 		for i, tok := range self.tokens {
+// 			if balances[i].Cmp(Big0) == 0 || balances[i].Cmp(BigMax) > 0 {
+// 				log.Printf("Fetcher ------> balances of token %s is invalid", tok.ID)
+// 				result[tok.ID] = common.BalanceEntry{
+// 					Valid:      false,
+// 					Error:      "Got strange balances from node. It equals to 0 or is bigger than 10^33",
+// 					Timestamp:  timestamp,
+// 					ReturnTime: returnTime,
+// 					Balance:    common.RawBalance(*balances[i]),
+// 				}
+// 			} else {
+// 				result[tok.ID] = common.BalanceEntry{
+// 					Valid:      true,
+// 					Timestamp:  timestamp,
+// 					ReturnTime: returnTime,
+// 					Balance:    common.RawBalance(*balances[i]),
+// 				}
+// 			}
+// 		}
+// 	}
+// 	return result, nil
+// }
 
 func NewBlockchain(intermediateSigner *signer.FileSigner, ethEndpoint string) (*Blockchain, error) {
 	log.Printf("intermediate address: %s", intermediateSigner.GetAddress().Hex())

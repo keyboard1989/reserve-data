@@ -393,7 +393,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 		}
 		if status == "mined" {
 			//if it is mined, send 2nd tx.
-			log.Println("found a new deposit status, which deposit %.5f %s. Proccxeed to send it to Huobi", sentAmount, tokenID)
+			log.Printf("found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, tokenID)
 			//check if the token is supported
 			token, err := common.GetToken(tokenID)
 			if err != nil {
@@ -412,6 +412,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 			}
 			self.currentDepositstatus[id] = *tx2
 		} else {
+			//status is not mined.
 			return "", nil
 		}
 	} else {
@@ -435,8 +436,8 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 					}
 					return "", nil
 				}
+				return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and activity ID are not consistently designed")
 			}
-			return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and activity ID are not consistently designed")
 		} else if status == "failed" || status == "lost" {
 			delete(self.currentDepositstatus, id)
 			return "failed", nil

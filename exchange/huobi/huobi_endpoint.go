@@ -411,7 +411,7 @@ func (self *HuobiEndpoint) Send2ndTransaction(amount float64, token common.Token
 		log.Printf("ERROR: Can not send transaction to exchange: %v", err)
 		return nil, err
 	}
-	log.Printf("ERROR: Transaction submitted. Tx is: \n %v", tx)
+	log.Printf("Transaction submitted. Tx is: \n %v", tx)
 	return tx, nil
 
 }
