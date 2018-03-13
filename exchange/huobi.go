@@ -36,7 +36,7 @@ func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
-func (self *Huobi) UpdateAllDepositAddresses(address string) {
+func (self *Huobi) UpdateAllDepositAddresses(address string, timepoint uint64) {
 	data := self.addresses.GetData()
 	for k, _ := range data {
 		self.addresses.Update(k, ethereum.HexToAddress(address))
@@ -345,7 +345,7 @@ func (self *Huobi) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][
 	return result, nil
 }
 
-func (self *Huobi) DepositStatus(id common.ActivityID) (string, error) {
+func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	idParts := strings.Split(id.EID, "|")
 	txID := idParts[0]
 	deposits, err := self.interf.DepositHistory()
@@ -363,7 +363,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID) (string, error) {
 	return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and activity ID are not consistently designed")
 }
 
-func (self *Huobi) WithdrawStatus(id common.ActivityID) (string, string, error) {
+func (self *Huobi) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
 	withdrawID, _ := strconv.ParseUint(id.EID, 10, 64)
 	withdraws, err := self.interf.WithdrawHistory()
 	if err != nil {
