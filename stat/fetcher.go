@@ -10,6 +10,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+const REORG_BLOCK_SAFE uint64 = 7
+
 type CoinCapRateResponse []struct {
 	ID       string `json:"id"`
 	Name     string `json:"name"`
@@ -19,7 +21,10 @@ type CoinCapRateResponse []struct {
 }
 
 type Fetcher struct {
-	storage                Storage
+	statStorage            StatStorage
+	userStorage            UserStorage
+	logStorage             LogStorage
+	rateStorage            RateStorage
 	blockchain             Blockchain
 	runner                 FetcherRunner
 	ethRate                EthUSDRate
@@ -31,14 +36,20 @@ type Fetcher struct {
 }
 
 func NewFetcher(
-	storage Storage,
+	statStorage StatStorage,
+	logStorage LogStorage,
+	rateStorage RateStorage,
+	userStorage UserStorage,
 	ethUSDRate EthUSDRate,
 	runner FetcherRunner,
 	deployBlock uint64,
 	reserve ethereum.Address,
 	thirdPartyReserves []ethereum.Address) *Fetcher {
 	return &Fetcher{
-		storage:            storage,
+		statStorage:        statStorage,
+		logStorage:         logStorage,
+		rateStorage:        rateStorage,
+		userStorage:        userStorage,
 		blockchain:         nil,
 		runner:             runner,
 		ethRate:            ethUSDRate,
@@ -113,7 +124,7 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	data.Range(func(key, value interface{}) bool {
 		reserveAddr := key.(string)
 		rates := value.(common.ReserveRates)
-		self.storage.StoreReserveRates(reserveAddr, rates, common.GetTimepoint())
+		self.rateStorage.StoreReserveRates(reserveAddr, rates, common.GetTimepoint())
 		return true
 	})
 }
@@ -126,15 +137,18 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 		timepoint := common.TimeToTimepoint(t)
 		self.FetchCurrentBlock()
 		log.Printf("fetched block from blockchain")
-		lastBlock, err := self.storage.LastBlock()
+		lastBlock, err := self.logStorage.LastBlock()
 		if lastBlock == 0 {
 			lastBlock = self.deployBlock
 		}
 		if err == nil {
 			toBlock := lastBlock + 1 + 1440 // 1440 is considered as 6 hours
-			if toBlock > self.currentBlock {
+			if toBlock > self.currentBlock-REORG_BLOCK_SAFE {
 				// set toBlock to 0 so we will fetch to last block
-				toBlock = 0
+				toBlock = self.currentBlock - REORG_BLOCK_SAFE
+			}
+			if lastBlock+1 > toBlock {
+				continue
 			}
 			nextBlock := self.FetchLogs(lastBlock+1, toBlock, timepoint)
 			if nextBlock == lastBlock && toBlock != 0 {
@@ -145,7 +159,7 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 				// miss any logs due to node inconsistency
 				nextBlock = toBlock + 1
 			}
-			self.storage.UpdateLogBlock(nextBlock, timepoint)
+			self.logStorage.UpdateLogBlock(nextBlock, timepoint)
 			log.Printf("nextBlock: %d", nextBlock)
 		} else {
 			log.Printf("failed to get last fetched log block, err: %+v", err)
@@ -170,7 +184,7 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 				if il.Type() == "TradeLog" {
 					l := il.(common.TradeLog)
 					log.Printf("blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
-					err = self.storage.StoreTradeLog(l, timepoint)
+					err = self.logStorage.StoreTradeLog(l, timepoint)
 					if err != nil {
 						log.Printf("storing trade log failed, abort storing process and return latest stored log block number, err: %+v", err)
 						return l.BlockNumber
@@ -181,7 +195,7 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 					l := il.(common.SetCatLog)
 					log.Printf("blockno: %d", l.BlockNumber)
 					log.Printf("log: %+v", l)
-					err = self.storage.StoreCatLog(l)
+					err = self.logStorage.StoreCatLog(l)
 					if err != nil {
 						log.Printf("storing cat log failed, abort storing process and return latest stored log block number, err: %+v", err)
 						return l.BlockNumber
@@ -255,7 +269,7 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 	}
 	for _, update := range updates {
 		for _, freq := range []string{"M", "H", "D"} {
-			err = self.storage.SetTradeStats(update.metric, freq, trade.Timestamp, update.tradeStats)
+			err = self.statStorage.SetTradeStats(update.metric, freq, trade.Timestamp, update.tradeStats)
 			if err != nil {
 				return
 			}

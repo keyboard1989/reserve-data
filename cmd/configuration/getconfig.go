@@ -99,7 +99,19 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	if err != nil {
 		panic(err)
 	}
-	statStorage, err := statstorage.NewBoltStorage(setPath.statStoragePath)
+	statStorage, err := statstorage.NewBoltStatStorage(setPath.statStoragePath)
+	if err != nil {
+		panic(err)
+	}
+	logStorage, err := statstorage.NewBoltLogStorage(setPath.logStoragePath)
+	if err != nil {
+		panic(err)
+	}
+	rateStorage, err := statstorage.NewBoltRateStorage(setPath.rateStoragePath)
+	if err != nil {
+		panic(err)
+	}
+	userStorage, err := statstorage.NewBoltUserStorage(setPath.userStoragePath)
 	if err != nil {
 		panic(err)
 	}
@@ -150,9 +162,11 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	return &Config{
 		ActivityStorage:         dataStorage,
 		DataStorage:             dataStorage,
+		UserStorage:             userStorage,
+		LogStorage:              logStorage,
+		RateStorage:             rateStorage,
 		StatStorage:             statStorage,
 		FetcherStorage:          dataStorage,
-		StatFetcherStorage:      statStorage,
 		MetricStorage:           dataStorage,
 		FetcherRunner:           fetcherRunner,
 		StatFetcherRunner:       statFetcherRunner,

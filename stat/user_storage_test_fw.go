@@ -3,9 +3,8 @@ package stat
 import (
 	"errors"
 	"fmt"
-
-	"github.com/KyberNetwork/reserve-data/common"
-	ethereum "github.com/ethereum/go-ethereum/common"
+	// "github.com/KyberNetwork/reserve-data/common"
+	// ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 // This test type enforces necessary logic required for a stat storage.
@@ -17,15 +16,15 @@ import (
 // of actual storage being used as this interface.
 // Eg. It should be used in cmd package where we decide to use
 // bolt (for example) as the storage for stat storage
-type StorageTest struct {
+type UserStorageTest struct {
 	storage UserStorage
 }
 
-func NewStorageTest(storage Storage) *StorageTest {
-	return &StorageTest{storage}
+func NewUserStorageTest(storage UserStorage) *UserStorageTest {
+	return &UserStorageTest{storage}
 }
 
-func (self *StorageTest) TestUpdateAddressCategory() error {
+func (self *UserStorageTest) TestUpdateAddressCategory() error {
 	lowercaseAddr := "0x8180a5ca4e3b94045e05a9313777955f7518d757"
 	lowercaseCat := "0x4a"
 	addr := "0x8180a5CA4E3B94045e05A9313777955f7518D757"
@@ -69,7 +68,7 @@ func (self *StorageTest) TestUpdateAddressCategory() error {
 	return nil
 }
 
-func (self *StorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() error {
+func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() error {
 	email := "victor@kyber.network"
 	addr1 := "0x8180a5ca4e3b94045e05a9313777955f7518d757"
 	time1 := uint64(1520825136556)
@@ -189,7 +188,7 @@ func (self *StorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() erro
 	return nil
 }
 
-func (self *StorageTest) TestUpdateAddressCategoryThenUpdateUserAddresses() error {
+func (self *UserStorageTest) TestUpdateAddressCategoryThenUpdateUserAddresses() error {
 	email := "Victor@kyber.network"
 	lowercaseEmail := "victor@kyber.network"
 	addr1 := "0x8180a5CA4E3B94045e05A9313777955f7518D757"
