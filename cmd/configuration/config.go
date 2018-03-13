@@ -93,7 +93,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"https://semi-node.kyber.network",
+		"https://mainnet.infura.io/0BRKxQ0SFvAxGL72cbXi",
 		[]string{
 			"https://semi-node.kyber.network",
 			"https://mainnet.infura.io",
@@ -108,7 +108,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"https://semi-node.kyber.network",
+		"https://mainnet.infura.io/0BRKxQ0SFvAxGL72cbXi",
 		[]string{
 			"https://semi-node.kyber.network",
 			"https://mainnet.infura.io",
