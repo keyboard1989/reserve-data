@@ -181,8 +181,8 @@ func (self *BoltStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(LOG_BUCKET))
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime * 1000000)
-		max := uint64ToBytes(toTime * 1000000)
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.TradeLog{}
 			err = json.Unmarshal(v, &record)
@@ -326,65 +326,52 @@ func (self *BoltStorage) getTradeStats(fromTime, toTime uint64, freq string) (ma
 func (self *BoltStorage) SaveUserAddress(timestamp uint64, addr string) (common.TradeStats, error) {
 	stats := common.TradeStats{}
 	var err error
-	var kycEd bool
 
 	self.db.Update(func(tx *bolt.Tx) error {
-		// CHECK IF USER HAD TRADED EVER BEFORE
-		addrBk := tx.Bucket([]byte(ADDRESS_BUCKET))
-		v := addrBk.Get([]byte(addr))
-		if v == nil {
-			stats["first_trade_ever"] = 1
-			stats["first_trade_in_day"] = 1
+		dailyAddrBk := tx.Bucket([]byte(DAILY_ADDRESS_BUCKET))
 
-			if err := addrBk.Put([]byte(addr), []byte("1")); err != nil {
-				return err
-			}
+		timestamp := getTimestampByFreq(timestamp, "D")
+
+		var addrTradedInDay map[string]bool
+		if raw := dailyAddrBk.Get(timestamp); raw != nil {
+			json.Unmarshal(raw, &addrTradedInDay)
 		} else {
-			// IF USER HAD TRADED, CHECK IF USER HAD TRADED IN DAY BEFORE
-			dailyAddrBk := tx.Bucket([]byte(DAILY_ADDRESS_BUCKET))
-
-			timestamp := getTimestampByFreq(timestamp, "D")
-			raw := dailyAddrBk.Get(timestamp)
-
-			var addrTradedInDay map[string]bool
-			if raw != nil {
-				json.Unmarshal(raw, &addrTradedInDay)
-			} else {
-				addrTradedInDay = map[string]bool{}
-			}
-
-			if _, traded := addrTradedInDay[addr]; !traded {
-				stats["first_trade_in_day"] = 1
-
-				addrTradedInDay[addr] = true
-				dataJSON, err := json.Marshal(addrTradedInDay)
-				if err != nil {
-					return err
-				}
-
-				if err := dailyAddrBk.Put(timestamp, dataJSON); err != nil {
-					return err
-				}
-			}
+			addrTradedInDay = map[string]bool{}
 		}
 
-		// CHECK IF KYCED USER HAD TRADED IN DAY BEFORE
-		// MEANS: first trade from addr in day, user is kyced and also first trade from user in day
-		if stats["first_trade_in_day"] == 1 {
+		if _, traded := addrTradedInDay[addr]; !traded {
+			stats["first_trade_in_day"] = 1 // FIRST TRADE IN DAY
+
+			addrTradedInDay[addr] = true
+			dataJSON, err := json.Marshal(addrTradedInDay)
+			if err != nil {
+				return err
+			}
+
+			if err := dailyAddrBk.Put(timestamp, dataJSON); err != nil {
+				return err
+			}
+
+			addrBk := tx.Bucket([]byte(ADDRESS_BUCKET))
+			v := addrBk.Get([]byte(addr))
+			if v == nil {
+				stats["first_trade_ever"] = 1 // FIRST TRADE EVER
+
+				if err := addrBk.Put([]byte(addr), []byte("1")); err != nil {
+					return err
+				}
+			}
+
 			user, err := self.GetUserOfAddress(addr)
 			if err != nil {
 				return err
 			}
-			kycEd = (user != addr && user != "")
-
+			kycEd := (user != addr && user != "")
 			if kycEd {
 				dailyUserBk := tx.Bucket([]byte(DAILY_USER_BUCKET))
 
-				timestamp := getTimestampByFreq(timestamp, "D")
-				raw := dailyUserBk.Get(timestamp)
-
 				var userTradedInDay map[string]bool
-				if raw != nil {
+				if raw := dailyUserBk.Get(timestamp); raw != nil {
 					json.Unmarshal(raw, &userTradedInDay)
 				} else {
 					userTradedInDay = map[string]bool{}
@@ -686,4 +673,31 @@ func (self *BoltStorage) GetReserveRates(fromTime, toTime uint64, reserveAddr st
 		return err
 	})
 	return result, err
+}
+
+func (self *BoltStorage) GetLastAggregatedTime() uint64 {
+	var time uint64
+	self.db.View(func(tx *bolt.Tx) error {
+		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
+
+		t := tradeStatsBk.Get([]byte("last_aggregated_time"))
+		if t == nil {
+			time = 0
+		} else {
+			time = bytesToUint64(t)
+		}
+
+		return nil
+	})
+	return time
+}
+
+func (self *BoltStorage) SetLastAggregatedTime(t uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
+		err = tradeStatsBk.Put([]byte("last_aggregated_time"), uint64ToBytes(t))
+		return nil
+	})
+	return err
 }

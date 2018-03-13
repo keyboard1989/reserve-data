@@ -68,6 +68,7 @@ func (self *Fetcher) Run() error {
 	self.runner.Start()
 	go self.RunBlockAndLogFetcher()
 	go self.RunReserveRatesFetcher()
+	go self.RunAggregateTrades()
 	log.Printf("Fetcher runner is running...")
 	return nil
 }
@@ -177,8 +178,6 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 					if err != nil {
 						log.Printf("storing trade log failed, abort storing process and return latest stored log block number, err: %+v", err)
 						return l.BlockNumber
-					} else {
-						self.aggregateTradeLog(l)
 					}
 				} else if il.Type() == "SetCatLog" {
 					l := il.(common.SetCatLog)
@@ -195,6 +194,40 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 		} else {
 			return fromBlock - 1
 		}
+	}
+}
+
+func (self *Fetcher) RunAggregateTrades() {
+	for {
+		log.Println("waiting for signal from aggregate trade stats channel")
+		t := <-self.runner.GetAggregateTradeStatsTicker()
+
+		log.Printf("got signal in aggregate trade stats channel with timestamp %d", common.GetTimepoint())
+
+		// get trade log from db
+		fromTime := self.storage.GetLastAggregatedTime() + 1
+		toTime := common.TimeToTimepoint(t) * 1000000
+		tradeLogs, err := self.storage.GetTradeLogs(fromTime, toTime)
+		if err != nil {
+			log.Printf("get trade log from db failed: %v", err)
+			continue
+		}
+
+		// aggregate tradelog and update time
+		log.Printf("AGGREGATE %d trades from %d to %d", len(tradeLogs), fromTime, toTime)
+		if len(tradeLogs) > 0 {
+			var last uint64
+			for _, trade := range tradeLogs {
+				if err := self.aggregateTradeLog(trade); err == nil {
+					if trade.Timestamp > last {
+						last = trade.Timestamp
+					}
+				}
+			}
+			self.storage.SetLastAggregatedTime(last)
+		}
+
+		log.Println("aggregated trade stats")
 	}
 }
 

@@ -122,7 +122,7 @@ func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
 	}
 
-	result, err := self.storage.GetTradeLogs(fromTime, toTime)
+	result, err := self.storage.GetTradeLogs(fromTime*1000000, toTime*1000000)
 	return result, err
 }
 

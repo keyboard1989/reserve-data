@@ -28,6 +28,10 @@ type Storage interface {
 
 	UpdateLogBlock(block uint64, timepoint uint64) error
 	StoreTradeLog(stat common.TradeLog, timepoint uint64) error
+
+	GetLastAggregatedTime() uint64
+	SetLastAggregatedTime(timestamp uint64) error
+
 	SetTradeStats(freq string, t uint64, tradeStats common.TradeStats) error
 	SaveUserAddress(timestamp uint64, addr string) (common.TradeStats, error)
 	StoreReserveRates(reserveAddr string, rate common.ReserveRates, timepoint uint64) error
