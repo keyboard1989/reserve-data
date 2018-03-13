@@ -1,17 +1,25 @@
 package configuration
 
 import (
+	"log"
+	"os"
+	"time"
+
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
+	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
+	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
+	"github.com/KyberNetwork/reserve-data/signer"
 	"github.com/KyberNetwork/reserve-data/stat"
+	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -62,6 +70,108 @@ type Config struct {
 	ThirdPartyReserves []ethereum.Address
 
 	ChainType string
+}
+
+// GetStatConfig: load config to run stat server only
+func (self *Config) AddStatConfig(setPath SettingPaths, addressConfig common.AddressConfig) {
+	thirdpartyReserves := []ethereum.Address{}
+	for _, address := range addressConfig.ThirdPartyReserves {
+		thirdpartyReserves = append(thirdpartyReserves, ethereum.HexToAddress(address))
+	}
+
+	statStorage, err := statstorage.NewBoltStatStorage(setPath.statStoragePath)
+	if err != nil {
+		panic(err)
+	}
+
+	logStorage, err := statstorage.NewBoltLogStorage(setPath.logStoragePath)
+	if err != nil {
+		panic(err)
+	}
+
+	rateStorage, err := statstorage.NewBoltRateStorage(setPath.rateStoragePath)
+	if err != nil {
+		panic(err)
+	}
+
+	userStorage, err := statstorage.NewBoltUserStorage(setPath.userStoragePath)
+	if err != nil {
+		panic(err)
+	}
+
+	//fetcherRunner := http_runner.NewHttpRunner(8001)
+	var statFetcherRunner stat.FetcherRunner
+
+	if os.Getenv("KYBER_ENV") == "simulation" {
+		statFetcherRunner = http_runner.NewHttpRunner(8002)
+	} else {
+		statFetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second, 7*time.Second)
+	}
+
+	self.StatStorage = statStorage
+	self.UserStorage = userStorage
+	self.LogStorage = logStorage
+	self.RateStorage = rateStorage
+	self.StatFetcherRunner = statFetcherRunner
+	self.ThirdPartyReserves = thirdpartyReserves
+}
+
+func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressConfig common.AddressConfig, kyberENV string) {
+	networkAddr := ethereum.HexToAddress(addressConfig.Network)
+	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
+	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
+
+	feeConfig, err := common.GetFeeFromFile(setPath.feePath)
+	if err != nil {
+		log.Fatalf("Fees file %s cannot found at: %s", setPath.feePath, err)
+	}
+
+	dataStorage, err := storage.NewBoltStorage(setPath.dataStoragePath)
+	if err != nil {
+		panic(err)
+	}
+
+	//fetcherRunner := http_runner.NewHttpRunner(8001)
+	var fetcherRunner fetcher.FetcherRunner
+
+	if os.Getenv("KYBER_ENV") == "simulation" {
+		fetcherRunner = http_runner.NewHttpRunner(8001)
+	} else {
+		fetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second, 7*time.Second)
+	}
+
+	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
+
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV)
+	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
+
+	var hmac512auth http.KNAuthentication
+
+	hmac512auth = http.KNAuthentication{
+		fileSigner.KNSecret,
+		fileSigner.KNReadOnly,
+		fileSigner.KNConfiguration,
+		fileSigner.KNConfirmConf,
+	}
+
+	if !authEnbl {
+		log.Printf("\nWARNING: No authentication mode\n")
+	}
+
+	self.ActivityStorage = dataStorage
+	self.DataStorage = dataStorage
+	self.FetcherStorage = dataStorage
+	self.MetricStorage = dataStorage
+	self.FetcherRunner = fetcherRunner
+	self.FetcherExchanges = exchangePool.FetcherExchanges()
+	self.Exchanges = exchangePool.CoreExchanges()
+	self.BlockchainSigner = fileSigner
+	self.EnableAuthentication = authEnbl
+	self.DepositSigner = depositSigner
+	self.AuthEngine = hmac512auth
+	self.FeeBurnerAddress = burnerAddr
+	self.NetworkAddress = networkAddr
+	self.WhitelistAddress = whitelistAddr
 }
 
 func (self *Config) MapTokens() map[string]common.Token {

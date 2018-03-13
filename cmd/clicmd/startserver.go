@@ -53,7 +53,9 @@ func GetConfigFromENV(kyberENV string) *configuration.Config {
 	var config *configuration.Config
 	config = configuration.GetConfig(kyberENV,
 		!noAuthEnable,
-		endpointOW)
+		endpointOW,
+		noCore,
+		enableStat)
 	return config
 }
 
@@ -155,9 +157,13 @@ func serverStart(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	//nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
-	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
-	nonceDeposit := nonce.NewTimeWindow(infura, config.DepositSigner)
+	var nonceCorpus *nonce.TimeWindow
+	var nonceDeposit *nonce.TimeWindow
+	
+	if !noCore {
+		nonceCorpus = nonce.NewTimeWindow(infura, config.BlockchainSigner)
+		nonceDeposit = nonce.NewTimeWindow(infura, config.DepositSigner)
+	}
 	//set block chain
 	bc, err := blockchain.NewBlockchain(
 		client,
