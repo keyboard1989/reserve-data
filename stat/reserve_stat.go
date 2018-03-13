@@ -140,10 +140,36 @@ func (self ReserveStats) GetCapByUser(userID string) (*common.UserCap, error) {
 	}
 }
 
+func isDuplicate(currentRate, latestRate common.ReserveRates) bool {
+	currentData := currentRate.Data
+	latestData := latestRate.Data
+	for key, _ := range currentData {
+		if currentData[key].BuyReserveRate != latestData[key].BuyReserveRate ||
+			currentData[key].BuySanityRate != latestData[key].BuySanityRate ||
+			currentData[key].SellReserveRate != latestData[key].SellReserveRate ||
+			currentData[key].SellSanityRate != latestData[key].SellSanityRate {
+			return false
+		}
+	}
+	return true
+}
+
 func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error) {
 	var result []common.ReserveRates
 	var err error
-	result, err = self.storage.GetReserveRates(fromTime, toTime, reserveAddr.Hex())
+	var rates []common.ReserveRates
+	rates, err = self.storage.GetReserveRates(fromTime, toTime, reserveAddr.Hex())
+	latest := common.ReserveRates{}
+	for _, rate := range rates {
+		if !isDuplicate(rate, latest) {
+			result = append(result, rate)
+		} else {
+			if len(result) > 0 {
+				result[len(result)-1].ToBlockNumber = rate.BlockNumber
+			}
+		}
+		latest = rate
+	}
 	log.Printf("Get reserve rate: %v", result)
 	return result, err
 }
