@@ -136,16 +136,17 @@ func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchange
 	ctx := opts.Context
 	defer cancel()
 	log.Printf("amount is %d", amount)
-	log.Printf("exchange address is %d", exchangeAddress.Hex())
+	log.Printf("exchange address is %s", exchangeAddress.Hex())
 	data, err := packData("transfer", exchangeAddress, amount)
 	if err != nil {
 		return nil, err
 	}
-
+	log.Printf("opts address is: %s ", opts.From.Hex())
+	log.Printf("token address is: %s ", tokenAddress.Hex())
 	msg := ether.CallMsg{From: opts.From, To: &tokenAddress, Value: big.NewInt(0), Data: data}
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
 	if err != nil {
-		log.Printf("Intermediator: Can not estimate gas %v", err)
+		log.Printf("Intermediator: Can not estimate gas: %v", err)
 		gasLimit = big.NewInt(25000)
 	} else {
 		log.Println("Intermediator: gas limit estimated is : %d", gasLimit)
@@ -307,7 +308,7 @@ func NewBlockchain(intermediateSigner *signer.FileSigner, ethEndpoint string) (*
 	//set client & endpoint
 	client, err := rpc.Dial(ethEndpoint)
 	if err != nil {
-		log.Println("ERROR: can't dial to etherum Endpoin ")
+		log.Println("ERROR: can't dial to etherum Endpoint ")
 	}
 	infura := ethclient.NewClient(client)
 	intermediatenonce := nonce.NewTimeWindow(infura, intermediateSigner)
