@@ -114,6 +114,10 @@ func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 	return self.logStorage.GetTradeLogs(fromTime, toTime)
 }
 
+func (self ReserveStats) GetCatLogs(fromTime uint64, toTime uint64) ([]common.SetCatLog, error) {
+	return self.logStorage.GetCatLogs(fromTime, toTime)
+}
+
 func (self ReserveStats) GetPendingAddresses() ([]string, error) {
 	return self.userStorage.GetPendingAddresses()
 }
