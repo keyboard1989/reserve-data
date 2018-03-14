@@ -116,6 +116,18 @@ func (self *Fetcher) RunAuthDataFetcher() {
 }
 
 func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
+	Acbalance, err := self.blockchain.FetchBalanceData(ethereum.HexToAddress("0x13922F1857C0677F79e4BbB16Ad2c49fAa620829"), nil, common.GetTimepoint())
+	if err != nil {
+		log.Printf("\n\n\n\nCan't get balance \n\n\n")
+	} else {
+		for id, entry := range Acbalance {
+			if entry.Valid {
+				tok, _ := common.GetToken(id)
+				log.Printf("Balance of token %v is %v", id, entry.Balance.ToFloat(tok.Decimal))
+			}
+		}
+	}
+
 	snapshot := common.AuthDataSnapshot{
 		Valid:             true,
 		Timestamp:         common.GetTimestamp(),

@@ -9,7 +9,9 @@ import (
 	"os"
 	"time"
 
+	originalbc "github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
+	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ether "github.com/ethereum/go-ethereum"
@@ -41,6 +43,7 @@ type rpcTransaction struct {
 type Blockchain struct {
 	rpcClient          *rpc.Client
 	client             *ethclient.Client
+	wrapper            *originalbc.KNWrapperContract
 	intermediateSigner exchange.Signer
 	nonceIntermediate  exchange.NonceCorpus
 	chainType          string
@@ -270,50 +273,7 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	}
 }
 
-// func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.Int, timepoint uint64, token common.Token) (map[string]common.BalanceEntry, error) {
-// 	result := map[string]common.BalanceEntry{}
-// 	tokens := []ethereum.Address{}
-// 	tokens = append(tokens, ethereum.HexToAddress(token.Address))
-// 	timestamp := common.GetTimestamp()
-// 	balances, err := self.wrapper.GetBalances(nil, atBlock, reserve, tokens)
-// 	returnTime := common.GetTimestamp()
-// 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
-
-// 	if err != nil {
-
-// 		for tokenID, _ := range common.SupportedTokens {
-// 			result[token.ID] = common.BalanceEntry{
-// 				Valid:      false,
-// 				Error:      err.Error(),
-// 				Timestamp:  timestamp,
-// 				ReturnTime: returnTime,
-// 			}
-// 		}
-// 	} else {
-// 		for i, tok := range self.tokens {
-// 			if balances[i].Cmp(Big0) == 0 || balances[i].Cmp(BigMax) > 0 {
-// 				log.Printf("Fetcher ------> balances of token %s is invalid", tok.ID)
-// 				result[tok.ID] = common.BalanceEntry{
-// 					Valid:      false,
-// 					Error:      "Got strange balances from node. It equals to 0 or is bigger than 10^33",
-// 					Timestamp:  timestamp,
-// 					ReturnTime: returnTime,
-// 					Balance:    common.RawBalance(*balances[i]),
-// 				}
-// 			} else {
-// 				result[tok.ID] = common.BalanceEntry{
-// 					Valid:      true,
-// 					Timestamp:  timestamp,
-// 					ReturnTime: returnTime,
-// 					Balance:    common.RawBalance(*balances[i]),
-// 				}
-// 			}
-// 		}
-// 	}
-// 	return result, nil
-// }
-
-func NewBlockchain(intermediateSigner *signer.FileSigner, ethEndpoint string) (*Blockchain, error) {
+func NewBlockchain(intermediateSigner *signer.FileSigner, ethEndpoint string, wrapperAddr ethereum.Address) (*Blockchain, error) {
 	log.Printf("intermediate address: %s", intermediateSigner.GetAddress().Hex())
 	//set client & endpoint
 	client, err := rpc.Dial(ethEndpoint)
@@ -322,11 +282,66 @@ func NewBlockchain(intermediateSigner *signer.FileSigner, ethEndpoint string) (*
 	}
 	infura := ethclient.NewClient(client)
 	intermediatenonce := nonce.NewTimeWindow(infura, intermediateSigner)
-
+	wrapper, err := originalbc.NewKNWrapperContract(wrapperAddr, infura)
+	if err != nil {
+		return nil, err
+	}
 	return &Blockchain{
 		rpcClient:          client,
 		client:             infura,
+		wrapper:            wrapper,
 		intermediateSigner: intermediateSigner,
 		nonceIntermediate:  intermediatenonce,
 	}, nil
+}
+
+func (self *Blockchain) CheckBalance(token common.Token) *big.Int {
+	opts, _, _ := self.getIntermediateTransactOpts(nil, nil)
+	balance, err := self.FetchBalanceData(opts.From, token)
+	if err != nil || !balance.Valid {
+		return big.NewInt(0)
+	}
+
+	balanceFloat := balance.Balance.ToFloat(token.Decimal)
+	return (getBigIntFromFloat(balanceFloat, token.Decimal))
+
+}
+
+func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, token common.Token) (common.BalanceEntry, error) {
+	result := common.BalanceEntry{}
+	tokens := []ethereum.Address{}
+	tokens = append(tokens, ethereum.HexToAddress(token.Address))
+
+	timestamp := common.GetTimestamp()
+	balances, err := self.wrapper.GetBalances(nil, nil, reserve, tokens)
+	returnTime := common.GetTimestamp()
+	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
+	if err != nil {
+		result = common.BalanceEntry{
+			Valid:      false,
+			Error:      err.Error(),
+			Timestamp:  timestamp,
+			ReturnTime: returnTime,
+		}
+	} else {
+		if balances[0].Cmp(big.NewInt(0)) == 0 || balances[0].Cmp(big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)) > 0 {
+			log.Printf("Fetcher ------> balances of token %s is invalid", token.ID)
+			result = common.BalanceEntry{
+				Valid:      false,
+				Error:      "Got strange balances from node. It equals to 0 or is bigger than 10^33",
+				Timestamp:  timestamp,
+				ReturnTime: returnTime,
+				Balance:    common.RawBalance(*balances[0]),
+			}
+		} else {
+			result = common.BalanceEntry{
+				Valid:      true,
+				Timestamp:  timestamp,
+				ReturnTime: returnTime,
+				Balance:    common.RawBalance(*balances[0]),
+			}
+		}
+	}
+
+	return result, nil
 }

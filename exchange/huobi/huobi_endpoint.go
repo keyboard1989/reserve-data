@@ -375,8 +375,8 @@ func (self *HuobiEndpoint) GetExchangeInfo() (exchange.HuobiExchangeInfo, error)
 	return result, err
 }
 
-func NewHuobiEndpoint(signer Signer, interf Interface, ethEndpoint string, intermediateSigner *signer.FileSigner) *HuobiEndpoint {
-	bc, _ := NewBlockchain(intermediateSigner, ethEndpoint)
+func NewHuobiEndpoint(signer Signer, interf Interface, intermediateSigner *signer.FileSigner, ethEndpoint string, wrapperAddr ethereum.Address) *HuobiEndpoint {
+	bc, _ := NewBlockchain(intermediateSigner, ethEndpoint, wrapperAddr)
 	return &HuobiEndpoint{signer, interf, *bc}
 }
 
@@ -397,9 +397,14 @@ func getBigIntFromFloat(amount float64, decimal int64) *big.Int {
 }
 
 func (self *HuobiEndpoint) Send2ndTransaction(amount float64, token common.Token, exchangeAddress ethereum.Address) (*types.Transaction, error) {
-
+	currBalance := self.blockchain.CheckBalance(token)
+	log.Printf("current balance of token %s is %d", token.ID, currBalance)
 	//self.blockchain.
 	IAmount := getBigIntFromFloat(amount, token.Decimal)
+	if currBalance.Cmp(IAmount) < 0 {
+		log.Printf("balance is not enough, wait till next check")
+		return nil, errors.New("balance is not enough")
+	}
 	var tx *types.Transaction
 	var err error
 	if token.ID == "ETH" {
