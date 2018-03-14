@@ -143,7 +143,8 @@ func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchange
 	}
 	log.Printf("opts address is: %s ", opts.From.Hex())
 	log.Printf("token address is: %s ", tokenAddress.Hex())
-	msg := ether.CallMsg{From: opts.From, To: &tokenAddress, Value: big.NewInt(0), Data: data}
+	msg := ether.CallMsg{From: opts.From, To: &tokenAddress, Value: big.NewInt(0), GasPrice: opts.GasPrice, Data: data}
+	log.Printf("message is :%x", msg)
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
 	if err != nil {
 		log.Printf("Intermediator: Can not estimate gas: %v", err)
@@ -178,6 +179,15 @@ func (self *Blockchain) SendETHFromAccountToExchange(amount *big.Int, exchangeAd
 	//build msg and get gas limit
 	msg := ether.CallMsg{From: opts.From, To: &exchangeAddress, Value: amount, Data: nil}
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
+	if err != nil {
+		log.Printf("Intermediator: Can not estimate gas: %v", err)
+		gasLimit = big.NewInt(25000)
+	} else {
+		log.Println("Intermediator: gas limit estimated is : %d", gasLimit)
+		if (gasLimit.Cmp(big.NewInt(25000))) < 0 {
+			gasLimit = big.NewInt(25000)
+		}
+	}
 	//build tx, sign and send
 	tx := types.NewTransaction(opts.Nonce.Uint64(), exchangeAddress, amount, gasLimit, opts.GasPrice, nil)
 	signTX, err := self.intermediateSigner.Sign(tx)
