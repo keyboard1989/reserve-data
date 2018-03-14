@@ -113,8 +113,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			config.FetcherStorage,
 			config.FetcherRunner,
 			config.ReserveAddress,
-			true,
-			// kyberENV == "simulation",
+			kyberENV == "simulation",
 		)
 		for _, ex := range config.FetcherExchanges {
 			dataFetcher.AddExchange(ex)

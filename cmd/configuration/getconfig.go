@@ -80,7 +80,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
-	intermediatorAddr := ethereum.HexToAddress("0x13922f1857c0677f79e4bbb16ad2c49faa620829")
+	intermediatorAddr := ethereum.HexToAddress("0x13922F1857C0677F79e4BbB16Ad2c49fAa620829")
 	//intermediatorAddr := ethereum.HexToAddress(addressConfig.Intermediator)
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
