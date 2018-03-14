@@ -10,6 +10,7 @@ import (
 // all of the functions must support concurrency
 type ReserveStats interface {
 	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
+	GetCatLogs(fromTime uint64, toTime uint64) ([]common.SetCatLog, error)
 	GetAssetVolume(fromTime, toTime uint64, freq, asset string) (common.StatTicks, error)
 	GetBurnFee(fromTime, toTime uint64, freq, reserveAddr string) (common.StatTicks, error)
 	GetWalletFee(fromTime, toTime uint64, freq, reserveAddr, walletAddr string) (common.StatTicks, error)
@@ -22,7 +23,7 @@ type ReserveStats interface {
 
 	GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error)
 
-	UpdateUserAddresses(userID string, addresses []ethereum.Address) error
+	UpdateUserAddresses(userID string, addresses []ethereum.Address, timestamps []uint64) error
 
 	Run() error
 	Stop() error

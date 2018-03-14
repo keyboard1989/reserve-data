@@ -533,10 +533,13 @@ type KNLog interface {
 }
 
 type SetCatLog struct {
-	Timestamp   uint64
-	BlockNumber uint64
-	Address     ethereum.Address
-	Category    string
+	Timestamp        uint64
+	BlockNumber      uint64
+	TransactionHash  ethereum.Hash
+	TransactionIndex uint
+
+	Address  ethereum.Address
+	Category string
 }
 
 func (self SetCatLog) BlockNo() uint64 { return self.BlockNumber }

@@ -680,10 +680,12 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, ethRate float6
 						return result, err
 					}
 					result = append(result, common.SetCatLog{
-						Timestamp:   t,
-						BlockNumber: l.BlockNumber,
-						Address:     addr,
-						Category:    cat,
+						Timestamp:        t,
+						BlockNumber:      l.BlockNumber,
+						TransactionHash:  l.TxHash,
+						TransactionIndex: l.TxIndex,
+						Address:          addr,
+						Category:         cat,
 					})
 				case FeeToWalletEvent:
 					reserveAddr, walletAddr, walletFee := LogDataToFeeWalletParams(l.Data)

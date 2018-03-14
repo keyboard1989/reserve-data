@@ -123,11 +123,14 @@ func serverStart(cmd *cobra.Command, args []string) {
 
 	if enableStat {
 		var deployBlock uint64
-		if kyberENV == "mainnet" || kyberENV == "production" {
+		if kyberENV == "mainnet" || kyberENV == "production" || kyberENV == "dev" {
 			deployBlock = 5069586
 		}
 		statFetcher = stat.NewFetcher(
-			config.StatFetcherStorage,
+			config.StatStorage,
+			config.LogStorage,
+			config.RateStorage,
+			config.UserStorage,
 			stat.NewCMCEthUSDRate(),
 			config.StatFetcherRunner,
 			deployBlock,
@@ -201,6 +204,9 @@ func serverStart(cmd *cobra.Command, args []string) {
 			statFetcher.SetBlockchain(bc)
 			rStat = stat.NewReserveStats(
 				config.StatStorage,
+				config.LogStorage,
+				config.RateStorage,
+				config.UserStorage,
 				statFetcher,
 			)
 			rStat.Run()
