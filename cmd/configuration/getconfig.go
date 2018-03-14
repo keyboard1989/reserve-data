@@ -123,8 +123,8 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
 		statFetcherRunner = http_runner.NewHttpRunner(8002)
 	} else {
-		fetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 5*time.Second)
-		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 5*time.Second)
+		fetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second)
+		statFetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second)
 	}
 
 	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)

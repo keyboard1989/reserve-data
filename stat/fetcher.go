@@ -98,7 +98,7 @@ func (self *Fetcher) GetReserveRates(
 	currentBlock uint64, reserveAddr ethereum.Address,
 	tokens []common.Token, data *sync.Map, wg *sync.WaitGroup) {
 	defer wg.Done()
-	rates, err := self.blockchain.GetReserveRates(currentBlock, reserveAddr, tokens)
+	rates, err := self.blockchain.GetReserveRates(currentBlock-1, currentBlock, reserveAddr, tokens)
 	if err != nil {
 		log.Println(err.Error())
 	}

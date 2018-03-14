@@ -1,3 +1,3 @@
 package reserve
 
-const VERSION string = "0.4.1"
+const VERSION string = "0.5.0"

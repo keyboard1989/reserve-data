@@ -1,3 +1,29 @@
+# 0.5.0 (2018-03-08)
+
+## Features:
+- Add api to halt setrate
+- Reorganize commandline to make core runable in different modes and configs
+- Rotate logs for better log management
+- Add API to get all core relevant addresses
+- Add api to check core version
+- Add a tool to monitor base/compact to detect bugs
+- Add binance trade history API
+## Bug fixes:
+- Fix minors with deposit signer
+- Fix order of pending activities in its API
+- Add API timerange limit to all relevant apis to mitigate dos attack from key keepers
+- Add sanity check to validate response from node
+- Remove eth-eth pair in requesting to exchange
+## Improvements:
+- Update binance limits
+- Reduce bianance api rate
+- Organize configuration better to list/delist token more easily
+- Wait sometime before fetching new rate to hopefully mitigrate reorg
+- Added sanity check on deposit/trade/withdraw
+- Improved gas limit estimation for deposit and setrate
+- Removed duplicated records in get rate API
+- Query rate at a specific block instead of relying on latest block
+
 # 0.4.1 (2018-02-19)
 ## Features:
 - Listed more 4 tokens (eng, salt, appc, rdn)
@@ -9,7 +35,7 @@
 - Fixed incompatibility between geth and parity in tx receipt data
 - Enable microsecond info in log
 
-## improvements:
+## Improvements:
 - Separated cex token pairs to config
 - Separated cex fee to config
 - Added sanity checks on setrates, deposit, withdraw and trade

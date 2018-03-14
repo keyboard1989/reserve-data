@@ -574,10 +574,11 @@ type ReserveRateEntry struct {
 type ReserveTokenRateEntry map[string]ReserveRateEntry
 
 type ReserveRates struct {
-	Timestamp   uint64
-	ReturnTime  uint64
-	BlockNumber uint64
-	Data        ReserveTokenRateEntry
+	Timestamp     uint64
+	ReturnTime    uint64
+	BlockNumber   uint64
+	ToBlockNumber uint64
+	Data          ReserveTokenRateEntry
 }
 
 func (self TradeLog) BlockNo() uint64 { return self.BlockNumber }

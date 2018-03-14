@@ -245,6 +245,14 @@ func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
 	}
 }
 
+func readablePrint(data map[ethereum.Address]byte) string {
+	result := ""
+	for addr, b := range data {
+		result = result + "|" + fmt.Sprintf("%s-%d", addr.Hex(), b)
+	}
+	return result
+}
+
 //====================== Write calls ===============================
 
 // TODO: Need better test coverage
@@ -310,7 +318,7 @@ func (self *Blockchain) SetRates(
 					buys, sells,
 					baseBuys, baseSells,
 					newBBuys, newBSells,
-					newCBuys, newCSells,
+					readablePrint(newCBuys), readablePrint(newCSells),
 					bbuys, bsells, indices,
 				)
 			}
@@ -324,7 +332,7 @@ func (self *Blockchain) SetRates(
 					tx.Hash().Hex(),
 					buys, sells,
 					baseBuys, baseSells,
-					newCBuys, newCSells,
+					readablePrint(newCBuys), readablePrint(newCSells),
 					bbuys, bsells, indices,
 				)
 			}
@@ -552,7 +560,7 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 }
 
 func (self *Blockchain) GetReserveRates(
-	atBlock uint64, reserveAddress ethereum.Address,
+	atBlock, currentBlock uint64, reserveAddress ethereum.Address,
 	tokens []common.Token) (common.ReserveRates, error) {
 	result := common.ReserveTokenRateEntry{}
 	rates := common.ReserveRates{}
@@ -572,6 +580,7 @@ func (self *Blockchain) GetReserveRates(
 	}
 
 	rates.BlockNumber = atBlock
+	rates.ToBlockNumber = currentBlock
 	rates.ReturnTime = common.GetTimepoint()
 	for index, token := range tokens {
 		rateEntry := common.ReserveRateEntry{}
