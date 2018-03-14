@@ -143,7 +143,7 @@ func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchange
 	}
 	log.Printf("opts address is: %s ", opts.From.Hex())
 	log.Printf("token address is: %s ", tokenAddress.Hex())
-	msg := ether.CallMsg{From: opts.From, To: &tokenAddress, Value: big.NewInt(0), GasPrice: opts.GasPrice, Data: data}
+	msg := ether.CallMsg{From: opts.From, To: &tokenAddress, Value: big.NewInt(0), Data: data}
 	log.Printf("message is :%x", msg)
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
 	if err != nil {
