@@ -126,7 +126,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	} else {
 		endpoint = setPath.endPoint
 	}
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr)
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr)
 	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	bkendpoints := setPath.bkendpoints

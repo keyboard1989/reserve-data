@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"math/big"
 	"net/http"
 	"net/url"
@@ -17,15 +16,12 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
-	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type HuobiEndpoint struct {
-	signer     Signer
-	interf     Interface
-	blockchain Blockchain
+	signer Signer
+	interf Interface
 }
 
 func (self *HuobiEndpoint) fillRequest(req *http.Request, signNeeded bool, timepoint uint64) {
@@ -375,48 +371,6 @@ func (self *HuobiEndpoint) GetExchangeInfo() (exchange.HuobiExchangeInfo, error)
 	return result, err
 }
 
-func NewHuobiEndpoint(signer Signer, interf Interface, intermediateSigner *signer.FileSigner, ethEndpoint string, wrapperAddr ethereum.Address) *HuobiEndpoint {
-	bc, _ := NewBlockchain(intermediateSigner, ethEndpoint, wrapperAddr)
-	return &HuobiEndpoint{signer, interf, *bc}
-}
-
-func (self *HuobiEndpoint) GetTxStatus(txID ethereum.Hash) (string, uint64, error) {
-	return self.blockchain.TxStatus(txID)
-}
-
-func getBigIntFromFloat(amount float64, decimal int64) *big.Int {
-	FAmount := big.NewFloat(amount)
-
-	power := math.Pow10(int(decimal))
-
-	FDecimal := (big.NewFloat(0)).SetFloat64(power)
-	FAmount.Mul(FAmount, FDecimal)
-	IAmount := big.NewInt(0)
-	FAmount.Int(IAmount)
-	return IAmount
-}
-
-func (self *HuobiEndpoint) Send2ndTransaction(amount float64, token common.Token, exchangeAddress ethereum.Address) (*types.Transaction, error) {
-	currBalance := self.blockchain.CheckBalance(token)
-	log.Printf("current balance of token %s is %d", token.ID, currBalance)
-	//self.blockchain.
-	IAmount := getBigIntFromFloat(amount, token.Decimal)
-	if currBalance.Cmp(IAmount) < 0 {
-		log.Printf("balance is not enough, wait till next check")
-		return nil, errors.New("balance is not enough")
-	}
-	var tx *types.Transaction
-	var err error
-	if token.ID == "ETH" {
-		tx, err = self.blockchain.SendETHFromAccountToExchange(IAmount, exchangeAddress)
-	} else {
-		tx, err = self.blockchain.SendTokenFromAccountToExchange(IAmount, exchangeAddress, ethereum.HexToAddress(token.Address))
-	}
-	if err != nil {
-		log.Printf("ERROR: Can not send transaction to exchange: %v", err)
-		return nil, err
-	}
-	log.Printf("Transaction submitted. Tx is: \n %v", tx)
-	return tx, nil
-
+func NewHuobiEndpoint(signer Signer, interf Interface) *HuobiEndpoint {
+	return &HuobiEndpoint{signer, interf}
 }

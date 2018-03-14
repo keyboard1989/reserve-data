@@ -5,7 +5,6 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 )
 
 type HuobiInterface interface {
@@ -43,7 +42,4 @@ type HuobiInterface interface {
 
 	OrderStatus(
 		symbol string, id uint64, timepoint uint64) (HuobiOrder, error)
-
-	GetTxStatus(hash ethereum.Hash) (string, uint64, error)
-	Send2ndTransaction(amount float64, token common.Token, exchangeAddress ethereum.Address) (*types.Transaction, error)
 }

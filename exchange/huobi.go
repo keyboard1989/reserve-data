@@ -9,9 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
-	"github.com/KyberNetwork/reserve-data/signer"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -32,11 +29,6 @@ type Signer interface {
 	GetTransactOpts() *bind.TransactOpts
 }
 
-type Intermediator struct {
-	signer signer.FileSigner
-	nonce  nonce.TimeWindow
-}
-
 type Huobi struct {
 	interf               HuobiInterface
 	pairs                []common.TokenPair
@@ -44,6 +36,8 @@ type Huobi struct {
 	exchangeInfo         *common.ExchangeInfo
 	fees                 common.ExchangeFees
 	currentDepositstatus map[common.ActivityID]types.Transaction
+	blockchain           Blockchain
+	intermediatorAddr    ethereum.Address
 }
 
 func (self *Huobi) MarshalText() (text []byte, err error) {
@@ -55,7 +49,9 @@ func (self *Huobi) TokenAddresses() map[string]ethereum.Address {
 }
 
 func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses.Get(token.ID)
+
+	_, supported := self.addresses.Get(token.ID)
+	addr := self.intermediatorAddr
 	return addr, supported
 }
 
@@ -381,16 +377,64 @@ func getDepositInfo(id common.ActivityID) (string, float64, string) {
 	return txID, sentAmount, tokenID
 }
 
+// func (self *Huobi) Process2ndTransaction(sentAmount float64, tokenID string) (string, error) {
+// 	//if it is mined, send 2nd tx.
+// 	log.Printf("found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, tokenID)
+// 	//check if the token is supported
+// 	token, err := common.GetToken(tokenID)
+// 	if err != nil {
+// 		log.Printf(" Token %s is not supported", tokenID)
+// 		return "", err
+// 	}
+// 	exchangeAddress, ok := self.Address(token)
+// 	if !ok {
+// 		log.Print(" Wrong token address configuration ")
+// 		return "", errors.New("Wrong token address configuration")
+// 	}
+// 	tx2, err := self.interf.Send2ndTransaction(sentAmount, token, exchangeAddress)
+// 	if err != nil {
+// 		log.Println("can't send 2nd transaction to the exchange")
+// 		return "failed", err
+// 	}
+// 	return "", nil
+// }
+
+func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchangeAddress ethereum.Address) (*types.Transaction, error) {
+	currBalance := self.blockchain.CheckBalance(token)
+	log.Printf("current balance of token %s is %d", token.ID, currBalance)
+	//self.blockchain.
+	IAmount := getBigIntFromFloat(amount, token.Decimal)
+	if currBalance.Cmp(IAmount) < 0 {
+		log.Printf("balance is not enough, wait till next check")
+		return nil, errors.New("balance is not enough")
+	}
+	var tx *types.Transaction
+	var err error
+	if token.ID == "ETH" {
+		tx, err = self.blockchain.SendETHFromAccountToExchange(IAmount, exchangeAddress)
+	} else {
+		tx, err = self.blockchain.SendTokenFromAccountToExchange(IAmount, exchangeAddress, ethereum.HexToAddress(token.Address))
+	}
+	if err != nil {
+		log.Printf("ERROR: Can not send transaction to exchange: %v", err)
+		return nil, err
+	}
+	log.Printf("Transaction submitted. Tx is: \n %v", tx)
+	return tx, nil
+
+}
+
 func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	txID, sentAmount, tokenID := getDepositInfo(id)
 	tx2, ok := self.currentDepositstatus[id]
 	if !ok {
 		log.Printf("tx ID from the activity ID is: %v", txID)
 		//if the transaction is not in the current Deposit status, check the 1st tx first.
-		status, _, err := self.interf.GetTxStatus(ethereum.HexToHash(txID))
+		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(txID))
 		if err != nil {
 			log.Println("Can not get TX status")
 		}
+		log.Printf("Status was %s at block %d ", status, blockno)
 		if status == "mined" {
 			//if it is mined, send 2nd tx.
 			log.Printf("found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, tokenID)
@@ -400,12 +444,12 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 				log.Printf(" Token %s is not supported", tokenID)
 				return "", err
 			}
-			exchangeAddress, ok := self.Address(token)
+			exchangeAddress, ok := self.addresses.Get(tokenID)
 			if !ok {
 				log.Print(" Wrong token address configuration ")
 				return "", errors.New("Wrong token address configuration")
 			}
-			tx2, err := self.interf.Send2ndTransaction(sentAmount, token, exchangeAddress)
+			tx2, err := self.Send2ndTransaction(sentAmount, token, exchangeAddress)
 			if err != nil {
 				log.Println("can't send 2nd transaction to the exchange")
 				return "failed", err
@@ -416,9 +460,9 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 			return "", nil
 		}
 	} else {
-		status, _, err := self.interf.GetTxStatus(tx2.Hash())
+		status, _, err := self.blockchain.TxStatus(tx2.Hash())
 		if err != nil {
-			log.Println("Can not get TX status")
+			log.Printf("Can not get TX status: %v", err)
 			return "", nil
 		}
 		if status == "mined" {
@@ -443,6 +487,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 			return "failed", nil
 		}
 	}
+
 	return "", nil
 }
 
@@ -491,9 +536,14 @@ func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 // 	self.interf.SetBlockchain(client, etherCli, intermediateSigner, nonceIntermediate, chainType)
 // }
 
-func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface) *Huobi {
+func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface,
+	intorSigner Signer, ethEndpoint string, wrapperAddr, intorAddr ethereum.Address) *Huobi {
 	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
-
+	bc, err := NewBlockchain(intorSigner, ethEndpoint, wrapperAddr)
+	if err != nil {
+		log.Printf("Cant create Huobi's blockchain: %v", err)
+		panic(err)
+	}
 	return &Huobi{
 		interf,
 		pairs,
@@ -501,6 +551,8 @@ func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, in
 		common.NewExchangeInfo(),
 		fees,
 		map[common.ActivityID]types.Transaction{},
+		*bc,
+		intorAddr,
 	}
 }
 
