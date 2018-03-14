@@ -26,13 +26,22 @@ type TickerRunner struct {
 	bduration  time.Duration
 	tduration  time.Duration
 	rsduration time.Duration
+	lduration  time.Duration
 	oclock     *time.Ticker
 	aclock     *time.Ticker
 	rclock     *time.Ticker
 	bclock     *time.Ticker
 	tclock     *time.Ticker
 	rsclock    *time.Ticker
+	lclock     *time.Ticker
 	signal     chan bool
+}
+
+func (self *TickerRunner) GetLogTicker() <-chan time.Time {
+	if self.lclock == nil {
+		<-self.signal
+	}
+	return self.lclock.C
 }
 
 func (self *TickerRunner) GetBlockTicker() <-chan time.Time {
@@ -85,6 +94,8 @@ func (self *TickerRunner) Start() error {
 	self.signal <- true
 	self.rsclock = time.NewTicker(self.rsduration)
 	self.signal <- true
+	self.lclock = time.NewTicker(self.lduration)
+	self.signal <- true
 	return nil
 }
 
@@ -95,11 +106,12 @@ func (self *TickerRunner) Stop() error {
 	self.bclock.Stop()
 	self.tclock.Stop()
 	self.rsclock.Stop()
+	self.lclock.Stop()
 	return nil
 }
 
 func NewTickerRunner(
-	oduration, aduration, rduration, bduration, tduration, rsduration time.Duration) *TickerRunner {
+	oduration, aduration, rduration, bduration, tduration, rsduration, lduration time.Duration) *TickerRunner {
 	return &TickerRunner{
 		oduration,
 		aduration,
@@ -107,12 +119,14 @@ func NewTickerRunner(
 		bduration,
 		tduration,
 		rsduration,
+		lduration,
 		nil,
 		nil,
 		nil,
 		nil,
 		nil,
 		nil,
-		make(chan bool, 6),
+		nil,
+		make(chan bool, 7),
 	}
 }

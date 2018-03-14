@@ -50,16 +50,19 @@ func NewBoltLogStorage(path string) (*BoltLogStorage, error) {
 	return storage, nil
 }
 
-func (self *BoltLogStorage) LoadLastCatLogIndex(tx *bolt.Tx) (uint64, uint, error) {
+func (self *BoltLogStorage) LoadLastCatLog(tx *bolt.Tx) (common.SetCatLog, error) {
 	b := tx.Bucket([]byte(CATLOG_BUCKET))
 	c := b.Cursor()
 	k, v := c.Last()
+	record := common.SetCatLog{}
 	if k != nil {
-		record := common.SetCatLog{}
-		json.Unmarshal(v, &record)
-		return record.BlockNumber, record.TransactionIndex, nil
+		err := json.Unmarshal(v, &record)
+		if err != nil {
+			return record, err
+		}
+		return record, nil
 	} else {
-		return 0, 0, errors.New("Database is empty")
+		return record, errors.New("Database is empty")
 	}
 }
 
@@ -81,10 +84,10 @@ func (self *BoltLogStorage) StoreCatLog(l common.SetCatLog) error {
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_BUCKET))
 		var dataJson []byte
-		block, txindex, berr := self.LoadLastCatLogIndex(tx)
-		if berr == nil && (block > l.BlockNumber || (block == l.BlockNumber && txindex >= l.TransactionIndex)) {
+		lastCat, berr := self.LoadLastCatLog(tx)
+		if berr == nil && (lastCat.Address.Big().Cmp(l.Address.Big()) == 0) {
 			err = errors.New(
-				fmt.Sprintf("Duplicated log (new block number %s is smaller or equal to latest block number %s)", block, l.BlockNumber))
+				fmt.Sprintf("Duplicated log %+v", l))
 			return err
 		}
 		dataJson, err = json.Marshal(l)

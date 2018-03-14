@@ -15,7 +15,12 @@ type HttpRunner struct {
 	bticker  chan time.Time
 	tticker  chan time.Time
 	rsticker chan time.Time
+	lticker  chan time.Time
 	server   *HttpRunnerServer
+}
+
+func (self *HttpRunner) GetLogTicker() <-chan time.Time {
+	return self.lticker
 }
 
 func (self *HttpRunner) GetBlockTicker() <-chan time.Time {
@@ -73,6 +78,7 @@ func NewHttpRunner(port int) *HttpRunner {
 	bchan := make(chan time.Time)
 	tchan := make(chan time.Time)
 	rschan := make(chan time.Time)
+	lchan := make(chan time.Time)
 	runner := HttpRunner{
 		port,
 		ochan,
@@ -81,6 +87,7 @@ func NewHttpRunner(port int) *HttpRunner {
 		bchan,
 		tchan,
 		rschan,
+		lchan,
 		nil,
 	}
 	runner.Start()

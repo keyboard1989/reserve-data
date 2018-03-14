@@ -77,7 +77,8 @@ func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	self.runner.Start()
-	go self.RunBlockAndLogFetcher()
+	go self.RunBlockFetcher()
+	go self.RunLogFetcher()
 	go self.RunReserveRatesFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
@@ -124,19 +125,18 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	data.Range(func(key, value interface{}) bool {
 		reserveAddr := key.(string)
 		rates := value.(common.ReserveRates)
+		log.Printf("Storing reserve rates to db...")
 		self.rateStorage.StoreReserveRates(reserveAddr, rates, common.GetTimepoint())
 		return true
 	})
 }
 
-func (self *Fetcher) RunBlockAndLogFetcher() {
+func (self *Fetcher) RunLogFetcher() {
 	for {
-		log.Printf("waiting for signal from block channel")
-		t := <-self.runner.GetBlockTicker()
-		log.Printf("got signal in block channel with timestamp %d", common.TimeToTimepoint(t))
+		log.Printf("waiting for signal from log channel")
+		t := <-self.runner.GetLogTicker()
 		timepoint := common.TimeToTimepoint(t)
-		self.FetchCurrentBlock()
-		log.Printf("fetched block from blockchain")
+		log.Printf("got signal in log channel with timestamp %d", timepoint)
 		lastBlock, err := self.logStorage.LastBlock()
 		if lastBlock == 0 {
 			lastBlock = self.deployBlock
@@ -164,6 +164,17 @@ func (self *Fetcher) RunBlockAndLogFetcher() {
 		} else {
 			log.Printf("failed to get last fetched log block, err: %+v", err)
 		}
+	}
+}
+
+func (self *Fetcher) RunBlockFetcher() {
+	for {
+		log.Printf("waiting for signal from block channel")
+		t := <-self.runner.GetBlockTicker()
+		timepoint := common.TimeToTimepoint(t)
+		log.Printf("got signal in block channel with timestamp %d", timepoint)
+		self.FetchCurrentBlock()
+		log.Printf("fetched block from blockchain")
 	}
 }
 
