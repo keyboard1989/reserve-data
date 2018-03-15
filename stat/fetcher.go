@@ -80,8 +80,138 @@ func (self *Fetcher) Run() error {
 	go self.RunBlockFetcher()
 	go self.RunLogFetcher()
 	go self.RunReserveRatesFetcher()
+	go self.RunTradeLogProcessor()
+	go self.RunCatLogProcessor()
 	log.Printf("Fetcher runner is running...")
 	return nil
+}
+
+func (self *Fetcher) RunCatLogProcessor() {
+	for {
+		t := <-self.runner.GetCatLogProcessorTicker()
+		// get trade log from db
+		fromTime, err := self.userStorage.GetLastProcessedCatLogTimepoint()
+		if err != nil {
+			log.Printf("get last processor state from db failed: %v", err)
+			continue
+		}
+		fromTime += 1
+		if fromTime == 1 {
+			// there is no cat log being processed before
+			// load the first log we have and set the fromTime to it's timestamp
+			l, err := self.logStorage.GetFirstCatLog()
+			if err != nil {
+				log.Printf("can't get first cat log: err(%s)", err)
+				continue
+			} else {
+				fromTime = l.Timestamp - 1
+			}
+		}
+		toTime := common.TimeToTimepoint(t) * 1000000
+		maxRange := self.logStorage.MaxRange()
+		if toTime-fromTime > maxRange {
+			toTime = fromTime + maxRange
+		}
+		catLogs, err := self.logStorage.GetCatLogs(fromTime, toTime)
+		if err != nil {
+			log.Printf("get cat log from db failed: %v", err)
+			continue
+		}
+		log.Printf("PROCESS %d cat logs from %d to %d", len(catLogs), fromTime, toTime)
+		if len(catLogs) > 0 {
+			var last uint64
+			for _, l := range catLogs {
+				err := self.userStorage.UpdateAddressCategory(
+					strings.ToLower(l.Address.Hex()),
+					l.Category,
+				)
+				if err != nil {
+					log.Printf("updating address and category failed: err(%s)", err)
+				} else {
+					if l.Timestamp > last {
+						last = l.Timestamp
+					}
+				}
+			}
+			self.userStorage.SetLastProcessedCatLogTimepoint(last)
+		} else {
+			l, err := self.logStorage.GetLastCatLog()
+			if err != nil {
+				log.Printf("LogFetcher - can't get last cat log: err(%s)", err)
+				continue
+			} else {
+				// log.Printf("LogFetcher - got last cat log: %+v", l)
+				if toTime < l.Timestamp {
+					// if we are querying on past logs, store toTime as the last
+					// processed trade log timepoint
+					self.userStorage.SetLastProcessedCatLogTimepoint(toTime)
+				}
+			}
+		}
+
+		log.Println("processed cat logs")
+	}
+}
+
+func (self *Fetcher) RunTradeLogProcessor() {
+	for {
+		t := <-self.runner.GetTradeLogProcessorTicker()
+		// get trade log from db
+		fromTime, err := self.statStorage.GetLastProcessedTradeLogTimepoint()
+		if err != nil {
+			log.Printf("get trade log processor state from db failed: %v", err)
+			continue
+		}
+		fromTime += 1
+		if fromTime == 1 {
+			// there is no trade log being processed before
+			// load the first log we have and set the fromTime to it's timestamp
+			l, err := self.logStorage.GetFirstTradeLog()
+			if err != nil {
+				log.Printf("can't get first trade log: err(%s)", err)
+				continue
+			} else {
+				log.Printf("got first trade: %+v", l)
+				fromTime = l.Timestamp - 1
+			}
+		}
+		toTime := common.TimeToTimepoint(t) * 1000000
+		maxRange := self.logStorage.MaxRange()
+		if toTime-fromTime > maxRange {
+			toTime = fromTime + maxRange
+		}
+		tradeLogs, err := self.logStorage.GetTradeLogs(fromTime, toTime)
+		if err != nil {
+			log.Printf("get trade log from db failed: %v", err)
+			continue
+		}
+		log.Printf("AGGREGATE %d trades from %d to %d", len(tradeLogs), fromTime, toTime)
+		if len(tradeLogs) > 0 {
+			var last uint64
+			for _, trade := range tradeLogs {
+				if err := self.aggregateTradeLog(trade); err == nil {
+					if trade.Timestamp > last {
+						last = trade.Timestamp
+					}
+				}
+			}
+			self.statStorage.SetLastProcessedTradeLogTimepoint(last)
+		} else {
+			l, err := self.logStorage.GetLastTradeLog()
+			if err != nil {
+				log.Printf("can't get last trade log: err(%s)", err)
+				continue
+			} else {
+				// log.Printf("got last trade: %+v", l)
+				if toTime < l.Timestamp {
+					// if we are querying on past logs, store toTime as the last
+					// processed trade log timepoint
+					self.statStorage.SetLastProcessedTradeLogTimepoint(toTime)
+				}
+			}
+		}
+		log.Println("aggregated trade stats")
+	}
 }
 
 func (self *Fetcher) RunReserveRatesFetcher() {
@@ -133,10 +263,10 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 
 func (self *Fetcher) RunLogFetcher() {
 	for {
-		log.Printf("waiting for signal from log channel")
+		log.Printf("LogFetcher - waiting for signal from log channel")
 		t := <-self.runner.GetLogTicker()
 		timepoint := common.TimeToTimepoint(t)
-		log.Printf("got signal in log channel with timestamp %d", timepoint)
+		log.Printf("LogFetcher - got signal in log channel with timestamp %d", timepoint)
 		lastBlock, err := self.logStorage.LastBlock()
 		if lastBlock == 0 {
 			lastBlock = self.deployBlock
@@ -159,10 +289,11 @@ func (self *Fetcher) RunLogFetcher() {
 				// miss any logs due to node inconsistency
 				nextBlock = toBlock + 1
 			}
+			log.Printf("LogFetcher - update log block: %d", nextBlock)
 			self.logStorage.UpdateLogBlock(nextBlock, timepoint)
-			log.Printf("nextBlock: %d", nextBlock)
+			log.Printf("LogFetcher - nextBlock: %d", nextBlock)
 		} else {
-			log.Printf("failed to get last fetched log block, err: %+v", err)
+			log.Printf("LogFetcher - failed to get last fetched log block, err: %+v", err)
 		}
 	}
 }
@@ -180,10 +311,10 @@ func (self *Fetcher) RunBlockFetcher() {
 
 // return block number that we just fetched the logs
 func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint64) uint64 {
-	log.Printf("fetching logs data from block %d", fromBlock)
+	log.Printf("LogFetcher - fetching logs data from block %d", fromBlock)
 	logs, err := self.blockchain.GetLogs(fromBlock, toBlock, self.GetEthRate(common.GetTimepoint()))
 	if err != nil {
-		log.Printf("fetching logs data from block %d failed, error: %v", fromBlock, err)
+		log.Printf("LogFetcher - fetching logs data from block %d failed, error: %v", fromBlock, err)
 		if fromBlock == 0 {
 			return 0
 		} else {
@@ -194,22 +325,18 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 			for _, il := range logs {
 				if il.Type() == "TradeLog" {
 					l := il.(common.TradeLog)
-					log.Printf("blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
+					log.Printf("LogFetcher - blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
 					err = self.logStorage.StoreTradeLog(l, timepoint)
 					if err != nil {
-						log.Printf("storing trade log failed, abort storing process and return latest stored log block number, err: %+v", err)
-						return l.BlockNumber
-					} else {
-						self.aggregateTradeLog(l)
+						log.Printf("LogFetcher - storing trade log failed, ignore that log and proceed with remaining logs, err: %+v", err)
 					}
 				} else if il.Type() == "SetCatLog" {
 					l := il.(common.SetCatLog)
-					log.Printf("blockno: %d", l.BlockNumber)
-					log.Printf("log: %+v", l)
+					log.Printf("LogFetcher - blockno: %d", l.BlockNumber)
+					log.Printf("LogFetcher - log: %+v", l)
 					err = self.logStorage.StoreCatLog(l)
 					if err != nil {
-						log.Printf("storing cat log failed, abort storing process and return latest stored log block number, err: %+v", err)
-						return l.BlockNumber
+						log.Printf("LogFetcher - storing cat log failed, ignore that log and proceed with remaining logs, err: %+v", err)
 					}
 				}
 			}

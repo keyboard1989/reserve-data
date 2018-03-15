@@ -644,7 +644,7 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, ethRate float6
 	var tradeLog *common.TradeLog
 	for i, l := range logs {
 		if l.Removed {
-			log.Printf("Log is ignored because it is removed due to chain reorg")
+			log.Printf("LogFetcher - Log is ignored because it is removed due to chain reorg")
 		} else {
 			if prevLog == nil || l.TxHash != prevLog.TxHash {
 				if tradeLog != nil {

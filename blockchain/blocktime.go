@@ -4,11 +4,24 @@ import (
 	"context"
 	"math/big"
 	"time"
+
+	"github.com/ethereum/go-ethereum/core/types"
 )
+
+var CachedBlockno uint64
+var CachedBlockHeader *types.Header
 
 func (self *Blockchain) InterpretTimestamp(blockno uint64, txindex uint) (uint64, error) {
 	context := context.Background()
-	block, err := self.client.HeaderByNumber(context, big.NewInt(int64(blockno)))
+	var block *types.Header
+	var err error
+	if CachedBlockno == blockno {
+		block = CachedBlockHeader
+	} else {
+		block, err = self.client.HeaderByNumber(context, big.NewInt(int64(blockno)))
+		CachedBlockno = blockno
+		CachedBlockHeader = block
+	}
 	if err != nil {
 		if block == nil {
 			return uint64(0), err

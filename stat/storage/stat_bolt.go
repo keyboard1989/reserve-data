@@ -16,6 +16,8 @@ import (
 const (
 	MAX_NUMBER_VERSION int = 1000
 
+	TRADELOG_PROCESSOR_STATE string = "tradelog_processor_state"
+
 	TRADE_STATS_BUCKET   string = "trade_stats"
 	ASSETS_VOLUME_BUCKET string = "assets_volume"
 	BURN_FEE_BUCKET      string = "burn_fee"
@@ -56,6 +58,7 @@ func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 	// init buckets
 	db.Update(func(tx *bolt.Tx) error {
 		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
+		tx.CreateBucket([]byte(TRADELOG_PROCESSOR_STATE))
 
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		metrics := []string{ASSETS_VOLUME_BUCKET, BURN_FEE_BUCKET, WALLET_FEE_BUCKET, USER_VOLUME_BUCKET}
@@ -97,6 +100,26 @@ func reverseSeek(timepoint uint64, c *bolt.Cursor) (uint64, error) {
 			}
 		}
 	}
+}
+
+func (self *BoltStatStorage) SetLastProcessedTradeLogTimepoint(timepoint uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
+		err = b.Put([]byte("last_timepoint"), uint64ToBytes(timepoint))
+		return err
+	})
+	return err
+}
+
+func (self *BoltStatStorage) GetLastProcessedTradeLogTimepoint() (uint64, error) {
+	var result uint64
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
+		result = bytesToUint64(b.Get([]byte("last_timepoint")))
+		return nil
+	})
+	return result, nil
 }
 
 // GetNumberOfVersion return number of version storing in a bucket
