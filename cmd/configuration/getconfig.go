@@ -108,7 +108,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
 		statFetcherRunner = http_runner.NewHttpRunner(8002)
 	} else {
-		fetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+		fetcherRunner = fetcher.NewTickerRunner(10*time.Second, 4*time.Second, 11*time.Second, 13*time.Second, 15*time.Second)
 		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
 	}
 	baseSigner := signer.GetBaseSigner(setPath.signerPath)
@@ -126,7 +126,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	} else {
 		endpoint = setPath.endPoint
 	}
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr)
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr, dataStorage)
 	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	bkendpoints := setPath.bkendpoints

@@ -494,6 +494,15 @@ type RateEntry struct {
 	Block       uint64
 }
 
+type TXEntry struct {
+	Hash      string
+	Exchange  string
+	Token     string
+	Status    string
+	Amount    float64
+	Timestamp Timestamp
+}
+
 type RateResponse struct {
 	Valid       bool
 	Error       string

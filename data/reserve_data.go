@@ -1,6 +1,8 @@
 package data
 
 import (
+	"log"
+
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
@@ -194,6 +196,23 @@ func (self ReserveData) GetRate(timepoint uint64) (common.AllRateResponse, error
 
 func (self ReserveData) GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
 	return self.storage.GetAllRecords(fromTime, toTime)
+}
+
+func (self ReserveData) CurrentIntermediateTxs(timepoint uint64) (map[common.ActivityID]common.TXEntry, error) {
+	pendings, err := self.storage.GetPendingActivities()
+	result := make(map[common.ActivityID]common.TXEntry)
+	if err != nil {
+		return result, err
+	}
+	for _, pending := range pendings {
+		tx2, err := self.storage.GetIntermedatorTx(pending.ID)
+		if err == nil {
+			result[pending.ID] = tx2
+		} else {
+			log.Printf("the current acitivy doesn't have the 2nd tx yet: ", err)
+		}
+	}
+	return result, nil
 }
 
 func (self ReserveData) GetPendingActivities() ([]common.ActivityRecord, error) {

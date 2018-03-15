@@ -77,7 +77,7 @@ func (self *HuobiEndpoint) GetResponse(
 	self.fillRequest(req, signNeeded, timepoint)
 	var err error
 	var resp_body []byte
-	log.Printf("request to huobi: %s\n", req.URL)
+	//log.Printf("request to huobi: %s\n", req.URL)
 	resp, err := client.Do(req)
 	if err != nil {
 		return resp_body, err

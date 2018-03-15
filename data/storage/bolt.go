@@ -31,6 +31,7 @@ const (
 	SETRATE_CONTROL         string = "setrate_control"
 	PENDING_PWI_EQUATION    string = "pending_pwi_equation"
 	PWI_EQUATION            string = "pwi_equation"
+	INTERMEDIATE_TX         string = "intermediate_tx"
 	MAX_NUMBER_VERSION      int    = 1000
 	MAX_GET_RATES_PERIOD    uint64 = 86400000 //1 days in milisec
 )
@@ -65,6 +66,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(SETRATE_CONTROL))
 		tx.CreateBucket([]byte(PENDING_PWI_EQUATION))
 		tx.CreateBucket([]byte(PWI_EQUATION))
+		tx.CreateBucket([]byte(INTERMEDIATE_TX))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db}
@@ -266,6 +268,30 @@ func (self *BoltStorage) GetRate(version common.Version) (common.AllRateEntry, e
 	return result, err
 }
 
+func (self *BoltStorage) StoreIntermediateTx(hash string, exchangeID string, tokenID string, status string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(INTERMEDIATE_TX))
+
+		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, INTERMEDIATE_TX))
+		self.PruneOutdatedData(tx, INTERMEDIATE_TX)
+		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, INTERMEDIATE_TX))
+		data := common.TXEntry{
+			hash, exchangeID, tokenID, status, Amount, Timestamp,
+		}
+		log.Printf("Data before marshaling is %v", data)
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		idByte := id.ToBytes()
+		log.Printf("the data before storage is %v", dataJson)
+		return b.Put(idByte[:], dataJson)
+	})
+	return err
+}
+
 func (self *BoltStorage) StorePrice(data common.AllPriceEntry, timepoint uint64) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
@@ -397,6 +423,42 @@ func formatTimepointToActivityID(timepoint uint64, id []byte) []byte {
 		byteID := activityID.ToBytes()
 		return byteID[:]
 	}
+}
+
+func isTheSame(a []byte, b []byte) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for ix, v := range a {
+		if b[ix] != v {
+			return false
+		}
+	}
+	return true
+}
+
+func (self *BoltStorage) GetIntermedatorTx(id common.ActivityID) (common.TXEntry, error) {
+	var tx2 common.TXEntry
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(INTERMEDIATE_TX))
+		c := b.Cursor()
+		idBytes := id.ToBytes()
+		k, v := c.Seek(idBytes[:])
+		if isTheSame(k, idBytes[:]) {
+			err = json.Unmarshal(v, &tx2)
+
+			if err != nil {
+				return err
+			}
+			log.Printf("the data came from db is %v", tx2)
+			return nil
+		} else {
+			err = errors.New("Can not find 2nd transaction tx for the deposit %s, please try later")
+			return err
+		}
+	})
+	return tx2, err
 }
 
 func (self *BoltStorage) GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {

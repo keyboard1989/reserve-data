@@ -60,6 +60,7 @@ func getNextNonce(n NonceCorpus) (*big.Int, error) {
 	var err error
 	for i := 0; i < 3; i++ {
 		nonce, err = n.GetNextNonce()
+		log.Print("Nonce is %v", nonce)
 		if err == nil {
 			return nonce, nil
 		}
@@ -194,8 +195,6 @@ func (self *Blockchain) SendETHFromAccountToExchange(amount *big.Int, exchangeAd
 			gasLimit = big.NewInt(25000)
 		}
 	}
-	gasLimit.Add(gasLimit, gasLimit.Div(gasLimit, big.NewInt(10)))
-	log.Printf("Intermediator: final gas: %d", gasLimit)
 
 	//build tx, sign and send
 	tx := types.NewTransaction(opts.Nonce.Uint64(), exchangeAddress, amount, gasLimit, opts.GasPrice, nil)
@@ -292,14 +291,14 @@ func NewBlockchain(intermediateSigner Signer, ethEndpoint string, wrapperAddr et
 	}
 	infura := ethclient.NewClient(client)
 	intermediatenonce := nonce.NewTimeWindow(infura, intermediateSigner)
-	wrapper, err := originalbc.NewKNWrapperContract(wrapperAddr, infura)
+	wrp, err := originalbc.NewKNWrapperContract(wrapperAddr, infura)
 	if err != nil {
 		return nil, err
 	}
 	return &Blockchain{
 		rpcClient:          client,
 		client:             infura,
-		wrapper:            wrapper,
+		wrapper:            wrp,
 		intermediateSigner: intermediateSigner,
 		nonceIntermediate:  intermediatenonce,
 	}, nil
@@ -318,8 +317,8 @@ func getBigIntFromFloat(amount float64, decimal int64) *big.Int {
 }
 
 func (self *Blockchain) CheckBalance(token common.Token) *big.Int {
-	opts, _, _ := self.getIntermediateTransactOpts(nil, nil)
-	balance, err := self.FetchBalanceData(opts.From, token)
+	addr := self.intermediateSigner.GetAddress()
+	balance, err := self.FetchBalanceData(addr, token)
 	if err != nil || !balance.Valid {
 		return big.NewInt(0)
 	}
