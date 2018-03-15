@@ -155,6 +155,7 @@ func (self *Fetcher) RunCatLogProcessor() {
 
 func (self *Fetcher) RunTradeLogProcessor() {
 	for {
+		log.Printf("TradeLogProcessor - waiting for signal from trade log processor channel")
 		t := <-self.runner.GetTradeLogProcessorTicker()
 		// get trade log from db
 		fromTime, err := self.statStorage.GetLastProcessedTradeLogTimepoint()
@@ -415,11 +416,27 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 	}
 
 	// stats on user
-	// user_stats, err := self.statStorage.SaveUserAddress(trade.Timestamp, userAddr)
-	// err = self.statStorage.SetTradeStats("D", trade.Timestamp, user_stats)
-	// if err != nil {
-	// return
-	// }
+	userAddr = strings.ToLower(trade.UserAddress.String())
+	email, regTime, err := self.userStorage.GetUserOfAddress(userAddr)
+	if err != nil {
+		return
+	}
+
+	var kycEd bool
+	if email != "" && email != userAddr && trade.Timestamp > regTime {
+		kycEd = true
+	}
+	userStats, err := self.statStorage.GetUserStats(trade.Timestamp, userAddr, email, kycEd)
+	if err != nil {
+		return
+	}
+
+	if len(userStats) > 0 {
+		if err := self.statStorage.SetUserStats(trade.Timestamp, userAddr, email, kycEd, userStats); err != nil {
+			log.Println("Set user stats failed: ", err)
+			return err
+		}
+	}
 
 	return
 }

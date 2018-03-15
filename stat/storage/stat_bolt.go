@@ -256,73 +256,28 @@ func (self *BoltStatStorage) getTradeStats(fromTime, toTime uint64, freq string)
 	return result, err
 }
 
-/*
-func (self *BoltStatStorage) SaveUserAddress(timestamp uint64, addr string) (common.TradeStats, error) {
+func (self *BoltStatStorage) GetUserStats(timestamp uint64, addr, email string, kycEd bool) (common.TradeStats, error) {
 	stats := common.TradeStats{}
 	var err error
 
-	self.db.Update(func(tx *bolt.Tx) error {
+	self.db.View(func(tx *bolt.Tx) error {
+		dailyTimestamp := string(getTimestampByFreq(timestamp, "D"))
+
 		dailyAddrBk := tx.Bucket([]byte(DAILY_ADDRESS_BUCKET))
-
-		timestamp := getTimestampByFreq(timestamp, "D")
-
-		var addrTradedInDay map[string]bool
-		if raw := dailyAddrBk.Get(timestamp); raw != nil {
-			json.Unmarshal(raw, &addrTradedInDay)
-		} else {
-			addrTradedInDay = map[string]bool{}
-		}
-
-		if _, traded := addrTradedInDay[addr]; !traded {
+		dailyAddrKey := strings.Join([]string{dailyTimestamp, addr}, "_")
+		if v := dailyAddrBk.Get([]byte(dailyAddrKey)); v == nil {
 			stats["first_trade_in_day"] = 1 // FIRST TRADE IN DAY
 
-			addrTradedInDay[addr] = true
-			dataJSON, err := json.Marshal(addrTradedInDay)
-			if err != nil {
-				return err
-			}
-
-			if err := dailyAddrBk.Put(timestamp, dataJSON); err != nil {
-				return err
-			}
-
 			addrBk := tx.Bucket([]byte(ADDRESS_BUCKET))
-			v := addrBk.Get([]byte(addr))
-			if v == nil {
+			if v := addrBk.Get([]byte(addr)); v == nil {
 				stats["first_trade_ever"] = 1 // FIRST TRADE EVER
-
-				if err := addrBk.Put([]byte(addr), []byte("1")); err != nil {
-					return err
-				}
 			}
 
-			user, err := self.GetUserOfAddress(addr)
-			if err != nil {
-				return err
-			}
-			kycEd := (user != addr && user != "")
 			if kycEd {
 				dailyUserBk := tx.Bucket([]byte(DAILY_USER_BUCKET))
-
-				var userTradedInDay map[string]bool
-				if raw := dailyUserBk.Get(timestamp); raw != nil {
-					json.Unmarshal(raw, &userTradedInDay)
-				} else {
-					userTradedInDay = map[string]bool{}
-				}
-
-				if _, traded := userTradedInDay[user]; !traded {
+				dailyUserKey := strings.Join([]string{dailyTimestamp, email}, "_")
+				if v := dailyUserBk.Get([]byte(dailyUserKey)); v == nil {
 					stats["kyced_in_day"] = 1
-
-					userTradedInDay[user] = true
-					dataJSON, err := json.Marshal(userTradedInDay)
-					if err != nil {
-						return err
-					}
-
-					if err := dailyUserBk.Put(timestamp, dataJSON); err != nil {
-						return err
-					}
 				}
 			}
 		}
@@ -332,7 +287,44 @@ func (self *BoltStatStorage) SaveUserAddress(timestamp uint64, addr string) (com
 
 	return stats, err
 }
-*/
+
+func (self *BoltStatStorage) SetUserStats(timestamp uint64, addr, email string, kycEd bool, stats common.TradeStats) error {
+	var err error
+
+	if err = self.SetTradeStats("D", timestamp, stats); err != nil {
+		return err
+	}
+
+	self.db.Update(func(tx *bolt.Tx) error {
+
+		dailyTimestamp := string(getTimestampByFreq(timestamp, "D"))
+
+		if _, traded := stats["first_trade_in_day"]; traded {
+			dailyAddrBk := tx.Bucket([]byte(DAILY_ADDRESS_BUCKET))
+			dailyAddrKey := strings.Join([]string{dailyTimestamp, addr}, "_")
+			if err := dailyAddrBk.Put([]byte(dailyAddrKey), []byte("1")); err != nil {
+				return err
+			}
+
+			if _, traded := stats["first_trade_ever"]; traded {
+				addrBk := tx.Bucket([]byte(ADDRESS_BUCKET))
+				if err := addrBk.Put([]byte(addr), []byte("1")); err != nil {
+					return err
+				}
+			}
+
+			if kycEd {
+				dailyUserBk := tx.Bucket([]byte(DAILY_USER_BUCKET))
+				dailyUserKey := strings.Join([]string{dailyTimestamp, email}, "_")
+				if err := dailyUserBk.Put([]byte(dailyUserKey), []byte("1")); err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+	return err
+}
 
 func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {
 	result := common.StatTicks{}

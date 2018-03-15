@@ -12,7 +12,8 @@ type StatStorage interface {
 	GetTradeSummary(fromTime, toTime uint64) (common.StatTicks, error)
 	GetLastProcessedTradeLogTimepoint() (timepoint uint64, err error)
 
-	// SaveUserAddress(timestamp uint64, addr string) (common.TradeStats, error)
+	GetUserStats(timestamp uint64, addr string, email string, kycEd bool) (common.TradeStats, error)
+	SetUserStats(timestamp uint64, addr string, email string, kycEd bool, stats common.TradeStats) error
 
 	SetTradeStats(freq string, t uint64, tradeStats common.TradeStats) error
 	SetLastProcessedTradeLogTimepoint(timepoint uint64) error
