@@ -275,7 +275,6 @@ func (self *Fetcher) RunLogFetcher() {
 		if err == nil {
 			toBlock := lastBlock + 1 + 1440 // 1440 is considered as 6 hours
 			if toBlock > self.currentBlock-REORG_BLOCK_SAFE {
-				// set toBlock to 0 so we will fetch to last block
 				toBlock = self.currentBlock - REORG_BLOCK_SAFE
 			}
 			if lastBlock+1 > toBlock {
@@ -312,7 +311,6 @@ func (self *Fetcher) RunBlockFetcher() {
 
 // return block number that we just fetched the logs
 func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint64) uint64 {
-	log.Printf("LogFetcher - fetching logs data from block %d", fromBlock)
 	logs, err := self.blockchain.GetLogs(fromBlock, toBlock, self.GetEthRate(common.GetTimepoint()))
 	if err != nil {
 		log.Printf("LogFetcher - fetching logs data from block %d failed, error: %v", fromBlock, err)
@@ -326,22 +324,28 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 			for _, il := range logs {
 				if il.Type() == "TradeLog" {
 					l := il.(common.TradeLog)
-					log.Printf("LogFetcher - blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
+					// log.Printf("LogFetcher - blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
 					err = self.logStorage.StoreTradeLog(l, timepoint)
 					if err != nil {
 						log.Printf("LogFetcher - storing trade log failed, ignore that log and proceed with remaining logs, err: %+v", err)
 					}
 				} else if il.Type() == "SetCatLog" {
 					l := il.(common.SetCatLog)
-					log.Printf("LogFetcher - blockno: %d", l.BlockNumber)
-					log.Printf("LogFetcher - log: %+v", l)
+					// log.Printf("LogFetcher - blockno: %d", l.BlockNumber)
+					// log.Printf("LogFetcher - log: %+v", l)
 					err = self.logStorage.StoreCatLog(l)
 					if err != nil {
 						log.Printf("LogFetcher - storing cat log failed, ignore that log and proceed with remaining logs, err: %+v", err)
 					}
 				}
 			}
-			return logs[len(logs)-1].BlockNo()
+			var max uint64 = 0
+			for _, l := range logs {
+				if l.BlockNo() > max {
+					max = l.BlockNo()
+				}
+			}
+			return max
 		} else {
 			return fromBlock - 1
 		}

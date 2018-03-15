@@ -628,6 +628,7 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 			},
 		},
 	}
+	log.Printf("LogFetcher - fetching logs data from block %d, to block %d", fromBlock, to.Uint64())
 	err := self.rpcClient.Call(&result, "eth_getLogs", toFilterArg(param))
 	return result, err
 }
@@ -635,6 +636,8 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 // return timestamp increasing array of trade log
 func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, ethRate float64) ([]common.KNLog, error) {
 	result := []common.KNLog{}
+	noCatLog := 0
+	noTradeLog := 0
 	// get all logs from fromBlock to best block
 	logs, err := self.GetRawLogs(fromBlock, toBlock)
 	if err != nil {
@@ -646,19 +649,26 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, ethRate float6
 		if l.Removed {
 			log.Printf("LogFetcher - Log is ignored because it is removed due to chain reorg")
 		} else {
-			if prevLog == nil || l.TxHash != prevLog.TxHash {
+			if prevLog == nil || (l.TxHash != prevLog.TxHash && l.Topics[0].Hex() != UserCatEvent) {
 				if tradeLog != nil {
 					result = append(result, *tradeLog)
+					noTradeLog += 1
+					// log.Printf(
+					// 	"LogFetcher - Fetched logs: TxHash(%s), TxIndex(%d), blockno(%d)",
+					// 	tradeLog.TransactionHash.Hex(),
+					// 	tradeLog.TransactionIndex,
+					// 	tradeLog.BlockNumber,
+					// )
 				}
 				if len(l.Topics) > 0 && l.Topics[0].Hex() != UserCatEvent {
 					// start new TradeLog
 					tradeLog = &common.TradeLog{}
 					tradeLog.BlockNumber = l.BlockNumber
 					tradeLog.TransactionHash = l.TxHash
-					tradeLog.TransactionIndex = l.TxIndex
+					tradeLog.Index = l.Index
 					tradeLog.Timestamp, err = self.InterpretTimestamp(
 						tradeLog.BlockNumber,
-						tradeLog.TransactionIndex,
+						tradeLog.Index,
 					)
 					if err != nil {
 						return result, err
@@ -674,19 +684,24 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, ethRate float6
 					addr, cat := LogDataToCatLog(l.Data)
 					t, err := self.InterpretTimestamp(
 						l.BlockNumber,
-						l.TxIndex,
+						l.Index,
 					)
 					if err != nil {
 						return result, err
 					}
+					// log.Printf(
+					// 	"LogFetcher - raw log entry: removed(%s), txhash(%s), timestamp(%d)",
+					// 	l.Removed, l.TxHash.Hex(), t,
+					// )
 					result = append(result, common.SetCatLog{
-						Timestamp:        t,
-						BlockNumber:      l.BlockNumber,
-						TransactionHash:  l.TxHash,
-						TransactionIndex: l.TxIndex,
-						Address:          addr,
-						Category:         cat,
+						Timestamp:       t,
+						BlockNumber:     l.BlockNumber,
+						TransactionHash: l.TxHash,
+						Index:           l.Index,
+						Address:         addr,
+						Category:        cat,
 					})
+					noCatLog += 1
 				case FeeToWalletEvent:
 					reserveAddr, walletAddr, walletFee := LogDataToFeeWalletParams(l.Data)
 					tradeLog.ReserveAddress = reserveAddr
@@ -720,12 +735,16 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, ethRate float6
 					}
 				}
 			}
-			prevLog = &logs[i]
+			if len(l.Topics) > 0 && l.Topics[0].Hex() != UserCatEvent {
+				prevLog = &logs[i]
+			}
 		}
 	}
-	if tradeLog != nil {
+	if tradeLog != nil && (len(result) == 0 || tradeLog.TransactionHash != result[len(result)-1].TxHash()) {
 		result = append(result, *tradeLog)
+		noTradeLog += 1
 	}
+	log.Printf("LogFetcher - Fetched %d trade logs, %d cat logs", noTradeLog, noCatLog)
 	return result, nil
 }
 

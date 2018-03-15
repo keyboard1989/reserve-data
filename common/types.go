@@ -528,28 +528,30 @@ type AllRateResponse struct {
 }
 
 type KNLog interface {
+	TxHash() ethereum.Hash
 	BlockNo() uint64
 	Type() string
 }
 
 type SetCatLog struct {
-	Timestamp        uint64
-	BlockNumber      uint64
-	TransactionHash  ethereum.Hash
-	TransactionIndex uint
+	Timestamp       uint64
+	BlockNumber     uint64
+	TransactionHash ethereum.Hash
+	Index           uint
 
 	Address  ethereum.Address
 	Category string
 }
 
-func (self SetCatLog) BlockNo() uint64 { return self.BlockNumber }
-func (self SetCatLog) Type() string    { return "SetCatLog" }
+func (self SetCatLog) BlockNo() uint64       { return self.BlockNumber }
+func (self SetCatLog) Type() string          { return "SetCatLog" }
+func (self SetCatLog) TxHash() ethereum.Hash { return self.TransactionHash }
 
 type TradeLog struct {
-	Timestamp        uint64
-	BlockNumber      uint64
-	TransactionHash  ethereum.Hash
-	TransactionIndex uint
+	Timestamp       uint64
+	BlockNumber     uint64
+	TransactionHash ethereum.Hash
+	Index           uint
 
 	UserAddress ethereum.Address
 	SrcAddress  ethereum.Address
@@ -581,8 +583,9 @@ type ReserveRates struct {
 	Data          ReserveTokenRateEntry
 }
 
-func (self TradeLog) BlockNo() uint64 { return self.BlockNumber }
-func (self TradeLog) Type() string    { return "TradeLog" }
+func (self TradeLog) BlockNo() uint64       { return self.BlockNumber }
+func (self TradeLog) Type() string          { return "TradeLog" }
+func (self TradeLog) TxHash() ethereum.Hash { return self.TransactionHash }
 
 type StatTicks map[uint64]interface{}
 

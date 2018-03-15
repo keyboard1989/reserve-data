@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -77,7 +76,7 @@ func (self *BoltLogStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) 
 	if k != nil {
 		record := common.TradeLog{}
 		json.Unmarshal(v, &record)
-		return record.BlockNumber, record.TransactionIndex, nil
+		return record.BlockNumber, record.Index, nil
 	} else {
 		return 0, 0, errors.New("Database is empty")
 	}
@@ -88,17 +87,11 @@ func (self *BoltLogStorage) StoreCatLog(l common.SetCatLog) error {
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_BUCKET))
 		var dataJson []byte
-		lastCat, berr := self.LoadLastCatLog(tx)
-		if berr == nil && (lastCat.Address.Big().Cmp(l.Address.Big()) == 0) {
-			err = errors.New(
-				fmt.Sprintf("LogFetcher - Duplicated log %+v", l))
-			return err
-		}
 		dataJson, err = json.Marshal(l)
 		if err != nil {
 			return err
 		}
-		log.Printf("Storing cat log: %d", l.Timestamp)
+		// log.Printf("Storing cat log: %d", l.Timestamp)
 		idByte := uint64ToBytes(l.Timestamp)
 		err = b.Put(idByte, dataJson)
 		return err
@@ -111,17 +104,17 @@ func (self *BoltLogStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADELOG_BUCKET))
 		var dataJson []byte
-		block, txindex, berr := self.LoadLastLogIndex(tx)
-		if berr == nil && (block > stat.BlockNumber || (block == stat.BlockNumber && txindex >= stat.TransactionIndex)) {
+		block, index, berr := self.LoadLastLogIndex(tx)
+		if berr == nil && (block > stat.BlockNumber || (block == stat.BlockNumber && index >= stat.Index)) {
 			err = errors.New(
-				fmt.Sprintf("Duplicated log (new block number %s is smaller or equal to latest block number %s)", block, stat.BlockNumber))
+				fmt.Sprintf("Duplicated log %+v (new block number %s is smaller or equal to latest block number %s and tx index %d is smaller or equal to last log tx index %d)", stat, block, stat.BlockNumber, index, stat.Index))
 			return err
 		}
 		dataJson, err = json.Marshal(stat)
 		if err != nil {
 			return err
 		}
-		log.Printf("Storing log: %d", stat.Timestamp)
+		// log.Printf("Storing log: %d", stat.Timestamp)
 		idByte := uint64ToBytes(stat.Timestamp)
 		err = b.Put(idByte, dataJson)
 		return err
