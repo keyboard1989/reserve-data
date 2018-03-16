@@ -131,7 +131,6 @@ func serverStart(cmd *cobra.Command, args []string) {
 			config.LogStorage,
 			config.RateStorage,
 			config.UserStorage,
-			stat.NewCMCEthUSDRate(),
 			config.StatFetcherRunner,
 			deployBlock,
 			config.ReserveAddress,
@@ -173,6 +172,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.DepositSigner,
 		nonceCorpus,
 		nonceDeposit,
+		blockchain.NewCMCEthUSDRate(),
 		config.ChainType,
 	)
 	if err != nil {

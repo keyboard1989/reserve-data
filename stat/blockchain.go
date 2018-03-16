@@ -7,6 +7,6 @@ import (
 
 type Blockchain interface {
 	CurrentBlock() (uint64, error)
-	GetLogs(fromBlock uint64, toBlock uint64, ethRate float64) ([]common.KNLog, error)
+	GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLog, error)
 	GetReserveRates(atBlock, currentBlock uint64, reserveAddress ethereum.Address, tokens []common.Token) (common.ReserveRates, error)
 }

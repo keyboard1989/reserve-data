@@ -59,6 +59,7 @@ type Blockchain struct {
 	nonce         NonceCorpus
 	nonceDeposit  NonceCorpus
 	broadcaster   *Broadcaster
+	ethRate       EthUSDRate
 	chainType     string
 }
 
@@ -633,8 +634,14 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 	return result, err
 }
 
+func (self *Blockchain) GetEthRate(timepoint uint64) float64 {
+	rate := self.ethRate.GetUSDRate(timepoint)
+	log.Printf("ETH-USD rate: %f", rate)
+	return rate
+}
+
 // return timestamp increasing array of trade log
-func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, ethRate float64) ([]common.KNLog, error) {
+func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLog, error) {
 	result := []common.KNLog{}
 	noCatLog := 0
 	noTradeLog := 0
@@ -719,7 +726,7 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, ethRate float6
 					tradeLog.DestAmount = destAmount.Big()
 					tradeLog.UserAddress = ethereum.BytesToAddress(l.Topics[1].Bytes())
 
-					if ethRate != 0 {
+					if ethRate := self.GetEthRate(tradeLog.Timestamp / 1000000); ethRate != 0 {
 						// fiatAmount = amount * ethRate
 						eth := common.SupportedTokens["ETH"]
 						f := new(big.Float)
@@ -800,6 +807,7 @@ func NewBlockchain(
 	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
 	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
 	nonceDeposit NonceCorpus,
+	ethUSDRate EthUSDRate,
 	chainType string) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper, err := NewKNWrapperContract(wrapperAddr, etherCli)
@@ -836,6 +844,7 @@ func NewBlockchain(
 		oldBurners:    []ethereum.Address{},
 		signer:        signer,
 		depositSigner: depositSigner,
+		ethRate:       ethUSDRate,
 		tokens:        []common.Token{},
 		nonce:         nonceCorpus,
 		nonceDeposit:  nonceDeposit,

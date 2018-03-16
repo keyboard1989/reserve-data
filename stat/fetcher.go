@@ -12,14 +12,6 @@ import (
 
 const REORG_BLOCK_SAFE uint64 = 7
 
-type CoinCapRateResponse []struct {
-	ID       string `json:"id"`
-	Name     string `json:"name"`
-	Symbol   string `json:"symbol"`
-	Rank     string `json:"rank"`
-	PriceUSD string `json:"price_usd"`
-}
-
 type Fetcher struct {
 	statStorage            StatStorage
 	userStorage            UserStorage
@@ -27,7 +19,6 @@ type Fetcher struct {
 	rateStorage            RateStorage
 	blockchain             Blockchain
 	runner                 FetcherRunner
-	ethRate                EthUSDRate
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 	deployBlock            uint64
@@ -40,7 +31,6 @@ func NewFetcher(
 	logStorage LogStorage,
 	rateStorage RateStorage,
 	userStorage UserStorage,
-	ethUSDRate EthUSDRate,
 	runner FetcherRunner,
 	deployBlock uint64,
 	reserve ethereum.Address,
@@ -52,7 +42,6 @@ func NewFetcher(
 		userStorage:        userStorage,
 		blockchain:         nil,
 		runner:             runner,
-		ethRate:            ethUSDRate,
 		deployBlock:        deployBlock,
 		reserveAddress:     reserve,
 		thirdPartyReserves: thirdPartyReserves,
@@ -61,12 +50,6 @@ func NewFetcher(
 
 func (self *Fetcher) Stop() error {
 	return self.runner.Stop()
-}
-
-func (self *Fetcher) GetEthRate(timepoint uint64) float64 {
-	rate := self.ethRate.GetUSDRate(timepoint)
-	log.Printf("ETH-USD rate: %f", rate)
-	return rate
 }
 
 func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
@@ -311,7 +294,7 @@ func (self *Fetcher) RunBlockFetcher() {
 
 // return block number that we just fetched the logs
 func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint64) uint64 {
-	logs, err := self.blockchain.GetLogs(fromBlock, toBlock, self.GetEthRate(common.GetTimepoint()))
+	logs, err := self.blockchain.GetLogs(fromBlock, toBlock)
 	if err != nil {
 		log.Printf("LogFetcher - fetching logs data from block %d failed, error: %v", fromBlock, err)
 		if fromBlock == 0 {
