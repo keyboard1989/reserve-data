@@ -814,7 +814,9 @@ func NewBlockchain(
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("reserve owner address: %s", signer.GetAddress().Hex())
+	if signer != nil {
+		log.Printf("reserve owner address: %s", signer.GetAddress().Hex())		
+	}
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve, err := NewKNReserveContract(reserveAddr, etherCli)
 	if err != nil {
