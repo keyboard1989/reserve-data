@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -13,7 +12,7 @@ import (
 )
 
 const (
-	MAX_GET_LOG_PERIOD uint64 = 86400000 //1 days in milisec
+	MAX_GET_LOG_PERIOD uint64 = 86400000000000 //1 days in milisec
 
 	TRADELOG_BUCKET string = "logs"
 	CATLOG_BUCKET   string = "cat_logs"
@@ -50,6 +49,10 @@ func NewBoltLogStorage(path string) (*BoltLogStorage, error) {
 	return storage, nil
 }
 
+func (self *BoltLogStorage) MaxRange() uint64 {
+	return MAX_GET_LOG_PERIOD
+}
+
 func (self *BoltLogStorage) LoadLastCatLog(tx *bolt.Tx) (common.SetCatLog, error) {
 	b := tx.Bucket([]byte(CATLOG_BUCKET))
 	c := b.Cursor()
@@ -73,7 +76,7 @@ func (self *BoltLogStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) 
 	if k != nil {
 		record := common.TradeLog{}
 		json.Unmarshal(v, &record)
-		return record.BlockNumber, record.TransactionIndex, nil
+		return record.BlockNumber, record.Index, nil
 	} else {
 		return 0, 0, errors.New("Database is empty")
 	}
@@ -84,17 +87,11 @@ func (self *BoltLogStorage) StoreCatLog(l common.SetCatLog) error {
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_BUCKET))
 		var dataJson []byte
-		lastCat, berr := self.LoadLastCatLog(tx)
-		if berr == nil && (lastCat.Address.Big().Cmp(l.Address.Big()) == 0) {
-			err = errors.New(
-				fmt.Sprintf("Duplicated log %+v", l))
-			return err
-		}
 		dataJson, err = json.Marshal(l)
 		if err != nil {
 			return err
 		}
-		log.Printf("Storing cat log: %d", l.Timestamp)
+		// log.Printf("Storing cat log: %d", l.Timestamp)
 		idByte := uint64ToBytes(l.Timestamp)
 		err = b.Put(idByte, dataJson)
 		return err
@@ -107,17 +104,17 @@ func (self *BoltLogStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64
 	self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADELOG_BUCKET))
 		var dataJson []byte
-		block, txindex, berr := self.LoadLastLogIndex(tx)
-		if berr == nil && (block > stat.BlockNumber || (block == stat.BlockNumber && txindex >= stat.TransactionIndex)) {
+		block, index, berr := self.LoadLastLogIndex(tx)
+		if berr == nil && (block > stat.BlockNumber || (block == stat.BlockNumber && index >= stat.Index)) {
 			err = errors.New(
-				fmt.Sprintf("Duplicated log (new block number %s is smaller or equal to latest block number %s)", block, stat.BlockNumber))
+				fmt.Sprintf("Duplicated log %+v (new block number %s is smaller or equal to latest block number %s and tx index %d is smaller or equal to last log tx index %d)", stat, block, stat.BlockNumber, index, stat.Index))
 			return err
 		}
 		dataJson, err = json.Marshal(stat)
 		if err != nil {
 			return err
 		}
-		log.Printf("Storing log: %d", stat.Timestamp)
+		// log.Printf("Storing log: %d", stat.Timestamp)
 		idByte := uint64ToBytes(stat.Timestamp)
 		err = b.Put(idByte, dataJson)
 		return err
@@ -132,6 +129,40 @@ func (self *BoltLogStorage) UpdateLogBlock(block uint64, timepoint uint64) error
 	return nil
 }
 
+func (self *BoltLogStorage) GetLastCatLog() (common.SetCatLog, error) {
+	var result common.SetCatLog
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(CATLOG_BUCKET))
+		c := b.Cursor()
+		k, v := c.Last()
+		if k == nil {
+			err = errors.New("there is no catlog")
+		} else {
+			err = json.Unmarshal(v, &result)
+		}
+		return err
+	})
+	return result, err
+}
+
+func (self *BoltLogStorage) GetFirstCatLog() (common.SetCatLog, error) {
+	var result common.SetCatLog
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(CATLOG_BUCKET))
+		c := b.Cursor()
+		k, v := c.First()
+		if k == nil {
+			err = errors.New("there is no catlog")
+		} else {
+			err = json.Unmarshal(v, &result)
+		}
+		return err
+	})
+	return result, err
+}
+
 func (self *BoltLogStorage) GetCatLogs(fromTime uint64, toTime uint64) ([]common.SetCatLog, error) {
 	result := []common.SetCatLog{}
 	var err error
@@ -141,8 +172,8 @@ func (self *BoltLogStorage) GetCatLogs(fromTime uint64, toTime uint64) ([]common
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_BUCKET))
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime * 1000000)
-		max := uint64ToBytes(toTime * 1000000)
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.SetCatLog{}
 			err = json.Unmarshal(v, &record)
@@ -156,6 +187,40 @@ func (self *BoltLogStorage) GetCatLogs(fromTime uint64, toTime uint64) ([]common
 	return result, err
 }
 
+func (self *BoltLogStorage) GetLastTradeLog() (common.TradeLog, error) {
+	var result common.TradeLog
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TRADELOG_BUCKET))
+		c := b.Cursor()
+		k, v := c.Last()
+		if k == nil {
+			err = errors.New("there is no tradelog")
+		} else {
+			err = json.Unmarshal(v, &result)
+		}
+		return err
+	})
+	return result, err
+}
+
+func (self *BoltLogStorage) GetFirstTradeLog() (common.TradeLog, error) {
+	var result common.TradeLog
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TRADELOG_BUCKET))
+		c := b.Cursor()
+		k, v := c.First()
+		if k == nil {
+			err = errors.New("there is no tradelog")
+		} else {
+			err = json.Unmarshal(v, &result)
+		}
+		return err
+	})
+	return result, err
+}
+
 func (self *BoltLogStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error) {
 	result := []common.TradeLog{}
 	var err error
@@ -165,8 +230,8 @@ func (self *BoltLogStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]comm
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADELOG_BUCKET))
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime * 1000000)
-		max := uint64ToBytes(toTime * 1000000)
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.TradeLog{}
 			err = json.Unmarshal(v, &record)
@@ -179,6 +244,7 @@ func (self *BoltLogStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]comm
 	})
 	return result, err
 }
+
 func (self *BoltLogStorage) LastBlock() (uint64, error) {
 	self.mu.RLock()
 	defer self.mu.RUnlock()

@@ -1,17 +1,25 @@
-package stat
+package blockchain
 
 import (
-	"time"
-	"log"
-	"net/http"
-	"io/ioutil"
-	"strconv"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
+	"log"
+	"net/http"
+	"strconv"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 )
+
+type CoinCapRateResponse []struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	Symbol   string `json:"symbol"`
+	Rank     string `json:"rank"`
+	PriceUSD string `json:"price_usd"`
+}
 
 type CMCEthUSDRate struct {
 	mu                *sync.RWMutex

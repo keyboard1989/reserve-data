@@ -10,6 +10,8 @@ import (
 const (
 	KYC_CATEGORY string = "0x0000000000000000000000000000000000000000000000000000000000000004"
 
+	CATLOG_PROCESSOR_STATE string = "catlog_processor_state"
+
 	ADDRESS_CATEGORY  string = "address_category"
 	ADDRESS_ID        string = "address_id"
 	ID_ADDRESSES      string = "id_addresses"
@@ -36,10 +38,31 @@ func NewBoltUserStorage(path string) (*BoltUserStorage, error) {
 		tx.CreateBucket([]byte(ID_ADDRESSES))
 		tx.CreateBucket([]byte(ADDRESS_TIME))
 		tx.CreateBucket([]byte(PENDING_ADDRESSES))
+		tx.CreateBucket([]byte(CATLOG_PROCESSOR_STATE))
 		return nil
 	})
 	storage := &BoltUserStorage{db}
 	return storage, nil
+}
+
+func (self *BoltUserStorage) SetLastProcessedCatLogTimepoint(timepoint uint64) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(CATLOG_PROCESSOR_STATE))
+		err = b.Put([]byte("last_timepoint"), uint64ToBytes(timepoint))
+		return err
+	})
+	return err
+}
+
+func (self *BoltUserStorage) GetLastProcessedCatLogTimepoint() (uint64, error) {
+	var result uint64
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(CATLOG_PROCESSOR_STATE))
+		result = bytesToUint64(b.Get([]byte("last_timepoint")))
+		return nil
+	})
+	return result, nil
 }
 
 func (self *BoltUserStorage) UpdateAddressCategory(address string, cat string) error {
