@@ -108,7 +108,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"https://mainnet.infura.io/0BRKxQ0SFvAxGL72cbXi",
+		"https://semi-node.kyber.network",
 		[]string{
 			"https://semi-node.kyber.network",
 			"https://mainnet.infura.io",
