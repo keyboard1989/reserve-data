@@ -399,13 +399,6 @@ func (self *Binance) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID
 }
 
 func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, error) {
-	idParts := strings.Split(id.EID, "|")
-	if len(idParts) != 3 {
-		// here, the exchange id part in id is malformed
-		// 1. because analytic didn't pass original ID
-		// 2. id is not constructed correctly in a form of uuid + "|" + token
-		return "", errors.New("Invalid deposit id")
-	}
 	startTime := timepoint - 86400000
 	endTime := timepoint
 	deposits, err := self.interf.DepositHistory(startTime, endTime)
@@ -425,9 +418,7 @@ func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string
 	}
 }
 
-func (self *Binance) WithdrawStatus(
-	id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, string, error) {
-	withdrawID := id.EID
+func (self *Binance) WithdrawStatus(id, currency string, amount float64, timepoint uint64) (string, string, error) {
 	startTime := timepoint - 86400000
 	endTime := timepoint
 	withdraws, err := self.interf.WithdrawHistory(startTime, endTime)
@@ -435,7 +426,7 @@ func (self *Binance) WithdrawStatus(
 		return "", "", err
 	} else {
 		for _, withdraw := range withdraws.Withdrawals {
-			if withdraw.ID == withdrawID {
+			if withdraw.ID == id {
 				if withdraw.Status == 3 || withdraw.Status == 5 || withdraw.Status == 6 {
 					return "done", withdraw.TxID, nil
 				} else {

@@ -14,5 +14,5 @@ type Exchange interface {
 	// FetchOrderData(timepoint uint64) (common.OrderEntry, error)
 	OrderStatus(id common.ActivityID, timepoint uint64) (string, error)
 	DepositStatus(id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, error)
-	WithdrawStatus(id common.ActivityID, txHash, currency string, amoutn float64, timepoint uint64) (string, string, error)
+	WithdrawStatus(id, currency string, amoutn float64, timepoint uint64) (string, string, error)
 }

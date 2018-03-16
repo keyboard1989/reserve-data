@@ -142,7 +142,7 @@ func (self *Bittrex) Withdraw(token common.Token, amount *big.Int, address ether
 		return "", err
 	} else {
 		if resp.Success {
-			return resp.Result["uuid"] + "|" + token.ID, nil
+			return resp.Result["uuid"], nil
 		} else {
 			return "", errors.New(resp.Error)
 		}
@@ -224,22 +224,13 @@ func (self *Bittrex) CancelOrder(id common.ActivityID) error {
 	}
 }
 
-func (self *Bittrex) WithdrawStatus(
-	id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, string, error) {
-	idParts := strings.Split(id.EID, "|")
-	if len(idParts) != 2 {
-		// here, the exchange id part in id is malformed
-		// 1. because analytic didn't pass original ID
-		// 2. id is not constructed correctly in a form of uuid + "|" + token
-		return "", "", errors.New("Invalid withdraw id")
-	}
-	uuid := idParts[0]
+func (self *Bittrex) WithdrawStatus(id, currency string, amount float64, timepoint uint64) (string, string, error) {
 	histories, err := self.interf.WithdrawHistory(currency, timepoint)
 	if err != nil {
 		return "", "", err
 	} else {
 		for _, withdraw := range histories.Result {
-			if withdraw.PaymentUuid == uuid {
+			if withdraw.PaymentUuid == id {
 				if withdraw.PendingPayment {
 					return "", withdraw.TxId, nil
 				} else {
@@ -247,7 +238,7 @@ func (self *Bittrex) WithdrawStatus(
 				}
 			}
 		}
-		return "", "", errors.New("Withdraw with uuid " + uuid + " of currency " + currency + " is not found on bittrex")
+		return "", "", errors.New("Withdraw with uuid " + id + " of currency " + currency + " is not found on bittrex")
 	}
 }
 
