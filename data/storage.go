@@ -20,5 +20,4 @@ type Storage interface {
 	GetPendingActivities() ([]common.ActivityRecord, error)
 
 	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
-	GetIntermedatorTx(id common.ActivityID) (common.TXEntry, error)
 }

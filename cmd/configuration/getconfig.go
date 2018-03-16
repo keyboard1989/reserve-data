@@ -9,6 +9,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	exsstorage "github.com/KyberNetwork/reserve-data/exchange/storage"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/signer"
 	"github.com/KyberNetwork/reserve-data/stat"
@@ -91,12 +92,17 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		common.SupportedTokens[id] = tok
 		tokens = append(tokens, tok)
 	}
-
+	log.Printf("Exchange storage is %s", setPath.exsStoragePath)
+	log.Printf("Stats    storage is %s", setPath.statStoragePath)
 	dataStorage, err := storage.NewBoltStorage(setPath.dataStoragePath)
 	if err != nil {
 		panic(err)
 	}
 	statStorage, err := statstorage.NewBoltStorage(setPath.statStoragePath)
+	if err != nil {
+		panic(err)
+	}
+	exsStorage, err := exsstorage.NewBoltStorage(setPath.exsStoragePath)
 	if err != nil {
 		panic(err)
 	}
@@ -126,7 +132,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	} else {
 		endpoint = setPath.endPoint
 	}
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr, dataStorage)
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr, exsStorage)
 	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	bkendpoints := setPath.bkendpoints
@@ -150,6 +156,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		DataStorage:             dataStorage,
 		StatStorage:             statStorage,
 		FetcherStorage:          dataStorage,
+		ExchangeStorage:         exsStorage,
 		StatFetcherStorage:      statStorage,
 		MetricStorage:           dataStorage,
 		FetcherRunner:           fetcherRunner,

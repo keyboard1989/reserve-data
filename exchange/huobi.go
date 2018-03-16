@@ -428,10 +428,9 @@ func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchan
 func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	txID, sentAmount, tokenID := getDepositInfo(id)
 	tx2, ok := self.currentDepositstatus[id]
-	log.Printf("someone called me \n\n\n\n\n\n\n")
 	if !ok {
-		log.Printf("tx ID from the activity ID is: %v", txID)
 		//if the transaction is not in the current Deposit status, check the 1st tx first.
+		log.Printf("tx ID from the activity ID is: %v", txID)
 		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(txID))
 		if err != nil {
 			log.Println("Can not get TX status")

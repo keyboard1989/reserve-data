@@ -6,6 +6,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
+	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
@@ -20,6 +21,7 @@ type SettingPaths struct {
 	feePath         string
 	dataStoragePath string
 	statStoragePath string
+	exsStoragePath  string
 	signerPath      string
 	endPoint        string
 	bkendpoints     []string
@@ -30,6 +32,7 @@ type Config struct {
 	DataStorage        data.Storage
 	StatStorage        stat.Storage
 	FetcherStorage     fetcher.Storage
+	ExchangeStorage    exchange.Storage
 	StatFetcherStorage stat.Storage
 	MetricStorage      metric.MetricStorage
 
@@ -75,6 +78,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_stats.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_exchanges.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"http://blockchain:8545",
 		[]string{
@@ -90,6 +94,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_stats.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_exchanges.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"https://kovan.infura.io",
 		[]string{},
@@ -99,6 +104,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_exchanges.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
 		"https://semi-node.kyber.network",
 		[]string{
@@ -114,6 +120,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_exchanges.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
 		"https://semi-node.kyber.network",
 		[]string{
@@ -129,6 +136,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_stats.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_exchanges.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
 		"https://semi-node.kyber.network",
 		[]string{
@@ -145,6 +153,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/exchanges.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"http://blockchain:8545",
 		[]string{
@@ -155,6 +164,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"https://ropsten.infura.io",

@@ -3,12 +3,15 @@ package data
 import (
 	"log"
 
+	"github.com/KyberNetwork/reserve-data/exchange"
+
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
 type ReserveData struct {
-	storage Storage
-	fetcher Fetcher
+	storage         Storage
+	fetcher         Fetcher
+	exchangeStorage exchange.Storage
 }
 
 func (self ReserveData) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
@@ -205,7 +208,7 @@ func (self ReserveData) CurrentIntermediateTxs(timepoint uint64) (map[common.Act
 		return result, err
 	}
 	for _, pending := range pendings {
-		tx2, err := self.storage.GetIntermedatorTx(pending.ID)
+		tx2, err := self.exchangeStorage.GetIntermedatorTx(pending.ID)
 		if err == nil {
 			result[pending.ID] = tx2
 		} else {
@@ -232,6 +235,6 @@ func (self ReserveData) Stop() error {
 	return self.fetcher.Stop()
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher) *ReserveData {
-	return &ReserveData{storage, fetcher}
+func NewReserveData(storage Storage, fetcher Fetcher, eStorage exchange.Storage) *ReserveData {
+	return &ReserveData{storage, fetcher, eStorage}
 }

@@ -152,13 +152,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	//nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
 	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
 	nonceDeposit := nonce.NewTimeWindow(infura, config.DepositSigner)
-	//nonceIntermediator := nonce.NewTimeWindow(infura, config.IntermediatorSigner)
-	//set block chain for Huobi if presence
-	// if huobiEx, err := common.GetExchange("huobi"); err != nil {
-	// 	log.Println("Setting blockchain object for huobi..")
-	// 	huobiEx.Address
-	// 	huobiEx.SetBlockchain(client, infura, config.IntermediatorSigner, nonceIntermediator)
-	// }
+	//nonceIntermediator := nonce.NewTimeWindow(infura, config.IntermediatorSigner
 
 	//set block chain
 	bc, err := blockchain.NewBlockchain(
@@ -198,6 +192,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			rData = data.NewReserveData(
 				config.DataStorage,
 				dataFetcher,
+				config.ExchangeStorage,
 			)
 			rData.Run()
 			rCore = core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)

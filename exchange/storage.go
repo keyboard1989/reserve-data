@@ -6,4 +6,5 @@ import (
 
 type Storage interface {
 	StoreIntermediateTx(hash string, exchangeID string, tokenID string, status string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error
+	GetIntermedatorTx(id common.ActivityID) (common.TXEntry, error)
 }
