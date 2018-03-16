@@ -80,54 +80,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		tokens = append(tokens, tok)
 	}
 
-	dataStorage, err := storage.NewBoltStorage(setPath.dataStoragePath)
-	if err != nil {
-		panic(err)
-	}
-	statStorage, err := statstorage.NewBoltStatStorage(setPath.statStoragePath)
-	if err != nil {
-		panic(err)
-	}
-	logStorage, err := statstorage.NewBoltLogStorage(setPath.logStoragePath)
-	if err != nil {
-		panic(err)
-	}
-	rateStorage, err := statstorage.NewBoltRateStorage(setPath.rateStoragePath)
-	if err != nil {
-		panic(err)
-	}
-	userStorage, err := statstorage.NewBoltUserStorage(setPath.userStoragePath)
-	if err != nil {
-		panic(err)
-	}
-	//fetcherRunner := http_runner.NewHttpRunner(8001)
-	var fetcherRunner fetcher.FetcherRunner
-	var statFetcherRunner stat.FetcherRunner
-
-	if os.Getenv("KYBER_ENV") == "simulation" {
-		fetcherRunner = http_runner.NewHttpRunner(8001)
-		statFetcherRunner = http_runner.NewHttpRunner(8002)
-	} else {
-		fetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second, 7*time.Second, 2*time.Second, 2*time.Second)
-		statFetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second, 7*time.Second, 2*time.Second, 2*time.Second)
-	}
-
-	fileSigner, depositSigner := signer.NewFileSigner(setPath.signerPath)
-
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV)
-	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
-
-	// endpoint := "https://ropsten.infura.io"
-	// endpoint := "http://blockchain:8545"
-	// endpoint := "https://kovan.infura.io"
-	var endpoint string
-	if endpointOW != "" {
-		log.Printf("overwriting Endpoint with %s\n", endpointOW)
-		endpoint = endpointOW
-	} else {
-		endpoint = setPath.endPoint
-	}
-
 	bkendpoints := setPath.bkendpoints
 	chainType := GetChainType(kyberENV)
 
