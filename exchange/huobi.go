@@ -85,6 +85,19 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExch
 	}
 }
 
+func (self *Huobi) PendingIntermediateTxs(timepoint uint64) (map[common.ActivityID]common.TXEntry, error) {
+	result := make(map[common.ActivityID]common.TXEntry)
+	for actID, _ := range self.currentDepositstatus {
+		tx2, err := self.storage.GetIntermedatorTx(actID)
+		if err == nil {
+			result[actID] = tx2
+		} else {
+			log.Printf("the current acitivy doesn't have the 2nd tx yet: ", err)
+		}
+	}
+	return result, nil
+}
+
 func (self *Huobi) UpdatePairsPrecision() {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err != nil {
@@ -429,7 +442,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 	txID, sentAmount, tokenID := getDepositInfo(id)
 	tx2, ok := self.currentDepositstatus[id]
 	if !ok {
-		//if the transaction is not in the current Deposit status, check the 1st tx first.
+		//if the 2nd transaction is not in the current Deposit status, check the 1st tx first.
 		log.Printf("tx ID from the activity ID is: %v", txID)
 		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(txID))
 		if err != nil {
@@ -466,6 +479,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 			return "", nil
 		}
 	} else {
+		//if the 2nd transaction is in the Deposit Status, check its status.
 		status, _, err := self.blockchain.TxStatus(tx2.Hash())
 		if err != nil {
 			log.Printf("Can not get TX status: %v", err)

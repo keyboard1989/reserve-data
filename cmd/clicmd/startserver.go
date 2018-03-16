@@ -192,7 +192,6 @@ func serverStart(cmd *cobra.Command, args []string) {
 			rData = data.NewReserveData(
 				config.DataStorage,
 				dataFetcher,
-				config.ExchangeStorage,
 			)
 			rData.Run()
 			rCore = core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
@@ -216,6 +215,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		)
 
 		server.Run()
+
 	}
 }
 

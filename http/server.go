@@ -716,30 +716,6 @@ func (self *HTTPServer) StopFetcher(c *gin.Context) {
 	}
 }
 
-func (self *HTTPServer) CurrentIntermediateTxs(c *gin.Context) {
-	log.Printf("Getting all transaction from Intermediate to exchange...")
-	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
-	if !ok {
-		return
-	}
-	data, err := self.app.CurrentIntermediateTxs(common.GetTimepoint())
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{"success": false, "reason": err.Error()},
-		)
-	} else {
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"success": true,
-				"data":    data,
-			},
-		)
-	}
-
-}
-
 func (self *HTTPServer) ImmediatePendingActivities(c *gin.Context) {
 	log.Printf("Getting all immediate pending activity records \n")
 	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
@@ -1737,7 +1713,6 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/immediate-pending-activities", self.ImmediatePendingActivities)
 		self.r.GET("/metrics", self.Metrics)
 		self.r.POST("/metrics", self.StoreMetrics)
-		self.r.GET("/current-intermediate-txs", self.CurrentIntermediateTxs)
 
 		self.r.POST("/cancelorder/:exchangeid", self.CancelOrder)
 		self.r.POST("/deposit/:exchangeid", self.Deposit)

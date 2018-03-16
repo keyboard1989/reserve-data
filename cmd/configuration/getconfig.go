@@ -132,8 +132,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 	} else {
 		endpoint = setPath.endPoint
 	}
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr, exsStorage)
-	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	bkendpoints := setPath.bkendpoints
 	var hmac512auth http.KNAuthentication
@@ -144,6 +142,8 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		fileSigner.KNConfiguration,
 		fileSigner.KNConfirmConf,
 	}
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr, exsStorage, authEnbl)
+	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
 
 	if !authEnbl {
 		log.Printf("\nWARNING: No authentication mode\n")

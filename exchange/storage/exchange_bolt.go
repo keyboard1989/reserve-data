@@ -91,13 +91,11 @@ func (self *BoltStorage) StoreIntermediateTx(hash string, exchangeID string, tok
 		data := common.TXEntry{
 			hash, exchangeID, tokenID, status, Amount, Timestamp,
 		}
-		log.Printf("Data before marshaling is %v", data)
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err
 		}
 		idByte := id.ToBytes()
-		log.Printf("the data before storage is %v", dataJson)
 		return b.Put(idByte[:], dataJson)
 	})
 	return err

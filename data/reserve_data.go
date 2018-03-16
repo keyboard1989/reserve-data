@@ -1,17 +1,12 @@
 package data
 
 import (
-	"log"
-
-	"github.com/KyberNetwork/reserve-data/exchange"
-
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
 type ReserveData struct {
-	storage         Storage
-	fetcher         Fetcher
-	exchangeStorage exchange.Storage
+	storage Storage
+	fetcher Fetcher
 }
 
 func (self ReserveData) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
@@ -201,23 +196,6 @@ func (self ReserveData) GetRecords(fromTime, toTime uint64) ([]common.ActivityRe
 	return self.storage.GetAllRecords(fromTime, toTime)
 }
 
-func (self ReserveData) CurrentIntermediateTxs(timepoint uint64) (map[common.ActivityID]common.TXEntry, error) {
-	pendings, err := self.storage.GetPendingActivities()
-	result := make(map[common.ActivityID]common.TXEntry)
-	if err != nil {
-		return result, err
-	}
-	for _, pending := range pendings {
-		tx2, err := self.exchangeStorage.GetIntermedatorTx(pending.ID)
-		if err == nil {
-			result[pending.ID] = tx2
-		} else {
-			log.Printf("the current acitivy doesn't have the 2nd tx yet: ", err)
-		}
-	}
-	return result, nil
-}
-
 func (self ReserveData) GetPendingActivities() ([]common.ActivityRecord, error) {
 	return self.storage.GetPendingActivities()
 }
@@ -235,6 +213,6 @@ func (self ReserveData) Stop() error {
 	return self.fetcher.Stop()
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher, eStorage exchange.Storage) *ReserveData {
-	return &ReserveData{storage, fetcher, eStorage}
+func NewReserveData(storage Storage, fetcher Fetcher) *ReserveData {
+	return &ReserveData{storage, fetcher}
 }

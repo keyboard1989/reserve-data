@@ -43,8 +43,6 @@ type ReserveData interface {
 	GetPendingActivities() ([]common.ActivityRecord, error)
 
 	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
-	CurrentIntermediateTxs(timepoint uint64) (map[common.ActivityID]common.TXEntry, error)
-
 	Run() error
 	Stop() error
 }

@@ -1,6 +1,7 @@
 package configuration
 
 import (
+	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -10,6 +11,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
+	exchangehttp "github.com/KyberNetwork/reserve-data/exchange/http"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/signer"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -54,7 +56,8 @@ func NewExchangePool(
 	bittrexStorage exchange.BittrexStorage, kyberENV string,
 	intermediatorSigner *signer.FileSigner,
 	ethEndpoint string, wrapperAddr ethereum.Address,
-	intorAddr ethereum.Address, storage exchange.Storage) *ExchangePool {
+	intorAddr ethereum.Address, storage exchange.Storage,
+	authEnbl bool) *ExchangePool {
 
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
@@ -94,6 +97,17 @@ func NewExchangePool(
 			wait.Wait()
 			huobi.UpdatePairsPrecision()
 			exchanges[huobi.ID()] = huobi
+			//start Huobi http server
+			huobiPortStr := fmt.Sprintf(":%d", 12221)
+			authEngine := exchangehttp.KNAuthentication{
+				signer.KNSecret,
+				signer.KNReadOnly,
+				signer.KNConfiguration,
+				signer.KNConfirmConf,
+			}
+			huobiServer := exchangehttp.NewHuobiHTTPServer(huobi, huobiPortStr, authEnbl, authEngine, kyberENV)
+			go huobiServer.Run()
+
 		}
 	}
 	return &ExchangePool{exchanges}
