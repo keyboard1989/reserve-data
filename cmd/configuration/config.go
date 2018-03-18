@@ -74,6 +74,10 @@ type Config struct {
 
 // GetStatConfig: load config to run stat server only
 func (self *Config) AddStatConfig(setPath SettingPaths, addressConfig common.AddressConfig) {
+	networkAddr := ethereum.HexToAddress(addressConfig.Network)
+	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
+	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
+
 	thirdpartyReserves := []ethereum.Address{}
 	for _, address := range addressConfig.ThirdPartyReserves {
 		thirdpartyReserves = append(thirdpartyReserves, ethereum.HexToAddress(address))
@@ -114,6 +118,9 @@ func (self *Config) AddStatConfig(setPath SettingPaths, addressConfig common.Add
 	self.RateStorage = rateStorage
 	self.StatFetcherRunner = statFetcherRunner
 	self.ThirdPartyReserves = thirdpartyReserves
+	self.FeeBurnerAddress = burnerAddr
+	self.NetworkAddress = networkAddr
+	self.WhitelistAddress = whitelistAddr
 }
 
 func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressConfig common.AddressConfig, kyberENV string) {
