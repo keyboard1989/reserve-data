@@ -15,7 +15,10 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-const HUOBI_EPSILON float64 = 0.0000000001 // 10e-10
+const (
+	HUOBI_EPSILON float64 = 0.0000000001 // 10e-10
+	EXPIRED       uint64  = 3600000      //1 hour in mili second
+)
 
 type NonceCorpus interface {
 	GetAddress() ethereum.Address
@@ -35,7 +38,7 @@ type Huobi struct {
 	addresses            *common.ExchangeAddresses
 	exchangeInfo         *common.ExchangeInfo
 	fees                 common.ExchangeFees
-	currentDepositstatus map[common.ActivityID]types.Transaction
+	currentDepositstatus map[common.ActivityID]uint64
 	blockchain           Blockchain
 	intermediatorAddr    ethereum.Address
 	storage              Storage
@@ -85,8 +88,18 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExch
 	}
 }
 
+func (self *Huobi) PrunePendingTxs(timepoint uint64) {
+	for actID, atTime := range self.currentDepositstatus {
+		if (timepoint - atTime) > EXPIRED {
+			log.Printf("Activity %s expired, remove from pending tx2 tracking record", actID.EID)
+			delete(self.currentDepositstatus, actID)
+		}
+	}
+}
+
 func (self *Huobi) PendingIntermediateTxs(timepoint uint64) (map[common.ActivityID]common.TXEntry, error) {
 	result := make(map[common.ActivityID]common.TXEntry)
+	self.PrunePendingTxs(common.GetTimepoint())
 	for actID, _ := range self.currentDepositstatus {
 		tx2, err := self.storage.GetIntermedatorTx(actID)
 		if err == nil {
@@ -440,8 +453,9 @@ func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchan
 
 func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	txID, sentAmount, tokenID := getDepositInfo(id)
-	tx2, ok := self.currentDepositstatus[id]
-	if !ok {
+	tx2Entry, ok := self.storage.GetIntermedatorTx(id)
+	self.currentDepositstatus[id] = common.GetTimepoint()
+	if ok != nil {
 		//if the 2nd transaction is not in the current Deposit status, check the 1st tx first.
 		log.Printf("tx ID from the activity ID is: %v", txID)
 		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(txID))
@@ -468,9 +482,8 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 				log.Println("can't send 2nd transaction to the exchange")
 				return "failed", err
 			}
-			self.currentDepositstatus[id] = *tx2
 			Txhash := tx2.Hash().Hex()
-			err = self.storage.StoreIntermediateTx(Txhash, self.Name(), tokenID, "submitted", sentAmount, common.GetTimestamp(), id)
+			err = self.storage.StoreIntermediateTx(Txhash, self.Name(), tokenID, "submitted", "", sentAmount, common.GetTimestamp(), id)
 			if err != nil {
 				log.Printf("Can not store the activity's 2nd transaction")
 			}
@@ -480,33 +493,36 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 		}
 	} else {
 		//if the 2nd transaction is in the Deposit Status, check its status.
-		status, _, err := self.blockchain.TxStatus(tx2.Hash())
+		status, _, err := self.blockchain.TxStatus(ethereum.HexToHash(tx2Entry.Hash))
 		if err != nil {
 			log.Printf("Can not get TX status: %v", err)
 			return "", nil
 		}
 		if status == "mined" {
 			log.Println("2nd Transaction is mined. Processed to store it and check the Deposit history")
-			err = self.storage.StoreIntermediateTx(tx2.Hash().Hex(), self.Name(), tokenID, "mined", sentAmount, common.GetTimestamp(), id)
+			err = self.storage.StoreIntermediateTx(tx2Entry.Hash, self.Name(), tokenID, "mined", "", sentAmount, common.GetTimestamp(), id)
 			if err != nil {
 				log.Printf("Can not store the activity's 2nd transaction ")
 			}
-			tx2ID := tx2.Hash().Hex()
 			deposits, err := self.interf.DepositHistory()
 			if err != nil && deposits.Status != "ok" {
 				return "", err
 			}
 			for _, deposit := range deposits.Data {
-				if deposit.TxHash == tx2ID {
+				log.Printf("deposit tx is %s, with token %s", deposit.TxHash, deposit.Currency)
+				if deposit.TxHash == tx2Entry.Hash {
 					if deposit.State == "safe" {
-						delete(self.currentDepositstatus, id)
+						err = self.storage.StoreIntermediateTx(tx2Entry.Hash, self.Name(), tokenID, "mined", "done", sentAmount, common.GetTimestamp(), id)
+						if err != nil {
+							log.Printf("Can not store the activity's 2nd transaction ")
+						}
 						return "done", nil
 					}
 				}
 			}
 			return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and tx2 are not consistently designed")
 		} else if status == "failed" || status == "lost" {
-			delete(self.currentDepositstatus, id)
+			err = self.storage.StoreIntermediateTx(tx2Entry.Hash, self.Name(), tokenID, "failed", "failed", sentAmount, common.GetTimestamp(), id)
 			return "failed", nil
 		}
 	}
@@ -572,7 +588,7 @@ func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, in
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,
-		map[common.ActivityID]types.Transaction{},
+		map[common.ActivityID]uint64{},
 		*bc,
 		intorAddr,
 		storage,

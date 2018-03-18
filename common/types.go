@@ -495,12 +495,13 @@ type RateEntry struct {
 }
 
 type TXEntry struct {
-	Hash      string
-	Exchange  string
-	Token     string
-	Status    string
-	Amount    float64
-	Timestamp Timestamp
+	Hash           string
+	Exchange       string
+	Token          string
+	MiningStatus   string
+	ExchangeStatus string
+	Amount         float64
+	Timestamp      Timestamp
 }
 
 type RateResponse struct {

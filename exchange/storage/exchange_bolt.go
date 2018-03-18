@@ -79,7 +79,7 @@ func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	}
 	return err
 }
-func (self *BoltStorage) StoreIntermediateTx(hash string, exchangeID string, tokenID string, status string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error {
+func (self *BoltStorage) StoreIntermediateTx(hash string, exchangeID string, tokenID string, miningStatus string, exchangeStatus string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
@@ -89,7 +89,7 @@ func (self *BoltStorage) StoreIntermediateTx(hash string, exchangeID string, tok
 		self.PruneOutdatedData(tx, INTERMEDIATE_TX)
 		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, INTERMEDIATE_TX))
 		data := common.TXEntry{
-			hash, exchangeID, tokenID, status, Amount, Timestamp,
+			hash, exchangeID, tokenID, miningStatus, exchangeStatus, Amount, Timestamp,
 		}
 		dataJson, err = json.Marshal(data)
 		if err != nil {
@@ -127,7 +127,6 @@ func (self *BoltStorage) GetIntermedatorTx(id common.ActivityID) (common.TXEntry
 			if err != nil {
 				return err
 			}
-			log.Printf("the data came from db is %v", tx2)
 			return nil
 		} else {
 			err = errors.New("Can not find 2nd transaction tx for the deposit %s, please try later")
