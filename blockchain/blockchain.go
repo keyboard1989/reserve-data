@@ -59,6 +59,7 @@ type Blockchain struct {
 	nonce         NonceCorpus
 	nonceDeposit  NonceCorpus
 	broadcaster   *Broadcaster
+	ethRate       EthUSDRate
 	chainType     string
 }
 
@@ -245,6 +246,14 @@ func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
 	}
 }
 
+func readablePrint(data map[ethereum.Address]byte) string {
+	result := ""
+	for addr, b := range data {
+		result = result + "|" + fmt.Sprintf("%s-%d", addr.Hex(), b)
+	}
+	return result
+}
+
 //====================== Write calls ===============================
 
 // TODO: Need better test coverage
@@ -310,7 +319,7 @@ func (self *Blockchain) SetRates(
 					buys, sells,
 					baseBuys, baseSells,
 					newBBuys, newBSells,
-					newCBuys, newCSells,
+					readablePrint(newCBuys), readablePrint(newCSells),
 					bbuys, bsells, indices,
 				)
 			}
@@ -324,7 +333,7 @@ func (self *Blockchain) SetRates(
 					tx.Hash().Hex(),
 					buys, sells,
 					baseBuys, baseSells,
-					newCBuys, newCSells,
+					readablePrint(newCBuys), readablePrint(newCSells),
 					bbuys, bsells, indices,
 				)
 			}
@@ -470,7 +479,7 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	}
 }
 
-func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.Int, timepoint uint64) (map[string]common.BalanceEntry, error) {
+func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.Int) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
 	for _, tok := range self.tokens {
@@ -513,7 +522,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.
 	return result, nil
 }
 
-func (self *Blockchain) FetchRates(timepoint uint64, atBlock uint64, currentBlock uint64) (common.AllRateEntry, error) {
+func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.AllRateEntry, error) {
 	result := common.AllRateEntry{}
 	tokenAddrs := []ethereum.Address{}
 	validTokens := []common.Token{}
@@ -551,6 +560,42 @@ func (self *Blockchain) FetchRates(timepoint uint64, atBlock uint64, currentBloc
 	}
 }
 
+func (self *Blockchain) GetReserveRates(
+	atBlock, currentBlock uint64, reserveAddress ethereum.Address,
+	tokens []common.Token) (common.ReserveRates, error) {
+	result := common.ReserveTokenRateEntry{}
+	rates := common.ReserveRates{}
+	rates.Timestamp = common.GetTimepoint()
+
+	ETH := common.MustGetToken("ETH")
+	srcAddresses := []ethereum.Address{}
+	destAddresses := []ethereum.Address{}
+	for _, token := range tokens {
+		srcAddresses = append(srcAddresses, ethereum.HexToAddress(token.Address), ethereum.HexToAddress(ETH.Address))
+		destAddresses = append(destAddresses, ethereum.HexToAddress(ETH.Address), ethereum.HexToAddress(token.Address))
+	}
+
+	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock)), reserveAddress, srcAddresses, destAddresses)
+	if err != nil {
+		return rates, err
+	}
+
+	rates.BlockNumber = atBlock
+	rates.ToBlockNumber = currentBlock
+	rates.ReturnTime = common.GetTimepoint()
+	for index, token := range tokens {
+		rateEntry := common.ReserveRateEntry{}
+		rateEntry.BuyReserveRate = common.BigToFloat(reserveRate[index*2+1], 18)
+		rateEntry.BuySanityRate = common.BigToFloat(sanityRate[index*2+1], 18)
+		rateEntry.SellReserveRate = common.BigToFloat(reserveRate[index*2], 18)
+		rateEntry.SellSanityRate = common.BigToFloat(sanityRate[index*2], 18)
+		result[fmt.Sprintf("ETH-%s", token.ID)] = rateEntry
+	}
+	rates.Data = result
+
+	return rates, err
+}
+
 func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock *big.Int) (*big.Int, error) {
 	if priceType == "buy" {
 		return self.pricing.GetRate(nil, atBlock, token, block, true, qty)
@@ -559,7 +604,7 @@ func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceTy
 	}
 }
 
-func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint uint64) ([]types.Log, error) {
+func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Log, error) {
 	result := []types.Log{}
 	var to *big.Int
 	if toBlock != 0 {
@@ -584,15 +629,24 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64, timepoint u
 			},
 		},
 	}
+	log.Printf("LogFetcher - fetching logs data from block %d, to block %d", fromBlock, to.Uint64())
 	err := self.rpcClient.Call(&result, "eth_getLogs", toFilterArg(param))
 	return result, err
 }
 
+func (self *Blockchain) GetEthRate(timepoint uint64) float64 {
+	rate := self.ethRate.GetUSDRate(timepoint)
+	log.Printf("ETH-USD rate: %f", rate)
+	return rate
+}
+
 // return timestamp increasing array of trade log
-func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, timepoint uint64, ethRate float64) ([]common.KNLog, error) {
+func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLog, error) {
 	result := []common.KNLog{}
+	noCatLog := 0
+	noTradeLog := 0
 	// get all logs from fromBlock to best block
-	logs, err := self.GetRawLogs(fromBlock, toBlock, timepoint)
+	logs, err := self.GetRawLogs(fromBlock, toBlock)
 	if err != nil {
 		return result, err
 	}
@@ -600,21 +654,28 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, timepoint uint
 	var tradeLog *common.TradeLog
 	for i, l := range logs {
 		if l.Removed {
-			log.Printf("Log is ignored because it is removed due to chain reorg")
+			log.Printf("LogFetcher - Log is ignored because it is removed due to chain reorg")
 		} else {
-			if prevLog == nil || l.TxHash != prevLog.TxHash {
+			if prevLog == nil || (l.TxHash != prevLog.TxHash && l.Topics[0].Hex() != UserCatEvent) {
 				if tradeLog != nil {
 					result = append(result, *tradeLog)
+					noTradeLog += 1
+					// log.Printf(
+					// 	"LogFetcher - Fetched logs: TxHash(%s), TxIndex(%d), blockno(%d)",
+					// 	tradeLog.TransactionHash.Hex(),
+					// 	tradeLog.TransactionIndex,
+					// 	tradeLog.BlockNumber,
+					// )
 				}
 				if len(l.Topics) > 0 && l.Topics[0].Hex() != UserCatEvent {
 					// start new TradeLog
 					tradeLog = &common.TradeLog{}
 					tradeLog.BlockNumber = l.BlockNumber
 					tradeLog.TransactionHash = l.TxHash
-					tradeLog.TransactionIndex = l.TxIndex
+					tradeLog.Index = l.Index
 					tradeLog.Timestamp, err = self.InterpretTimestamp(
 						tradeLog.BlockNumber,
-						tradeLog.TransactionIndex,
+						tradeLog.Index,
 					)
 					if err != nil {
 						return result, err
@@ -630,17 +691,24 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, timepoint uint
 					addr, cat := LogDataToCatLog(l.Data)
 					t, err := self.InterpretTimestamp(
 						l.BlockNumber,
-						l.TxIndex,
+						l.Index,
 					)
 					if err != nil {
 						return result, err
 					}
+					// log.Printf(
+					// 	"LogFetcher - raw log entry: removed(%s), txhash(%s), timestamp(%d)",
+					// 	l.Removed, l.TxHash.Hex(), t,
+					// )
 					result = append(result, common.SetCatLog{
-						Timestamp:   t,
-						BlockNumber: l.BlockNumber,
-						Address:     addr,
-						Category:    cat,
+						Timestamp:       t,
+						BlockNumber:     l.BlockNumber,
+						TransactionHash: l.TxHash,
+						Index:           l.Index,
+						Address:         addr,
+						Category:        cat,
 					})
+					noCatLog += 1
 				case FeeToWalletEvent:
 					reserveAddr, walletAddr, walletFee := LogDataToFeeWalletParams(l.Data)
 					tradeLog.ReserveAddress = reserveAddr
@@ -658,7 +726,7 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, timepoint uint
 					tradeLog.DestAmount = destAmount.Big()
 					tradeLog.UserAddress = ethereum.BytesToAddress(l.Topics[1].Bytes())
 
-					if ethRate != 0 {
+					if ethRate := self.GetEthRate(tradeLog.Timestamp / 1000000); ethRate != 0 {
 						// fiatAmount = amount * ethRate
 						eth := common.SupportedTokens["ETH"]
 						f := new(big.Float)
@@ -674,12 +742,16 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64, timepoint uint
 					}
 				}
 			}
-			prevLog = &logs[i]
+			if len(l.Topics) > 0 && l.Topics[0].Hex() != UserCatEvent {
+				prevLog = &logs[i]
+			}
 		}
 	}
-	if tradeLog != nil {
+	if tradeLog != nil && (len(result) == 0 || tradeLog.TransactionHash != result[len(result)-1].TxHash()) {
 		result = append(result, *tradeLog)
+		noTradeLog += 1
 	}
+	log.Printf("LogFetcher - Fetched %d trade logs, %d cat logs", noTradeLog, noCatLog)
 	return result, nil
 }
 
@@ -735,13 +807,16 @@ func NewBlockchain(
 	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
 	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
 	nonceDeposit NonceCorpus,
+	ethUSDRate EthUSDRate,
 	chainType string) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper, err := NewKNWrapperContract(wrapperAddr, etherCli)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("reserve owner address: %s", signer.GetAddress().Hex())
+	if signer != nil {
+		log.Printf("reserve owner address: %s", signer.GetAddress().Hex())		
+	}
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve, err := NewKNReserveContract(reserveAddr, etherCli)
 	if err != nil {
@@ -771,6 +846,7 @@ func NewBlockchain(
 		oldBurners:    []ethereum.Address{},
 		signer:        signer,
 		depositSigner: depositSigner,
+		ethRate:       ethUSDRate,
 		tokens:        []common.Token{},
 		nonce:         nonceCorpus,
 		nonceDeposit:  nonceDeposit,

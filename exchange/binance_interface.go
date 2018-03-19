@@ -42,7 +42,7 @@ type BinanceInterface interface {
 		startTime, endTime uint64) (Binawithdrawals, error)
 
 	OrderStatus(
-		symbol string, id uint64, timepoint uint64) (Binaorder, error)
+		symbol string, id uint64) (Binaorder, error)
 
 	GetServerTime() (uint64, error)
 }

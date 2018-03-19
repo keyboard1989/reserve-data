@@ -2,18 +2,8 @@ package configuration
 
 import (
 	"log"
-	"os"
-	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/data/fetcher"
-	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
-	"github.com/KyberNetwork/reserve-data/data/storage"
-	exsstorage "github.com/KyberNetwork/reserve-data/exchange/storage"
-	"github.com/KyberNetwork/reserve-data/http"
-	"github.com/KyberNetwork/reserve-data/signer"
-	"github.com/KyberNetwork/reserve-data/stat"
-	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -64,25 +54,28 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 	}
 }
 
-// GetConfig: load and set all config with preset params and customize param depends on env
-// This is to generalized all the getconfig function.
-func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
+func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
-	// settingPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json"
 	addressConfig := GetAddressConfig(setPath.settingPath)
 
-	feeConfig, err := common.GetFeeFromFile(setPath.feePath)
-	if err != nil {
-		log.Fatalf("Fees file %s cannot found at: %s", setPath.feePath, err)
-	}
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
-	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
-	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
-	networkAddr := ethereum.HexToAddress(addressConfig.Network)
-	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
-	intermediatorAddr := ethereum.HexToAddress("0x13922F1857C0677F79e4BbB16Ad2c49fAa620829")
-	//intermediatorAddr := ethereum.HexToAddress(addressConfig.Intermediator)
+	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+	var intermediatorAddr ethereum.Address
+	if addressConfig.Intermediator != "" {
+		intermediatorAddr = ethereum.HexToAddress(addressConfig.Intermediator)
+	} else {
+		intermediatorAddr = ethereum.HexToAddress("0x13922F1857C0677F79e4BbB16Ad2c49fAa620829")
+	}
+
+	var endpoint string
+	if endpointOW != "" {
+		log.Printf("overwriting Endpoint with %s\n", endpointOW)
+		endpoint = endpointOW
+	} else {
+		endpoint = setPath.endPoint
+	}
+
 	common.SupportedTokens = map[string]common.Token{}
 	tokens := []common.Token{}
 	for id, t := range addressConfig.Tokens {
@@ -92,92 +85,102 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string) *Config {
 		common.SupportedTokens[id] = tok
 		tokens = append(tokens, tok)
 	}
-	log.Printf("Exchange storage is %s", setPath.exsStoragePath)
-	log.Printf("Stats    storage is %s", setPath.statStoragePath)
-	dataStorage, err := storage.NewBoltStorage(setPath.dataStoragePath)
-	if err != nil {
-		panic(err)
-	}
-	statStorage, err := statstorage.NewBoltStorage(setPath.statStoragePath)
-	if err != nil {
-		panic(err)
-	}
-	exsStorage, err := exsstorage.NewBoltStorage(setPath.exsStoragePath)
-	if err != nil {
-		panic(err)
-	}
-	//fetcherRunner := http_runner.NewHttpRunner(8001)
-	var fetcherRunner fetcher.FetcherRunner
-	var statFetcherRunner stat.FetcherRunner
+	// log.Printf("Exchange storage is %s", setPath.exsStoragePath)
+	// log.Printf("Stats    storage is %s", setPath.statStoragePath)
+	// dataStorage, err := storage.NewBoltStorage(setPath.dataStoragePath)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// statStorage, err := statstorage.NewBoltStorage(setPath.statStoragePath)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// exsStorage, err := exsstorage.NewBoltStorage(setPath.exsStoragePath)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// //fetcherRunner := http_runner.NewHttpRunner(8001)
+	// var fetcherRunner fetcher.FetcherRunner
+	// var statFetcherRunner stat.FetcherRunner
 
-	if os.Getenv("KYBER_ENV") == "simulation" {
-		fetcherRunner = http_runner.NewHttpRunner(8001)
-		statFetcherRunner = http_runner.NewHttpRunner(8002)
-	} else {
-		fetcherRunner = fetcher.NewTickerRunner(10*time.Second, 4*time.Second, 11*time.Second, 13*time.Second, 15*time.Second)
-		statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
-	}
-	baseSigner := signer.GetBaseSigner(setPath.signerPath)
-	fileSigner := signer.NewFileSigner(baseSigner, baseSigner.Keystore, baseSigner.Passphrase)
-	depositSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreD, baseSigner.PassphraseD)
-	intermediatorSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreI, baseSigner.PassphraseI)
+	// if os.Getenv("KYBER_ENV") == "simulation" {
+	// 	fetcherRunner = http_runner.NewHttpRunner(8001)
+	// 	statFetcherRunner = http_runner.NewHttpRunner(8002)
+	// } else {
+	// 	fetcherRunner = fetcher.NewTickerRunner(10*time.Second, 4*time.Second, 11*time.Second, 13*time.Second, 15*time.Second)
+	// 	statFetcherRunner = fetcher.NewTickerRunner(3*time.Second, 2*time.Second, 3*time.Second, 5*time.Second, 5*time.Second)
+	// }
+	// baseSigner := signer.GetBaseSigner(setPath.signerPath)
+	// fileSigner := signer.NewFileSigner(baseSigner, baseSigner.Keystore, baseSigner.Passphrase)
+	// depositSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreD, baseSigner.PassphraseD)
+	// intermediatorSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreI, baseSigner.PassphraseI)
 
-	// endpoint := "https://ropsten.infura.io"
-	// endpoint := "http://blockchain:8545"
-	// endpoint := "https://kovan.infura.io"
-	var endpoint string
-	if endpointOW != "" {
-		log.Printf("overwriting Endpoint with %s\n", endpointOW)
-		endpoint = endpointOW
-	} else {
-		endpoint = setPath.endPoint
-	}
+	// // endpoint := "https://ropsten.infura.io"
+	// // endpoint := "http://blockchain:8545"
+	// // endpoint := "https://kovan.infura.io"
+	// var endpoint string
+	// if endpointOW != "" {
+	// 	log.Printf("overwriting Endpoint with %s\n", endpointOW)
+	// 	endpoint = endpointOW
+	// } else {
+	// 	endpoint = setPath.endPoint
+	// }
+
+	// bkendpoints := setPath.bkendpoints
+	// var hmac512auth http.KNAuthentication
+
+	// hmac512auth = http.KNAuthentication{
+	// 	fileSigner.KNSecret,
+	// 	fileSigner.KNReadOnly,
+	// 	fileSigner.KNConfiguration,
+	// 	fileSigner.KNConfirmConf,
+	// }
+	// exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr, exsStorage, authEnbl)
+	// //exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
+
+	// if !authEnbl {
+	// 	log.Printf("\nWARNING: No authentication mode\n")
+	// }
+
+	// chainType := GetChainType(kyberENV)
+
+	// return &Config{
+	// 	ActivityStorage:         dataStorage,
+	// 	DataStorage:             dataStorage,
+	// 	StatStorage:             statStorage,
+	// 	FetcherStorage:          dataStorage,
+	// 	ExchangeStorage:         exsStorage,
+	// 	StatFetcherStorage:      statStorage,
+	// 	MetricStorage:           dataStorage,
+	// 	FetcherRunner:           fetcherRunner,
+	// 	StatFetcherRunner:       statFetcherRunner,
+	// 	FetcherExchanges:        exchangePool.FetcherExchanges(),
+	// 	Exchanges:               exchangePool.CoreExchanges(),
+	// 	BlockchainSigner:        fileSigner,
+	// 	EnableAuthentication:    authEnbl,
+	// 	DepositSigner:           depositSigner,
+	// 	AuthEngine:              hmac512auth,
 
 	bkendpoints := setPath.bkendpoints
-	var hmac512auth http.KNAuthentication
-
-	hmac512auth = http.KNAuthentication{
-		fileSigner.KNSecret,
-		fileSigner.KNReadOnly,
-		fileSigner.KNConfiguration,
-		fileSigner.KNConfirmConf,
-	}
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, endpoint, wrapperAddr, intermediatorAddr, exsStorage, authEnbl)
-	//exchangePool := exchangePoolFunc(feeConfig, addressConfig, fileSigner, storage)
-
-	if !authEnbl {
-		log.Printf("\nWARNING: No authentication mode\n")
-	}
-
 	chainType := GetChainType(kyberENV)
 
-	return &Config{
-		ActivityStorage:         dataStorage,
-		DataStorage:             dataStorage,
-		StatStorage:             statStorage,
-		FetcherStorage:          dataStorage,
-		ExchangeStorage:         exsStorage,
-		StatFetcherStorage:      statStorage,
-		MetricStorage:           dataStorage,
-		FetcherRunner:           fetcherRunner,
-		StatFetcherRunner:       statFetcherRunner,
-		FetcherExchanges:        exchangePool.FetcherExchanges(),
-		Exchanges:               exchangePool.CoreExchanges(),
-		BlockchainSigner:        fileSigner,
-		EnableAuthentication:    authEnbl,
-		DepositSigner:           depositSigner,
-		AuthEngine:              hmac512auth,
+	config := &Config{
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
 		SupportedTokens:         tokens,
 		WrapperAddress:          wrapperAddr,
 		PricingAddress:          pricingAddr,
 		ReserveAddress:          reserveAddr,
-		FeeBurnerAddress:        burnerAddr,
-		NetworkAddress:          networkAddr,
-		WhitelistAddress:        whitelistAddr,
 		ChainType:               chainType,
-		IntermediatorSigner:     intermediatorSigner,
 		IntermediatorAddress:    intermediatorAddr,
 	}
+
+	if enableStat {
+		config.AddStatConfig(setPath, addressConfig)
+	}
+
+	if !noCore {
+		config.AddCoreConfig(setPath, authEnbl, addressConfig, kyberENV)
+	}
+	return config
 }

@@ -59,7 +59,7 @@ func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
-func (self *Huobi) UpdateAllDepositAddresses(address string) {
+func (self *Huobi) UpdateAllDepositAddresses(address string, timepoint uint64) {
 	data := self.addresses.GetData()
 	for k, _ := range data {
 		self.addresses.Update(k, ethereum.HexToAddress(address))
@@ -147,8 +147,8 @@ func (self *Huobi) Name() string {
 	return "huobi"
 }
 
-func (self *Huobi) QueryOrder(symbol string, id uint64, timepoint uint64) (done float64, remaining float64, finished bool, err error) {
-	result, err := self.interf.OrderStatus(symbol, id, timepoint)
+func (self *Huobi) QueryOrder(symbol string, id uint64) (done float64, remaining float64, finished bool, err error) {
+	result, err := self.interf.OrderStatus(symbol, id)
 	if err != nil {
 		return 0, 0, false, err
 	} else {
@@ -169,7 +169,6 @@ func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token
 		done, remaining, finished, err := self.QueryOrder(
 			base.ID+quote.ID,
 			orderID,
-			timepoint+20,
 		)
 		id := fmt.Sprintf("%s_%s", result.OrderID, symbol)
 		return id, done, remaining, finished, err
@@ -215,7 +214,7 @@ func (self *Huobi) FetchOnePairData(
 	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Timestamp = timestamp
 	result.Valid = true
-	resp_data, err := self.interf.GetDepthOnePair(pair, timepoint)
+	resp_data, err := self.interf.GetDepthOnePair(pair)
 	returnTime := common.GetTimestamp()
 	result.ReturnTime = returnTime
 	if err != nil {
@@ -311,7 +310,7 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
-	resp_data, err := self.interf.GetInfo(timepoint)
+	resp_data, err := self.interf.GetInfo()
 	result.ReturnTime = common.GetTimestamp()
 	if err != nil {
 		result.Valid = false
@@ -347,12 +346,11 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 func (self *Huobi) FetchOnePairTradeHistory(
 	wait *sync.WaitGroup,
 	data *sync.Map,
-	pair common.TokenPair,
-	timepoint uint64) {
+	pair common.TokenPair) {
 
 	defer wait.Done()
 	result := []common.TradeHistory{}
-	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, timepoint)
+	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote)
 	if err != nil {
 		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
 	}
@@ -383,7 +381,7 @@ func (self *Huobi) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][
 	wait := sync.WaitGroup{}
 	for _, pair := range pairs {
 		wait.Add(1)
-		go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
+		go self.FetchOnePairTradeHistory(&wait, &data, pair)
 	}
 	wait.Wait()
 	data.Range(func(key, value interface{}) bool {
@@ -556,7 +554,7 @@ func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 		panic(err)
 	}
 	symbol := parts[1]
-	order, err := self.interf.OrderStatus(symbol, orderID, timepoint)
+	order, err := self.interf.OrderStatus(symbol, orderID)
 	if err != nil {
 		return "", err
 	}

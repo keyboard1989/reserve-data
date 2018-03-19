@@ -671,6 +671,34 @@ func (self *HTTPServer) GetActivities(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) CatLogs(c *gin.Context) {
+	log.Printf("Getting cat logs")
+	fromTime, err := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	if err != nil {
+		fromTime = 0
+	}
+	toTime, err := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if err != nil || toTime == 0 {
+		toTime = common.GetTimepoint()
+	}
+
+	data, err := self.stat.GetCatLogs(fromTime, toTime)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) TradeLogs(c *gin.Context) {
 	log.Printf("Getting trade logs")
 	fromTime, err := strconv.ParseUint(c.Query("fromTime"), 10, 64)
@@ -1554,6 +1582,29 @@ func (self *HTTPServer) GetUserVolume(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetTradeSummary(c *gin.Context) {
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	data, err := self.stat.GetTradeSummary(fromTime, toTime)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
 	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
 	if !ok {
@@ -1657,17 +1708,33 @@ func (self *HTTPServer) GetPendingAddresses(c *gin.Context) {
 
 func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 	var err error
-	postForm, ok := self.Authenticated(c, []string{"user", "addresses"}, []Permission{ConfirmConfPermission})
+	postForm, ok := self.Authenticated(c, []string{"user", "addresses", "timestamps"}, []Permission{ConfirmConfPermission})
 	if !ok {
 		return
 	}
 	user := postForm.Get("user")
 	addresses := postForm.Get("addresses")
+	times := postForm.Get("timestamps")
 	addrs := []ethereum.Address{}
-	for _, addr := range strings.Split(addresses, "-") {
+	timestamps := []uint64{}
+	addrsStr := strings.Split(addresses, "-")
+	timesStr := strings.Split(times, "-")
+	if len(addrsStr) != len(timesStr) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "addresses and timestamps must have the same number of elements",
+			},
+		)
+		return
+	}
+	for i, addr := range addrsStr {
 		a := ethereum.HexToAddress(addr)
-		if a.Big().Cmp(ethereum.Big0) != 0 {
+		t, err := strconv.ParseUint(timesStr[i], 10, 64)
+		if a.Big().Cmp(ethereum.Big0) != 0 && err == nil {
 			addrs = append(addrs, a)
+			timestamps = append(timestamps, t)
 		}
 	}
 	if len(addrs) == 0 {
@@ -1680,7 +1747,7 @@ func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 		)
 		return
 	}
-	err = self.stat.UpdateUserAddresses(user, addrs)
+	err = self.stat.UpdateUserAddresses(user, addrs, timestamps)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1697,6 +1764,43 @@ func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 			},
 		)
 	}
+}
+
+func (self *HTTPServer) GetReserveRate(c *gin.Context) {
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if toTime == 0 {
+		toTime = common.GetTimepoint()
+	}
+	reserveAddr := ethereum.HexToAddress(c.Query("reserveAddr"))
+	if reserveAddr.Big().Cmp(ethereum.Big0) == 0 {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "Reserve address is invalid",
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetReserveRates(fromTime, toTime, reserveAddr)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
 }
 
 func (self *HTTPServer) Run() {
@@ -1755,12 +1859,15 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/cap-by-user/:user", self.GetCapByUser)
 		self.r.GET("/richguy/:addr", self.ExceedDailyLimit)
 		self.r.GET("/tradelogs", self.TradeLogs)
+		self.r.GET("/catlogs", self.CatLogs)
 		self.r.GET("/get-asset-volume", self.GetAssetVolume)
 		self.r.GET("/get-burn-fee", self.GetBurnFee)
 		self.r.GET("/get-wallet-fee", self.GetWalletFee)
 		self.r.GET("/get-user-volume", self.GetUserVolume)
+		self.r.GET("/get-trade-summary", self.GetTradeSummary)
 		self.r.POST("/update-user-addresses", self.UpdateUserAddresses)
 		self.r.GET("/get-pending-addresses", self.GetPendingAddresses)
+		self.r.GET("/get-reserve-rate", self.GetReserveRate)
 	}
 
 	self.r.Run(self.host)

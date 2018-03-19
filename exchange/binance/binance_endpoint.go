@@ -88,7 +88,8 @@ func (self *BinanceEndpoint) GetResponse(
 }
 
 func (self *BinanceEndpoint) GetDepthOnePair(
-	pair common.TokenPair, timepoint uint64) (exchange.Binaresp, error) {
+	pair common.TokenPair,
+	timepoint uint64) (exchange.Binaresp, error) {
 
 	resp_body, err := self.GetResponse(
 		"GET", self.interf.PublicEndpoint()+"/api/v1/depth",
@@ -265,7 +266,7 @@ func (self *BinanceEndpoint) CancelOrder(symbol string, id uint64) (exchange.Bin
 	return result, err
 }
 
-func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64, timepoint uint64) (exchange.Binaorder, error) {
+func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64) (exchange.Binaorder, error) {
 	result := exchange.Binaorder{}
 	resp_body, err := self.GetResponse(
 		"GET",

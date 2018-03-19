@@ -53,7 +53,9 @@ func GetConfigFromENV(kyberENV string) *configuration.Config {
 	var config *configuration.Config
 	config = configuration.GetConfig(kyberENV,
 		!noAuthEnable,
-		endpointOW)
+		endpointOW,
+		noCore,
+		enableStat)
 	return config
 }
 
@@ -122,14 +124,18 @@ func serverStart(cmd *cobra.Command, args []string) {
 
 	if enableStat {
 		var deployBlock uint64
-		if kyberENV == "mainnet" || kyberENV == "production" {
+		if kyberENV == "mainnet" || kyberENV == "production" || kyberENV == "dev" {
 			deployBlock = 5069586
 		}
 		statFetcher = stat.NewFetcher(
-			config.StatFetcherStorage,
-			stat.NewCMCEthUSDRate(),
+			config.StatStorage,
+			config.LogStorage,
+			config.RateStorage,
+			config.UserStorage,
 			config.StatFetcherRunner,
 			deployBlock,
+			config.ReserveAddress,
+			config.ThirdPartyReserves,
 		)
 	}
 
@@ -149,11 +155,13 @@ func serverStart(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	//nonceCorpus := nonce.NewAutoIncreasing(infura, fileSigner)
-	nonceCorpus := nonce.NewTimeWindow(infura, config.BlockchainSigner)
-	nonceDeposit := nonce.NewTimeWindow(infura, config.DepositSigner)
-	//nonceIntermediator := nonce.NewTimeWindow(infura, config.IntermediatorSigner
+	var nonceCorpus *nonce.TimeWindow
+	var nonceDeposit *nonce.TimeWindow
 
+	if !noCore {
+		nonceCorpus = nonce.NewTimeWindow(infura, config.BlockchainSigner)
+		nonceDeposit = nonce.NewTimeWindow(infura, config.DepositSigner)
+	}
 	//set block chain
 	bc, err := blockchain.NewBlockchain(
 		client,
@@ -169,6 +177,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.DepositSigner,
 		nonceCorpus,
 		nonceDeposit,
+		blockchain.NewCMCEthUSDRate(),
 		config.ChainType,
 	)
 	if err != nil {
@@ -200,6 +209,9 @@ func serverStart(cmd *cobra.Command, args []string) {
 			statFetcher.SetBlockchain(bc)
 			rStat = stat.NewReserveStats(
 				config.StatStorage,
+				config.LogStorage,
+				config.RateStorage,
+				config.UserStorage,
 				statFetcher,
 			)
 			rStat.Run()

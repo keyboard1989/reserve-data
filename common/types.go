@@ -538,25 +538,30 @@ type AllRateResponse struct {
 }
 
 type KNLog interface {
+	TxHash() ethereum.Hash
 	BlockNo() uint64
 	Type() string
 }
 
 type SetCatLog struct {
-	Timestamp   uint64
-	BlockNumber uint64
-	Address     ethereum.Address
-	Category    string
+	Timestamp       uint64
+	BlockNumber     uint64
+	TransactionHash ethereum.Hash
+	Index           uint
+
+	Address  ethereum.Address
+	Category string
 }
 
-func (self SetCatLog) BlockNo() uint64 { return self.BlockNumber }
-func (self SetCatLog) Type() string    { return "SetCatLog" }
+func (self SetCatLog) BlockNo() uint64       { return self.BlockNumber }
+func (self SetCatLog) Type() string          { return "SetCatLog" }
+func (self SetCatLog) TxHash() ethereum.Hash { return self.TransactionHash }
 
 type TradeLog struct {
-	Timestamp        uint64
-	BlockNumber      uint64
-	TransactionHash  ethereum.Hash
-	TransactionIndex uint
+	Timestamp       uint64
+	BlockNumber     uint64
+	TransactionHash ethereum.Hash
+	Index           uint
 
 	UserAddress ethereum.Address
 	SrcAddress  ethereum.Address
@@ -571,10 +576,28 @@ type TradeLog struct {
 	BurnFee        *big.Int
 }
 
-func (self TradeLog) BlockNo() uint64 { return self.BlockNumber }
-func (self TradeLog) Type() string    { return "TradeLog" }
+type ReserveRateEntry struct {
+	BuyReserveRate  float64
+	BuySanityRate   float64
+	SellReserveRate float64
+	SellSanityRate  float64
+}
 
-type StatTicks map[uint64]float64
+type ReserveTokenRateEntry map[string]ReserveRateEntry
+
+type ReserveRates struct {
+	Timestamp     uint64
+	ReturnTime    uint64
+	BlockNumber   uint64
+	ToBlockNumber uint64
+	Data          ReserveTokenRateEntry
+}
+
+func (self TradeLog) BlockNo() uint64       { return self.BlockNumber }
+func (self TradeLog) Type() string          { return "TradeLog" }
+func (self TradeLog) TxHash() ethereum.Hash { return self.TransactionHash }
+
+type StatTicks map[uint64]interface{}
 
 type TradeStats map[string]float64
 
