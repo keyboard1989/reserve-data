@@ -425,14 +425,14 @@ func getDepositInfo(id common.ActivityID) (string, float64, string) {
 // }
 
 func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchangeAddress ethereum.Address) (*types.Transaction, error) {
-	currBalance := self.blockchain.CheckBalance(token)
-	log.Printf("current balance of token %s is %d", token.ID, currBalance)
-	//self.blockchain.
 	IAmount := getBigIntFromFloat(amount, token.Decimal)
-	if currBalance.Cmp(IAmount) < 0 {
-		log.Printf("balance is not enough, wait till next check")
-		return nil, errors.New("balance is not enough")
-	}
+	// currBalance := self.blockchain.CheckBalance(token)
+	// log.Printf("current balance of token %s is %d", token.ID, currBalance)
+	// //self.blockchain.
+	// if currBalance.Cmp(IAmount) < 0 {
+	// 	log.Printf("balance is not enough, wait till next check")
+	// 	return nil, errors.New("balance is not enough")
+	// }
 	var tx *types.Transaction
 	var err error
 	if token.ID == "ETH" {
@@ -573,9 +573,9 @@ func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 // }
 
 func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface,
-	intorSigner Signer, ethEndpoint string, wrapperAddr, intorAddr ethereum.Address, storage Storage) *Huobi {
+	intorSigner Signer, ethEndpoint string, intorAddr ethereum.Address, storage Storage) *Huobi {
 	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
-	bc, err := NewBlockchain(intorSigner, ethEndpoint, wrapperAddr)
+	bc, err := NewBlockchain(intorSigner, ethEndpoint)
 	if err != nil {
 		log.Printf("Cant create Huobi's blockchain: %v", err)
 		panic(err)

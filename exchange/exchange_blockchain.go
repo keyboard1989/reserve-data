@@ -10,9 +10,7 @@ import (
 	"os"
 	"time"
 
-	originalbc "github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
-	"github.com/KyberNetwork/reserve-data/common"
 	ether "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -40,9 +38,9 @@ type rpcTransaction struct {
 }
 
 type Blockchain struct {
-	rpcClient          *rpc.Client
-	client             *ethclient.Client
-	wrapper            *originalbc.KNWrapperContract
+	rpcClient *rpc.Client
+	client    *ethclient.Client
+	// wrapper            *originalbc.KNWrapperContract
 	intermediateSigner Signer
 	nonceIntermediate  NonceCorpus
 	chainType          string
@@ -138,27 +136,18 @@ func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchange
 	opts, cancel, err := self.getIntermediateTransactOpts(nil, nil)
 	ctx := opts.Context
 	defer cancel()
-	log.Printf("amount is %d", amount)
-	log.Printf("exchange address is %s", exchangeAddress.Hex())
 	data, err := packData("transfer", exchangeAddress, amount)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("opts address is: %s ", opts.From.Hex())
-	log.Printf("token address is: %s ", tokenAddress.Hex())
 	msg := ether.CallMsg{From: opts.From, To: &tokenAddress, Value: big.NewInt(0), Data: data}
 	log.Printf("message is :%x", msg)
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
 	if err != nil {
 		log.Printf("Intermediator: Can not estimate gas: %v", err)
-		gasLimit = big.NewInt(25000)
-	} else {
-		log.Println("Intermediator: gas limit estimated is : %d", gasLimit)
-		if (gasLimit.Cmp(big.NewInt(25000))) < 0 {
-			gasLimit = big.NewInt(25000)
-		}
+		return nil, err
 	}
-	//build tx, sign and send
+	// If there's a need of ensure the gas limit is enough, increase it by 10%
 	// increment := big.NewInt(0)
 	// increment.Div(gasLimit, big.NewInt(10))
 	// gasLimit.Add(gasLimit, increment)
@@ -188,14 +177,8 @@ func (self *Blockchain) SendETHFromAccountToExchange(amount *big.Int, exchangeAd
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
 	if err != nil {
 		log.Printf("Intermediator: Can not estimate gas: %v", err)
-		gasLimit = big.NewInt(25000)
-	} else {
-		log.Println("Intermediator: gas limit estimated is : %d", gasLimit)
-		if (gasLimit.Cmp(big.NewInt(25000))) < 0 {
-			gasLimit = big.NewInt(25000)
-		}
+		return nil, err
 	}
-
 	//build tx, sign and send
 	tx := types.NewTransaction(opts.Nonce.Uint64(), exchangeAddress, amount, gasLimit, opts.GasPrice, nil)
 	signTX, err := self.intermediateSigner.Sign(tx)
@@ -282,7 +265,7 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	}
 }
 
-func NewBlockchain(intermediateSigner Signer, ethEndpoint string, wrapperAddr ethereum.Address) (*Blockchain, error) {
+func NewBlockchain(intermediateSigner Signer, ethEndpoint string) (*Blockchain, error) {
 	log.Printf("intermediate address: %s", intermediateSigner.GetAddress().Hex())
 	//set client & endpoint
 	client, err := rpc.Dial(ethEndpoint)
@@ -291,14 +274,14 @@ func NewBlockchain(intermediateSigner Signer, ethEndpoint string, wrapperAddr et
 	}
 	infura := ethclient.NewClient(client)
 	intermediatenonce := nonce.NewTimeWindow(infura, intermediateSigner)
-	wrp, err := originalbc.NewKNWrapperContract(wrapperAddr, infura)
+	// wrp, err := originalbc.NewKNWrapperContract(wrapperAddr, infura)
 	if err != nil {
 		return nil, err
 	}
 	return &Blockchain{
-		rpcClient:          client,
-		client:             infura,
-		wrapper:            wrp,
+		rpcClient: client,
+		client:    infura,
+		// wrapper:            wrp,
 		intermediateSigner: intermediateSigner,
 		nonceIntermediate:  intermediatenonce,
 	}, nil
@@ -316,53 +299,53 @@ func getBigIntFromFloat(amount float64, decimal int64) *big.Int {
 	return IAmount
 }
 
-func (self *Blockchain) CheckBalance(token common.Token) *big.Int {
-	addr := self.intermediateSigner.GetAddress()
-	balance, err := self.FetchBalanceData(addr, token)
-	if err != nil || !balance.Valid {
-		return big.NewInt(0)
-	}
+// func (self *Blockchain) CheckBalance(token common.Token) *big.Int {
+// 	addr := self.intermediateSigner.GetAddress()
+// 	balance, err := self.FetchBalanceData(addr, token)
+// 	if err != nil || !balance.Valid {
+// 		return big.NewInt(0)
+// 	}
 
-	balanceFloat := balance.Balance.ToFloat(token.Decimal)
-	return (getBigIntFromFloat(balanceFloat, token.Decimal))
+// 	balanceFloat := balance.Balance.ToFloat(token.Decimal)
+// 	return (getBigIntFromFloat(balanceFloat, token.Decimal))
 
-}
+// }
 
-func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, token common.Token) (common.BalanceEntry, error) {
-	result := common.BalanceEntry{}
-	tokens := []ethereum.Address{}
-	tokens = append(tokens, ethereum.HexToAddress(token.Address))
+// func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, token common.Token) (common.BalanceEntry, error) {
+// 	result := common.BalanceEntry{}
+// 	tokens := []ethereum.Address{}
+// 	tokens = append(tokens, ethereum.HexToAddress(token.Address))
 
-	timestamp := common.GetTimestamp()
-	balances, err := self.wrapper.GetBalances(nil, nil, reserve, tokens)
-	returnTime := common.GetTimestamp()
-	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
-	if err != nil {
-		result = common.BalanceEntry{
-			Valid:      false,
-			Error:      err.Error(),
-			Timestamp:  timestamp,
-			ReturnTime: returnTime,
-		}
-	} else {
-		if balances[0].Cmp(big.NewInt(0)) == 0 || balances[0].Cmp(big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)) > 0 {
-			log.Printf("Fetcher ------> balances of token %s is invalid", token.ID)
-			result = common.BalanceEntry{
-				Valid:      false,
-				Error:      "Got strange balances from node. It equals to 0 or is bigger than 10^33",
-				Timestamp:  timestamp,
-				ReturnTime: returnTime,
-				Balance:    common.RawBalance(*balances[0]),
-			}
-		} else {
-			result = common.BalanceEntry{
-				Valid:      true,
-				Timestamp:  timestamp,
-				ReturnTime: returnTime,
-				Balance:    common.RawBalance(*balances[0]),
-			}
-		}
-	}
+// 	timestamp := common.GetTimestamp()
+// 	balances, err := self.wrapper.GetBalances(nil, nil, reserve, tokens)
+// 	returnTime := common.GetTimestamp()
+// 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
+// 	if err != nil {
+// 		result = common.BalanceEntry{
+// 			Valid:      false,
+// 			Error:      err.Error(),
+// 			Timestamp:  timestamp,
+// 			ReturnTime: returnTime,
+// 		}
+// 	} else {
+// 		if balances[0].Cmp(big.NewInt(0)) == 0 || balances[0].Cmp(big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)) > 0 {
+// 			log.Printf("Fetcher ------> balances of token %s is invalid", token.ID)
+// 			result = common.BalanceEntry{
+// 				Valid:      false,
+// 				Error:      "Got strange balances from node. It equals to 0 or is bigger than 10^33",
+// 				Timestamp:  timestamp,
+// 				ReturnTime: returnTime,
+// 				Balance:    common.RawBalance(*balances[0]),
+// 			}
+// 		} else {
+// 			result = common.BalanceEntry{
+// 				Valid:      true,
+// 				Timestamp:  timestamp,
+// 				ReturnTime: returnTime,
+// 				Balance:    common.RawBalance(*balances[0]),
+// 			}
+// 		}
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }
