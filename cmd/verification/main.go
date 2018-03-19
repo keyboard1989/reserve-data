@@ -128,9 +128,7 @@ func main() {
 	if kyberENV == "" {
 		kyberENV = "dev"
 	}
-	config = configuration.GetConfig(kyberENV,
-		!noAuthEnable,
-		endpointOW)
+	config = configuration.GetConfig(kyberENV, !noAuthEnable, endpointOW, false, false)
 	if config.AuthEngine == nil {
 		Warning.Println("Current environment setting does not enable authentication. Please check again!!!")
 	}

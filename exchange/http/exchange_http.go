@@ -122,7 +122,6 @@ func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string, p
 }
 
 func (self *HTTPServer) PendingIntermediateTxs(c *gin.Context) {
-	log.Printf("Getting all transaction from Intermediate to exchange...")
 	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return

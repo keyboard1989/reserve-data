@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 
@@ -13,9 +12,10 @@ import (
 )
 
 const (
-	INTERMEDIATE_TX      string = "intermediate_tx"
-	MAX_NUMBER_VERSION   int    = 1000
-	MAX_GET_RATES_PERIOD uint64 = 86400000 //1 days in milisec
+	INTERMEDIATE_TX         string = "intermediate_tx"
+	PENDING_INTERMEDIATE_TX string = "pending_intermediate_tx"
+	MAX_NUMBER_VERSION      int    = 1000
+	PENDING_TX2_EXPIRED     uint64 = 3600000 // 1 hour in milisecond
 )
 
 type BoltStorage struct {
@@ -34,6 +34,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	// init buckets
 	db.Update(func(tx *bolt.Tx) error {
 		tx.CreateBucket([]byte(INTERMEDIATE_TX))
+		tx.CreateBucket([]byte(PENDING_INTERMEDIATE_TX))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db}
@@ -50,44 +51,55 @@ func bytesToUint64(b []byte) uint64 {
 	return binary.BigEndian.Uint64(b)
 }
 
-// GetNumberOfVersion return number of version storing in a bucket
-func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, bucket string) int {
-	result := 0
-	b := tx.Bucket([]byte(bucket))
-	c := b.Cursor()
-	for k, _ := c.First(); k != nil; k, _ = c.Next() {
-		result++
-	}
-	return result
-}
-
-// PruneOutdatedData Remove first version out of database
-func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
+func (self *BoltStorage) StorePendingIntermediateTxID(Timestamp uint64, id common.ActivityID) error {
 	var err error
-	b := tx.Bucket([]byte(bucket))
-	c := b.Cursor()
-	for self.GetNumberOfVersion(tx, bucket) >= MAX_NUMBER_VERSION {
-		k, _ := c.First()
-		if k == nil {
-			err = errors.New(fmt.Sprintf("There no version in %s", bucket))
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
+		data := uint64ToBytes(Timestamp)
+		var idJson []byte
+		idJson, err = json.Marshal(id)
+		if err != nil {
 			return err
 		}
-		err = b.Delete([]byte(k))
-		if err != nil {
-			panic(err)
-		}
-	}
+		return b.Put(idJson, data)
+	})
 	return err
 }
+
+func (self *BoltStorage) GetPendingIntermediateTXID(TimeStamp uint64) ([]common.ActivityID, error) {
+	result := []common.ActivityID{}
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			record := common.ActivityID{}
+			atTime := bytesToUint64(v)
+			err = json.Unmarshal(k, &record)
+			if err != nil {
+				log.Printf("Can not unmarshall ID, check Database design., %v", err)
+				return err
+			}
+			if (TimeStamp - atTime) > PENDING_TX2_EXPIRED {
+				log.Printf("Activity %s expired, remove from pending tx2 tracking record", record.EID)
+				if err := b.Delete(k); err != nil {
+					return err
+				}
+			} else {
+				result = append([]common.ActivityID{record}, result...)
+			}
+
+		}
+		return nil
+	})
+	return result, err
+}
+
 func (self *BoltStorage) StoreIntermediateTx(hash string, exchangeID string, tokenID string, miningStatus string, exchangeStatus string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(INTERMEDIATE_TX))
-
-		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, INTERMEDIATE_TX))
-		self.PruneOutdatedData(tx, INTERMEDIATE_TX)
-		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, INTERMEDIATE_TX))
 		data := common.TXEntry{
 			hash, exchangeID, tokenID, miningStatus, exchangeStatus, Amount, Timestamp,
 		}

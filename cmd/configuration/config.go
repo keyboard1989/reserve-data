@@ -293,7 +293,6 @@ var ConfigPaths = map[string]SettingPaths{
 	},
 	"simulation": {
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json",
-		//"/go/src/github.com/KyberNetwork/reserve-data/cmd/sim.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",

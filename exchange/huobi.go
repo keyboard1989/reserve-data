@@ -33,15 +33,14 @@ type Signer interface {
 }
 
 type Huobi struct {
-	interf               HuobiInterface
-	pairs                []common.TokenPair
-	addresses            *common.ExchangeAddresses
-	exchangeInfo         *common.ExchangeInfo
-	fees                 common.ExchangeFees
-	currentDepositstatus map[common.ActivityID]uint64
-	blockchain           Blockchain
-	intermediatorAddr    ethereum.Address
-	storage              Storage
+	interf            HuobiInterface
+	pairs             []common.TokenPair
+	addresses         *common.ExchangeAddresses
+	exchangeInfo      *common.ExchangeInfo
+	fees              common.ExchangeFees
+	blockchain        Blockchain
+	intermediatorAddr ethereum.Address
+	storage           Storage
 }
 
 func (self *Huobi) MarshalText() (text []byte, err error) {
@@ -86,29 +85,6 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExch
 			break
 		}
 	}
-}
-
-func (self *Huobi) PrunePendingTxs(timepoint uint64) {
-	for actID, atTime := range self.currentDepositstatus {
-		if (timepoint - atTime) > EXPIRED {
-			log.Printf("Activity %s expired, remove from pending tx2 tracking record", actID.EID)
-			delete(self.currentDepositstatus, actID)
-		}
-	}
-}
-
-func (self *Huobi) PendingIntermediateTxs(timepoint uint64) (map[common.ActivityID]common.TXEntry, error) {
-	result := make(map[common.ActivityID]common.TXEntry)
-	self.PrunePendingTxs(common.GetTimepoint())
-	for actID, _ := range self.currentDepositstatus {
-		tx2, err := self.storage.GetIntermedatorTx(actID)
-		if err == nil {
-			result[actID] = tx2
-		} else {
-			log.Printf("the current acitivy doesn't have the 2nd tx yet: ", err)
-		}
-	}
-	return result, nil
 }
 
 func (self *Huobi) UpdatePairsPrecision() {
@@ -402,30 +378,9 @@ func getDepositInfo(id common.ActivityID) (string, float64, string) {
 	return txID, sentAmount, tokenID
 }
 
-// func (self *Huobi) Process2ndTransaction(sentAmount float64, tokenID string) (string, error) {
-// 	//if it is mined, send 2nd tx.
-// 	log.Printf("found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, tokenID)
-// 	//check if the token is supported
-// 	token, err := common.GetToken(tokenID)
-// 	if err != nil {
-// 		log.Printf(" Token %s is not supported", tokenID)
-// 		return "", err
-// 	}
-// 	exchangeAddress, ok := self.Address(token)
-// 	if !ok {
-// 		log.Print(" Wrong token address configuration ")
-// 		return "", errors.New("Wrong token address configuration")
-// 	}
-// 	tx2, err := self.interf.Send2ndTransaction(sentAmount, token, exchangeAddress)
-// 	if err != nil {
-// 		log.Println("can't send 2nd transaction to the exchange")
-// 		return "failed", err
-// 	}
-// 	return "", nil
-// }
-
 func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchangeAddress ethereum.Address) (*types.Transaction, error) {
 	IAmount := getBigIntFromFloat(amount, token.Decimal)
+	// Check balance, removed from huobi's blockchain object.
 	// currBalance := self.blockchain.CheckBalance(token)
 	// log.Printf("current balance of token %s is %d", token.ID, currBalance)
 	// //self.blockchain.
@@ -449,18 +404,37 @@ func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchan
 
 }
 
+func (self *Huobi) PendingIntermediateTxs(timepoint uint64) (map[common.ActivityID]common.TXEntry, error) {
+	result := make(map[common.ActivityID]common.TXEntry)
+	pendings, err := self.storage.GetPendingIntermediateTXID(timepoint)
+	if err != nil {
+		return nil, err
+	}
+	for _, actID := range pendings {
+		tx2, err := self.storage.GetIntermedatorTx(actID)
+		if err == nil {
+			result[actID] = tx2
+		} else {
+			log.Printf("the current acitivy doesn't have the 2nd tx yet: ", err)
+		}
+	}
+	return result, nil
+}
+
 func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
 	txID, sentAmount, tokenID := getDepositInfo(id)
 	tx2Entry, ok := self.storage.GetIntermedatorTx(id)
-	self.currentDepositstatus[id] = common.GetTimepoint()
+	err := self.storage.StorePendingIntermediateTxID(common.GetTimepoint(), id)
+	if err != nil {
+		return "", err
+	}
 	if ok != nil {
 		//if the 2nd transaction is not in the current Deposit status, check the 1st tx first.
-		log.Printf("tx ID from the activity ID is: %v", txID)
 		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(txID))
 		if err != nil {
 			log.Println("Can not get TX status")
 		}
-		log.Printf("∏Status was %s at block %d ", status, blockno)
+		log.Printf("Status was %s at block %d ", status, blockno)
 		if status == "mined" {
 			//if it is mined, send 2nd tx.
 			log.Printf("found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, tokenID)
@@ -486,7 +460,6 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 				log.Printf("Can not store the activity's 2nd transaction")
 			}
 		} else {
-			//status is not mined.
 			return "", nil
 		}
 	} else {
@@ -565,13 +538,6 @@ func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	}
 }
 
-// func (self *Huobi) SetBlockchain(client *rpc.Client,
-// 	etherCli *ethclient.Client,
-// 	intermediateSigner Signer, nonceIntermediate NonceCorpus,
-// 	chainType string) {
-// 	self.interf.SetBlockchain(client, etherCli, intermediateSigner, nonceIntermediate, chainType)
-// }
-
 func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface,
 	intorSigner Signer, ethEndpoint string, intorAddr ethereum.Address, storage Storage) *Huobi {
 	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
@@ -586,7 +552,6 @@ func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, in
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,
-		map[common.ActivityID]uint64{},
 		*bc,
 		intorAddr,
 		storage,
