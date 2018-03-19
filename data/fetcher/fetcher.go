@@ -43,6 +43,17 @@ func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 
 func (self *Fetcher) AddExchange(exchange Exchange) {
 	self.exchanges = append(self.exchanges, exchange)
+	// initiate exchange status as up
+	exchangeStatus, _ := self.storage.GetExchangeStatus()
+	if exchangeStatus == nil {
+		exchangeStatus = map[string]common.ExStatus{}
+	}
+	exchangeID := string(exchange.ID())
+	exchangeStatus[exchangeID] = common.ExStatus{
+		Timestamp: common.GetTimepoint(),
+		Status:    true,
+	}
+	self.storage.UpdateExchangeStatus(exchangeStatus)
 }
 
 func (self *Fetcher) Stop() error {

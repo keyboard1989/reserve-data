@@ -605,3 +605,10 @@ type AllTradeHistory struct {
 	Timestamp Timestamp
 	Data      map[ExchangeID]ExchangeTradeHistory
 }
+
+type ExStatus struct {
+	Timestamp uint64 `json:"timestamp"`
+	Status    bool   `json:"status"`
+}
+
+type ExchangesStatus map[string]ExStatus
