@@ -270,7 +270,7 @@ func (self *Fetcher) RunLogFetcher() {
 				// It is not the case if toBlock == 0, means we are querying
 				// best window, we should keep querying it in order not to
 				// miss any logs due to node inconsistency
-				nextBlock = toBlock + 1
+				nextBlock = toBlock
 			}
 			log.Printf("LogFetcher - update log block: %d", nextBlock)
 			self.logStorage.UpdateLogBlock(nextBlock, timepoint)
