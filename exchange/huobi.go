@@ -359,7 +359,7 @@ func (self *Huobi) DepositStatus(
 			return "", nil
 		}
 	}
-	return "", errors.New("Deposit doesn't exist. This shouldn't happen unless tx returned from huobi and activity ID are not consistently designed")
+	return "", errors.New("Deposit doesn't exist. This should not happen unless you have more than 10 deposits at the same time.")
 }
 
 func (self *Huobi) WithdrawStatus(

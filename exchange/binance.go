@@ -414,7 +414,7 @@ func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string
 				}
 			}
 		}
-		return "", errors.New("Deposit is not found in deposit list returned from Binance. This shouldn't happen unless tx returned from binance and activity ID are not consistently designed")
+		return "", errors.New("Deposit is not found in deposit list returned from Binance. This might cause by wrong start/end time, please check again.")
 	}
 }
 
