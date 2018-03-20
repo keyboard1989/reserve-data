@@ -141,7 +141,7 @@ func (self *BoltStorage) GetIntermedatorTx(id common.ActivityID) (common.TXEntry
 			}
 			return nil
 		} else {
-			err = errors.New("Can not find 2nd transaction tx for the deposit %s, please try later")
+			err = errors.New("Can not find 2nd transaction tx for the deposit, please try later")
 			return err
 		}
 	})
