@@ -147,11 +147,6 @@ func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchange
 		log.Printf("Intermediator: Can not estimate gas: %v", err)
 		return nil, err
 	}
-	// If there's a need of ensure the gas limit is enough, increase it by 10%
-	// increment := big.NewInt(0)
-	// increment.Div(gasLimit, big.NewInt(10))
-	// gasLimit.Add(gasLimit, increment)
-	// log.Printf("Intermediator: final gas: %d", gasLimit)
 
 	tx := types.NewTransaction(opts.Nonce.Uint64(), tokenAddress, big.NewInt(0), gasLimit, opts.GasPrice, data)
 	signTX, err := self.intermediateSigner.Sign(tx)
