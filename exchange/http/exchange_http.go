@@ -126,7 +126,7 @@ func (self *HTTPServer) PendingIntermediateTxs(c *gin.Context) {
 	if !ok {
 		return
 	}
-	data, err := self.app.PendingIntermediateTxs(common.GetTimepoint())
+	data, err := self.app.PendingIntermediateTxs()
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

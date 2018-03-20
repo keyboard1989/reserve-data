@@ -50,7 +50,7 @@ func bytesToUint64(b []byte) uint64 {
 	return binary.BigEndian.Uint64(b)
 }
 
-func (self *BoltStorage) GetPendingIntermediateTXs(TimeStamp uint64) (map[common.ActivityID]common.TXEntry, error) {
+func (self *BoltStorage) GetPendingIntermediateTXs() (map[common.ActivityID]common.TXEntry, error) {
 	result := make(map[common.ActivityID]common.TXEntry)
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
@@ -72,14 +72,11 @@ func (self *BoltStorage) GetPendingIntermediateTXs(TimeStamp uint64) (map[common
 	return result, err
 }
 
-func (self *BoltStorage) StorePendingIntermediateTx(hash string, exchangeID string, tokenID string, miningStatus string, exchangeStatus string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error {
+func (self *BoltStorage) StorePendingIntermediateTx(id common.ActivityID, data common.TXEntry) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
-		data := common.TXEntry{
-			hash, exchangeID, tokenID, miningStatus, exchangeStatus, Amount, Timestamp,
-		}
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err
@@ -107,14 +104,11 @@ func (self *BoltStorage) RemovePendingIntermediateTx(id common.ActivityID) error
 	return err
 }
 
-func (self *BoltStorage) StoreIntermediateTx(hash string, exchangeID string, tokenID string, miningStatus string, exchangeStatus string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error {
+func (self *BoltStorage) StoreIntermediateTx(id common.ActivityID, data common.TXEntry) error {
 	var err error
 	self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(INTERMEDIATE_TX))
-		data := common.TXEntry{
-			hash, exchangeID, tokenID, miningStatus, exchangeStatus, Amount, Timestamp,
-		}
 		dataJson, err = json.Marshal(data)
 		if err != nil {
 			return err
