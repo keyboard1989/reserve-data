@@ -1830,8 +1830,29 @@ func (self *HTTPServer) UpdateExchangeStatus(c *gin.Context) {
 		return
 	}
 	exchange := postForm.Get("exchange")
-	status, _ := strconv.ParseBool(postForm.Get("status"))
-	err := self.app.UpdateExchangeStatus(exchange, status)
+	status, err := strconv.ParseBool(postForm.Get("status"))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	_, err = common.GetExchange(strings.ToLower(exchange))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	err = self.app.UpdateExchangeStatus(exchange, status)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
