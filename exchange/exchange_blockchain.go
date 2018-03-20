@@ -58,7 +58,6 @@ func getNextNonce(n NonceCorpus) (*big.Int, error) {
 	var err error
 	for i := 0; i < 3; i++ {
 		nonce, err = n.GetNextNonce()
-		log.Print("Nonce is %v", nonce)
 		if err == nil {
 			return nonce, nil
 		}
@@ -141,7 +140,6 @@ func (self *Blockchain) SendTokenFromAccountToExchange(amount *big.Int, exchange
 		return nil, err
 	}
 	msg := ether.CallMsg{From: opts.From, To: &tokenAddress, Value: big.NewInt(0), Data: data}
-	log.Printf("message is :%x", msg)
 	gasLimit, err := self.client.EstimateGas(ensureContext(opts.Context), msg)
 	if err != nil {
 		log.Printf("Intermediator: Can not estimate gas: %v", err)
@@ -207,7 +205,7 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	option := context.Background()
 	tx, pending, err := self.TransactionByHash(option, hash)
 	if err != nil {
-		log.Printf("1error is %v", err)
+		return "", 0, err
 	}
 	if err == nil {
 		// tx exist
@@ -234,7 +232,6 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 						return "mined", tx.BlockNumber().Uint64(), nil
 					}
 				} else {
-					log.Printf("3error is %v", err)
 					// networking issue
 					return "", 0, err
 				}
@@ -254,7 +251,6 @@ func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 			return "lost", 0, nil
 		} else {
 			// networking issue
-			log.Printf("4error is %v", err)
 			return "", 0, err
 		}
 	}

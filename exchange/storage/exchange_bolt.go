@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
-	"log"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -51,48 +50,61 @@ func bytesToUint64(b []byte) uint64 {
 	return binary.BigEndian.Uint64(b)
 }
 
-func (self *BoltStorage) StorePendingIntermediateTxID(Timestamp uint64, id common.ActivityID) error {
-	var err error
-	self.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
-		data := uint64ToBytes(Timestamp)
-		var idJson []byte
-		idJson, err = json.Marshal(id)
-		if err != nil {
-			return err
-		}
-		return b.Put(idJson, data)
-	})
-	return err
-}
-
-func (self *BoltStorage) GetPendingIntermediateTXID(TimeStamp uint64) ([]common.ActivityID, error) {
-	result := []common.ActivityID{}
+func (self *BoltStorage) GetPendingIntermediateTXs(TimeStamp uint64) (map[common.ActivityID]common.TXEntry, error) {
+	result := make(map[common.ActivityID]common.TXEntry)
 	var err error
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			record := common.ActivityID{}
-			atTime := bytesToUint64(v)
-			err = json.Unmarshal(k, &record)
-			if err != nil {
-				log.Printf("Can not unmarshall ID, check Database design., %v", err)
+			actID := common.ActivityID{}
+			record := common.TXEntry{}
+			if err = json.Unmarshal(k, &actID); err != nil {
 				return err
 			}
-			if (TimeStamp - atTime) > PENDING_TX2_EXPIRED {
-				log.Printf("Activity %s expired, remove from pending tx2 tracking record", record.EID)
-				if err := b.Delete(k); err != nil {
-					return err
-				}
-			} else {
-				result = append([]common.ActivityID{record}, result...)
+			if err = json.Unmarshal(v, &record); err != nil {
+				return err
 			}
-
+			result[actID] = record
 		}
 		return nil
 	})
 	return result, err
+}
+
+func (self *BoltStorage) StorePendingIntermediateTx(hash string, exchangeID string, tokenID string, miningStatus string, exchangeStatus string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
+		data := common.TXEntry{
+			hash, exchangeID, tokenID, miningStatus, exchangeStatus, Amount, Timestamp,
+		}
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		idJson, err := json.Marshal(id)
+		if err != nil {
+			return err
+		}
+		return b.Put(idJson, dataJson)
+	})
+	return err
+}
+
+func (self *BoltStorage) RemovePendingIntermediateTx(id common.ActivityID) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
+		idJson, err := json.Marshal(id)
+		if err != nil {
+			return err
+		}
+		err = b.Delete(idJson)
+		return err
+	})
+	return err
 }
 
 func (self *BoltStorage) StoreIntermediateTx(hash string, exchangeID string, tokenID string, miningStatus string, exchangeStatus string, Amount float64, Timestamp common.Timestamp, id common.ActivityID) error {

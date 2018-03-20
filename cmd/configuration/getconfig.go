@@ -61,13 +61,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
-	var intermediatorAddr ethereum.Address
-	if addressConfig.Intermediator != "" {
-		intermediatorAddr = ethereum.HexToAddress(addressConfig.Intermediator)
-	} else {
-		intermediatorAddr = ethereum.HexToAddress("0x13922F1857C0677F79e4BbB16Ad2c49fAa620829")
-	}
-
+	intermediatorAddr := ethereum.HexToAddress(addressConfig.Intermediator)
 	var endpoint string
 	if endpointOW != "" {
 		log.Printf("overwriting Endpoint with %s\n", endpointOW)
