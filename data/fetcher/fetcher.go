@@ -468,7 +468,6 @@ func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []commo
 				amountStr := activity.Params["amount"].(string)
 				amount, _ := strconv.ParseFloat(amountStr, 64)
 				currency := activity.Params["token"].(string)
-				log.Printf("Activity: %+v", activity)
 				tx = activity.Result["tx"].(string)
 				status, tx, err = exchange.WithdrawStatus(id.EID, currency, amount, timepoint)
 				log.Printf("Got withdraw status for %v: (%s), error(%v)", activity, status, err)

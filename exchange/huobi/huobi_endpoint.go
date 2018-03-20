@@ -161,11 +161,13 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 
 func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 	result := exchange.HuobiWithdraws{}
+	size := len(common.SupportedTokens) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
 		map[string]string{
-			"size":  "10",
+			"size": strconv.Itoa(size),
+			// "size":  "10",
 			"types": "withdraw-virtual",
 		},
 		true,
@@ -181,11 +183,13 @@ func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 
 func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
 	result := exchange.HuobiDeposits{}
+	size := len(common.SupportedTokens) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
 		map[string]string{
-			"size":  "10",
+			"size": strconv.Itoa(size),
+			// "size":  "10",
 			"types": "deposit-virtual",
 		},
 		true,
