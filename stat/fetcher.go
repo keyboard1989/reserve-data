@@ -231,9 +231,14 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	supportedReserves := append(self.thirdPartyReserves, self.reserveAddress)
 	data := sync.Map{}
 	wg := sync.WaitGroup{}
+	// get current block to use to fetch all reserve rates.
+	// dont use self.currentBlock directly with self.GetReserveRates
+	// because otherwise, rates from different reserves will not
+	// be synced with block no
+	block := self.currentBlock
 	for _, reserveAddr := range supportedReserves {
 		wg.Add(1)
-		go self.GetReserveRates(self.currentBlock, reserveAddr, tokens, &data, &wg)
+		go self.GetReserveRates(block, reserveAddr, tokens, &data, &wg)
 	}
 	wg.Wait()
 	data.Range(func(key, value interface{}) bool {
@@ -270,7 +275,7 @@ func (self *Fetcher) RunLogFetcher() {
 				// It is not the case if toBlock == 0, means we are querying
 				// best window, we should keep querying it in order not to
 				// miss any logs due to node inconsistency
-				nextBlock = toBlock + 1
+				nextBlock = toBlock
 			}
 			log.Printf("LogFetcher - update log block: %d", nextBlock)
 			self.logStorage.UpdateLogBlock(nextBlock, timepoint)
