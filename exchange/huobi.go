@@ -359,7 +359,7 @@ func (self *Huobi) DepositStatus(
 			return "", nil
 		}
 	}
-	return "", errors.New("Deposit doesn't exist. This should not happen unless you have more than 10 deposits at the same time.")
+	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %s deposits at the same time.", len(common.SupportedTokens)*2))
 }
 
 func (self *Huobi) WithdrawStatus(
