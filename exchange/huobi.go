@@ -441,12 +441,10 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 			//check if the token is supported
 			token, err := common.GetToken(tokenID)
 			if err != nil {
-				log.Printf(" Token %s is not supported", tokenID)
 				return "", err
 			}
 			exchangeAddress, ok := self.addresses.Get(tokenID)
 			if !ok {
-				log.Print(" Wrong token address configuration ")
 				return "", errors.New("Wrong token address configuration")
 			}
 			tx2, err := self.Send2ndTransaction(sentAmount, token, exchangeAddress)
