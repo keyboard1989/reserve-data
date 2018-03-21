@@ -1,4 +1,4 @@
-package exchange
+package storage
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"

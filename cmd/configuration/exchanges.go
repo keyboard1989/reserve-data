@@ -1,7 +1,6 @@
 package configuration
 
 import (
-	"fmt"
 	"os"
 	"strings"
 	"sync"
@@ -11,10 +10,8 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
-	exchangehttp "github.com/KyberNetwork/reserve-data/exchange/http"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/signer"
-	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type ExchangePool struct {
@@ -54,10 +51,7 @@ func NewExchangePool(
 	addressConfig common.AddressConfig,
 	signer *signer.FileSigner,
 	bittrexStorage exchange.BittrexStorage, kyberENV string,
-	intermediatorSigner *signer.FileSigner,
-	ethEndpoint string, wrapperAddr ethereum.Address,
-	intorAddr ethereum.Address, storage exchange.Storage,
-	authEnbl bool) *ExchangePool {
+	huobiConfig common.HuobiConfig) *ExchangePool {
 
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
@@ -88,7 +82,7 @@ func NewExchangePool(
 			exchanges[bin.ID()] = bin
 		case "huobi":
 			endpoint := huobi.NewHuobiEndpoint(signer, getHuobiInterface(kyberENV))
-			huobi := exchange.NewHuobi(addressConfig.Exchanges["huobi"], feeConfig.Exchanges["huobi"], endpoint, intermediatorSigner, ethEndpoint, intorAddr, storage)
+			huobi := exchange.NewHuobi(addressConfig.Exchanges["huobi"], feeConfig.Exchanges["huobi"], endpoint, huobiConfig)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
 				wait.Add(1)
@@ -97,17 +91,6 @@ func NewExchangePool(
 			wait.Wait()
 			huobi.UpdatePairsPrecision()
 			exchanges[huobi.ID()] = huobi
-			//start Huobi http server
-			huobiPortStr := fmt.Sprintf(":%d", 12221)
-			authEngine := exchangehttp.KNAuthentication{
-				signer.KNSecret,
-				signer.KNReadOnly,
-				signer.KNConfiguration,
-				signer.KNConfirmConf,
-			}
-			huobiServer := exchangehttp.NewHuobiHTTPServer(huobi, huobiPortStr, authEnbl, authEngine, kyberENV)
-			go huobiServer.Run()
-
 		}
 	}
 	return &ExchangePool{exchanges}

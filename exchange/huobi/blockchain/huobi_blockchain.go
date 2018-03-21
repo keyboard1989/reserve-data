@@ -1,4 +1,4 @@
-package exchange
+package blockchain
 
 import (
 	"context"
@@ -36,7 +36,17 @@ type rpcTransaction struct {
 	tx *types.Transaction
 	txExtraInfo
 }
+type NonceCorpus interface {
+	GetAddress() ethereum.Address
+	GetNextNonce() (*big.Int, error)
+	MinedNonce() (*big.Int, error)
+}
 
+type Signer interface {
+	GetAddress() ethereum.Address
+	Sign(*types.Transaction) (*types.Transaction, error)
+	GetTransactOpts() *bind.TransactOpts
+}
 type Blockchain struct {
 	rpcClient *rpc.Client
 	client    *ethclient.Client
@@ -179,7 +189,6 @@ func (self *Blockchain) SendETHFromAccountToExchange(amount *big.Int, exchangeAd
 		log.Println("Intermediator: Can not sign the transaction")
 		return nil, err
 	}
-	log.Printf("Intermediator: the signed TX is: \n%v ", signTX)
 	err = self.client.SendTransaction(ctx, signTX)
 	if err != nil {
 		log.Println("ERROR: Can't send the transaction")

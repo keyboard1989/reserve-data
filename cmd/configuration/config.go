@@ -12,11 +12,9 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
-	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
-	exsstorage "github.com/KyberNetwork/reserve-data/exchange/storage"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/KyberNetwork/reserve-data/signer"
@@ -34,7 +32,6 @@ type SettingPaths struct {
 	rateStoragePath string
 	userStoragePath string
 	signerPath      string
-	exsStoragePath  string
 	endPoint        string
 	bkendpoints     []string
 }
@@ -48,15 +45,15 @@ type Config struct {
 	RateStorage     stat.RateStorage
 	FetcherStorage  fetcher.Storage
 	MetricStorage   metric.MetricStorage
-	ExchangeStorage exchange.Storage
+	//ExchangeStorage exchange.Storage
 
-	FetcherRunner       fetcher.FetcherRunner
-	StatFetcherRunner   stat.FetcherRunner
-	FetcherExchanges    []fetcher.Exchange
-	Exchanges           []common.Exchange
-	BlockchainSigner    blockchain.Signer
-	DepositSigner       blockchain.Signer
-	IntermediatorSigner blockchain.Signer
+	FetcherRunner     fetcher.FetcherRunner
+	StatFetcherRunner stat.FetcherRunner
+	FetcherExchanges  []fetcher.Exchange
+	Exchanges         []common.Exchange
+	BlockchainSigner  blockchain.Signer
+	DepositSigner     blockchain.Signer
+	//IntermediatorSigner blockchain.Signer
 
 	EnableAuthentication bool
 	AuthEngine           http.Authentication
@@ -66,14 +63,13 @@ type Config struct {
 
 	SupportedTokens []common.Token
 
-	WrapperAddress       ethereum.Address
-	PricingAddress       ethereum.Address
-	ReserveAddress       ethereum.Address
-	FeeBurnerAddress     ethereum.Address
-	NetworkAddress       ethereum.Address
-	WhitelistAddress     ethereum.Address
-	ThirdPartyReserves   []ethereum.Address
-	IntermediatorAddress ethereum.Address
+	WrapperAddress     ethereum.Address
+	PricingAddress     ethereum.Address
+	ReserveAddress     ethereum.Address
+	FeeBurnerAddress   ethereum.Address
+	NetworkAddress     ethereum.Address
+	WhitelistAddress   ethereum.Address
+	ThirdPartyReserves []ethereum.Address
 
 	ChainType string
 }
@@ -142,12 +138,7 @@ func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressCo
 	if err != nil {
 		panic(err)
 	}
-	exsStorage, err := exsstorage.NewBoltStorage(setPath.exsStoragePath)
-	if err != nil {
-		panic(err)
-	}
 
-	//fetcherRunner := http_runner.NewHttpRunner(8001)
 	var fetcherRunner fetcher.FetcherRunner
 
 	if os.Getenv("KYBER_ENV") == "simulation" {
@@ -159,7 +150,7 @@ func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressCo
 	baseSigner := signer.GetBaseSigner(setPath.signerPath)
 	fileSigner := signer.NewFileSigner(baseSigner, baseSigner.Keystore, baseSigner.Passphrase)
 	depositSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreD, baseSigner.PassphraseD)
-	intermediatorSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreI, baseSigner.PassphraseI)
+	huobiIntermediatorSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreI, baseSigner.PassphraseI)
 
 	hmac512auth := http.KNAuthentication{
 		fileSigner.KNSecret,
@@ -179,16 +170,29 @@ func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressCo
 	self.FetcherRunner = fetcherRunner
 	self.BlockchainSigner = fileSigner
 	self.EnableAuthentication = authEnbl
-	self.IntermediatorSigner = intermediatorSigner
+	//self.IntermediatorSigner = huoBiintermediatorSigner
 	self.DepositSigner = depositSigner
 	self.AuthEngine = hmac512auth
 	self.FeeBurnerAddress = burnerAddr
 	self.NetworkAddress = networkAddr
 	self.WhitelistAddress = whitelistAddr
-	self.ExchangeStorage = exsStorage
+	//self.ExchangeStorage = exsStorage
+
+	//create Huobi config object
+	huobiHTTPConfig := common.HuobiHTTPConfig{
+		12221,
+		self.EnableAuthentication,
+		kyberENV,
+	}
+	huobiConfig := common.HuobiConfig{ethereum.HexToAddress("0x13922F1857C0677F79e4BbB16Ad2c49fAa620829"),
+		self.EthereumEndpoint,
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/huobi.db",
+		*huobiIntermediatorSigner,
+		huobiHTTPConfig,
+	}
 
 	// create Exchange pool
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, intermediatorSigner, self.EthereumEndpoint, self.WrapperAddress, self.IntermediatorAddress, self.ExchangeStorage, authEnbl)
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, huobiConfig)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()
 }
@@ -211,7 +215,6 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_users.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_exchanges.db",
 		"https://semi-node.kyber.network",
 		[]string{
 			"https://semi-node.kyber.network",
@@ -230,7 +233,6 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_users.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_exchanges.db",
 		"https://kovan.infura.io",
 		[]string{},
 	},
@@ -243,7 +245,6 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_exchanges.db",
 		"https://semi-node.kyber.network",
 		[]string{
 			"https://semi-node.kyber.network",
@@ -262,7 +263,6 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_exchanges.db",
 		"https://semi-node.kyber.network",
 		[]string{
 			"https://semi-node.kyber.network",
@@ -281,7 +281,6 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_exchanges.db",
 		"https://semi-node.kyber.network",
 		[]string{
 			"https://semi-node.kyber.network",
@@ -300,7 +299,6 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_users.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_exchanges.db",
 		"http://blockchain:8545",
 		[]string{
 			"http://blockchain:8545",
@@ -315,7 +313,6 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_users.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_exchange.db",
 		"https://ropsten.infura.io",
 		[]string{
 			"https://api.myetherapi.com/rop",
@@ -351,13 +348,4 @@ func SetInterface(base_url string) {
 	BinanceInterfaces["staging"] = binance.NewRealInterface()
 	BinanceInterfaces["simulation"] = binance.NewSimulatedInterface(base_url)
 	BinanceInterfaces["ropsten"] = binance.NewRopstenInterface(base_url)
-}
-
-var HuobiAsync = map[string]bool{
-	"dev":        false,
-	"kovan":      true,
-	"mainnet":    true,
-	"staging":    true,
-	"simulation": false,
-	"ropsten":    true,
 }

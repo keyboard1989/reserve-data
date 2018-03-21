@@ -154,16 +154,15 @@ func (self *HTTPServer) Run() {
 
 func NewHuobiHTTPServer(
 	app Huobi,
-	host string,
-	enableAuth bool,
+	config common.HuobiHTTPConfig,
 	authEngine Authentication,
-	env string) *HTTPServer {
-
+) *HTTPServer {
+	huobihost := fmt.Sprintf(":%d", config.Port)
 	r := gin.Default()
 	sentryCli, err := raven.NewWithTags(
 		"https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067",
 		map[string]string{
-			"env": env,
+			"env": config.KyberENV,
 		},
 	)
 	if err != nil {
@@ -180,6 +179,6 @@ func NewHuobiHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, host, enableAuth, authEngine, r,
+		app, huobihost, config.AuthEnbl, authEngine, r,
 	}
 }
