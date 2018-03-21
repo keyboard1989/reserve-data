@@ -13,8 +13,6 @@ import (
 const (
 	INTERMEDIATE_TX         string = "intermediate_tx"
 	PENDING_INTERMEDIATE_TX string = "pending_intermediate_tx"
-	MAX_NUMBER_VERSION      int    = 1000
-	PENDING_TX2_EXPIRED     uint64 = 3600000 // 1 hour in milisecond
 )
 
 type BoltStorage struct {

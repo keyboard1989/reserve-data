@@ -17,7 +17,6 @@ import (
 
 const (
 	HUOBI_EPSILON float64 = 0.0000000001 // 10e-10
-	EXPIRED       uint64  = 3600000      //1 hour in mili second
 )
 
 type NonceCorpus interface {
