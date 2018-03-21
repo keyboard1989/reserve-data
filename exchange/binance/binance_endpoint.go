@@ -73,12 +73,21 @@ func (self *BinanceEndpoint) GetResponse(
 		switch resp.StatusCode {
 		case 429:
 			err = errors.New("breaking a request rate limit.")
+			break
 		case 418:
 			err = errors.New("IP has been auto-banned for continuing to send requests after receiving 429 codes.")
+			break
 		case 500:
 			err = errors.New("500 from Binance, its fault.")
+			break
+		case 401:
+			err = errors.New("API key not valid.")
+			break
 		case 200:
 			resp_body, err = ioutil.ReadAll(resp.Body)
+			break
+		default:
+			err = errors.New(fmt.Sprintf("Binance return with code: %d", resp.StatusCode))
 		}
 		if err != nil || len(resp_body) == 0 || rand.Int()%10 == 0 {
 			log.Printf("request to %s, got response from binance (error or throttled to 10%%): %s, err: %v", req.URL, common.TruncStr(resp_body), err)

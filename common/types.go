@@ -450,6 +450,7 @@ type EBalanceEntry struct {
 	AvailableBalance map[string]float64
 	LockedBalance    map[string]float64
 	DepositBalance   map[string]float64
+	Status           bool
 }
 
 type AllEBalanceResponse struct {

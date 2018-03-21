@@ -193,9 +193,7 @@ func (self ReserveData) GetRate(timepoint uint64) (common.AllRateResponse, error
 }
 
 func (self ReserveData) GetExchangeStatus() (common.ExchangesStatus, error) {
-	var data common.ExchangesStatus
-	var err error
-	data, err = self.storage.GetExchangeStatus()
+	data, err := self.storage.GetExchangeStatus()
 	return data, err
 }
 

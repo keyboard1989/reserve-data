@@ -324,10 +324,12 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	if err != nil {
 		result.Valid = false
 		result.Error = err.Error()
+		result.Status = false
 	} else {
 		result.AvailableBalance = map[string]float64{}
 		result.LockedBalance = map[string]float64{}
 		result.DepositBalance = map[string]float64{}
+		result.Status = true
 		if resp_data.Code != 0 {
 			result.Valid = false
 			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
