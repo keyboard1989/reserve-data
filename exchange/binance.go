@@ -398,15 +398,7 @@ func (self *Binance) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID
 	return result, nil
 }
 
-func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	idParts := strings.Split(id.EID, "|")
-	if len(idParts) != 3 {
-		// here, the exchange id part in id is malformed
-		// 1. because analytic didn't pass original ID
-		// 2. id is not constructed correctly in a form of uuid + "|" + token
-		return "", errors.New("Invalid deposit id")
-	}
-	txID := idParts[0]
+func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, error) {
 	startTime := timepoint - 86400000
 	endTime := timepoint
 	deposits, err := self.interf.DepositHistory(startTime, endTime)
@@ -414,7 +406,7 @@ func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 		return "", err
 	} else {
 		for _, deposit := range deposits.Deposits {
-			if deposit.TxID == txID {
+			if deposit.TxID == txHash {
 				if deposit.Status == 1 {
 					return "done", nil
 				} else {
@@ -422,12 +414,11 @@ func (self *Binance) DepositStatus(id common.ActivityID, timepoint uint64) (stri
 				}
 			}
 		}
-		return "", errors.New("Deposit is not found in deposit list returned from Binance. This shouldn't happen unless tx returned from binance and activity ID are not consistently designed")
+		return "", errors.New("Deposit is not found in deposit list returned from Binance. This might cause by wrong start/end time, please check again.")
 	}
 }
 
-func (self *Binance) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
-	withdrawID := id.EID
+func (self *Binance) WithdrawStatus(id, currency string, amount float64, timepoint uint64) (string, string, error) {
 	startTime := timepoint - 86400000
 	endTime := timepoint
 	withdraws, err := self.interf.WithdrawHistory(startTime, endTime)
@@ -435,7 +426,7 @@ func (self *Binance) WithdrawStatus(id common.ActivityID, timepoint uint64) (str
 		return "", "", err
 	} else {
 		for _, withdraw := range withdraws.Withdrawals {
-			if withdraw.ID == withdrawID {
+			if withdraw.ID == id {
 				if withdraw.Status == 3 || withdraw.Status == 5 || withdraw.Status == 6 {
 					return "done", withdraw.TxID, nil
 				} else {

@@ -515,8 +515,9 @@ func (self *Huobi) DepositStatus(id common.ActivityID, timepoint uint64) (string
 	return "", nil
 }
 
-func (self *Huobi) WithdrawStatus(id common.ActivityID, timepoint uint64) (string, string, error) {
-	withdrawID, _ := strconv.ParseUint(id.EID, 10, 64)
+func (self *Huobi) WithdrawStatus(
+	id, currency string, amount float64, timepoint uint64) (string, string, error) {
+	withdrawID, _ := strconv.ParseUint(id, 10, 64)
 	withdraws, err := self.interf.WithdrawHistory()
 	if err != nil {
 		return "", "", nil
