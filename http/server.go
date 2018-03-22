@@ -49,10 +49,10 @@ func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 	} else {
 		timepoint, err := strconv.ParseUint(timestamp, 10, 64)
 		if err != nil {
-			log.Printf("Interpreted timestamp(%s) to default - %s\n", timestamp, MAX_TIMESPOT)
+			log.Printf("Interpreted timestamp(%s) to default - %d", timestamp, MAX_TIMESPOT)
 			return MAX_TIMESPOT
 		} else {
-			log.Printf("Interpreted timestamp(%s) to %s\n", timestamp, timepoint)
+			log.Printf("Interpreted timestamp(%s) to %d", timestamp, timepoint)
 			return timepoint
 		}
 	}
@@ -60,7 +60,7 @@ func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 
 func IsIntime(nonce string) bool {
 	serverTime := common.GetTimepoint()
-	log.Printf("Server time: %d, None: %d", serverTime, nonce)
+	log.Printf("Server time: %d, None: %s", serverTime, nonce)
 	nonceInt, err := strconv.ParseInt(nonce, 10, 64)
 	if err != nil {
 		log.Printf("IsIntime returns false, err: %v", err)

@@ -29,10 +29,10 @@ func getTimePoint(c *gin.Context) uint64 {
 	} else {
 		timepoint, err := strconv.ParseUint(timestamp, 10, 64)
 		if err != nil {
-			log.Printf("Interpreted timestamp(%s) to default - %s\n", timestamp, MAX_TIMESPOT)
+			log.Printf("Interpreted timestamp(%s) to default - %d\n", timestamp, MAX_TIMESPOT)
 			return MAX_TIMESPOT
 		} else {
-			log.Printf("Interpreted timestamp(%s) to %s\n", timestamp, timepoint)
+			log.Printf("Interpreted timestamp(%s) to %d\n", timestamp, timepoint)
 			return timepoint
 		}
 	}

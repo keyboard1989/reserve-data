@@ -269,7 +269,7 @@ func (self *Binance) OpenOrdersForOnePair(
 			orgQty, _ := strconv.ParseFloat(order.OrigQty, 64)
 			executedQty, _ := strconv.ParseFloat(order.ExecutedQty, 64)
 			orders = append(orders, common.Order{
-				ID:          fmt.Sprintf("%s_%s%s", order.OrderId, strings.ToUpper(pair.Base.ID), strings.ToUpper(pair.Quote.ID)),
+				ID:          fmt.Sprintf("%d_%s%s", order.OrderId, strings.ToUpper(pair.Base.ID), strings.ToUpper(pair.Quote.ID)),
 				Base:        strings.ToUpper(pair.Base.ID),
 				Quote:       strings.ToUpper(pair.Quote.ID),
 				OrderId:     fmt.Sprintf("%d", order.OrderId),
@@ -330,7 +330,7 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		result.DepositBalance = map[string]float64{}
 		if resp_data.Code != 0 {
 			result.Valid = false
-			result.Error = fmt.Sprintf("Code: %s, Msg: %s", resp_data.Code, resp_data.Msg)
+			result.Error = fmt.Sprintf("Code: %d, Msg: %s", resp_data.Code, resp_data.Msg)
 		} else {
 			for _, b := range resp_data.Balances {
 				tokenID := b.Asset

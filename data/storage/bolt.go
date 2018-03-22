@@ -153,7 +153,7 @@ func (self *BoltStorage) GetAllPrices(version common.Version) (common.AllPriceEn
 		b := tx.Bucket([]byte(PRICE_BUCKET))
 		data := b.Get(uint64ToBytes(uint64(version)))
 		if data == nil {
-			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", string(version)))
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
@@ -169,7 +169,7 @@ func (self *BoltStorage) GetOnePrice(pair common.TokenPairID, version common.Ver
 		b := tx.Bucket([]byte(PRICE_BUCKET))
 		data := b.Get(uint64ToBytes(uint64(version)))
 		if data == nil {
-			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", string(version)))
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
@@ -205,7 +205,7 @@ func (self *BoltStorage) GetAuthData(version common.Version) (common.AuthDataSna
 		b := tx.Bucket([]byte(AUTH_DATA_BUCKET))
 		data := b.Get(uint64ToBytes(uint64(version)))
 		if data == nil {
-			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", string(version)))
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
@@ -257,7 +257,7 @@ func (self *BoltStorage) GetRate(version common.Version) (common.AllRateEntry, e
 		b := tx.Bucket([]byte(RATE_BUCKET))
 		data := b.Get(uint64ToBytes(uint64(version)))
 		if data == nil {
-			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", string(version)))
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
@@ -718,7 +718,6 @@ func (self *BoltStorage) CurrentTargetQtyVersion(timepoint uint64) (common.Versi
 func (self *BoltStorage) GetTokenTargetQty() (metric.TokenTargetQty, error) {
 	tokenTargetQty := metric.TokenTargetQty{}
 	version, err := self.CurrentTargetQtyVersion(common.GetTimepoint())
-	log.Printf("Current version: %s", version)
 	if err != nil {
 		log.Printf("Cannot get version: %s", err.Error())
 	}
@@ -726,7 +725,7 @@ func (self *BoltStorage) GetTokenTargetQty() (metric.TokenTargetQty, error) {
 		b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
 		data := b.Get(uint64ToBytes(uint64(version)))
 		if data == nil {
-			err = errors.New(fmt.Sprintf("version %s doesn't exist", version))
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", string(version)))
 		} else {
 			err = json.Unmarshal(data, &tokenTargetQty)
 			if err != nil {
@@ -788,7 +787,7 @@ func (self *BoltStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHisto
 		b := tx.Bucket([]byte(TRADE_HISTORY))
 		_, data := b.Cursor().First()
 		if data == nil {
-			err = errors.New(fmt.Sprintf("There no data before timepoint %s", timepoint))
+			err = errors.New(fmt.Sprintf("There no data before timepoint %d", timepoint))
 		} else {
 			err = json.Unmarshal(data, &result)
 		}

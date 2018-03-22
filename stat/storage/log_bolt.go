@@ -107,7 +107,7 @@ func (self *BoltLogStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64
 		block, index, berr := self.LoadLastLogIndex(tx)
 		if berr == nil && (block > stat.BlockNumber || (block == stat.BlockNumber && index >= stat.Index)) {
 			err = errors.New(
-				fmt.Sprintf("Duplicated log %+v (new block number %s is smaller or equal to latest block number %s and tx index %d is smaller or equal to last log tx index %d)", stat, block, stat.BlockNumber, index, stat.Index))
+				fmt.Sprintf("Duplicated log %+v (new block number %d is smaller or equal to latest block number %d and tx index %d is smaller or equal to last log tx index %d)", stat, block, stat.BlockNumber, index, stat.Index))
 			return err
 		}
 		dataJson, err = json.Marshal(stat)

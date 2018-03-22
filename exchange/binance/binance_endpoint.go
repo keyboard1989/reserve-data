@@ -31,7 +31,7 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 		req.Header.Add("User-Agent", "binance/go")
 	}
 	req.Header.Add("Accept", "application/json")
-	log.Printf("Bin Time Delta: %s", self.timeDelta)
+	log.Printf("Bin Time Delta: %d", self.timeDelta)
 	if signNeeded {
 		q := req.URL.Query()
 		sig := url.Values{}
@@ -81,7 +81,7 @@ func (self *BinanceEndpoint) GetResponse(
 			resp_body, err = ioutil.ReadAll(resp.Body)
 		}
 		if err != nil || len(resp_body) == 0 || rand.Int()%10 == 0 {
-			log.Printf("request to %s, got response from binance (error or throttled to 10%): %s, err: %v", req.URL, common.TruncStr(resp_body), err)
+			log.Printf("request to %s, got response from binance (error or throttled to 10%%): %s, err: %v", req.URL, common.TruncStr(resp_body), err)
 		}
 		return resp_body, err
 	}
@@ -404,13 +404,13 @@ func (self *BinanceEndpoint) UpdateTimeDelta() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Binance current time: %s", currentTime)
-	log.Printf("Binance server time: %s", serverTime)
-	log.Printf("Binance response time: %s", responseTime)
+	log.Printf("Binance current time: %d", currentTime)
+	log.Printf("Binance server time: %d", serverTime)
+	log.Printf("Binance response time: %d", responseTime)
 	roundtripTime := (int64(responseTime) - int64(currentTime)) / 2
 	self.timeDelta = int64(serverTime) - int64(currentTime) - roundtripTime
 
-	log.Printf("Time delta: %s", self.timeDelta)
+	log.Printf("Time delta: %d", self.timeDelta)
 	return nil
 }
 

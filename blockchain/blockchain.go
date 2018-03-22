@@ -423,7 +423,7 @@ func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Has
 		return nil, false, fmt.Errorf("server returned transaction without signature")
 	}
 	setSenderFromServer(json.tx, json.From, json.BlockHash)
-	return json, json.BlockNumber == nil, nil
+	return json, json.BlockNumber().Cmp(ethereum.Big0) == 0, nil
 }
 
 func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {

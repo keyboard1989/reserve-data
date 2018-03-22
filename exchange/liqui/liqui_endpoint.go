@@ -209,11 +209,11 @@ func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
 		if resp.StatusCode == 200 {
 			defer resp.Body.Close()
 			resp_body, err := ioutil.ReadAll(resp.Body)
-			log.Printf("Liqui GetInfo response: %s\n", string(resp_body))
+			log.Printf("Liqui GetInfo response: %s", string(resp_body))
 			if err == nil {
 				json.Unmarshal(resp_body, &result)
 			}
-			log.Printf("Liqui GetInfo data: %s\n", result)
+			log.Printf("Liqui GetInfo data: %v", result)
 		} else {
 			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 		}
@@ -245,11 +245,11 @@ func (self *LiquiEndpoint) OrderInfo(orderID string, timepoint uint64) (exchange
 		if resp.StatusCode == 200 {
 			defer resp.Body.Close()
 			resp_body, err := ioutil.ReadAll(resp.Body)
-			log.Printf("Liqui Order info response: %s\n", string(resp_body))
+			log.Printf("Liqui Order info response: %s", string(resp_body))
 			if err == nil {
 				json.Unmarshal(resp_body, &result)
 			}
-			log.Printf("Liqui Order info data: %s\n", result)
+			log.Printf("Liqui Order info data: %v", result)
 		} else {
 			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 		}
@@ -281,11 +281,11 @@ func (self *LiquiEndpoint) ActiveOrders(timepoint uint64) (exchange.Liqorders, e
 		if resp.StatusCode == 200 {
 			defer resp.Body.Close()
 			resp_body, err := ioutil.ReadAll(resp.Body)
-			log.Printf("Liqui ActiveOrders response: %s\n", string(resp_body))
+			log.Printf("Liqui ActiveOrders response: %s", string(resp_body))
 			if err == nil {
 				json.Unmarshal(resp_body, &result)
 			}
-			log.Printf("Liqui ActiveOrders data: %s\n", result)
+			log.Printf("Liqui ActiveOrders data: %v", result)
 		} else {
 			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 		}
