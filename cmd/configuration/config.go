@@ -3,6 +3,7 @@ package configuration
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
@@ -177,6 +178,19 @@ func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressCo
 	self.NetworkAddress = networkAddr
 	self.WhitelistAddress = whitelistAddr
 	//self.ExchangeStorage = exsStorage
+	var huobiConfig common.HuobiConfig
+	exchangesIDs := os.Getenv("KYBER_EXCHANGES")
+	if strings.Contains(exchangesIDs, "huobi") {
+		huobiConfig = *self.GetHuobiConfig(kyberENV, addressConfig.Intermediator, huobiIntermediatorSigner)
+	}
+
+	// create Exchange pool
+	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, huobiConfig)
+	self.FetcherExchanges = exchangePool.FetcherExchanges()
+	self.Exchanges = exchangePool.CoreExchanges()
+}
+
+func (self *Config) GetHuobiConfig(kyberENV string, imtorAddr string, huobiIntermediatorSigner *signer.FileSigner) *common.HuobiConfig {
 
 	//create Huobi config object
 	huobiHTTPConfig := common.HuobiHTTPConfig{
@@ -184,17 +198,14 @@ func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressCo
 		self.EnableAuthentication,
 		kyberENV,
 	}
-	huobiConfig := common.HuobiConfig{ethereum.HexToAddress("0x13922F1857C0677F79e4BbB16Ad2c49fAa620829"),
+	//test address "0x13922F1857C0677F79e4BbB16Ad2c49fAa620829"
+	huobiConfig := common.HuobiConfig{ethereum.HexToAddress(imtorAddr),
 		self.EthereumEndpoint,
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/huobi.db",
 		*huobiIntermediatorSigner,
 		huobiHTTPConfig,
 	}
-
-	// create Exchange pool
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, huobiConfig)
-	self.FetcherExchanges = exchangePool.FetcherExchanges()
-	self.Exchanges = exchangePool.CoreExchanges()
+	return &huobiConfig
 }
 
 func (self *Config) MapTokens() map[string]common.Token {
