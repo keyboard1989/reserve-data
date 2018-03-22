@@ -114,7 +114,6 @@ func (self *Huobi) QueryOrder(symbol string, id uint64) (done float64, remaining
 
 func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 	result, err := self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
-	symbol := base.ID + quote.ID
 
 	if err != nil {
 		return "", 0, 0, false, err
@@ -124,13 +123,12 @@ func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token
 			base.ID+quote.ID,
 			orderID,
 		)
-		id := fmt.Sprintf("%s_%s", result.OrderID, symbol)
-		return id, done, remaining, finished, err
+		return result.OrderID, done, remaining, finished, err
 	}
 }
 
 func (self *Huobi) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
-	withdrawID, err := self.interf.Withdraw(token, amount, address, timepoint)
+	withdrawID, err := self.interf.Withdraw(token, amount, address)
 	if err != nil {
 		return "", err
 	}

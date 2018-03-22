@@ -152,8 +152,7 @@ func (self *Binance) QueryOrder(symbol string, id uint64) (done float64, remaini
 }
 
 func (self *Binance) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
-	result, err := self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
-	symbol := base.ID + quote.ID
+	result, err := self.interf.Trade(tradeType, base, quote, rate, amount)
 
 	if err != nil {
 		return "", 0, 0, false, err
@@ -162,13 +161,13 @@ func (self *Binance) Trade(tradeType string, base common.Token, quote common.Tok
 			base.ID+quote.ID,
 			result.OrderID,
 		)
-		id := fmt.Sprintf("%s_%s", strconv.FormatUint(result.OrderID, 10), symbol)
+		id := strconv.FormatUint(result.OrderID, 10)
 		return id, done, remaining, finished, err
 	}
 }
 
 func (self *Binance) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
-	tx, err := self.interf.Withdraw(token, amount, address, timepoint)
+	tx, err := self.interf.Withdraw(token, amount, address)
 	return tx, err
 }
 
@@ -198,7 +197,7 @@ func (self *Binance) FetchOnePairData(
 	timestamp := common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Timestamp = timestamp
 	result.Valid = true
-	resp_data, err := self.interf.GetDepthOnePair(pair, timepoint)
+	resp_data, err := self.interf.GetDepthOnePair(pair)
 	returnTime := common.GetTimestamp()
 	result.ReturnTime = returnTime
 	if err != nil {
@@ -261,7 +260,7 @@ func (self *Binance) OpenOrdersForOnePair(
 
 	defer wg.Done()
 
-	result, err := self.interf.OpenOrdersForOnePair(pair, timepoint)
+	result, err := self.interf.OpenOrdersForOnePair(pair)
 
 	if err == nil {
 		orders := []common.Order{}
@@ -320,7 +319,7 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
-	resp_data, err := self.interf.GetInfo(timepoint)
+	resp_data, err := self.interf.GetInfo()
 	result.ReturnTime = common.GetTimestamp()
 	if err != nil {
 		result.Valid = false
@@ -357,7 +356,7 @@ func (self *Binance) FetchOnePairTradeHistory(
 
 	defer wait.Done()
 	result := []common.TradeHistory{}
-	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, 0, timepoint)
+	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, 0)
 	if err != nil {
 		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
 	}

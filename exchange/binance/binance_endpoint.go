@@ -87,9 +87,7 @@ func (self *BinanceEndpoint) GetResponse(
 	}
 }
 
-func (self *BinanceEndpoint) GetDepthOnePair(
-	pair common.TokenPair,
-	timepoint uint64) (exchange.Binaresp, error) {
+func (self *BinanceEndpoint) GetDepthOnePair(pair common.TokenPair) (exchange.Binaresp, error) {
 
 	resp_body, err := self.GetResponse(
 		"GET", self.interf.PublicEndpoint()+"/api/v1/depth",
@@ -128,7 +126,7 @@ func (self *BinanceEndpoint) GetDepthOnePair(
 //
 // In this version, we only support LIMIT order which means only buy/sell with acceptable price,
 // and GTC time in force which means that the order will be active until it's implicitly canceled
-func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (exchange.Binatrade, error) {
+func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64) (exchange.Binatrade, error) {
 	result := exchange.Binatrade{}
 	symbol := base.ID + quote.ID
 	orderType := "LIMIT"
@@ -178,8 +176,7 @@ func (self *BinanceEndpoint) GetTradeHistory(symbol string) (exchange.BinanceTra
 
 func (self *BinanceEndpoint) GetAccountTradeHistory(
 	base, quote common.Token,
-	fromID uint64,
-	timepoint uint64) (exchange.BinaAccountTradeHistory, error) {
+	fromID uint64) (exchange.BinaAccountTradeHistory, error) {
 
 	symbol := strings.ToUpper(fmt.Sprintf("%s%s", base.ID, quote.ID))
 	result := exchange.BinaAccountTradeHistory{}
@@ -195,7 +192,7 @@ func (self *BinanceEndpoint) GetAccountTradeHistory(
 		self.interf.AuthenticatedEndpoint()+"/api/v3/myTrades",
 		params,
 		true,
-		timepoint,
+		common.GetTimepoint(),
 	)
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
@@ -287,7 +284,7 @@ func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64) (exchange.Bin
 	return result, err
 }
 
-func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
+func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) (string, error) {
 	result := exchange.Binawithdraw{}
 	resp_body, err := self.GetResponse(
 		"POST",
@@ -312,7 +309,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	}
 }
 
-func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error) {
+func (self *BinanceEndpoint) GetInfo() (exchange.Binainfo, error) {
 	result := exchange.Binainfo{}
 	resp_body, err := self.GetResponse(
 		"GET",
@@ -330,8 +327,7 @@ func (self *BinanceEndpoint) GetInfo(timepoint uint64) (exchange.Binainfo, error
 	return result, err
 }
 
-func (self *BinanceEndpoint) OpenOrdersForOnePair(
-	pair common.TokenPair, timepoint uint64) (exchange.Binaorders, error) {
+func (self *BinanceEndpoint) OpenOrdersForOnePair(pair common.TokenPair) (exchange.Binaorders, error) {
 
 	result := exchange.Binaorders{}
 	resp_body, err := self.GetResponse(
