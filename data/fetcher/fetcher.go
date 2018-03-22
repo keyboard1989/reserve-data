@@ -307,7 +307,7 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			case "lost":
 				elapsed := common.GetTimepoint() - activity.Timestamp.ToUint64()
 				if elapsed > uint64(15*time.Minute/time.Millisecond) {
-					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %s", activity.Result["tx"].(string), elapsed)
+					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %d", activity.Result["tx"].(string), elapsed)
 					result[activity.ID] = common.ActivityStatus{
 						activity.ExchangeStatus,
 						activity.Result["tx"].(string),
