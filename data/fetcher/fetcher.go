@@ -3,6 +3,7 @@ package fetcher
 import (
 	"log"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -456,7 +457,10 @@ func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []commo
 
 			id := activity.ID
 			if activity.Action == "trade" {
-				status, err = exchange.OrderStatus(id, timepoint)
+				orderID := strings.Split(id.EID, "_")
+				base := activity.Params["base"].(common.Token)
+				quote := activity.Params["quote"].(common.Token)
+				status, err = exchange.OrderStatus(orderID[0], base, quote)
 			} else if activity.Action == "deposit" {
 				txHash := activity.Result["tx"].(string)
 				amountStr := activity.Params["amount"].(string)

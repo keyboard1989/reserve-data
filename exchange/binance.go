@@ -438,15 +438,12 @@ func (self *Binance) WithdrawStatus(id, currency string, amount float64, timepoi
 	}
 }
 
-func (self *Binance) OrderStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	tradeID := id.EID
-	parts := strings.Split(tradeID, "_")
-	orderID, err := strconv.ParseUint(parts[0], 10, 64)
+func (self *Binance) OrderStatus(id string, base, quote common.Token) (string, error) {
+	orderID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		// if this crashes, it means core put malformed activity ID
 		panic(err)
 	}
-	symbol := parts[1]
+	symbol := base.ID + quote.ID
 	order, err := self.interf.OrderStatus(symbol, orderID)
 	if err != nil {
 		return "", err

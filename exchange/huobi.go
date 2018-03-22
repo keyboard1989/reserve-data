@@ -381,15 +381,12 @@ func (self *Huobi) WithdrawStatus(
 	return "", "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from huobi and activity ID are not consistently designed")
 }
 
-func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	tradeID := id.EID
-	parts := strings.Split(tradeID, "_")
-	orderID, err := strconv.ParseUint(parts[0], 10, 64)
+func (self *Huobi) OrderStatus(id string, base, quote common.Token) (string, error) {
+	orderID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		// if this crashes, it means core put malformed activity ID
 		panic(err)
 	}
-	symbol := parts[1]
+	symbol := base.ID + quote.ID
 	order, err := self.interf.OrderStatus(symbol, orderID)
 	if err != nil {
 		return "", err
