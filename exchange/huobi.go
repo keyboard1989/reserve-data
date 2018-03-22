@@ -357,7 +357,7 @@ func (self *Huobi) DepositStatus(
 			return "", nil
 		}
 	}
-	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %s deposits at the same time.", len(common.SupportedTokens)*2))
+	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.SupportedTokens)*2))
 }
 
 func (self *Huobi) WithdrawStatus(
@@ -367,7 +367,7 @@ func (self *Huobi) WithdrawStatus(
 	if err != nil {
 		return "", "", nil
 	}
-	log.Printf("Withdrawal id: %s", withdrawID)
+	log.Printf("Withdrawal id: %d", withdrawID)
 	for _, withdraw := range withdraws.Data {
 		if withdraw.TxID == withdrawID {
 			if withdraw.State == "confirmed" {
