@@ -456,7 +456,10 @@ func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []commo
 
 			id := activity.ID
 			if activity.Action == "trade" {
-				status, err = exchange.OrderStatus(id, timepoint)
+				orderID := id.EID
+				base := activity.Params["base"].(common.Token)
+				quote := activity.Params["quote"].(common.Token)
+				status, err = exchange.OrderStatus(orderID, base, quote)
 			} else if activity.Action == "deposit" {
 				txHash := activity.Result["tx"].(string)
 				amountStr := activity.Params["amount"].(string)

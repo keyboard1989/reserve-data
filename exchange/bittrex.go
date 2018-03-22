@@ -109,7 +109,7 @@ func (self *Bittrex) Name() string {
 }
 
 func (self *Bittrex) QueryOrder(uuid string, timepoint uint64) (float64, float64, bool, error) {
-	result, err := self.interf.OrderStatus(uuid, timepoint)
+	result, err := self.interf.OrderStatus(uuid)
 	if err != nil {
 		return 0, 0, false, err
 	} else {
@@ -120,7 +120,7 @@ func (self *Bittrex) QueryOrder(uuid string, timepoint uint64) (float64, float64
 }
 
 func (self *Bittrex) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (string, float64, float64, bool, error) {
-	result, err := self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
+	result, err := self.interf.Trade(tradeType, base, quote, rate, amount)
 
 	if err != nil {
 		return "", 0, 0, false, errors.New("Trade rejected by Bittrex")
@@ -137,7 +137,7 @@ func (self *Bittrex) Trade(tradeType string, base common.Token, quote common.Tok
 }
 
 func (self *Bittrex) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
-	resp, err := self.interf.Withdraw(token, amount, address, timepoint)
+	resp, err := self.interf.Withdraw(token, amount, address)
 	if err != nil {
 		return "", err
 	} else {
@@ -180,7 +180,7 @@ func (self *Bittrex) DepositStatus(
 	if err != nil {
 		panic(err)
 	}
-	histories, err := self.interf.DepositHistory(currency, timepoint)
+	histories, err := self.interf.DepositHistory(currency)
 	if err != nil {
 		return "", err
 	} else {
@@ -212,7 +212,7 @@ func (self *Bittrex) DepositStatus(
 
 func (self *Bittrex) CancelOrder(id common.ActivityID) error {
 	uuid := id.EID
-	resp, err := self.interf.CancelOrder(uuid, common.GetTimepoint())
+	resp, err := self.interf.CancelOrder(uuid)
 	if err != nil {
 		return err
 	} else {
@@ -225,7 +225,7 @@ func (self *Bittrex) CancelOrder(id common.ActivityID) error {
 }
 
 func (self *Bittrex) WithdrawStatus(id, currency string, amount float64, timepoint uint64) (string, string, error) {
-	histories, err := self.interf.WithdrawHistory(currency, timepoint)
+	histories, err := self.interf.WithdrawHistory(currency)
 	if err != nil {
 		return "", "", err
 	} else {
@@ -242,9 +242,8 @@ func (self *Bittrex) WithdrawStatus(id, currency string, amount float64, timepoi
 	}
 }
 
-func (self *Bittrex) OrderStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	uuid := id.EID
-	resp_data, err := self.interf.OrderStatus(uuid, timepoint)
+func (self *Bittrex) OrderStatus(uuid string, base, quote common.Token) (string, error) {
+	resp_data, err := self.interf.OrderStatus(uuid)
 	if err != nil {
 		return "", err
 	} else {
@@ -261,7 +260,7 @@ func (self *Bittrex) FetchOnePairData(wq *sync.WaitGroup, pair common.TokenPair,
 	result := common.ExchangePrice{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
-	onePairData, err := self.interf.FetchOnePairData(pair, timepoint)
+	onePairData, err := self.interf.FetchOnePairData(pair)
 	returnTime := common.GetTimestamp()
 	result.ReturnTime = returnTime
 	if err != nil {
@@ -316,7 +315,7 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
-	resp_data, err := self.interf.GetInfo(timepoint)
+	resp_data, err := self.interf.GetInfo()
 	result.ReturnTime = common.GetTimestamp()
 	if err != nil {
 		result.Valid = false
@@ -351,7 +350,7 @@ func (self *Bittrex) FetchOnePairTradeHistory(
 
 	defer wait.Done()
 	result := []common.TradeHistory{}
-	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, timepoint)
+	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote)
 	if err != nil {
 		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
 	}
