@@ -366,11 +366,16 @@ func (self *Fetcher) PersistSnapshot(
 		v := value.(common.EBalanceEntry)
 		allEBalances[key.(common.ExchangeID)] = v
 		if !v.Valid {
-			// get old auth
+			// get old auth data, because get balance error then we have to keep
+			// balance to the latest version then analytic won't get exchange balance to zero
 			authVersion, err := self.storage.CurrentAuthDataVersion(common.GetTimepoint())
 			if err == nil {
 				oldAuth, err := self.storage.GetAuthData(authVersion)
-				if err == nil {
+				if err != nil {
+					allEBalances[key.(common.ExchangeID)] = common.EBalanceEntry{
+						Error: err.Error(),
+					}
+				} else {
 					// update old auth to current
 					allEBalances[key.(common.ExchangeID)] = oldAuth.ExchangeBalances[key.(common.ExchangeID)]
 				}
