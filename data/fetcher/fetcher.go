@@ -366,6 +366,15 @@ func (self *Fetcher) PersistSnapshot(
 		v := value.(common.EBalanceEntry)
 		allEBalances[key.(common.ExchangeID)] = v
 		if !v.Valid {
+			// get old auth
+			authVersion, err := self.storage.CurrentAuthDataVersion(common.GetTimepoint())
+			if err == nil {
+				oldAuth, err := self.storage.GetAuthData(authVersion)
+				if err == nil {
+					// update old auth to current
+					allEBalances[key.(common.ExchangeID)] = oldAuth.ExchangeBalances[key.(common.ExchangeID)]
+				}
+			}
 			snapshot.Valid = false
 			snapshot.Error = v.Error
 		}
