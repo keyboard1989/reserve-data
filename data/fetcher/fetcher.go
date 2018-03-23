@@ -377,7 +377,9 @@ func (self *Fetcher) PersistSnapshot(
 					}
 				} else {
 					// update old auth to current
-					allEBalances[key.(common.ExchangeID)] = oldAuth.ExchangeBalances[key.(common.ExchangeID)]
+					newEbalance := oldAuth.ExchangeBalances[key.(common.ExchangeID)]
+					newEbalance.Error = v.Error
+					allEBalances[key.(common.ExchangeID)] = newEbalance
 				}
 			}
 			snapshot.Valid = false
