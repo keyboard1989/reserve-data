@@ -31,6 +31,7 @@ const (
 	SETRATE_CONTROL         string = "setrate_control"
 	PENDING_PWI_EQUATION    string = "pending_pwi_equation"
 	PWI_EQUATION            string = "pwi_equation"
+	EXCHANGE_STATUS         string = "exchange_status"
 	MAX_NUMBER_VERSION      int    = 1000
 	MAX_GET_RATES_PERIOD    uint64 = 86400000 //1 days in milisec
 )
@@ -65,6 +66,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(SETRATE_CONTROL))
 		tx.CreateBucket([]byte(PENDING_PWI_EQUATION))
 		tx.CreateBucket([]byte(PWI_EQUATION))
+		tx.CreateBucket([]byte(EXCHANGE_STATUS))
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db}
@@ -1017,6 +1019,37 @@ func (self *BoltStorage) RemovePendingPWIEquation() error {
 			err = errors.New("There is no pending data")
 		}
 		return err
+	})
+	return err
+}
+
+func (self *BoltStorage) GetExchangeStatus() (common.ExchangesStatus, error) {
+	var result common.ExchangesStatus
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(EXCHANGE_STATUS))
+		c := b.Cursor()
+		_, v := c.Last()
+		if v == nil {
+			err = errors.New("There is no data yet.")
+			return err
+		}
+		err := json.Unmarshal(v, &result)
+		return err
+	})
+	return result, err
+}
+
+func (self *BoltStorage) UpdateExchangeStatus(data common.ExchangesStatus) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(EXCHANGE_STATUS))
+		idByte := uint64ToBytes(common.GetTimepoint())
+		dataJson, err := json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		return b.Put(idByte, dataJson)
 	})
 	return err
 }

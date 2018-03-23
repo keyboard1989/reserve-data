@@ -267,10 +267,12 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 	if err != nil {
 		result.Valid = false
 		result.Error = err.Error()
+		result.Status = false
 	} else {
 		result.AvailableBalance = map[string]float64{}
 		result.LockedBalance = map[string]float64{}
 		result.DepositBalance = map[string]float64{}
+		result.Status = true
 		if resp_data.Status != "ok" {
 			result.Valid = false
 			result.Error = fmt.Sprintf("Cannot fetch ebalance")
@@ -289,7 +291,6 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 					result.DepositBalance[tokenID] = 0
 				}
 			}
-			return result, nil
 		}
 	}
 	return result, nil
