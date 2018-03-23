@@ -2,6 +2,7 @@ package fetcher
 
 import (
 	"log"
+	"os"
 	"sync"
 	"testing"
 
@@ -104,10 +105,12 @@ func TestUnchangedFunc(t *testing.T) {
 func TestExchangeDown(t *testing.T) {
 
 	// mock fetcher
-	fstorage, err := storage.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/data/fetcher/test_fetcher.db")
+	testFetcherStoragePath := "/go/src/github.com/KyberNetwork/reserve-data/data/fetcher/test_fetcher.db"
+	fstorage, err := storage.NewBoltStorage(testFetcherStoragePath)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+	defer os.Remove(testFetcherStoragePath)
 	runner := http_runner.NewHttpRunner(9000)
 	fetcher := NewFetcher(fstorage, runner, ethereum.Address{}, true)
 
