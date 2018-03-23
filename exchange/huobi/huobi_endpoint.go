@@ -241,7 +241,7 @@ func (self *HuobiEndpoint) OrderStatus(symbol string, id uint64) (exchange.Huobi
 	return result, err
 }
 
-func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
+func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) (string, error) {
 	result := exchange.HuobiWithdraw{}
 	resp_body, err := self.GetResponse(
 		"POST",

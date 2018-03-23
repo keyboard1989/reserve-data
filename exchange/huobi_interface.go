@@ -25,8 +25,7 @@ type HuobiInterface interface {
 	Withdraw(
 		token common.Token,
 		amount *big.Int,
-		address ethereum.Address,
-		timepoint uint64) (string, error)
+		address ethereum.Address) (string, error)
 
 	Trade(
 		tradeType string,
