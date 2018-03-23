@@ -430,6 +430,21 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 		}
 	}
 
+	//stats on wallet address
+	updates = common.TradeStats{
+		strings.Join([]string{"wallet_eth_volume", walletAddr}, "_"):  ethAmount,
+		strings.Join([]string{"wallet_usd_volume", walletAddr}, "_"):  trade.FiatAmount,
+		strings.Join([]string{"wallet_burn_fee", walletAddr}, "_"):    burnFee,
+		strings.Join([]string{"wallet_trade_count", walletAddr}, "_"): 1,
+	}
+
+	for _, freq := range []string{"M", "H", "D"} {
+		err = self.statStorage.SetTradeStats(freq, trade.Timestamp, updates)
+		if err != nil {
+			return
+		}
+	}
+
 	return
 }
 

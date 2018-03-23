@@ -191,6 +191,13 @@ func isDuplicate(currentRate, latestRate common.ReserveRates) bool {
 	}
 	return true
 }
+func (self ReserveStats) GetWalletStats(fromTime uint64, toTime uint64, freq string, walletAddr string) ([]common.WalletStats, error) {
+	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, freq)
+	if err != nil {
+		return nil, err
+	}
+	return self.statStorage.GetWalletStats(fromTime, toTime, freq, walletAddr)
+}
 
 func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error) {
 	var result []common.ReserveRates

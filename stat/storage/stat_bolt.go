@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -324,6 +325,47 @@ func (self *BoltStatStorage) SetUserStats(timestamp uint64, addr, email string, 
 		return nil
 	})
 	return err
+}
+
+func findField(fieldName string, stat common.TradeStats) float64 {
+	val, found := stat[fieldName]
+	if !found {
+		return 0
+	}
+	return val
+}
+
+func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, freq string, walletAddr string) ([]common.WalletStats, error) {
+	log.Println("LIEMTEST: 3 got here")
+	walletAddr = strings.ToLower(walletAddr)
+	log.Printf("LIEMTEST: wlladdr is %s \n", walletAddr)
+	var result []common.WalletStats
+	stats, err := self.getTradeStats(fromTime, toTime, freq)
+	log.Printf("LIEMTEST: len of stats is %d", len(stats))
+	if err != nil {
+		return result, err
+	}
+	for timestamp, stat := range stats {
+		log.Printf("LIEMTEST: stat is %v", stat)
+
+		eth_amount, found := stat[strings.Join([]string{"wallet_eth_volume", walletAddr}, "_")]
+		if !found {
+			continue
+		}
+		usd_amount, _ := stat[strings.Join([]string{"wallet_usd_volume", walletAddr}, "_")]
+		burn_fee, _ := stat[strings.Join([]string{"wallet_burn_fee", walletAddr}, "_")]
+		trade_count, _ := stat[strings.Join([]string{"wallet_trade_count", walletAddr}, "_")]
+		record := common.WalletStats{
+			timestamp,
+			eth_amount,
+			usd_amount,
+			burn_fee,
+			uint64(trade_count),
+		}
+		result = append(result, record)
+
+	}
+	return result, nil
 }
 
 func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {

@@ -11,7 +11,7 @@ type StatStorage interface {
 	GetUserVolume(fromTime uint64, toTime uint64, freq string, userAddr string) (common.StatTicks, error)
 	GetTradeSummary(fromTime, toTime uint64) (common.StatTicks, error)
 	GetLastProcessedTradeLogTimepoint() (timepoint uint64, err error)
-
+	GetWalletStats(fromTime uint64, toTime uint64, freq string, walletAddr string) ([]common.WalletStats, error)
 	GetUserStats(timestamp uint64, addr string, email string, kycEd bool) (common.TradeStats, error)
 	SetUserStats(timestamp uint64, addr string, email string, kycEd bool, stats common.TradeStats) error
 

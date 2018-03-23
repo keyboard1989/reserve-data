@@ -591,6 +591,19 @@ type StatTicks map[uint64]interface{}
 
 type TradeStats map[string]float64
 
+type WalletStats struct {
+	Timestamp            uint64
+	Eth_per_trade        float64
+	Kyced_addresses      uint64
+	New_unique_addresses uint64
+	Total_burn_fee       float64
+	Total_eth_volume     float64
+	Total_trade          uint64
+	Total_usd_amount     float64
+	Unique_addresses     uint64
+	Usd_per_trade        float64
+}
+
 type TradeHistory struct {
 	ID        string
 	Price     float64
