@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"time"
 
@@ -21,13 +22,15 @@ const (
 
 	TRADE_STATS_BUCKET string = "trade_stats"
 
-	MINUTE_BUCKET string = "minute"
-	HOUR_BUCKET   string = "hour"
-	DAY_BUCKET    string = "day"
-
-	ADDRESS_BUCKET       string = "address"
-	DAILY_ADDRESS_BUCKET string = "daily_address"
-	DAILY_USER_BUCKET    string = "daily_user"
+	MINUTE_BUCKET               string = "minute"
+	HOUR_BUCKET                 string = "hour"
+	DAY_BUCKET                  string = "day"
+	TIMEZONE_BUCKET_PREFIX      string = "utc"
+	START_TIMEZONE              int64  = -11
+	END_TIMEZONE                int64  = 14
+	ADDRESS_BUCKET_PREFIX       string = "address"
+	DAILY_ADDRESS_BUCKET_PREFIX string = "daily_address"
+	DAILY_USER_BUCKET_PREFIX    string = "daily_user"
 
 	RESERVE_RATES string = "reserve_rates"
 )
@@ -62,15 +65,24 @@ func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
 		tx.CreateBucket([]byte(TRADELOG_PROCESSOR_STATE))
 
-		tx.CreateBucket([]byte(ADDRESS_BUCKET))
-		tx.CreateBucket([]byte(DAILY_ADDRESS_BUCKET))
-		tx.CreateBucket([]byte(DAILY_USER_BUCKET))
-
+		//create timezone buckets
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		frequencies := []string{MINUTE_BUCKET, HOUR_BUCKET, DAY_BUCKET}
 
 		for _, freq := range frequencies {
 			tradeStatsBk.CreateBucket([]byte(freq))
+		}
+		for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
+			tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
+			log.Printf("tzstring is %s", tzstring)
+			tx.CreateBucket([]byte(tzstring))
+			tradeStatsBk.CreateBucket([]byte(tzstring))
+			dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, i)
+			tx.CreateBucket([]byte(dailyAddrBkname))
+			dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, i)
+			tx.CreateBucket([]byte(dailyUserBkname))
+			addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, i)
+			tx.CreateBucket([]byte(addrBucketName))
 		}
 
 		return nil
@@ -161,6 +173,8 @@ func getBucketNameByFreq(freq string) (bucketName string, err error) {
 		bucketName = HOUR_BUCKET
 	case "d", "D":
 		bucketName = DAY_BUCKET
+	default:
+		bucketName = freq
 	}
 	return
 }
@@ -173,7 +187,18 @@ func getTimestampByFreq(t uint64, freq string) (result []byte) {
 		result = uint64ToBytes(t / uint64(time.Hour) * uint64(time.Hour))
 	case "d", "D":
 		result = uint64ToBytes(t / uint64(time.Hour*24) * uint64(time.Hour*24))
+	default:
+		// utc timezone
+
+		offset, _ := strconv.ParseInt(strings.TrimPrefix(freq, "utc"), 10, 64)
+		if offset > 0 {
+			result = uint64ToBytes((t + uint64(int64(time.Hour)*offset)) / uint64(time.Hour*24) * uint64(time.Hour*24))
+		} else {
+			offset = 0 - offset
+			result = uint64ToBytes((t - uint64(int64(time.Hour)*offset)) / uint64(time.Hour*24) * uint64(time.Hour*24))
+		}
 	}
+
 	return
 }
 
@@ -186,9 +211,7 @@ func (self *BoltStatStorage) SetTradeStats(freq string, t uint64, tradeStats com
 			return err
 		}
 		freqBk := tradeStatsBk.Bucket([]byte(freqBkName))
-
 		timestamp := getTimestampByFreq(t, freq)
-
 		rawStats := freqBk.Get(timestamp)
 		var stats common.TradeStats
 		if rawStats != nil {
@@ -257,30 +280,53 @@ func (self *BoltStatStorage) getTradeStats(fromTime, toTime uint64, freq string)
 	return result, err
 }
 
-func (self *BoltStatStorage) GetUserStats(timestamp uint64, addr, email string, kycEd bool) (common.TradeStats, error) {
+func (self *BoltStatStorage) GetUserStats(timestamp uint64, addr, email, wallet string, kycEd bool, timezone int64) (common.TradeStats, error) {
 	stats := common.TradeStats{}
 	var err error
 
 	self.db.View(func(tx *bolt.Tx) error {
-		dailyTimestamp := string(getTimestampByFreq(timestamp, "D"))
-
-		dailyAddrBk := tx.Bucket([]byte(DAILY_ADDRESS_BUCKET))
+		freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
+		dailyTimestamp := string(getTimestampByFreq(timestamp, freq))
+		dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
+		dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
 		dailyAddrKey := strings.Join([]string{dailyTimestamp, addr}, "_")
 		if v := dailyAddrBk.Get([]byte(dailyAddrKey)); v == nil {
 			stats["first_trade_in_day"] = 1 // FIRST TRADE IN DAY
 
-			addrBk := tx.Bucket([]byte(ADDRESS_BUCKET))
+			addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
+			addrBk := tx.Bucket([]byte(addrBucketName))
 			if v := addrBk.Get([]byte(addr)); v == nil {
 				stats["first_trade_ever"] = 1 // FIRST TRADE EVER
 			}
 
 			if kycEd {
-				dailyUserBk := tx.Bucket([]byte(DAILY_USER_BUCKET))
+				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
+				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
 				dailyUserKey := strings.Join([]string{dailyTimestamp, email}, "_")
 				if v := dailyUserBk.Get([]byte(dailyUserKey)); v == nil {
 					stats["kyced_in_day"] = 1
 				}
 			}
+		}
+
+		//Get user stat for the current Wallet address
+		dailyAddrWalletKey := strings.Join([]string{dailyTimestamp, addr, wallet}, "_")
+		if v := dailyAddrBk.Get([]byte(dailyAddrWalletKey)); v == nil {
+			stats[strings.Join([]string{"wallet_first_trade_in_day", wallet}, "_")] = 1
+			addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
+			addrBk := tx.Bucket([]byte(addrBucketName))
+			if v := addrBk.Get([]byte(strings.Join([]string{addr, wallet}, "_"))); v == nil {
+				stats[strings.Join([]string{"wallet_first_trade_ever", wallet}, "_")] = 1
+			}
+			if kycEd {
+				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
+				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
+				dailyUserWalletKey := strings.Join([]string{dailyTimestamp, email, wallet}, "_")
+				if v := dailyUserBk.Get([]byte(dailyUserWalletKey)); v == nil {
+					stats[strings.Join([]string{"wallet_kyced_in_day", wallet}, "_")] = 1
+				}
+			}
+
 		}
 
 		return nil
@@ -289,35 +335,64 @@ func (self *BoltStatStorage) GetUserStats(timestamp uint64, addr, email string, 
 	return stats, err
 }
 
-func (self *BoltStatStorage) SetUserStats(timestamp uint64, addr, email string, kycEd bool, stats common.TradeStats) error {
+func (self *BoltStatStorage) SetUserStats(timestamp uint64, addr, email, wallet string, kycEd bool, timezone int64, stats common.TradeStats) error {
 	var err error
-
-	if err = self.SetTradeStats("D", timestamp, stats); err != nil {
+	freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
+	if err = self.SetTradeStats(freq, timestamp, stats); err != nil {
 		return err
 	}
 
 	self.db.Update(func(tx *bolt.Tx) error {
 
-		dailyTimestamp := string(getTimestampByFreq(timestamp, "D"))
+		dailyTimestamp := string(getTimestampByFreq(timestamp, freq))
 
 		if _, traded := stats["first_trade_in_day"]; traded {
-			dailyAddrBk := tx.Bucket([]byte(DAILY_ADDRESS_BUCKET))
+			dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
+			dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
 			dailyAddrKey := strings.Join([]string{dailyTimestamp, addr}, "_")
 			if err := dailyAddrBk.Put([]byte(dailyAddrKey), []byte("1")); err != nil {
 				return err
 			}
 
 			if _, traded := stats["first_trade_ever"]; traded {
-				addrBk := tx.Bucket([]byte(ADDRESS_BUCKET))
+				addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
+				addrBk := tx.Bucket([]byte(addrBucketName))
 				if err := addrBk.Put([]byte(addr), []byte("1")); err != nil {
 					return err
 				}
 			}
 
 			if kycEd {
-				dailyUserBk := tx.Bucket([]byte(DAILY_USER_BUCKET))
+				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
+				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
 				dailyUserKey := strings.Join([]string{dailyTimestamp, email}, "_")
 				if err := dailyUserBk.Put([]byte(dailyUserKey), []byte("1")); err != nil {
+					return err
+				}
+			}
+		}
+
+		//Set user stat for the current Wallet address
+		if _, walletTraded := stats[strings.Join([]string{"wallet_first_trade_in_day", wallet}, "_")]; walletTraded {
+			dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
+			dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
+			dailyAddrWalletKey := strings.Join([]string{dailyTimestamp, addr, wallet}, "_")
+			if err := dailyAddrBk.Put([]byte(dailyAddrWalletKey), []byte("1")); err != nil {
+				return err
+			}
+
+			if _, walletTraded := stats[strings.Join([]string{"wallet_first_trade_ever", wallet}, "_")]; walletTraded {
+				addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
+				addrBk := tx.Bucket([]byte(addrBucketName))
+				if err := addrBk.Put([]byte(strings.Join([]string{addr, wallet}, "_")), []byte("1")); err != nil {
+					return err
+				}
+			}
+			if kycEd {
+				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
+				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
+				dailyUserWalletKey := strings.Join([]string{dailyTimestamp, email, wallet}, "_")
+				if err := dailyUserBk.Put([]byte(dailyUserWalletKey), []byte("1")); err != nil {
 					return err
 				}
 			}
@@ -335,35 +410,40 @@ func findField(fieldName string, stat common.TradeStats) float64 {
 	return val
 }
 
-func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, freq string, walletAddr string) ([]common.WalletStats, error) {
-	log.Println("LIEMTEST: 3 got here")
+func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, walletAddr string, timezone int64) (common.StatTicks, error) {
+
 	walletAddr = strings.ToLower(walletAddr)
-	log.Printf("LIEMTEST: wlladdr is %s \n", walletAddr)
-	var result []common.WalletStats
-	stats, err := self.getTradeStats(fromTime, toTime, freq)
-	log.Printf("LIEMTEST: len of stats is %d", len(stats))
+	log.Printf("fromtime %v toTime %v fre %v", fromTime, toTime, timezone)
+	result := common.StatTicks{}
+	tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
+	stats, err := self.getTradeStats(fromTime, toTime, tzstring)
 	if err != nil {
 		return result, err
 	}
-	for timestamp, stat := range stats {
-		log.Printf("LIEMTEST: stat is %v", stat)
 
-		eth_amount, found := stat[strings.Join([]string{"wallet_eth_volume", walletAddr}, "_")]
+	for timestamp, stat := range stats {
+		result[timestamp] = make(map[string]float64)
+		trade_countstr, found := stat[strings.Join([]string{"wallet_trade_count", walletAddr}, "_")]
 		if !found {
 			continue
 		}
-		usd_amount, _ := stat[strings.Join([]string{"wallet_usd_volume", walletAddr}, "_")]
-		burn_fee, _ := stat[strings.Join([]string{"wallet_burn_fee", walletAddr}, "_")]
-		trade_count, _ := stat[strings.Join([]string{"wallet_trade_count", walletAddr}, "_")]
-		record := common.WalletStats{
-			timestamp,
-			eth_amount,
-			usd_amount,
-			burn_fee,
-			uint64(trade_count),
+		tradeCount := float64(trade_countstr)
+		var avgEth, avgUsd float64
+		if tradeCount > 0 {
+			avgEth = float64(stat[strings.Join([]string{"wallet_eth_volume", walletAddr}, "_")]) / tradeCount
+			avgUsd = float64(stat[strings.Join([]string{"wallet_usd_volume", walletAddr}, "_")]) / tradeCount
 		}
-		result = append(result, record)
-
+		result[timestamp] = map[string]float64{
+			"total_eth_volume":     stat[strings.Join([]string{"wallet_eth_volume", walletAddr}, "_")],
+			"total_usd_amount":     stat[strings.Join([]string{"wallet_usd_volume", walletAddr}, "_")],
+			"total_burn_fee":       stat[strings.Join([]string{"wallet_burn_fee", walletAddr}, "_")],
+			"unique_addresses":     stat[strings.Join([]string{"wallet_first_trade_in_day", walletAddr}, "_")],
+			"new_unique_addresses": stat[strings.Join([]string{"wallet_first_trade_ever", walletAddr}, "_")],
+			"kyced_addresses":      stat[strings.Join([]string{"wallet_kyced_in_day", walletAddr}, "_")],
+			"total_trade":          tradeCount,
+			"eth_per_trade":        avgEth,
+			"usd_per_trade":        avgUsd,
+		}
 	}
 	return result, nil
 }
@@ -424,10 +504,11 @@ func (self *BoltStatStorage) GetUserVolume(fromTime uint64, toTime uint64, freq 
 	return result, err
 }
 
-func (self *BoltStatStorage) GetTradeSummary(fromTime uint64, toTime uint64) (common.StatTicks, error) {
+func (self *BoltStatStorage) GetTradeSummary(fromTime uint64, toTime uint64, timezone int64) (common.StatTicks, error) {
+	log.Printf("fromtime %v toTime %v fre %v", fromTime, toTime, timezone)
 	result := common.StatTicks{}
-
-	stats, err := self.getTradeStats(fromTime, toTime, "D")
+	tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
+	stats, err := self.getTradeStats(fromTime, toTime, tzstring)
 	if err != nil {
 		return result, err
 	}

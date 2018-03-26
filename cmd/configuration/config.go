@@ -109,7 +109,7 @@ func (self *Config) AddStatConfig(setPath SettingPaths, addressConfig common.Add
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		statFetcherRunner = http_runner.NewHttpRunner(8002)
 	} else {
-		statFetcherRunner = fetcher.NewTickerRunner(15*time.Second, 25*time.Second, 23*time.Second, 14*time.Second, 16*time.Second, 10*time.Second, 7*time.Second, 10*time.Second, 10*time.Second)
+		statFetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second, 7*time.Second, 2*time.Second, 2*time.Second)
 	}
 
 	self.StatStorage = statStorage
