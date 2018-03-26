@@ -3,6 +3,7 @@ package stat
 import (
 	"fmt"
 	"log"
+	"math/big"
 	"strings"
 	"sync"
 	// "sync"
@@ -357,12 +358,26 @@ func (self *Fetcher) updateTimeZoneBuckets(timestamp uint64, updates common.Trad
 	}
 	return nil
 }
+
+func checkWalletAddress(wallet string) bool {
+	walletAddr := ethereum.HexToAddress(wallet)
+	cap := big.NewInt(0)
+	cap.Exp(big.NewInt(2), big.NewInt(128), big.NewInt(0))
+	if walletAddr.Big().Cmp(cap) < 0 {
+		return false
+	}
+	return true
+}
+
 func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 	srcAddr := common.AddrToString(trade.SrcAddress)
 	dstAddr := common.AddrToString(trade.DestAddress)
 	reserveAddr := common.AddrToString(trade.ReserveAddress)
 	walletAddr := common.AddrToString(trade.WalletAddress)
 	userAddr := common.AddrToString(trade.UserAddress)
+	if checkWalletAddress(walletAddr) {
+		self.statStorage.SetWalletAddress(walletAddr)
+	}
 	var srcAmount, destAmount, ethAmount, burnFee, walletFee float64
 	var tokenAddr string
 	for _, token := range common.SupportedTokens {

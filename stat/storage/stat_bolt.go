@@ -31,8 +31,8 @@ const (
 	ADDRESS_BUCKET_PREFIX       string = "address"
 	DAILY_ADDRESS_BUCKET_PREFIX string = "daily_address"
 	DAILY_USER_BUCKET_PREFIX    string = "daily_user"
-
-	RESERVE_RATES string = "reserve_rates"
+	WALLET_ADDRESS_BUCKET       string = "wallet_address"
+	RESERVE_RATES               string = "reserve_rates"
 )
 
 type BoltStatStorage struct {
@@ -64,7 +64,7 @@ func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 	db.Update(func(tx *bolt.Tx) error {
 		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
 		tx.CreateBucket([]byte(TRADELOG_PROCESSOR_STATE))
-
+		tx.CreateBucket([]byte(WALLET_ADDRESS_BUCKET))
 		//create timezone buckets
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		frequencies := []string{MINUTE_BUCKET, HOUR_BUCKET, DAY_BUCKET}
@@ -74,7 +74,6 @@ func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 		}
 		for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
 			tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
-			log.Printf("tzstring is %s", tzstring)
 			tx.CreateBucket([]byte(tzstring))
 			tradeStatsBk.CreateBucket([]byte(tzstring))
 			dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, i)
@@ -192,10 +191,10 @@ func getTimestampByFreq(t uint64, freq string) (result []byte) {
 
 		offset, _ := strconv.ParseInt(strings.TrimPrefix(freq, "utc"), 10, 64)
 		if offset > 0 {
-			result = uint64ToBytes((t + uint64(int64(time.Hour)*offset)) / uint64(time.Hour*24) * uint64(time.Hour*24))
+			result = uint64ToBytes((t+uint64(int64(time.Hour)*offset))/uint64(time.Hour*24)*uint64(time.Hour*24) + uint64(int64(time.Hour)*offset))
 		} else {
 			offset = 0 - offset
-			result = uint64ToBytes((t - uint64(int64(time.Hour)*offset)) / uint64(time.Hour*24) * uint64(time.Hour*24))
+			result = uint64ToBytes((t-uint64(int64(time.Hour)*offset))/uint64(time.Hour*24)*uint64(time.Hour*24) - uint64(int64(time.Hour)*offset))
 		}
 	}
 
@@ -402,12 +401,30 @@ func (self *BoltStatStorage) SetUserStats(timestamp uint64, addr, email, wallet 
 	return err
 }
 
-func findField(fieldName string, stat common.TradeStats) float64 {
-	val, found := stat[fieldName]
-	if !found {
-		return 0
-	}
-	return val
+func (self *BoltStatStorage) SetWalletAddress(walletAddr string) (err error) {
+	self.db.Update(func(tx *bolt.Tx) error {
+		walletBucket := tx.Bucket([]byte(WALLET_ADDRESS_BUCKET))
+
+		if err := walletBucket.Put([]byte(walletAddr), []byte("1")); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	return
+}
+
+func (self *BoltStatStorage) GetWalletAddress() ([]string, error) {
+	var result []string
+	self.db.View(func(tx *bolt.Tx) error {
+		walletBucket := tx.Bucket([]byte(WALLET_ADDRESS_BUCKET))
+		c := walletBucket.Cursor()
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			result = append(result, string(k[:]))
+		}
+		return nil
+	})
+	return result, nil
 }
 
 func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, walletAddr string, timezone int64) (common.StatTicks, error) {

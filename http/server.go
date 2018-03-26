@@ -1832,6 +1832,27 @@ func (self *HTTPServer) GetWalletStats(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetWalletAddress(c *gin.Context) {
+	data, err := self.stat.GetWalletAddress()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) GetReserveRate(c *gin.Context) {
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
@@ -1934,6 +1955,7 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-pending-addresses", self.GetPendingAddresses)
 		self.r.GET("/get-reserve-rate", self.GetReserveRate)
 		self.r.GET("/get-wallet-stats", self.GetWalletStats)
+		self.r.GET("/get-wallet-address", self.GetWalletAddress)
 	}
 
 	self.r.Run(self.host)

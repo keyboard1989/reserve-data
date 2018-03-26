@@ -16,5 +16,7 @@ type StatStorage interface {
 	SetUserStats(timestamp uint64, addr string, email string, wallet string, kycEd bool, timezone int64, stats common.TradeStats) error
 
 	SetTradeStats(freq string, t uint64, tradeStats common.TradeStats) error
+	SetWalletAddress(walletAddr string) error
+	GetWalletAddress() ([]string, error)
 	SetLastProcessedTradeLogTimepoint(timepoint uint64) error
 }

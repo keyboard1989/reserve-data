@@ -198,6 +198,10 @@ func (self ReserveStats) GetWalletStats(fromTime uint64, toTime uint64, walletAd
 	return self.statStorage.GetWalletStats(fromTime, toTime, walletAddr, timezone)
 }
 
+func (self ReserveStats) GetWalletAddress() ([]string, error) {
+	return self.statStorage.GetWalletAddress()
+}
+
 func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error) {
 	var result []common.ReserveRates
 	var err error

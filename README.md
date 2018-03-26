@@ -834,6 +834,7 @@ GET request
 Url params:
   - fromTime (millisecond - required): from time stamp
   - toTime (millisecond - required): to time stamp  
+  - timeZone (in range [-12,14], default to 0): the integer specific which UTC timezone to query
 ```
 
 ```
@@ -844,6 +845,43 @@ response
 {"data":{"1519344000000":{"eth_per_trade":0.55402703087424,"kyced_addresses":0,"new_unique_addresses":35,"total_burn_fee":0,"total_eth_volume":44.3221624699392,"total_trade":80,"total_usd_amount":30981.281202536768,"unique_addresses":50,"usd_per_trade":387.26601503170957},"1519430400000":{"eth_per_trade":0.17008867987348247,"kyced_addresses":0,"new_unique_addresses":17,"total_burn_fee":0,"total_eth_volume":8.674522673547607,"total_trade":51,"total_usd_amount":6060.828270348999,"unique_addresses":29,"usd_per_trade":118.83977000684311},"1519516800000":{"eth_per_trade":0.14234886960871,"kyced_addresses":0,"new_unique_addresses":9,"total_burn_fee":1.1025,"total_eth_volume":5.40925704513098,"total_trade":38,"total_usd_amount":3779.4100326337,"unique_addresses":18,"usd_per_trade":99.45815875351843},"1519603200000":{"eth_per_trade":0.5430574166436676,"kyced_addresses":0,"new_unique_addresses":39,"total_burn_fee":42.85336706164196,"total_eth_volume":45.07376558142441,"total_trade":83,"total_usd_amount":31497.3427579499,"unique_addresses":56,"usd_per_trade":379.4860573246976},"1519689600000":{"eth_per_trade":0.6014134385918366,"kyced_addresses":0,"new_unique_addresses":69,"total_burn_fee":79.03472646631772,"total_eth_volume":78.7851604555306,"total_trade":131,"total_usd_amount":55076.026979006005,"unique_addresses":92,"usd_per_trade":420.4276868626413},"1519776000000":{"eth_per_trade":0.40083191776618454,"kyced_addresses":0,"new_unique_addresses":64,"total_burn_fee":48.899026261678536,"total_eth_volume":52.50898122737018,"total_trade":131,"total_usd_amount":36662.138255818456,"unique_addresses":94,"usd_per_trade":279.8636508077745}},"success":true}
 ```
 
+### Get a specific wallet's stats summary follow timeframe (day)
+```
+<host>:8000/get-wallet-stats
+GET request
+
+Url params:
+  - fromTime (millisecond - required): from time stamp
+  - toTime (millisecond - required): to time stamp  
+  - timeZone (in range [-12,14], default to 0): the integer specific which UTC timezone to query
+  - walletAddr (hex string - required) : to specific which wallet Address to query data from. It must be larger than 2^128 to be valid.
+```
+
+```
+curl -x GET http://localhost:8000/get-wallet-stats?fromTime=1521914061000&toTime=1523000461000&walletAddr=0xb9e29984fe50602e7a619662ebed4f90d93824c7
+```
+response
+```
+{"data":{"1521936000000":{"eth_per_trade":0.15169175185997197,"kyced_addresses":0,"new_unique_addresses":27,"total_burn_fee":3.5843774403434443,"total_eth_volume":9.101505111598318,"total_trade":60,"total_usd_amount":4738.284168671162,"unique_addresses":40,"usd_per_trade":78.97140281118602},"1522022400000":{"eth_per_trade":0.1305336778977258,"kyced_addresses":0,"new_unique_addresses":13,"total_burn_fee":1.2758795269915402,"total_eth_volume":2.3496062021590642,"total_trade":18,"total_usd_amount":1230.3892752776494,"unique_addresses":18,"usd_per_trade":68.35495973764719}},"success":true}
+```
+
+### Get a list of wallet that has ever traded with core
+```
+<host>:8000/get-wallet-address 
+GET request
+
+URL params:
+  Nil
+```
+
+
+```
+curl -x GET http://localhost:8000/get-wallet-address
+```
+response
+```
+{"data":["0xb9e29984fe50602e7a619662ebed4f90d93824c7","0xf1aa99c69715f423086008eb9d06dc1e35cc504d"],"success":true}
+``` 
 
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
