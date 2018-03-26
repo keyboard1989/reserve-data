@@ -53,10 +53,10 @@ func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 	} else {
 		timepoint, err := strconv.ParseUint(timestamp, 10, 64)
 		if err != nil {
-			log.Printf("Interpreted timestamp(%s) to default - %s\n", timestamp, MAX_TIMESPOT)
+			log.Printf("Interpreted timestamp(%s) to default - %d", timestamp, MAX_TIMESPOT)
 			return MAX_TIMESPOT
 		} else {
-			log.Printf("Interpreted timestamp(%s) to %s\n", timestamp, timepoint)
+			log.Printf("Interpreted timestamp(%s) to %d", timestamp, timepoint)
 			return timepoint
 		}
 	}
@@ -64,7 +64,7 @@ func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 
 func IsIntime(nonce string) bool {
 	serverTime := common.GetTimepoint()
-	log.Printf("Server time: %d, None: %d", serverTime, nonce)
+	log.Printf("Server time: %d, None: %s", serverTime, nonce)
 	nonceInt, err := strconv.ParseInt(nonce, 10, 64)
 	if err != nil {
 		log.Printf("IsIntime returns false, err: %v", err)
@@ -1890,6 +1890,74 @@ func (self *HTTPServer) GetReserveRate(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetExchangesStatus(c *gin.Context) {
+	data, err := self.app.GetExchangeStatus()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) UpdateExchangeStatus(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+	exchange := postForm.Get("exchange")
+	status, err := strconv.ParseBool(postForm.Get("status"))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	_, err = common.GetExchange(strings.ToLower(exchange))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	err = self.app.UpdateExchangeStatus(exchange, status)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -1938,6 +2006,9 @@ func (self *HTTPServer) Run() {
 		self.r.POST("/set-pwis-equation", self.SetPWIEquation)
 		self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
 		self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
+
+		self.r.GET("/get-exchange-status", self.GetExchangesStatus)
+		self.r.POST("/update-exchange-status", self.UpdateExchangeStatus)
 	}
 
 	if self.stat != nil {

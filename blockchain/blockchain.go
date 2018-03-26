@@ -423,7 +423,7 @@ func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Has
 		return nil, false, fmt.Errorf("server returned transaction without signature")
 	}
 	setSenderFromServer(json.tx, json.From, json.BlockHash)
-	return json, json.BlockNumber == nil, nil
+	return json, json.BlockNumber().Cmp(ethereum.Big0) == 0, nil
 }
 
 func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
@@ -815,7 +815,7 @@ func NewBlockchain(
 		return nil, err
 	}
 	if signer != nil {
-		log.Printf("reserve owner address: %s", signer.GetAddress().Hex())		
+		log.Printf("reserve owner address: %s", signer.GetAddress().Hex())
 	}
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve, err := NewKNReserveContract(reserveAddr, etherCli)

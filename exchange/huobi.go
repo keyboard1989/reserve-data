@@ -114,7 +114,6 @@ func (self *Huobi) QueryOrder(symbol string, id uint64) (done float64, remaining
 
 func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token, rate float64, amount float64, timepoint uint64) (id string, done float64, remaining float64, finished bool, err error) {
 	result, err := self.interf.Trade(tradeType, base, quote, rate, amount, timepoint)
-	symbol := base.ID + quote.ID
 
 	if err != nil {
 		return "", 0, 0, false, err
@@ -124,13 +123,12 @@ func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token
 			base.ID+quote.ID,
 			orderID,
 		)
-		id := fmt.Sprintf("%s_%s", result.OrderID, symbol)
-		return id, done, remaining, finished, err
+		return result.OrderID, done, remaining, finished, err
 	}
 }
 
 func (self *Huobi) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
-	withdrawID, err := self.interf.Withdraw(token, amount, address, timepoint)
+	withdrawID, err := self.interf.Withdraw(token, amount, address)
 	if err != nil {
 		return "", err
 	}
@@ -269,10 +267,12 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 	if err != nil {
 		result.Valid = false
 		result.Error = err.Error()
+		result.Status = false
 	} else {
 		result.AvailableBalance = map[string]float64{}
 		result.LockedBalance = map[string]float64{}
 		result.DepositBalance = map[string]float64{}
+		result.Status = true
 		if resp_data.Status != "ok" {
 			result.Valid = false
 			result.Error = fmt.Sprintf("Cannot fetch ebalance")
@@ -291,7 +291,6 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 					result.DepositBalance[tokenID] = 0
 				}
 			}
-			return result, nil
 		}
 	}
 	return result, nil
@@ -359,7 +358,7 @@ func (self *Huobi) DepositStatus(
 			return "", nil
 		}
 	}
-	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %s deposits at the same time.", len(common.SupportedTokens)*2))
+	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.SupportedTokens)*2))
 }
 
 func (self *Huobi) WithdrawStatus(
@@ -369,7 +368,7 @@ func (self *Huobi) WithdrawStatus(
 	if err != nil {
 		return "", "", nil
 	}
-	log.Printf("Withdrawal id: %s", withdrawID)
+	log.Printf("Withdrawal id: %d", withdrawID)
 	for _, withdraw := range withdraws.Data {
 		if withdraw.TxID == withdrawID {
 			if withdraw.State == "confirmed" {
@@ -381,15 +380,12 @@ func (self *Huobi) WithdrawStatus(
 	return "", "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from huobi and activity ID are not consistently designed")
 }
 
-func (self *Huobi) OrderStatus(id common.ActivityID, timepoint uint64) (string, error) {
-	tradeID := id.EID
-	parts := strings.Split(tradeID, "_")
-	orderID, err := strconv.ParseUint(parts[0], 10, 64)
+func (self *Huobi) OrderStatus(id string, base, quote common.Token) (string, error) {
+	orderID, err := strconv.ParseUint(id, 10, 64)
 	if err != nil {
-		// if this crashes, it means core put malformed activity ID
 		panic(err)
 	}
-	symbol := parts[1]
+	symbol := base.ID + quote.ID
 	order, err := self.interf.OrderStatus(symbol, orderID)
 	if err != nil {
 		return "", err

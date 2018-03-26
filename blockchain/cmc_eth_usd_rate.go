@@ -156,7 +156,7 @@ func (self *CMCEthUSDRate) FetchEthRate() (err error) {
 			if rate.Symbol == "ETH" {
 				newrate, err := strconv.ParseFloat(rate.PriceUSD, 64)
 				if err != nil {
-					log.Println("Cannot get usd rate: %s", err.Error())
+					log.Printf("Cannot get usd rate: %s", err.Error())
 					return err
 				} else {
 					if self.realtimeRate == 0 {

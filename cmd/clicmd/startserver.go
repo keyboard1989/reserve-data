@@ -158,7 +158,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 
 	var nonceCorpus *nonce.TimeWindow
 	var nonceDeposit *nonce.TimeWindow
-	
+
 	if !noCore {
 		nonceCorpus = nonce.NewTimeWindow(infura, config.BlockchainSigner)
 		nonceDeposit = nonce.NewTimeWindow(infura, config.DepositSigner)
