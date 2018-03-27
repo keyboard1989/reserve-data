@@ -586,6 +586,8 @@ type TradeLog struct {
 	WalletAddress  ethereum.Address
 	WalletFee      *big.Int
 	BurnFee        *big.Int
+	IP             string
+	Country        string
 }
 
 type ReserveRateEntry struct {
