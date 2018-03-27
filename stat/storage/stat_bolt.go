@@ -213,12 +213,12 @@ func (self *BoltStatStorage) SetTradeStats(freq string, t uint64, tradeStats com
 		timestamp := getTimestampByFreq(t, freq)
 		rawStats := freqBk.Get(timestamp)
 		var stats common.TradeStats
+
 		if rawStats != nil {
 			json.Unmarshal(rawStats, &stats)
 		} else {
 			stats = common.TradeStats{}
 		}
-
 		for key, value := range tradeStats {
 			sum, ok := stats[key]
 			if ok {
@@ -227,7 +227,10 @@ func (self *BoltStatStorage) SetTradeStats(freq string, t uint64, tradeStats com
 				stats[key] = value
 			}
 		}
-
+		//log.Printf("TIMESTAMP: %d", bytesToUint64(timestamp))
+		if _, ok := tradeStats["usd_volume"]; (bytesToUint64(timestamp) == 1518393600000000000) && (ok) {
+			log.Printf("DIFFERENCE: New aggregating: %.20f, change a mount is %.20f", stats["usd_volume"], tradeStats["usd_volume"])
+		}
 		dataJSON, err := json.Marshal(stats)
 		if err != nil {
 			return err
