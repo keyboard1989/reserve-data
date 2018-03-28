@@ -1782,8 +1782,28 @@ func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetWalletStats(c *gin.Context) {
-	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
-	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	fromTime, ok := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	if ok != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
+			},
+		)
+		return
+	}
+	toTime, ok := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if ok != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
+			},
+		)
+		return
+	}
 	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
 	if (tzparam < START_TIMEZONE) || (tzparam > END_TIMEZONE) {
 		c.JSON(

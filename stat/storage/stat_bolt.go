@@ -174,28 +174,36 @@ func getBucketNameByFreq(freq string) (bucketName string, err error) {
 	case "d", "D":
 		bucketName = DAY_BUCKET
 	default:
+		offset, ok := strconv.ParseInt(strings.TrimPrefix(freq, "utc"), 10, 64)
+		if (offset < START_TIMEZONE) || (offset > END_TIMEZONE) {
+			err = errors.New("Frequency is wrong, can not get bucket name")
+		}
+		if ok != nil {
+			err = ok
+		}
 		bucketName = freq
 	}
 	return
 }
 
 func getTimestampByFreq(t uint64, freq string) (result []byte) {
+	ui64Day := uint64(time.Hour * 24)
 	switch freq {
 	case "m", "M":
 		result = uint64ToBytes(t / uint64(time.Minute) * uint64(time.Minute))
 	case "h", "H":
 		result = uint64ToBytes(t / uint64(time.Hour) * uint64(time.Hour))
 	case "d", "D":
-		result = uint64ToBytes(t / uint64(time.Hour*24) * uint64(time.Hour*24))
+		result = uint64ToBytes(t / ui64Day * ui64Day)
 	default:
 		// utc timezone
-
 		offset, _ := strconv.ParseInt(strings.TrimPrefix(freq, "utc"), 10, 64)
+		ui64offset := uint64(int64(time.Hour) * offset)
 		if offset > 0 {
-			result = uint64ToBytes((t+uint64(int64(time.Hour)*offset))/uint64(time.Hour*24)*uint64(time.Hour*24) + uint64(int64(time.Hour)*offset))
+			result = uint64ToBytes((t+ui64offset)/ui64Day*ui64Day + ui64offset)
 		} else {
 			offset = 0 - offset
-			result = uint64ToBytes((t-uint64(int64(time.Hour)*offset))/uint64(time.Hour*24)*uint64(time.Hour*24) - uint64(int64(time.Hour)*offset))
+			result = uint64ToBytes((t-ui64offset)/ui64Day*ui64Day - ui64offset)
 		}
 	}
 
@@ -336,22 +344,20 @@ func (self *BoltStatStorage) GetUserStats(timestamp uint64, addr, email, wallet 
 
 func isEalier(k, timestamp []byte) bool {
 	temps := strings.Split(string(k), "_")
-	ktstamp := bytesToUint64([]byte(temps[0]))
-	if ktstamp <= (bytesToUint64(timestamp) - EXPIRED) {
-		return true
-	}
-	return false
+	return (bytes.Compare([]byte(temps[0]), timestamp) <= 0)
 }
 
 func (self *BoltStatStorage) PruneDailyBucket(timepoint uint64, timezone int64) (err error) {
 	freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
-	timestampkey := (getTimestampByFreq(timepoint, freq))
+	currentUintTimeStamp := bytesToUint64(getTimestampByFreq(timepoint, freq))
+	expiredByteTimeStamp := uint64ToBytes(currentUintTimeStamp - EXPIRED)
+
 	//update daily Address bucket
 	dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
 	self.db.Update(func(tx *bolt.Tx) error {
 		dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
 		c := dailyAddrBk.Cursor()
-		for k, _ := c.First(); k != nil && isEalier(k, timestampkey); k, _ = c.Next() {
+		for k, _ := c.First(); k != nil && isEalier(k, expiredByteTimeStamp); k, _ = c.Next() {
 			err = dailyAddrBk.Delete([]byte(k))
 		}
 		return err
@@ -361,7 +367,7 @@ func (self *BoltStatStorage) PruneDailyBucket(timepoint uint64, timezone int64) 
 	self.db.Update(func(tx *bolt.Tx) error {
 		dailyAddrBk := tx.Bucket([]byte(dailyUserBkname))
 		c := dailyAddrBk.Cursor()
-		for k, _ := c.First(); k != nil && isEalier(k, timestampkey); k, _ = c.Next() {
+		for k, _ := c.First(); k != nil && isEalier(k, expiredByteTimeStamp); k, _ = c.Next() {
 			err = dailyAddrBk.Delete([]byte(k))
 		}
 		return err
