@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -20,12 +19,10 @@ type TimeWindow struct {
 	time        uint64 `last time nonce was requested`
 }
 
-func NewTimeWindow(
-	ethclient *ethclient.Client,
-	signer blockchain.Signer) *TimeWindow {
+func NewTimeWindow(ethclient *ethclient.Client, address ethereum.Address) *TimeWindow {
 	return &TimeWindow{
 		ethclient,
-		signer,
+		address,
 		sync.Mutex{},
 		big.NewInt(0),
 		0,
@@ -37,14 +34,14 @@ func (self *TimeWindow) GetAddress() ethereum.Address {
 }
 
 func (self *TimeWindow) getNonceFromNode() (*big.Int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	nonce, err := self.ethclient.PendingNonceAt(ctx, self.GetAddress())
 	return big.NewInt(int64(nonce)), err
 }
 
 func (self *TimeWindow) MinedNonce() (*big.Int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	nonce, err := self.ethclient.NonceAt(ctx, self.GetAddress(), nil)
 	return big.NewInt(int64(nonce)), err

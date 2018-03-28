@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/blockchain"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -20,10 +19,10 @@ type AutoIncreasing struct {
 
 func NewAutoIncreasing(
 	ethclient *ethclient.Client,
-	signer blockchain.Signer) *AutoIncreasing {
+	address ethereum.Address) *AutoIncreasing {
 	return &AutoIncreasing{
 		ethclient,
-		signer,
+		address,
 		sync.Mutex{},
 		big.NewInt(0),
 	}

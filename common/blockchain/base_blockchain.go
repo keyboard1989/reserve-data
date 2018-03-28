@@ -33,6 +33,14 @@ type BaseBlockchain struct {
 	chainType   string
 }
 
+func (self *BaseBlockchain) OperatorAddresses() map[string]ethereum.Address {
+	result := map[string]ethereum.Address{}
+	for name, op := range self.operators {
+		result[name] = op.Address
+	}
+	return result
+}
+
 func (self *BaseBlockchain) RegisterOperator(name string, op *Operator) {
 	if _, found := self.operators[name]; found {
 		panic(fmt.Sprintf("Operator name %s already exist", name))
@@ -184,19 +192,19 @@ func (self *BaseBlockchain) transactTx(context context.Context, opts TxOpts, con
 	return rawTx, nil
 }
 
-func (self *BaseBlockchain) GetCallOpts(op string, block uint64) (*CallOpts, error) {
+func (self *BaseBlockchain) GetCallOpts(op string, block uint64) CallOpts {
 	operator := self.GetOperator(op)
 	var blockBig *big.Int
 	if block != 0 {
 		blockBig = big.NewInt(int64(block))
 	}
-	return &CallOpts{
+	return CallOpts{
 		Operator: operator,
 		Block:    blockBig,
-	}, nil
+	}
 }
 
-func (self *BaseBlockchain) GetTxOpts(op string, nonce *big.Int, gasPrice *big.Int, value *big.Int) (*TxOpts, error) {
+func (self *BaseBlockchain) GetTxOpts(op string, nonce *big.Int, gasPrice *big.Int, value *big.Int) (TxOpts, error) {
 	result := TxOpts{}
 	operator := self.GetOperator(op)
 	var err error
@@ -204,7 +212,7 @@ func (self *BaseBlockchain) GetTxOpts(op string, nonce *big.Int, gasPrice *big.I
 		nonce, err = self.GetNextNonce(op)
 	}
 	if err != nil {
-		return nil, err
+		return result, err
 	}
 	if gasPrice == nil {
 		gasPrice = big.NewInt(50100000000)
@@ -215,7 +223,7 @@ func (self *BaseBlockchain) GetTxOpts(op string, nonce *big.Int, gasPrice *big.I
 	result.Value = value
 	result.GasPrice = gasPrice
 	result.GasLimit = nil
-	return &result, nil
+	return result, nil
 }
 
 func (self *BaseBlockchain) GetLogs(param ether.FilterQuery) ([]types.Log, error) {
@@ -309,8 +317,8 @@ func (self *BaseBlockchain) GetEthRate(timepoint uint64) float64 {
 }
 
 func NewBaseBlockchain(
-	client *ethclient.Client,
 	rpcClient *rpc.Client,
+	client *ethclient.Client,
 	operators map[string]*Operator,
 	broadcaster *Broadcaster,
 	ethRate EthUSDRate,
