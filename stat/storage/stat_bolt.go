@@ -462,7 +462,6 @@ func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, wall
 	}
 
 	for timestamp, stat := range stats {
-		result[timestamp] = make(map[string]float64)
 		trade_countstr, found := stat[fmt.Sprintf("wallet_trade_count_%s", walletAddr)]
 		if !found {
 			continue
