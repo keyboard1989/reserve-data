@@ -636,3 +636,10 @@ type ExStatus struct {
 }
 
 type ExchangesStatus map[string]ExStatus
+
+type HeatmapType struct {
+	token string
+	value float64
+}
+
+type Heatmap map[string]HeatmapType

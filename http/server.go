@@ -2006,7 +2006,7 @@ func (self *HTTPServer) GetCountryStats(c *gin.Context) {
 		toTime = common.GetTimepoint()
 	}
 	country := c.Query("country")
-	data, err := self.stat.GetGeoData(fromtTime, toTime, country)
+	data, err := self.stat.GetGeoData(fromTime, toTime, country)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2033,9 +2033,8 @@ func (self *HTTPServer) GetHeatMap(c *gin.Context) {
 	if toTime == 0 {
 		toTime = common.GetTimepoint()
 	}
-	country := c.Query("country")
 	token := c.Query("token")
-	data, err := self.stat.GetHeatMap(fromTime, toTime, country, token)
+	data, err := self.stat.GetHeatMap(fromTime, toTime, token)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

@@ -34,6 +34,7 @@ const (
 	WALLET_ADDRESS_BUCKET       string = "wallet_address"
 	RESERVE_RATES               string = "reserve_rates"
 	EXPIRED                     uint64 = uint64(7 * time.Hour * 24)
+	COUNTRY_BUCKET              string = "country_bucket"
 )
 
 type BoltStatStorage struct {
@@ -502,6 +503,30 @@ func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, wall
 		}
 	}
 	return result, nil
+}
+
+func (self *BoltStatStorage) SetCountry(country string) error {
+	var err error
+	self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(COUNTRY_BUCKET))
+		err = b.Put([]byte(country), []byte("1"))
+		return err
+	})
+	return err
+}
+
+func (self *BoltStatStorage) GetCountries() ([]string, error) {
+	countries := []string{}
+	var err error
+	self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(COUNTRY_BUCKET))
+		c := b.Cursor()
+		for _, v := c.First(); v != nil; _, v = c.Next() {
+			countries = append(countries, string(v))
+		}
+		return err
+	})
+	return countries, err
 }
 
 func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {

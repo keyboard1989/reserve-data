@@ -19,4 +19,7 @@ type StatStorage interface {
 	SetWalletAddress(walletAddr string) error
 	GetWalletAddress() ([]string, error)
 	SetLastProcessedTradeLogTimepoint(timepoint uint64) error
+
+	SetCountry(country string) error
+	GetCountries() ([]string, error)
 }
