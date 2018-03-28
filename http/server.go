@@ -1596,7 +1596,7 @@ func (self *HTTPServer) ValidateTimeInput(c *gin.Context) (uint64, uint64, bool)
 				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
 			},
 		)
-		return 0, 0, true
+		return 0, 0, false
 	}
 	toTime, ok := strconv.ParseUint(c.Query("toTime"), 10, 64)
 	if ok != nil {
