@@ -1,21 +1,16 @@
 package blockchain
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"log"
 	"math"
 	"math/big"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	ether "github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -39,11 +34,10 @@ var (
 )
 
 type Blockchain struct {
-	rpcClient     *rpc.Client
-	client        *ethclient.Client
-	wrapper       *KNWrapperContract
-	pricing       *KNPricingContract
-	reserve       *KNReserveContract
+	*blockchain.BaseBlockchain
+	wrapper       *blockchain.Contract
+	pricing       *blockchain.Contract
+	reserve       *blockchain.Contract
 	rm            ethereum.Address
 	wrapperAddr   ethereum.Address
 	pricingAddr   ethereum.Address
@@ -52,15 +46,8 @@ type Blockchain struct {
 	whitelistAddr ethereum.Address
 	oldNetworks   []ethereum.Address
 	oldBurners    []ethereum.Address
-	signer        Signer
-	depositSigner Signer
 	tokens        []common.Token
 	tokenIndices  map[string]tbindex
-	nonce         NonceCorpus
-	nonceDeposit  NonceCorpus
-	broadcaster   *Broadcaster
-	ethRate       EthUSDRate
-	chainType     string
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
@@ -128,122 +115,6 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	}
 	log.Printf("Token indices: %+v", self.tokenIndices)
 	return nil
-}
-
-func getNextNonce(n NonceCorpus) (*big.Int, error) {
-	var nonce *big.Int
-	var err error
-	for i := 0; i < 3; i++ {
-		nonce, err = n.GetNextNonce()
-		if err == nil {
-			return nonce, nil
-		}
-	}
-	return nonce, err
-}
-
-func donothing() {}
-
-func (self *Blockchain) getTransactOpts(nonce *big.Int, gasPrice *big.Int) (*bind.TransactOpts, context.CancelFunc, error) {
-	shared := self.signer.GetTransactOpts()
-	var err error
-	if nonce == nil {
-		nonce, err = getNextNonce(self.nonce)
-	}
-	if err != nil {
-		return nil, donothing, err
-	}
-	if gasPrice == nil {
-		gasPrice = big.NewInt(50100000000)
-	}
-	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	result := bind.TransactOpts{
-		shared.From,
-		nonce,
-		shared.Signer,
-		shared.Value,
-		gasPrice,
-		shared.GasLimit,
-		timeout,
-	}
-	return &result, cancel, nil
-}
-
-func (self *Blockchain) getDepositTransactOpts(nonce, gasPrice *big.Int) (*bind.TransactOpts, context.CancelFunc, error) {
-	shared := self.depositSigner.GetTransactOpts()
-	var err error
-	if nonce == nil {
-		nonce, err = getNextNonce(self.nonceDeposit)
-	}
-	if err != nil {
-		return nil, donothing, err
-	}
-	if gasPrice == nil {
-		gasPrice = big.NewInt(50100000000)
-	}
-	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	result := bind.TransactOpts{
-		shared.From,
-		nonce,
-		shared.Signer,
-		shared.Value,
-		gasPrice,
-		shared.GasLimit,
-		timeout,
-	}
-	return &result, cancel, nil
-}
-
-func toBlockNumArg(number *big.Int) string {
-	if number == nil {
-		return "latest"
-	}
-	return hexutil.EncodeBig(number)
-}
-
-func toFilterArg(q ether.FilterQuery) interface{} {
-	arg := map[string]interface{}{
-		"fromBlock": toBlockNumArg(q.FromBlock),
-		"toBlock":   toBlockNumArg(q.ToBlock),
-		"address":   q.Addresses,
-		"topics":    q.Topics,
-	}
-	if q.FromBlock == nil {
-		arg["fromBlock"] = "0x0"
-	}
-	return arg
-}
-
-func (self *Blockchain) signAndBroadcast(tx *types.Transaction, singer Signer) (*types.Transaction, error) {
-	if tx == nil {
-		panic(errors.New("Nil tx is forbidden here"))
-	} else {
-		signedTx, err := singer.Sign(tx)
-		if err != nil {
-			return nil, err
-		}
-		failures, ok := self.broadcaster.Broadcast(signedTx)
-		log.Printf("Rebroadcasting failures: %s", failures)
-		if !ok {
-			log.Printf("Broadcasting transaction failed!!!!!!!, err: %s, retry failures: %s", err, failures)
-			if signedTx != nil {
-				return signedTx, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
-			} else {
-				return signedTx, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
-			}
-		} else {
-			return signedTx, nil
-		}
-	}
-}
-
-func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
-	nonce, err := self.nonce.MinedNonce()
-	if err != nil {
-		return 0, err
-	} else {
-		return nonce.Uint64(), err
-	}
 }
 
 func readablePrint(data map[ethereum.Address]byte) string {
@@ -402,83 +273,6 @@ func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.I
 }
 
 //====================== Readonly calls ============================
-func (self *Blockchain) CurrentBlock() (uint64, error) {
-	var blockno string
-	err := self.rpcClient.Call(&blockno, "eth_blockNumber")
-	if err != nil {
-		return 0, err
-	}
-	result, err := strconv.ParseUint(blockno, 0, 64)
-	return result, err
-}
-
-func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Hash) (tx *rpcTransaction, isPending bool, err error) {
-	var json *rpcTransaction
-	err = self.rpcClient.CallContext(ctx, &json, "eth_getTransactionByHash", hash)
-	if err != nil {
-		return nil, false, err
-	} else if json == nil {
-		return nil, false, ether.NotFound
-	} else if _, r, _ := json.tx.RawSignatureValues(); r == nil {
-		return nil, false, fmt.Errorf("server returned transaction without signature")
-	}
-	setSenderFromServer(json.tx, json.From, json.BlockHash)
-	return json, json.BlockNumber().Cmp(ethereum.Big0) == 0, nil
-}
-
-func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
-	option := context.Background()
-	tx, pending, err := self.TransactionByHash(option, hash)
-	if err == nil {
-		// tx exist
-		if pending {
-			return "", 0, nil
-		} else {
-			receipt, err := self.client.TransactionReceipt(option, hash)
-			if err != nil {
-				// incompatibily between geth and parity
-				// so even err is not nil, receipt is still there
-				// and have valid fields
-				if receipt != nil {
-					// only byzantium has status field at the moment
-					// mainnet, ropsten are byzantium, other chains such as
-					// devchain, kovan are not
-					if self.chainType == "byzantium" {
-						if receipt.Status == 1 {
-							// successful tx
-							return "mined", tx.BlockNumber().Uint64(), nil
-						} else {
-							// failed tx
-							return "failed", tx.BlockNumber().Uint64(), nil
-						}
-					} else {
-						return "mined", tx.BlockNumber().Uint64(), nil
-					}
-				} else {
-					// networking issue
-					return "", 0, err
-				}
-			} else {
-				if receipt.Status == 1 {
-					// successful tx
-					return "mined", tx.BlockNumber().Uint64(), nil
-				} else {
-					// failed tx
-					return "failed", tx.BlockNumber().Uint64(), nil
-				}
-			}
-		}
-	} else {
-		if err == ether.NotFound {
-			// tx doesn't exist. it failed
-			return "lost", 0, nil
-		} else {
-			// networking issue
-			return "", 0, err
-		}
-	}
-}
-
 func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.Int) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
@@ -634,12 +428,6 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 	return result, err
 }
 
-func (self *Blockchain) GetEthRate(timepoint uint64) float64 {
-	rate := self.ethRate.GetUSDRate(timepoint)
-	log.Printf("ETH-USD rate: %f", rate)
-	return rate
-}
-
 // return timestamp increasing array of trade log
 func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLog, error) {
 	result := []common.KNLog{}
@@ -755,84 +543,46 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 	return result, nil
 }
 
-// func (self *Blockchain) sendToken(token common.Token, amount *big.Int, address ethereum.Address) (ethereum.Hash, error) {
-// 	erc20, err := NewErc20Contract(
-// 		ethereum.HexToAddress(token.Address),
-// 		self.ethclient,
-// 	)
-// 	fmt.Printf("address: %s\n", token.Address)
-// 	if err != nil {
-// 		return ethereum.Hash{}, err
-// 	}
-// 	tx, err := erc20.Transfer(
-// 		self.signer.GetTransactOpts(),
-// 		address, amount)
-// 	if err != nil {
-// 		return ethereum.Hash{}, err
-// 	} else {
-// 		return tx.Hash(), nil
-// 	}
-// }
-//
-// func (self *Blockchain) sendETH(
-// 	amount *big.Int,
-// 	address ethereum.Address) (ethereum.Hash, error) {
-// 	// nonce, gasLimit, gasPrice gets from ethclient
-//
-// 	option := context.Background()
-// 	rm := self.signer.GetAddress()
-// 	nonce, err := self.ethclient.PendingNonceAt(
-// 		option, rm)
-// 	if err != nil {
-// 		return ethereum.Hash{}, err
-// 	}
-// 	gasLimit := big.NewInt(1000000)
-// 	gasPrice := big.NewInt(20000000000)
-// 	rawTx := types.NewTransaction(
-// 		nonce, address, amount, gasLimit, gasPrice, []byte{})
-// 	signedTx, err := self.signer.Sign(rm, rawTx)
-// 	if err != nil {
-// 		return ethereum.Hash{}, err
-// 	}
-// 	if err = self.ethclient.SendTransaction(option, signedTx); err != nil {
-// 		return ethereum.Hash{}, err
-// 	}
-// 	return signedTx.Hash(), nil
-// }
-
 func NewBlockchain(
 	client *rpc.Client,
 	etherCli *ethclient.Client,
 	clients map[string]*ethclient.Client,
 	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
-	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
-	nonceDeposit NonceCorpus,
-	ethUSDRate EthUSDRate,
+	signer blockchain.Signer, depositSigner blockchain.Signer,
+	nonceCorpus blockchain.NonceCorpus, nonceDeposit blockchain.NonceCorpus,
+	ethUSDRate blockchain.EthUSDRate,
 	chainType string) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
-	wrapper, err := NewKNWrapperContract(wrapperAddr, etherCli)
-	if err != nil {
-		return nil, err
-	}
+	wrapper := blockchain.NewContract(
+		wrapperAddr,
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/wrapper.abi",
+	)
 	if signer != nil {
 		log.Printf("reserve owner address: %s", signer.GetAddress().Hex())
 	}
 	log.Printf("reserve address: %s", reserveAddr.Hex())
-	reserve, err := NewKNReserveContract(reserveAddr, etherCli)
-	if err != nil {
-		return nil, err
-	}
+	reserve := blockchain.NewContract(
+		reserveAddr,
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/reserve.abi",
+	)
 	log.Printf("pricing address: %s", pricingAddr.Hex())
-	pricing, err := NewKNPricingContract(pricingAddr, etherCli)
-	if err != nil {
-		return nil, err
-	}
+	pricing := blockchain.NewContract(
+		pricingAddr,
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/pricing.abi",
+	)
 	log.Printf("burner address: %s", burnerAddr.Hex())
 	log.Printf("network address: %s", networkAddr.Hex())
 	log.Printf("whitelist address: %s", whitelistAddr.Hex())
+
+	operators := map[string]*Operator{
+		"pricingOP": blockchain.NewOperator(signer, nonceCorpus),
+		"depositOP": blockchain.NewOperator(depositSigner, nonceDeposit),
+	}
 	return &Blockchain{
-		rpcClient:     client,
-		client:        etherCli,
+		blockchain.NewBaseBlockchain(
+			client, rpcClient, operators, blockchain.NewBroadcaster(clients),
+			ethUSDRate, chaintype,
+		),
 		wrapper:       wrapper,
 		pricing:       pricing,
 		reserve:       reserve,
@@ -844,13 +594,6 @@ func NewBlockchain(
 		whitelistAddr: whitelistAddr,
 		oldNetworks:   []ethereum.Address{},
 		oldBurners:    []ethereum.Address{},
-		signer:        signer,
-		depositSigner: depositSigner,
-		ethRate:       ethUSDRate,
 		tokens:        []common.Token{},
-		nonce:         nonceCorpus,
-		nonceDeposit:  nonceDeposit,
-		broadcaster:   NewBroadcaster(clients),
-		chainType:     chainType,
 	}, nil
 }

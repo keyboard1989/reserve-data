@@ -95,7 +95,7 @@ func run(verify *Verification) {
 		if *depositToken != "" {
 			token, err = common.GetToken(*depositToken)
 			if err != nil {
-				log.Println(err.Error)
+				log.Println(err.Error())
 				os.Exit(1)
 			}
 		} else {

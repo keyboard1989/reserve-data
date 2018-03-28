@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	ether "github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -21,106 +22,8 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-type tbindex struct {
-	BulkIndex   uint64
-	IndexInBulk uint64
-}
-
-type txExtraInfo struct {
-	BlockNumber *string
-	BlockHash   ethereum.Hash
-	From        ethereum.Address
-}
-
-type rpcTransaction struct {
-	tx *types.Transaction
-	txExtraInfo
-}
-type NonceCorpus interface {
-	GetAddress() ethereum.Address
-	GetNextNonce() (*big.Int, error)
-	MinedNonce() (*big.Int, error)
-}
-
-type Signer interface {
-	GetAddress() ethereum.Address
-	Sign(*types.Transaction) (*types.Transaction, error)
-	GetTransactOpts() *bind.TransactOpts
-}
 type Blockchain struct {
-	rpcClient *rpc.Client
-	client    *ethclient.Client
-	// wrapper            *originalbc.KNWrapperContract
-	intermediateSigner Signer
-	nonceIntermediate  NonceCorpus
-	chainType          string
-}
-
-func (tx *rpcTransaction) UnmarshalJSON(msg []byte) error {
-	if err := json.Unmarshal(msg, &tx.tx); err != nil {
-		return err
-	}
-	return json.Unmarshal(msg, &tx.txExtraInfo)
-}
-
-func getNextNonce(n NonceCorpus) (*big.Int, error) {
-	var nonce *big.Int
-	var err error
-	for i := 0; i < 3; i++ {
-		nonce, err = n.GetNextNonce()
-		if err == nil {
-			return nonce, nil
-		}
-	}
-	return nonce, err
-}
-
-func (tx *rpcTransaction) BlockNumber() *big.Int {
-	if tx.txExtraInfo.BlockNumber == nil {
-		return big.NewInt(0)
-	} else {
-		blockno, err := hexutil.DecodeBig(*tx.txExtraInfo.BlockNumber)
-		if err != nil {
-			log.Printf("Error decoding block number: %v", err)
-			return big.NewInt(0)
-		} else {
-			return blockno
-		}
-	}
-}
-
-func ensureContext(ctx context.Context) context.Context {
-	if ctx == nil {
-		return context.TODO()
-	}
-	return ctx
-}
-
-func donothing() {}
-
-func (self *Blockchain) getIntermediateTransactOpts(nonce, gasPrice *big.Int) (*bind.TransactOpts, context.CancelFunc, error) {
-	shared := self.intermediateSigner.GetTransactOpts()
-	var err error
-	if nonce == nil {
-		nonce, err = getNextNonce(self.nonceIntermediate)
-	}
-	if err != nil {
-		return nil, donothing, err
-	}
-	if gasPrice == nil {
-		gasPrice = big.NewInt(50100000000)
-	}
-	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	result := bind.TransactOpts{
-		shared.From,
-		nonce,
-		shared.Signer,
-		shared.Value,
-		gasPrice,
-		shared.GasLimit,
-		timeout,
-	}
-	return &result, cancel, nil
+	*blockchain.BaseBlockchain
 }
 
 func packData(method string, params ...interface{}) ([]byte, error) {
@@ -197,74 +100,6 @@ func (self *Blockchain) SendETHFromAccountToExchange(amount *big.Int, exchangeAd
 	return signTX, nil
 }
 
-func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Hash) (tx *rpcTransaction, isPending bool, err error) {
-	var json *rpcTransaction
-	err = self.rpcClient.CallContext(ctx, &json, "eth_getTransactionByHash", hash)
-	if err != nil {
-		return nil, false, err
-	} else if json == nil {
-		return nil, false, ether.NotFound
-	} else if _, r, _ := json.tx.RawSignatureValues(); r == nil {
-		return nil, false, fmt.Errorf("server returned transaction without signature")
-	}
-	return json, json.BlockNumber == nil, nil
-}
-
-func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
-	option := context.Background()
-	tx, pending, err := self.TransactionByHash(option, hash)
-	if err != nil {
-		return "", 0, err
-	}
-	if err == nil {
-		// tx exist
-		if pending {
-			return "", 0, nil
-		} else {
-			receipt, err := self.client.TransactionReceipt(option, hash)
-			if err != nil {
-				log.Println("Get receipt err: ", err.Error())
-				log.Printf("Receipt: %+v", receipt)
-				if receipt != nil {
-					// only byzantium has status field at the moment
-					// mainnet, ropsten are byzantium, other chains such as
-					// devchain, kovan are not
-					if self.chainType == "byzantium" {
-						if receipt.Status == 1 {
-							// successful tx
-							return "mined", tx.BlockNumber().Uint64(), nil
-						} else {
-							// failed tx
-							return "failed", tx.BlockNumber().Uint64(), nil
-						}
-					} else {
-						return "mined", tx.BlockNumber().Uint64(), nil
-					}
-				} else {
-					// networking issue
-					return "", 0, err
-				}
-			} else {
-				if receipt.Status == 1 {
-					// successful tx
-					return "mined", tx.BlockNumber().Uint64(), nil
-				} else {
-					// failed tx
-					return "failed", tx.BlockNumber().Uint64(), nil
-				}
-			}
-		}
-	} else {
-		if err == ether.NotFound {
-			// tx doesn't exist. it failed
-			return "lost", 0, nil
-		} else {
-			// networking issue
-			return "", 0, err
-		}
-	}
-}
-
 func NewBlockchain(intermediateSigner Signer, ethEndpoint string) (*Blockchain, error) {
 	log.Printf("intermediate address: %s", intermediateSigner.GetAddress().Hex())
 	//set client & endpoint
@@ -285,18 +120,6 @@ func NewBlockchain(intermediateSigner Signer, ethEndpoint string) (*Blockchain, 
 		intermediateSigner: intermediateSigner,
 		nonceIntermediate:  intermediatenonce,
 	}, nil
-}
-
-func getBigIntFromFloat(amount float64, decimal int64) *big.Int {
-	FAmount := big.NewFloat(amount)
-
-	power := math.Pow10(int(decimal))
-
-	FDecimal := (big.NewFloat(0)).SetFloat64(power)
-	FAmount.Mul(FAmount, FDecimal)
-	IAmount := big.NewInt(0)
-	FAmount.Int(IAmount)
-	return IAmount
 }
 
 // func (self *Blockchain) CheckBalance(token common.Token) *big.Int {

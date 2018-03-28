@@ -11,7 +11,6 @@ import (
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	huobiblockchain "github.com/KyberNetwork/reserve-data/exchange/huobi/blockchain"
 	huobihttp "github.com/KyberNetwork/reserve-data/exchange/huobi/http"
 	huobistorage "github.com/KyberNetwork/reserve-data/exchange/huobi/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -28,7 +27,7 @@ type Huobi struct {
 	addresses         *common.ExchangeAddresses
 	exchangeInfo      *common.ExchangeInfo
 	fees              common.ExchangeFees
-	blockchain        huobiblockchain.Blockchain
+	blockchain        HuobiBlockchain
 	intermediatorAddr ethereum.Address
 	storage           huobistorage.Storage
 }
@@ -279,10 +278,12 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 	if err != nil {
 		result.Valid = false
 		result.Error = err.Error()
+		result.Status = false
 	} else {
 		result.AvailableBalance = map[string]float64{}
 		result.LockedBalance = map[string]float64{}
 		result.DepositBalance = map[string]float64{}
+		result.Status = true
 		if resp_data.Status != "ok" {
 			result.Valid = false
 			result.Error = fmt.Sprintf("Cannot fetch ebalance")
@@ -301,7 +302,6 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 					result.DepositBalance[tokenID] = 0
 				}
 			}
-			return result, nil
 		}
 	}
 	return result, nil
@@ -497,7 +497,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, txHash, currency string, 
 					}
 				}
 			}
-			return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %s deposits at the same time.", len(common.SupportedTokens)*2))
+			return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.SupportedTokens)*2))
 		} else if status == "failed" || status == "lost" {
 			data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "failed", "failed", sentAmount, common.GetTimestamp()}
 			err = self.storage.StoreIntermediateTx(id, data)
@@ -550,7 +550,10 @@ func (self *Huobi) OrderStatus(id string, base, quote common.Token) (string, err
 	}
 }
 
-func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface, huobiConfig common.HuobiConfig) *Huobi {
+func NewHuobi(
+	addressConfig map[string]string,
+	feeConfig common.ExchangeFees,
+	interf HuobiInterface, huobiConfig common.HuobiConfig) *Huobi {
 	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
 	bc, err := huobiblockchain.NewBlockchain(huobiConfig.IntermediatorSigner, huobiConfig.EthEndPoint)
 	if err != nil {

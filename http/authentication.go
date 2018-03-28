@@ -16,10 +16,10 @@ type Authentication interface {
 }
 
 type KNAuthentication struct {
-	KNSecret        string
-	KNReadOnly      string
-	KNConfiguration string
-	KNConfirmConf   string
+	KNSecret        string `json:"kn_secret"`
+	KNReadOnly      string `json:"kn_readonly"`
+	KNConfiguration string `json:"kn_configuration"`
+	KNConfirmConf   string `json:"kn_confirm_configuration"`
 }
 
 func (self KNAuthentication) KNSign(msg string) string {

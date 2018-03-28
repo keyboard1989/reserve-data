@@ -13,7 +13,7 @@ import (
 
 type AutoIncreasing struct {
 	ethclient   *ethclient.Client
-	signer      blockchain.Signer
+	address     ethereum.Address
 	mu          sync.Mutex
 	manualNonce *big.Int
 }
@@ -30,20 +30,20 @@ func NewAutoIncreasing(
 }
 
 func (self *AutoIncreasing) GetAddress() ethereum.Address {
-	return self.signer.GetAddress()
+	return self.GetAddress()
 }
 
 func (self *AutoIncreasing) getNonceFromNode() (*big.Int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	nonce, err := self.ethclient.PendingNonceAt(ctx, self.signer.GetAddress())
+	nonce, err := self.ethclient.PendingNonceAt(ctx, self.GetAddress())
 	return big.NewInt(int64(nonce)), err
 }
 
 func (self *AutoIncreasing) MinedNonce() (*big.Int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	nonce, err := self.ethclient.NonceAt(ctx, self.signer.GetAddress(), nil)
+	nonce, err := self.ethclient.NonceAt(ctx, self.GetAddress(), nil)
 	return big.NewInt(int64(nonce)), err
 }
 

@@ -25,7 +25,7 @@ type HTTPServer struct {
 
 func IsIntime(nonce string) bool {
 	serverTime := common.GetTimepoint()
-	log.Printf("Server time: %d, None: %d", serverTime, nonce)
+	log.Printf("Server time: %d, None: %s", serverTime, nonce)
 	nonceInt, err := strconv.ParseInt(nonce, 10, 64)
 	if err != nil {
 		log.Printf("IsIntime returns false, err: %v", err)

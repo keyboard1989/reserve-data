@@ -43,6 +43,17 @@ func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 
 func (self *Fetcher) AddExchange(exchange Exchange) {
 	self.exchanges = append(self.exchanges, exchange)
+	// initiate exchange status as up
+	exchangeStatus, _ := self.storage.GetExchangeStatus()
+	if exchangeStatus == nil {
+		exchangeStatus = map[string]common.ExStatus{}
+	}
+	exchangeID := string(exchange.ID())
+	exchangeStatus[exchangeID] = common.ExStatus{
+		Timestamp: common.GetTimepoint(),
+		Status:    true,
+	}
+	self.storage.UpdateExchangeStatus(exchangeStatus)
 }
 
 func (self *Fetcher) Stop() error {
@@ -355,6 +366,22 @@ func (self *Fetcher) PersistSnapshot(
 		v := value.(common.EBalanceEntry)
 		allEBalances[key.(common.ExchangeID)] = v
 		if !v.Valid {
+			// get old auth data, because get balance error then we have to keep
+			// balance to the latest version then analytic won't get exchange balance to zero
+			authVersion, err := self.storage.CurrentAuthDataVersion(common.GetTimepoint())
+			if err == nil {
+				oldAuth, err := self.storage.GetAuthData(authVersion)
+				if err != nil {
+					allEBalances[key.(common.ExchangeID)] = common.EBalanceEntry{
+						Error: err.Error(),
+					}
+				} else {
+					// update old auth to current
+					newEbalance := oldAuth.ExchangeBalances[key.(common.ExchangeID)]
+					newEbalance.Error = v.Error
+					allEBalances[key.(common.ExchangeID)] = newEbalance
+				}
+			}
 			snapshot.Valid = false
 			snapshot.Error = v.Error
 		}

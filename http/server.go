@@ -1803,6 +1803,74 @@ func (self *HTTPServer) GetReserveRate(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetExchangesStatus(c *gin.Context) {
+	data, err := self.app.GetExchangeStatus()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) UpdateExchangeStatus(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+	exchange := postForm.Get("exchange")
+	status, err := strconv.ParseBool(postForm.Get("status"))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	_, err = common.GetExchange(strings.ToLower(exchange))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	err = self.app.UpdateExchangeStatus(exchange, status)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -1852,6 +1920,8 @@ func (self *HTTPServer) Run() {
 		self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
 		self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
 
+		self.r.GET("/get-exchange-status", self.GetExchangesStatus)
+		self.r.POST("/update-exchange-status", self.UpdateExchangeStatus)
 	}
 
 	if self.stat != nil {
