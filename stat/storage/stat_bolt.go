@@ -340,23 +340,17 @@ func isEalier(k, timestamp []byte) bool {
 	if ktstamp <= (bytesToUint64(timestamp) - EXPIRED) {
 		return true
 	}
-	log.Printf("PRUNE: stop at %d, which is not expired regarding %d", ktstamp, bytesToUint64(timestamp)-EXPIRED)
 	return false
 }
 
 func (self *BoltStatStorage) PruneDailyBucket(timepoint uint64, timezone int64) (err error) {
-	//log.Printf("PRUNE: Pruning at timestamp  %d ...", timepoint)
 	dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
 	freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 	timestampkey := (getTimestampByFreq(timepoint, freq))
 	self.db.Update(func(tx *bolt.Tx) error {
 		dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
 		c := dailyAddrBk.Cursor()
-		//for k, _ := c.Seek(newTimepoint); k != nil && bytes.HasPrefix(k, newTimepoint); k, _ = c.Prev() {
 		for k, _ := c.First(); k != nil && isEalier(k, timestampkey); k, _ = c.Next() {
-			ss := strings.Split(string(k), "_")
-			ktstamp := bytesToUint64([]byte(ss[0]))
-			log.Printf("PRUNE: found key %d_%s_%s which expired at %d", ktstamp, ss[1], ss[len(ss)-1], bytesToUint64(timestampkey))
 			err = dailyAddrBk.Delete([]byte(k))
 		}
 		return err
@@ -364,16 +358,14 @@ func (self *BoltStatStorage) PruneDailyBucket(timepoint uint64, timezone int64) 
 	return
 }
 
-// func (self *BoltStatStorage )
-
 func (self *BoltStatStorage) SetUserStats(timestamp uint64, addr, email, wallet string, kycEd bool, timezone int64, stats common.TradeStats) error {
 	var err error
 	freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 	if err = self.SetTradeStats(freq, timestamp, stats); err != nil {
 		return err
 	}
-	//self.PruneDailyBucket(timestamp, timezone)
-	//self.CheckPrune
+	self.PruneDailyBucket(timestamp, timezone)
+
 	self.db.Update(func(tx *bolt.Tx) error {
 
 		dailyTimestamp := string(getTimestampByFreq(timestamp, freq))
