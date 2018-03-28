@@ -179,7 +179,8 @@ func (self *Fetcher) RunTradeLogProcessor() {
 		log.Printf("AGGREGATE %d trades from %d to %d", len(tradeLogs), fromTime, toTime)
 		if len(tradeLogs) > 0 {
 			var last uint64
-			for _, trade := range tradeLogs {
+			for i := len(tradeLogs) - 1; i >= 0; i-- {
+				trade := tradeLogs[i]
 				if err := self.aggregateTradeLog(trade); err == nil {
 					if trade.Timestamp > last {
 						last = trade.Timestamp
@@ -409,14 +410,14 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 	}
 
 	updates := common.TradeStats{
-		strings.Join([]string{"assets_volume", srcAddr}, "_"):              srcAmount,
-		strings.Join([]string{"assets_volume", dstAddr}, "_"):              destAmount,
-		strings.Join([]string{"assets_eth_amount", tokenAddr}, "_"):        ethAmount,
-		strings.Join([]string{"assets_usd_amount", srcAddr}, "_"):          trade.FiatAmount,
-		strings.Join([]string{"assets_usd_amount", dstAddr}, "_"):          trade.FiatAmount,
-		strings.Join([]string{"burn_fee", reserveAddr}, "_"):               burnFee,
-		strings.Join([]string{"wallet_fee", reserveAddr, walletAddr}, "_"): walletFee,
-		strings.Join([]string{"user_volume", userAddr}, "_"):               trade.FiatAmount,
+		fmt.Sprintf("assets_volume_%s", srcAddr):                 srcAmount,
+		fmt.Sprintf("assets_volume_%s", dstAddr):                 destAmount,
+		fmt.Sprintf("assets_eth_amount_%s", tokenAddr):           ethAmount,
+		fmt.Sprintf("assets_usd_amount_%s", srcAddr):             trade.FiatAmount,
+		fmt.Sprintf("assets_usd_amount_%s", dstAddr):             trade.FiatAmount,
+		fmt.Sprintf("burn_fee_%s", reserveAddr):                  burnFee,
+		fmt.Sprintf("wallet_fee_%s_%s", reserveAddr, walletAddr): walletFee,
+		fmt.Sprintf("user_volume_%s", userAddr):                  trade.FiatAmount,
 	}
 
 	for _, freq := range []string{"M", "H", "D"} {
@@ -467,10 +468,10 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 
 	//stats on wallet address
 	updates = common.TradeStats{
-		strings.Join([]string{"wallet_eth_volume", walletAddr}, "_"):  ethAmount,
-		strings.Join([]string{"wallet_usd_volume", walletAddr}, "_"):  trade.FiatAmount,
-		strings.Join([]string{"wallet_burn_fee", walletAddr}, "_"):    burnFee,
-		strings.Join([]string{"wallet_trade_count", walletAddr}, "_"): 1,
+		fmt.Sprintf("wallet_eth_volume_%s", walletAddr):  ethAmount,
+		fmt.Sprintf("wallet_usd_volume_%s", walletAddr):  trade.FiatAmount,
+		fmt.Sprintf("wallet_burn_fee_%s", walletAddr):    burnFee,
+		fmt.Sprintf("wallet_trade_count_%s", walletAddr): 1,
 	}
 	//update to timezone buckets
 	if err = self.updateTimeZoneBuckets(trade.Timestamp, updates); err != nil {
