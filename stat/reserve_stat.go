@@ -229,7 +229,7 @@ func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error
 	addrs := []string{}
 	if user == "" {
 		// address is not associated to any users
-		addrs = append(addrs, address.Hex())
+		addrs = append(addrs, strings.ToLower(address.Hex()))
 	} else {
 		addrs, _, err := self.userStorage.GetAddressesOfUser(user)
 		log.Printf("got addresses %v for address %s", addrs, strings.ToLower(address.Hex()))
