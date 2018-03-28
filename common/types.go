@@ -450,6 +450,7 @@ type EBalanceEntry struct {
 	AvailableBalance map[string]float64
 	LockedBalance    map[string]float64
 	DepositBalance   map[string]float64
+	Status           bool
 }
 
 type AllEBalanceResponse struct {
@@ -605,3 +606,10 @@ type AllTradeHistory struct {
 	Timestamp Timestamp
 	Data      map[ExchangeID]ExchangeTradeHistory
 }
+
+type ExStatus struct {
+	Timestamp uint64 `json:"timestamp"`
+	Status    bool   `json:"status"`
+}
+
+type ExchangesStatus map[string]ExStatus

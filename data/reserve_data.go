@@ -192,6 +192,23 @@ func (self ReserveData) GetRate(timepoint uint64) (common.AllRateResponse, error
 	}
 }
 
+func (self ReserveData) GetExchangeStatus() (common.ExchangesStatus, error) {
+	data, err := self.storage.GetExchangeStatus()
+	return data, err
+}
+
+func (self ReserveData) UpdateExchangeStatus(exchange string, status bool) error {
+	currentExchangeStatus, err := self.storage.GetExchangeStatus()
+	if err != nil {
+		return err
+	}
+	currentExchangeStatus[exchange] = common.ExStatus{
+		Timestamp: common.GetTimepoint(),
+		Status:    status,
+	}
+	return self.storage.UpdateExchangeStatus(currentExchangeStatus)
+}
+
 func (self ReserveData) GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error) {
 	return self.storage.GetAllRecords(fromTime, toTime)
 }

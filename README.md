@@ -883,6 +883,41 @@ response
 {"data":["0xb9e29984fe50602e7a619662ebed4f90d93824c7","0xf1aa99c69715f423086008eb9d06dc1e35cc504d"],"success":true}
 ``` 
 
+### Get exchanges status
+```
+<host>:8000/get-exchange-status
+GET request
+```
+
+eg:
+```
+curl -x GET http://localhost:8000/get-exchange-status
+```
+
+response:
+```
+{"data":{"binance":{"timestamp":1521532176702,"status":true},"bittrex":{"timestamp":1521532176704,"status":true},"huobi":{"timestamp":1521532176703,"status":true}},"success":true}
+```
+
+### Update exchanges status
+```
+<host>:8000/update-exchange-status
+POST request
+
+params: 
+exchange (string): exchange name (eg: 'binance')
+status (bool): true (up), false (down)
+```
+
+eg:
+```
+curl -X POST \
+  http://localhost:8000/update-exchange-status \
+  -H 'content-type: multipart/form-data' \
+  -F exchange=binance \
+  -F status=false
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 
