@@ -344,11 +344,22 @@ func isEalier(k, timestamp []byte) bool {
 }
 
 func (self *BoltStatStorage) PruneDailyBucket(timepoint uint64, timezone int64) (err error) {
-	dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
 	freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 	timestampkey := (getTimestampByFreq(timepoint, freq))
+	//update daily Address bucket
+	dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
 	self.db.Update(func(tx *bolt.Tx) error {
 		dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
+		c := dailyAddrBk.Cursor()
+		for k, _ := c.First(); k != nil && isEalier(k, timestampkey); k, _ = c.Next() {
+			err = dailyAddrBk.Delete([]byte(k))
+		}
+		return err
+	})
+	//update daily User bucket
+	dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
+	self.db.Update(func(tx *bolt.Tx) error {
+		dailyAddrBk := tx.Bucket([]byte(dailyUserBkname))
 		c := dailyAddrBk.Cursor()
 		for k, _ := c.First(); k != nil && isEalier(k, timestampkey); k, _ = c.Next() {
 			err = dailyAddrBk.Delete([]byte(k))
