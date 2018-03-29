@@ -637,6 +637,14 @@ type ExStatus struct {
 
 type ExchangesStatus map[string]ExStatus
 
+type TradeLogGeoInfoResp struct {
+	Success bool `json:"success"`
+	Data    struct {
+		IP      string `json:"IP"`
+		Country string `json:"Country"`
+	} `json:"data"`
+}
+
 type HeatmapType struct {
 	token string
 	value float64

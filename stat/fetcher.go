@@ -1,6 +1,7 @@
 package stat
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -309,14 +310,19 @@ func (self *Fetcher) RunBlockFetcher() {
 }
 
 func getTradeGeo(txHash string) (string, string, error) {
-	url := fmt.Sprintf("txhash=%s", txHash)
+	url := fmt.Sprintf("https://broadcast.kyber.network/get-tx-info/%s", txHash)
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", "", err
 	}
+	response := common.TradeLogGeoInfoResp{}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	log.Println("Tx Geo: ", body)
+	log.Println("Tx Geo: ", string(body))
+	if err != nil {
+		return "", "", err
+	}
+	err = json.Unmarshal(body, &response)
 	return "", "", err
 }
 
