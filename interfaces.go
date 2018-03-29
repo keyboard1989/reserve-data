@@ -49,7 +49,7 @@ type ReserveData interface {
 	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
 
 	GetExchangeStatus() (common.ExchangesStatus, error)
-	UpdateExchangeStatus(exchange string, status bool) error
+	UpdateExchangeStatus(exchange string, status bool, timestamp uint64) error
 
 	Run() error
 	Stop() error

@@ -1958,6 +1958,17 @@ func (self *HTTPServer) UpdateExchangeStatus(c *gin.Context) {
 		)
 		return
 	}
+	timestamp, err := strconv.ParseUint(postForm.Get("timestamp"), 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
 	_, err = common.GetExchange(strings.ToLower(exchange))
 	if err != nil {
 		c.JSON(
@@ -1969,7 +1980,7 @@ func (self *HTTPServer) UpdateExchangeStatus(c *gin.Context) {
 		)
 		return
 	}
-	err = self.app.UpdateExchangeStatus(exchange, status)
+	err = self.app.UpdateExchangeStatus(exchange, status, timestamp)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

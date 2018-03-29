@@ -197,13 +197,13 @@ func (self ReserveData) GetExchangeStatus() (common.ExchangesStatus, error) {
 	return data, err
 }
 
-func (self ReserveData) UpdateExchangeStatus(exchange string, status bool) error {
+func (self ReserveData) UpdateExchangeStatus(exchange string, status bool, timestamp uint64) error {
 	currentExchangeStatus, err := self.storage.GetExchangeStatus()
 	if err != nil {
 		return err
 	}
 	currentExchangeStatus[exchange] = common.ExStatus{
-		Timestamp: common.GetTimepoint(),
+		Timestamp: timestamp,
 		Status:    status,
 	}
 	return self.storage.UpdateExchangeStatus(currentExchangeStatus)

@@ -907,6 +907,7 @@ POST request
 params: 
 exchange (string): exchange name (eg: 'binance')
 status (bool): true (up), false (down)
+timestamp (integer): timestamp of the exchange status
 ```
 
 eg:
