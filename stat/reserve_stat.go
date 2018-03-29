@@ -41,7 +41,6 @@ func NewReserveStats(
 func validateTimeWindow(fromTime, toTime uint64, freq string) (uint64, uint64, error) {
 	var from = fromTime * 1000000
 	var to = toTime * 1000000
-
 	switch freq {
 	case "m", "M":
 		if to-from > uint64((time.Hour * 24).Nanoseconds()) {
@@ -114,7 +113,7 @@ func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr s
 	return data, err
 }
 
-func (self ReserveStats) GetTradeSummary(fromTime, toTime uint64) (common.StatTicks, error) {
+func (self ReserveStats) GetTradeSummary(fromTime, toTime uint64, timezone int64) (common.StatTicks, error) {
 	data := common.StatTicks{}
 
 	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, "D")
@@ -122,7 +121,7 @@ func (self ReserveStats) GetTradeSummary(fromTime, toTime uint64) (common.StatTi
 		return data, err
 	}
 
-	data, err = self.statStorage.GetTradeSummary(fromTime, toTime)
+	data, err = self.statStorage.GetTradeSummary(fromTime, toTime, timezone)
 	return data, err
 }
 
@@ -190,6 +189,17 @@ func isDuplicate(currentRate, latestRate common.ReserveRates) bool {
 		}
 	}
 	return true
+}
+func (self ReserveStats) GetWalletStats(fromTime uint64, toTime uint64, walletAddr string, timezone int64) (common.StatTicks, error) {
+	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, "D")
+	if err != nil {
+		return nil, err
+	}
+	return self.statStorage.GetWalletStats(fromTime, toTime, walletAddr, timezone)
+}
+
+func (self ReserveStats) GetWalletAddress() ([]string, error) {
+	return self.statStorage.GetWalletAddress()
 }
 
 func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error) {

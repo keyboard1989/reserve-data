@@ -33,7 +33,11 @@ type HTTPServer struct {
 	r           *gin.Engine
 }
 
-const MAX_TIMESPOT uint64 = 18446744073709551615
+const (
+	MAX_TIMESPOT   uint64 = 18446744073709551615
+	START_TIMEZONE int64  = -11
+	END_TIMEZONE   int64  = 14
+)
 
 func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 	timestamp := c.DefaultQuery("timestamp", "")
@@ -1582,10 +1586,49 @@ func (self *HTTPServer) GetUserVolume(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) ValidateTimeInput(c *gin.Context) (uint64, uint64, bool) {
+	fromTime, ok := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	if ok != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
+			},
+		)
+		return 0, 0, false
+	}
+	toTime, ok := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if ok != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
+			},
+		)
+		return 0, 0, false
+	}
+	return fromTime, toTime, true
+}
+
 func (self *HTTPServer) GetTradeSummary(c *gin.Context) {
-	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
-	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
-	data, err := self.stat.GetTradeSummary(fromTime, toTime)
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
+	if (tzparam < START_TIMEZONE) || (tzparam > END_TIMEZONE) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "Timezone is not supported",
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetTradeSummary(fromTime, toTime, tzparam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1766,6 +1809,80 @@ func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 	}
 }
 
+func (self *HTTPServer) GetWalletStats(c *gin.Context) {
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
+	if (tzparam < START_TIMEZONE) || (tzparam > END_TIMEZONE) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "Timezone is not supported",
+			},
+		)
+		return
+	}
+	if toTime == 0 {
+		toTime = common.GetTimepoint()
+	}
+	walletAddr := ethereum.HexToAddress(c.Query("walletAddr"))
+	cap := big.NewInt(0)
+	cap.Exp(big.NewInt(2), big.NewInt(128), big.NewInt(0))
+	if walletAddr.Big().Cmp(cap) < 0 {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "Wallet address is invalid, its integer form must be larger than 2^128",
+			},
+		)
+		return
+	}
+
+	data, err := self.stat.GetWalletStats(fromTime, toTime, walletAddr.Hex(), tzparam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetWalletAddress(c *gin.Context) {
+	data, err := self.stat.GetWalletAddress()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) GetReserveRate(c *gin.Context) {
 	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
@@ -1938,6 +2055,8 @@ func (self *HTTPServer) Run() {
 		self.r.POST("/update-user-addresses", self.UpdateUserAddresses)
 		self.r.GET("/get-pending-addresses", self.GetPendingAddresses)
 		self.r.GET("/get-reserve-rate", self.GetReserveRate)
+		self.r.GET("/get-wallet-stats", self.GetWalletStats)
+		self.r.GET("/get-wallet-address", self.GetWalletAddress)
 	}
 
 	self.r.Run(self.host)
