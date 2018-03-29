@@ -222,12 +222,20 @@ func (self ReserveStats) UpdateUserAddresses(userID string, addrs []ethereum.Add
 
 func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error) {
 	user, _, err := self.userStorage.GetUserOfAddress(address.Hex())
+	log.Printf("got user %s for address %s", user, strings.ToLower(address.Hex()))
 	if err != nil {
 		return false, err
 	}
-	addrs, _, err := self.userStorage.GetAddressesOfUser(user)
-	if err != nil {
-		return false, err
+	addrs := []string{}
+	if user == "" {
+		// address is not associated to any users
+		addrs = append(addrs, strings.ToLower(address.Hex()))
+	} else {
+		addrs, _, err := self.userStorage.GetAddressesOfUser(user)
+		log.Printf("got addresses %v for address %s", addrs, strings.ToLower(address.Hex()))
+		if err != nil {
+			return false, err
+		}
 	}
 	today := common.GetTimepoint() / uint64(24*time.Hour/time.Millisecond) * uint64(24*time.Hour/time.Millisecond)
 	var totalVolume float64 = 0.0
@@ -244,6 +252,8 @@ func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error
 					break
 				}
 			}
+		} else {
+			log.Printf("Getting volumes for %s failed, err: %s", strings.ToLower(address.Hex()), err.Error())
 		}
 	}
 	cap, err := self.GetCapByAddress(address)
