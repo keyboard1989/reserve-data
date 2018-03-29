@@ -529,6 +529,41 @@ func (self *BoltStatStorage) GetCountries() ([]string, error) {
 	return countries, err
 }
 
+func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country string, timezone int64) (common.StatTicks, error) {
+	result := common.StatTicks{}
+	tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
+	stats, err := self.getTradeStats(fromTime, toTime, tzstring)
+	if err != nil {
+		return result, err
+	}
+
+	for timestamp, stat := range stats {
+		trade_countstr, found := stat[fmt.Sprintf("geo_trade_count_%s", country)]
+		if !found {
+			continue
+		}
+		tradeCount := float64(trade_countstr)
+		var avgEth, avgUsd float64
+		if tradeCount > 0 {
+			avgEth = float64(stat[fmt.Sprintf("geo_eth_volume_%s", country)]) / tradeCount
+			avgUsd = float64(stat[fmt.Sprintf("geo_usd_volume_%s", country)]) / tradeCount
+		}
+		result[timestamp] = map[string]float64{
+			"total_eth_volume":     stat[fmt.Sprintf("geo_eth_volume_%s", country)],
+			"total_usd_amount":     stat[fmt.Sprintf("geo_usd_volume_%s", country)],
+			"total_burn_fee":       stat[fmt.Sprintf("geo_burn_fee_%s", country)],
+			"unique_addresses":     stat[fmt.Sprintf("geo_first_trade_in_day_%s", country)],
+			"new_unique_addresses": stat[fmt.Sprintf("geo_first_trade_ever_%s", country)],
+			"kyced_addresses":      stat[fmt.Sprintf("geo_kyced_in_day_%s", country)],
+			"total_trade":          tradeCount,
+			"eth_per_trade":        avgEth,
+			"usd_per_trade":        avgUsd,
+		}
+	}
+	return result, nil
+
+}
+
 func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {
 	result := common.StatTicks{}
 
