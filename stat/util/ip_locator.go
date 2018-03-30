@@ -1,10 +1,10 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
-	"errors"
 
 	"github.com/oschwald/geoip2-golang"
 )
@@ -33,10 +33,10 @@ func IpToCountry(IP string) (string, error) {
 		log.Printf("failed to query data from geo-database!")
 		return country, err
 	}
-	
+
 	country = record.Country.Names["en"] //name of country in english
 	if country == "" {
 		return country, errors.New(fmt.Sprintf("Can't find country of the given IP: %s", IP))
 	}
-	return  country, nil
+	return country, nil
 }

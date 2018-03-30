@@ -2006,7 +2006,18 @@ func (self *HTTPServer) GetCountryStats(c *gin.Context) {
 		toTime = common.GetTimepoint()
 	}
 	country := c.Query("country")
-	data, err := self.stat.GetGeoData(fromTime, toTime, country)
+	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
+	if (tzparam < START_TIMEZONE) || (tzparam > END_TIMEZONE) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "Timezone is not supported",
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetGeoData(fromTime, toTime, country, tzparam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2034,7 +2045,18 @@ func (self *HTTPServer) GetHeatMap(c *gin.Context) {
 		toTime = common.GetTimepoint()
 	}
 	token := c.Query("token")
-	data, err := self.stat.GetHeatMap(fromTime, toTime, token)
+	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
+	if (tzparam < START_TIMEZONE) || (tzparam > END_TIMEZONE) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "Timezone is not supported",
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetHeatMap(fromTime, toTime, token, tzparam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

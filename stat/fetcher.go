@@ -13,6 +13,7 @@ import (
 	// "sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/stat/util"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -311,6 +312,7 @@ func (self *Fetcher) RunBlockFetcher() {
 
 func getTradeGeo(txHash string) (string, string, error) {
 	url := fmt.Sprintf("https://broadcast.kyber.network/get-tx-info/%s", txHash)
+
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", "", err
@@ -323,7 +325,20 @@ func getTradeGeo(txHash string) (string, string, error) {
 		return "", "", err
 	}
 	err = json.Unmarshal(body, &response)
-	return "", "", err
+	if err != nil {
+		return "", "", err
+	}
+	if response.Success {
+		if response.Data.Country != "" {
+			return response.Data.IP, response.Data.Country, err
+		}
+		country, err := util.IpToCountry(response.Data.IP)
+		if err != nil {
+			return "", "", err
+		}
+		return response.Data.IP, country, err
+	}
+	return "", "unknown", err
 }
 
 // return block number that we just fetched the logs
@@ -513,6 +528,8 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 		fmt.Sprintf("geo_burn_fee_%s", country):    burnFee,
 		fmt.Sprintf("geo_trade_count_%s", country): 1,
 	}
+
+	log.Printf("geo_eth_volume_%s_%d", country, trade.Timestamp)
 
 	if err = self.updateTimeZoneBuckets(trade.Timestamp, updates); err != nil {
 		return

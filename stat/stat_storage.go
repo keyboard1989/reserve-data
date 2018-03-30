@@ -22,4 +22,5 @@ type StatStorage interface {
 
 	SetCountry(country string) error
 	GetCountries() ([]string, error)
+	GetCountryStats(fromTime, toTime uint64, country string, tzparam int64) (common.StatTicks, error)
 }

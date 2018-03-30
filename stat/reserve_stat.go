@@ -136,27 +136,30 @@ func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 	return result, err
 }
 
-func (self ReserveStats) GetGeoData(fromTime, toTime uint64, country string) (common.StatTicks, error) {
+func (self ReserveStats) GetGeoData(fromTime, toTime uint64, country string, tzparam int64) (common.StatTicks, error) {
+	var err error
 	result := common.StatTicks{}
-	var err error
-
-	return result, err
-}
-
-func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, token string) (common.Heatmap, error) {
-	result := common.Heatmap{}
-	var err error
-	// countries, err := self.statStorage.GetCountries()
+	fromTime, toTime, err = validateTimeWindow(fromTime, toTime, "D")
 	if err != nil {
 		return result, err
 	}
-	// for _, c := range countries {
-	// 	heat, err := self.statStorage.GetGeoData(fromTime, toTime, c)
-	// 	if err != nil {
-	// 		return result, err
-	// 	}
-	// 	result[c] = heat
-	// }
+	result, err = self.statStorage.GetCountryStats(fromTime, toTime, country, tzparam)
+	return result, err
+}
+
+func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, token string, tzparam int64) (common.Heatmap, error) {
+	result := common.Heatmap{}
+	var err error
+	countries, err := self.statStorage.GetCountries()
+	if err != nil {
+		return result, err
+	}
+	for _, c := range countries {
+		_, err := self.statStorage.GetCountryStats(fromTime, toTime, c, tzparam)
+		if err != nil {
+			return result, err
+		}
+	}
 	return result, err
 }
 
