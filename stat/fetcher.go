@@ -496,13 +496,13 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 		kycEd = true
 	}
 	for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
-		userStats, err := self.statStorage.GetUserStats(trade.Timestamp, userAddr, email, walletAddr, kycEd, i)
+		userStats, err := self.statStorage.GetUserStats(trade.Timestamp, userAddr, email, walletAddr, country, kycEd, i)
 		if err != nil {
 			return err
 		}
 
 		if len(userStats) > 0 {
-			if err := self.statStorage.SetUserStats(trade.Timestamp, userAddr, email, walletAddr, kycEd, i, userStats); err != nil {
+			if err := self.statStorage.SetUserStats(trade.Timestamp, userAddr, email, walletAddr, country, kycEd, i, userStats); err != nil {
 				log.Println("Set user stats failed: ", err)
 				return err
 			}

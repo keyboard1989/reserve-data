@@ -5,15 +5,15 @@ import (
 )
 
 type StatStorage interface {
-	GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error)
-	GetBurnFee(fromTime uint64, toTime uint64, freq string, reserveAddr string) (common.StatTicks, error)
-	GetWalletFee(fromTime uint64, toTime uint64, freq string, reserveAddr string, walletAddr string) (common.StatTicks, error)
-	GetUserVolume(fromTime uint64, toTime uint64, freq string, userAddr string) (common.StatTicks, error)
+	GetAssetVolume(fromTime, toTime uint64, freq, asset string) (common.StatTicks, error)
+	GetBurnFee(fromTime, toTime uint64, freq, reserveAddr string) (common.StatTicks, error)
+	GetWalletFee(fromTime, toTime uint64, freq, reserveAddr string, walletAddr string) (common.StatTicks, error)
+	GetUserVolume(fromTime, toTime uint64, freq, userAddr string) (common.StatTicks, error)
 	GetTradeSummary(fromTime, toTime uint64, timezone int64) (common.StatTicks, error)
 	GetLastProcessedTradeLogTimepoint() (timepoint uint64, err error)
-	GetWalletStats(fromTime uint64, toTime uint64, walletAddr string, timezone int64) (common.StatTicks, error)
-	GetUserStats(timestamp uint64, addr string, email string, wallet string, kycEd bool, timezone int64) (common.TradeStats, error)
-	SetUserStats(timestamp uint64, addr string, email string, wallet string, kycEd bool, timezone int64, stats common.TradeStats) error
+	GetWalletStats(fromTime, toTime uint64, walletAddr string, timezone int64) (common.StatTicks, error)
+	GetUserStats(timestamp uint64, addr, email, wallet, country string, kycEd bool, timezone int64) (common.TradeStats, error)
+	SetUserStats(timestamp uint64, addr, email, wallet, country string, kycEd bool, timezone int64, stats common.TradeStats) error
 
 	SetTradeStats(freq string, t uint64, tradeStats common.TradeStats) error
 	SetWalletAddress(walletAddr string) error
