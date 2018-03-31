@@ -11,8 +11,9 @@ import (
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
+	huobiblockchain "github.com/KyberNetwork/reserve-data/exchange/huobi/blockchain"
 	huobihttp "github.com/KyberNetwork/reserve-data/exchange/huobi/http"
-	huobistorage "github.com/KyberNetwork/reserve-data/exchange/huobi/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -29,7 +30,7 @@ type Huobi struct {
 	fees              common.ExchangeFees
 	blockchain        HuobiBlockchain
 	intermediatorAddr ethereum.Address
-	storage           huobistorage.Storage
+	storage           HuobiStorage
 }
 
 func (self *Huobi) MarshalText() (text []byte, err error) {
@@ -553,18 +554,20 @@ func (self *Huobi) OrderStatus(id string, base, quote common.Token) (string, err
 func NewHuobi(
 	addressConfig map[string]string,
 	feeConfig common.ExchangeFees,
-	interf HuobiInterface, huobiConfig common.HuobiConfig) *Huobi {
+	interf HuobiInterface, blockchain *blockchain.BaseBlockchain,
+	signer blockchain.Signer, nonce blockchain.NonceCorpus, storage HuobiStorage) *Huobi {
+
 	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
-	bc, err := huobiblockchain.NewBlockchain(huobiConfig.IntermediatorSigner, huobiConfig.EthEndPoint)
+	bc, err := huobiblockchain.NewBlockchain(blockchain, signer, nonce)
 	if err != nil {
 		log.Printf("Cant create Huobi's blockchain: %v", err)
 		panic(err)
 	}
 
-	huobiStorage, err := huobistorage.NewBoltStorage(huobiConfig.StoragePath)
-	if err != nil {
-		panic(err)
-	}
+	// huobiStorage, err := huobistorage.NewBoltStorage(huobiConfig.StoragePath)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
 	huobiObj := Huobi{
 		interf,
@@ -572,18 +575,11 @@ func NewHuobi(
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,
-		*bc,
-		huobiConfig.IntermediatorAddress,
-		huobiStorage,
+		bc,
+		signer.GetAddress(),
+		storage,
 	}
-	//start Huobi http server
-	authEngine := huobihttp.KNAuthentication{
-		huobiConfig.IntermediatorSigner.KNSecret,
-		huobiConfig.IntermediatorSigner.KNReadOnly,
-		huobiConfig.IntermediatorSigner.KNConfiguration,
-		huobiConfig.IntermediatorSigner.KNConfirmConf,
-	}
-	huobiServer := huobihttp.NewHuobiHTTPServer(&huobiObj, huobiConfig.HuobihttpConfig, authEngine)
+	huobiServer := huobihttp.NewHuobiHTTPServer(&huobiObj)
 	go huobiServer.Run()
 	return &huobiObj
 }

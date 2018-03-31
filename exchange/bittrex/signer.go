@@ -3,6 +3,7 @@ package bittrex
 import (
 	"crypto/hmac"
 	"crypto/sha512"
+	"encoding/json"
 	"io/ioutil"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -28,7 +29,7 @@ func NewSigner(key, secret string) *Signer {
 }
 
 func NewSignerFromFile(path string) *Signer {
-	raw, err := ioutil.ReadFile(file)
+	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}

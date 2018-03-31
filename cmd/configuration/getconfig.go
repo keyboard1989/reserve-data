@@ -4,7 +4,10 @@ import (
 	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 func GetAddressConfig(filePath string) common.AddressConfig {
@@ -82,7 +85,31 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	bkendpoints := setPath.bkendpoints
 	chainType := GetChainType(kyberENV)
 
+	//set client & endpoint
+	client, err := rpc.Dial(endpoint)
+	if err != nil {
+		panic(err)
+	}
+	infura := ethclient.NewClient(client)
+	bkclients := map[string]*ethclient.Client{}
+	for _, ep := range bkendpoints {
+		bkclient, err := ethclient.Dial(ep)
+		if err != nil {
+			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, err)
+		} else {
+			bkclients[ep] = bkclient
+		}
+	}
+
+	blockchain := blockchain.NewBaseBlockchain(
+		client, infura, map[string]*blockchain.Operator{},
+		blockchain.NewBroadcaster(bkclients),
+		blockchain.NewCMCEthUSDRate(),
+		chainType,
+	)
+
 	config := &Config{
+		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
 		SupportedTokens:         tokens,

@@ -12,8 +12,6 @@ import (
 	ether "github.com/ethereum/go-ethereum"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
 )
 
 const (
@@ -548,15 +546,16 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 	return result, nil
 }
 
+func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
+	return self.GetMinedNonce(PRICING_OP)
+}
+
 func NewBlockchain(
-	client *rpc.Client,
-	etherCli *ethclient.Client,
-	clients map[string]*ethclient.Client,
-	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
+	base *blockchain.BaseBlockchain,
 	signer blockchain.Signer, depositSigner blockchain.Signer,
 	nonceCorpus blockchain.NonceCorpus, nonceDeposit blockchain.NonceCorpus,
-	ethUSDRate blockchain.EthUSDRate,
-	chainType string) (*Blockchain, error) {
+	wrapperAddr, pricingAddr, burnerAddr,
+	networkAddr, reserveAddr, whitelistAddr ethereum.Address) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper := blockchain.NewContract(
 		wrapperAddr,
@@ -579,15 +578,15 @@ func NewBlockchain(
 	log.Printf("network address: %s", networkAddr.Hex())
 	log.Printf("whitelist address: %s", whitelistAddr.Hex())
 
-	operators := map[string]*blockchain.Operator{
-		PRICING_OP: blockchain.NewOperator(signer, nonceCorpus),
-		DEPOSIT_OP: blockchain.NewOperator(depositSigner, nonceDeposit),
-	}
+	base.RegisterOperator(PRICING_OP, blockchain.NewOperator(signer, nonceCorpus))
+	base.RegisterOperator(DEPOSIT_OP, blockchain.NewOperator(depositSigner, nonceDeposit))
+
 	return &Blockchain{
-		BaseBlockchain: blockchain.NewBaseBlockchain(
-			client, etherCli, operators, blockchain.NewBroadcaster(clients),
-			ethUSDRate, chainType,
-		),
+		BaseBlockchain: base,
+		// blockchain.NewBaseBlockchain(
+		// 	client, etherCli, operators, blockchain.NewBroadcaster(clients),
+		// 	ethUSDRate, chainType,
+		// ),
 		wrapper:       wrapper,
 		pricing:       pricing,
 		reserve:       reserve,

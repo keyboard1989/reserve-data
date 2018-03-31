@@ -19,7 +19,7 @@ import (
 )
 
 type BittrexEndpoint struct {
-	signer Signer
+	signer *Signer
 	interf Interface
 }
 
@@ -45,10 +45,10 @@ func (self *BittrexEndpoint) fillRequest(req *http.Request, signNeeded bool) {
 	req.Header.Add("Accept", "application/json")
 	if signNeeded {
 		q := req.URL.Query()
-		q.Set("apikey", self.signer.GetBittrexKey())
+		q.Set("apikey", self.signer.GetKey())
 		q.Set("nonce", nonce())
 		req.URL.RawQuery = q.Encode()
-		req.Header.Add("apisign", self.signer.BittrexSign(req.URL.String()))
+		req.Header.Add("apisign", self.signer.Sign(req.URL.String()))
 	}
 }
 
@@ -278,6 +278,6 @@ func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token) (e
 	return result, err
 }
 
-func NewBittrexEndpoint(signer Signer, interf Interface) *BittrexEndpoint {
+func NewBittrexEndpoint(signer *Signer, interf Interface) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, interf}
 }

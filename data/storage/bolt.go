@@ -22,7 +22,6 @@ const (
 	ACTIVITY_BUCKET         string = "activities"
 	AUTH_DATA_BUCKET        string = "auth_data"
 	PENDING_ACTIVITY_BUCKET string = "pending_activities"
-	BITTREX_DEPOSIT_HISTORY string = "bittrex_deposit_history"
 	METRIC_BUCKET           string = "metrics"
 	METRIC_TARGET_QUANTITY  string = "target_quantity"
 	PENDING_TARGET_QUANTITY string = "pending_target_quantity"
@@ -57,7 +56,6 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		tx.CreateBucket([]byte(ORDER_BUCKET))
 		tx.CreateBucket([]byte(ACTIVITY_BUCKET))
 		tx.CreateBucket([]byte(PENDING_ACTIVITY_BUCKET))
-		tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY))
 		tx.CreateBucket([]byte(AUTH_DATA_BUCKET))
 		tx.CreateBucket([]byte(METRIC_BUCKET))
 		tx.CreateBucket([]byte(METRIC_TARGET_QUANTITY))
@@ -541,32 +539,6 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 			return err
 		}
 		return b.Put(idBytes[:], dataJson)
-	})
-	return err
-}
-
-func (self *BoltStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID) bool {
-	res := true
-	self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
-		v := b.Get(uint64ToBytes(id))
-		if v != nil && string(v) != actID.String() {
-			log.Printf("bolt: stored act id - current act id: %s - %s", string(v), actID.String())
-			res = false
-		}
-		return nil
-	})
-	return res
-}
-
-func (self *BoltStorage) RegisterBittrexDeposit(id uint64, actID common.ActivityID) error {
-	var err error
-	self.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
-		// actIDBytes, _ := actID.MarshalText()
-		actIDBytes, _ := actID.MarshalText()
-		err = b.Put(uint64ToBytes(id), actIDBytes)
-		return nil
 	})
 	return err
 }

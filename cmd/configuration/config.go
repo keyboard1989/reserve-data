@@ -3,11 +3,10 @@ package configuration
 import (
 	"log"
 	"os"
-	"strings"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
@@ -18,7 +17,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
-	"github.com/KyberNetwork/reserve-data/signer"
 	"github.com/KyberNetwork/reserve-data/stat"
 	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -32,7 +30,7 @@ type SettingPaths struct {
 	logStoragePath  string
 	rateStoragePath string
 	userStoragePath string
-	signerPath      string
+	secretPath      string
 	endPoint        string
 	bkendpoints     []string
 }
@@ -61,6 +59,7 @@ type Config struct {
 
 	EthereumEndpoint        string
 	BackupEthereumEndpoints []string
+	Blockchain              *blockchain.BaseBlockchain
 
 	SupportedTokens []common.Token
 
@@ -76,7 +75,7 @@ type Config struct {
 }
 
 // GetStatConfig: load config to run stat server only
-func (self *Config) AddStatConfig(setPath SettingPaths, addressConfig common.AddressConfig) {
+func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common.AddressConfig) {
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
@@ -86,22 +85,22 @@ func (self *Config) AddStatConfig(setPath SettingPaths, addressConfig common.Add
 		thirdpartyReserves = append(thirdpartyReserves, ethereum.HexToAddress(address))
 	}
 
-	statStorage, err := statstorage.NewBoltStatStorage(setPath.statStoragePath)
+	statStorage, err := statstorage.NewBoltStatStorage(settingPath.statStoragePath)
 	if err != nil {
 		panic(err)
 	}
 
-	logStorage, err := statstorage.NewBoltLogStorage(setPath.logStoragePath)
+	logStorage, err := statstorage.NewBoltLogStorage(settingPath.logStoragePath)
 	if err != nil {
 		panic(err)
 	}
 
-	rateStorage, err := statstorage.NewBoltRateStorage(setPath.rateStoragePath)
+	rateStorage, err := statstorage.NewBoltRateStorage(settingPath.rateStoragePath)
 	if err != nil {
 		panic(err)
 	}
 
-	userStorage, err := statstorage.NewBoltUserStorage(setPath.userStoragePath)
+	userStorage, err := statstorage.NewBoltUserStorage(settingPath.userStoragePath)
 	if err != nil {
 		panic(err)
 	}
@@ -125,17 +124,17 @@ func (self *Config) AddStatConfig(setPath SettingPaths, addressConfig common.Add
 	self.WhitelistAddress = whitelistAddr
 }
 
-func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressConfig common.AddressConfig, kyberENV string) {
+func (self *Config) AddCoreConfig(settingPath SettingPaths, authEnbl bool, addressConfig common.AddressConfig, kyberENV string) {
 	networkAddr := ethereum.HexToAddress(addressConfig.Network)
 	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
 	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
 
-	feeConfig, err := common.GetFeeFromFile(setPath.feePath)
+	feeConfig, err := common.GetFeeFromFile(settingPath.feePath)
 	if err != nil {
-		log.Fatalf("Fees file %s cannot found at: %s", setPath.feePath, err)
+		log.Fatalf("Fees file %s cannot found at: %s", settingPath.feePath, err)
 	}
 
-	dataStorage, err := storage.NewBoltStorage(setPath.dataStoragePath)
+	dataStorage, err := storage.NewBoltStorage(settingPath.dataStoragePath)
 	if err != nil {
 		panic(err)
 	}
@@ -148,17 +147,10 @@ func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressCo
 		fetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second, 7*time.Second, 2*time.Second, 2*time.Second)
 	}
 
-	baseSigner := signer.GetBaseSigner(setPath.signerPath)
-	fileSigner := signer.NewFileSigner(baseSigner, baseSigner.Keystore, baseSigner.Passphrase)
-	depositSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreD, baseSigner.PassphraseD)
-	huobiIntermediatorSigner := signer.NewFileSigner(baseSigner, baseSigner.KeystoreI, baseSigner.PassphraseI)
+	pricingSigner := PricingSignerFromConfigFile(settingPath.secretPath)
+	depositSigner := DepositSignerFromConfigFile(settingPath.secretPath)
 
-	hmac512auth := http.KNAuthentication{
-		fileSigner.KNSecret,
-		fileSigner.KNReadOnly,
-		fileSigner.KNConfiguration,
-		fileSigner.KNConfirmConf,
-	}
+	hmac512auth := http.NewKNAuthenticationFromFile(settingPath.secretPath)
 
 	if !authEnbl {
 		log.Printf("\nWARNING: No authentication mode\n")
@@ -169,7 +161,7 @@ func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressCo
 	self.FetcherStorage = dataStorage
 	self.MetricStorage = dataStorage
 	self.FetcherRunner = fetcherRunner
-	self.BlockchainSigner = fileSigner
+	self.BlockchainSigner = pricingSigner
 	self.EnableAuthentication = authEnbl
 	//self.IntermediatorSigner = huoBiintermediatorSigner
 	self.DepositSigner = depositSigner
@@ -178,34 +170,21 @@ func (self *Config) AddCoreConfig(setPath SettingPaths, authEnbl bool, addressCo
 	self.NetworkAddress = networkAddr
 	self.WhitelistAddress = whitelistAddr
 	//self.ExchangeStorage = exsStorage
-	var huobiConfig common.HuobiConfig
-	exchangesIDs := os.Getenv("KYBER_EXCHANGES")
-	if strings.Contains(exchangesIDs, "huobi") {
-		huobiConfig = *self.GetHuobiConfig(kyberENV, addressConfig.Intermediator, huobiIntermediatorSigner)
-	}
+	// var huobiConfig common.HuobiConfig
+	// exchangesIDs := os.Getenv("KYBER_EXCHANGES")
+	// if strings.Contains(exchangesIDs, "huobi") {
+	// 	huobiConfig = *self.GetHuobiConfig(kyberENV, addressConfig.Intermediator, huobiIntermediatorSigner)
+	// }
 
 	// create Exchange pool
-	exchangePool := NewExchangePool(feeConfig, addressConfig, fileSigner, dataStorage, kyberENV, huobiConfig)
+	exchangePool := NewExchangePool(
+		feeConfig,
+		addressConfig,
+		settingPath,
+		self.Blockchain,
+		kyberENV)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()
-}
-
-func (self *Config) GetHuobiConfig(kyberENV string, imtorAddr string, huobiIntermediatorSigner *signer.FileSigner) *common.HuobiConfig {
-
-	//create Huobi config object
-	huobiHTTPConfig := common.HuobiHTTPConfig{
-		12221,
-		self.EnableAuthentication,
-		kyberENV,
-	}
-	//test address "0x13922F1857C0677F79e4BbB16Ad2c49fAa620829"
-	huobiConfig := common.HuobiConfig{ethereum.HexToAddress(imtorAddr),
-		self.EthereumEndpoint,
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/huobi.db",
-		*huobiIntermediatorSigner,
-		huobiHTTPConfig,
-	}
-	return &huobiConfig
 }
 
 func (self *Config) MapTokens() map[string]common.Token {

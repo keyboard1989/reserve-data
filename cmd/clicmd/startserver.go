@@ -20,8 +20,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/stat"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
@@ -139,46 +137,26 @@ func serverStart(cmd *cobra.Command, args []string) {
 		)
 	}
 
-	//set client & endpoint
-	client, err := rpc.Dial(config.EthereumEndpoint)
-	if err != nil {
-		panic(err)
-	}
-	infura := ethclient.NewClient(client)
-	bkclients := map[string]*ethclient.Client{}
-	for _, ep := range config.BackupEthereumEndpoints {
-		bkclient, err := ethclient.Dial(ep)
-		if err != nil {
-			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, err)
-		} else {
-			bkclients[ep] = bkclient
-		}
-	}
-
 	var nonceCorpus *nonce.TimeWindow
 	var nonceDeposit *nonce.TimeWindow
 
 	if !noCore {
-		nonceCorpus = nonce.NewTimeWindow(infura, config.BlockchainSigner)
-		nonceDeposit = nonce.NewTimeWindow(infura, config.DepositSigner)
+		nonceCorpus = nonce.NewTimeWindow(config.BlockchainSigner.GetAddress())
+		nonceDeposit = nonce.NewTimeWindow(config.DepositSigner.GetAddress())
 	}
 	//set block chain
 	bc, err := blockchain.NewBlockchain(
-		client,
-		infura,
-		bkclients,
+		config.Blockchain,
+		config.BlockchainSigner,
+		config.DepositSigner,
+		nonceCorpus,
+		nonceDeposit,
 		config.WrapperAddress,
 		config.PricingAddress,
 		config.FeeBurnerAddress,
 		config.NetworkAddress,
 		config.ReserveAddress,
 		config.WhitelistAddress,
-		config.BlockchainSigner,
-		config.DepositSigner,
-		nonceCorpus,
-		nonceDeposit,
-		blockchain.NewCMCEthUSDRate(),
-		config.ChainType,
 	)
 	if err != nil {
 		panic(err)

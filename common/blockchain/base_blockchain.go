@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"log"
 	"math/big"
+	"os"
 	"strconv"
+	"time"
 
 	ether "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -31,6 +34,8 @@ type BaseBlockchain struct {
 	broadcaster *Broadcaster
 	ethRate     EthUSDRate
 	chainType   string
+
+	erc20abi abi.ABI
 }
 
 func (self *BaseBlockchain) OperatorAddresses() map[string]ethereum.Address {
@@ -57,7 +62,7 @@ func (self *BaseBlockchain) GetOperator(name string) *Operator {
 }
 
 func (self *BaseBlockchain) GetMinedNonce(operator string) (uint64, error) {
-	nonce, err := self.GetOperator(operator).NonceCorpus.MinedNonce()
+	nonce, err := self.GetOperator(operator).NonceCorpus.MinedNonce(self.client)
 	if err != nil {
 		return 0, err
 	} else {
@@ -70,7 +75,7 @@ func (self *BaseBlockchain) GetNextNonce(operator string) (*big.Int, error) {
 	var nonce *big.Int
 	var err error
 	for i := 0; i < 3; i++ {
-		nonce, err = n.GetNextNonce()
+		nonce, err = n.GetNextNonce(self.client)
 		if err == nil {
 			return nonce, nil
 		}
@@ -243,6 +248,63 @@ func (self *BaseBlockchain) CurrentBlock() (uint64, error) {
 	return result, err
 }
 
+func (self *BaseBlockchain) PackERC20Data(method string, params ...interface{}) ([]byte, error) {
+	return self.erc20abi.Pack(method, params...)
+}
+
+func (self *BaseBlockchain) BuildSendERC20Tx(opts TxOpts, amount *big.Int, to ethereum.Address, tokenAddress ethereum.Address) (*types.Transaction, error) {
+	var err error
+	value := opts.Value
+	if value == nil {
+		value = new(big.Int)
+	}
+	var nonce uint64
+	if opts.Nonce == nil {
+		return nil, errors.New("nonce must be specified")
+	} else {
+		nonce = opts.Nonce.Uint64()
+	}
+	// Figure out the gas allowance and gas price values
+	if opts.GasPrice == nil {
+		return nil, errors.New("gas price must be specified")
+	}
+	data, err := self.PackERC20Data("transfer", to, amount)
+	if err != nil {
+		return nil, err
+	}
+	msg := ether.CallMsg{From: opts.Operator.Address, To: &tokenAddress, Value: value, Data: data}
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	gasLimit, err := self.client.EstimateGas(timeout, msg)
+	if err != nil {
+		log.Printf("Cannot estimate gas limit: %v", err)
+		return nil, err
+	}
+	gasLimit.Add(gasLimit, big.NewInt(50000))
+	rawTx := types.NewTransaction(nonce, tokenAddress, value, gasLimit, opts.GasPrice, data)
+	return rawTx, nil
+}
+
+func (self *BaseBlockchain) BuildSendETHTx(opts TxOpts, amount *big.Int, to ethereum.Address) (*types.Transaction, error) {
+	value := opts.Value
+	if value == nil {
+		value = new(big.Int)
+	}
+	var nonce uint64
+	if opts.Nonce == nil {
+		return nil, errors.New("nonce must be specified")
+	} else {
+		nonce = opts.Nonce.Uint64()
+	}
+	// Figure out the gas allowance and gas price values
+	if opts.GasPrice == nil {
+		return nil, errors.New("gas price must be specified")
+	}
+	gasLimit := big.NewInt(50000)
+	rawTx := types.NewTransaction(nonce, to, value, gasLimit, opts.GasPrice, nil)
+	return rawTx, nil
+}
+
 func (self *BaseBlockchain) TransactionByHash(ctx context.Context, hash ethereum.Hash) (tx *rpcTransaction, isPending bool, err error) {
 	var json *rpcTransaction
 	err = self.rpcClient.CallContext(ctx, &json, "eth_getTransactionByHash", hash)
@@ -323,6 +385,17 @@ func NewBaseBlockchain(
 	broadcaster *Broadcaster,
 	ethRate EthUSDRate,
 	chainType string) *BaseBlockchain {
+
+	file, err := os.Open(
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/ERC20.abi")
+	if err != nil {
+		panic(err)
+	}
+	packabi, err := abi.JSON(file)
+	if err != nil {
+		panic(err)
+	}
+
 	return &BaseBlockchain{
 		client:      client,
 		rpcClient:   rpcClient,
@@ -330,5 +403,6 @@ func NewBaseBlockchain(
 		broadcaster: broadcaster,
 		ethRate:     ethRate,
 		chainType:   chainType,
+		erc20abi:    packabi,
 	}
 }

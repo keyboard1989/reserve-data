@@ -1,4 +1,4 @@
-package storage
+package huobi
 
 import (
 	"encoding/binary"

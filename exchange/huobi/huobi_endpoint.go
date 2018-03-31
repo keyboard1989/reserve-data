@@ -39,7 +39,7 @@ func (self *HuobiEndpoint) fillRequest(req *http.Request, signNeeded bool) {
 		hostname := req.URL.Hostname()
 		path := req.URL.Path
 		payload := strings.Join([]string{method, hostname, path, auth}, "\n")
-		sig.Set("Signature", self.signer.HuobiSign(payload))
+		sig.Set("Signature", self.signer.Sign(payload))
 		req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 	}
 }
@@ -63,7 +63,7 @@ func (self *HuobiEndpoint) GetResponse(
 		timestamp := fmt.Sprintf("%s", time.Now().Format("2006-01-02T15:04:05"))
 		params["SignatureMethod"] = "HmacSHA256"
 		params["SignatureVersion"] = "2"
-		params["AccessKeyId"] = self.signer.GetHuobiKey()
+		params["AccessKeyId"] = self.signer.GetKey()
 		params["Timestamp"] = timestamp
 	}
 	var sortedParams []string

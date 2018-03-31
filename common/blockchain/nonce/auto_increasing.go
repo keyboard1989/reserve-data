@@ -11,17 +11,14 @@ import (
 )
 
 type AutoIncreasing struct {
-	ethclient   *ethclient.Client
 	address     ethereum.Address
 	mu          sync.Mutex
 	manualNonce *big.Int
 }
 
 func NewAutoIncreasing(
-	ethclient *ethclient.Client,
 	address ethereum.Address) *AutoIncreasing {
 	return &AutoIncreasing{
-		ethclient,
 		address,
 		sync.Mutex{},
 		big.NewInt(0),
@@ -32,24 +29,24 @@ func (self *AutoIncreasing) GetAddress() ethereum.Address {
 	return self.GetAddress()
 }
 
-func (self *AutoIncreasing) getNonceFromNode() (*big.Int, error) {
+func (self *AutoIncreasing) getNonceFromNode(ethclient *ethclient.Client) (*big.Int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	nonce, err := self.ethclient.PendingNonceAt(ctx, self.GetAddress())
+	nonce, err := ethclient.PendingNonceAt(ctx, self.GetAddress())
 	return big.NewInt(int64(nonce)), err
 }
 
-func (self *AutoIncreasing) MinedNonce() (*big.Int, error) {
+func (self *AutoIncreasing) MinedNonce(ethclient *ethclient.Client) (*big.Int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	nonce, err := self.ethclient.NonceAt(ctx, self.GetAddress(), nil)
+	nonce, err := ethclient.NonceAt(ctx, self.GetAddress(), nil)
 	return big.NewInt(int64(nonce)), err
 }
 
-func (self *AutoIncreasing) GetNextNonce() (*big.Int, error) {
+func (self *AutoIncreasing) GetNextNonce(ethclient *ethclient.Client) (*big.Int, error) {
 	self.mu.Lock()
 	defer self.mu.Unlock()
-	nodeNonce, err := self.getNonceFromNode()
+	nodeNonce, err := self.getNonceFromNode(ethclient)
 	if err != nil {
 		return nodeNonce, err
 	} else {

@@ -1,10 +1,10 @@
-package storage
+package exchange
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
-type Storage interface {
+type HuobiStorage interface {
 	StoreIntermediateTx(id common.ActivityID, data common.TXEntry) error
 	StorePendingIntermediateTx(id common.ActivityID, data common.TXEntry) error
 

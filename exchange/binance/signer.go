@@ -3,6 +3,7 @@ package binance
 import (
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/json"
 	"io/ioutil"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -28,8 +29,8 @@ func NewSigner(key, secret string) *Signer {
 	return &Signer{key, secret}
 }
 
-func NewSignerFromFile(path string) *Signer {
-	raw, err := ioutil.ReadFile(file)
+func NewSignerFromFile(path string) Signer {
+	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
@@ -38,5 +39,5 @@ func NewSignerFromFile(path string) *Signer {
 	if err != nil {
 		panic(err)
 	}
-	return &signer
+	return signer
 }
