@@ -260,7 +260,7 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 }
 
 func (self *Fetcher) FetchBalanceFromBlockchain() (map[string]common.BalanceEntry, error) {
-	return self.blockchain.FetchBalanceData(self.rmaddr, nil)
+	return self.blockchain.FetchBalanceData(self.rmaddr, 0)
 }
 
 func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {

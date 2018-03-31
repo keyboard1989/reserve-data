@@ -274,14 +274,14 @@ func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.I
 }
 
 //====================== Readonly calls ============================
-func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.Int) (map[string]common.BalanceEntry, error) {
+func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint64) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
 	for _, tok := range self.tokens {
 		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 	}
 	timestamp := common.GetTimestamp()
-	opts := self.GetCallOpts(PRICING_OP, atBlock.Uint64())
+	opts := self.GetCallOpts(PRICING_OP, atBlock)
 	balances, err := self.GeneratedGetBalances(opts, reserve, tokens)
 	returnTime := common.GetTimestamp()
 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
@@ -394,8 +394,8 @@ func (self *Blockchain) GetReserveRates(
 	return rates, err
 }
 
-func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock *big.Int) (*big.Int, error) {
-	opts := self.GetCallOpts(PRICING_OP, atBlock.Uint64())
+func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock uint64) (*big.Int, error) {
+	opts := self.GetCallOpts(PRICING_OP, atBlock)
 	if priceType == "buy" {
 		return self.GeneratedGetRate(opts, token, block, true, qty)
 	} else {
