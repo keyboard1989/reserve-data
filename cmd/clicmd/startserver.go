@@ -76,7 +76,7 @@ func configLog() {
 	c.Start()
 }
 
-func initInterface(kyberENV string) {
+func InitInterface(kyberENV string) {
 	if base_url != configuration.Baseurl {
 		log.Printf("Overwriting base URL with %s \n", base_url)
 	}
@@ -93,7 +93,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if kyberENV == "" {
 		kyberENV = "dev"
 	}
-	initInterface(kyberENV)
+	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
 
 	var dataFetcher *fetcher.Fetcher

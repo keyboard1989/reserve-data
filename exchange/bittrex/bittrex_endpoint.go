@@ -19,7 +19,7 @@ import (
 )
 
 type BittrexEndpoint struct {
-	signer *Signer
+	signer Signer
 	interf Interface
 }
 
@@ -278,6 +278,6 @@ func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token) (e
 	return result, err
 }
 
-func NewBittrexEndpoint(signer *Signer, interf Interface) *BittrexEndpoint {
+func NewBittrexEndpoint(signer Signer, interf Interface) *BittrexEndpoint {
 	return &BittrexEndpoint{signer, interf}
 }

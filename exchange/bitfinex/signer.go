@@ -3,6 +3,7 @@ package bitfinex
 import (
 	"crypto/hmac"
 	"crypto/sha512"
+	"encoding/json"
 	"io/ioutil"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -13,11 +14,11 @@ type Signer struct {
 	Secret string `json:"bitfinex_secret"`
 }
 
-func (self FileSigner) GetKey() string {
+func (self Signer) GetKey() string {
 	return self.Key
 }
 
-func (self FileSigner) Sign(msg string) string {
+func (self Signer) Sign(msg string) string {
 	mac := hmac.New(sha512.New384, []byte(self.Secret))
 	mac.Write([]byte(msg))
 	return ethereum.Bytes2Hex(mac.Sum(nil))
@@ -27,8 +28,8 @@ func NewSigner(key, secret string) *Signer {
 	return &Signer{key, secret}
 }
 
-func NewSignerFromFile(path string) *Signer {
-	raw, err := ioutil.ReadFile(file)
+func NewSignerFromFile(path string) Signer {
+	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
 	}
@@ -37,5 +38,5 @@ func NewSignerFromFile(path string) *Signer {
 	if err != nil {
 		panic(err)
 	}
-	return &signer
+	return signer
 }

@@ -24,11 +24,11 @@ func (self Signer) Sign(msg string) string {
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }
 
-func NewSigner(key, secret string) *Signer {
-	return &Signer{key, secret}
+func NewSigner(key, secret string) Signer {
+	return Signer{key, secret}
 }
 
-func NewSignerFromFile(path string) *Signer {
+func NewSignerFromFile(path string) Signer {
 	raw, err := ioutil.ReadFile(path)
 	if err != nil {
 		panic(err)
@@ -38,5 +38,5 @@ func NewSignerFromFile(path string) *Signer {
 	if err != nil {
 		panic(err)
 	}
-	return &signer
+	return signer
 }
