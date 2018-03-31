@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"math/big"
 	"strconv"
 	"strings"
@@ -346,6 +347,16 @@ type ExchangePrice struct {
 	ReturnTime Timestamp
 }
 
+func FloatToBigInt(amount float64, decimal int64) *big.Int {
+	FAmount := big.NewFloat(amount)
+	power := math.Pow10(int(decimal))
+	FDecimal := (big.NewFloat(0)).SetFloat64(power)
+	FAmount.Mul(FAmount, FDecimal)
+	IAmount := big.NewInt(0)
+	FAmount.Int(IAmount)
+	return IAmount
+}
+
 func BigToFloat(b *big.Int, decimal int64) float64 {
 	f := new(big.Float).SetInt(b)
 	power := new(big.Float).SetInt(new(big.Int).Exp(
@@ -493,6 +504,16 @@ type RateEntry struct {
 	BaseSell    *big.Int
 	CompactSell int8
 	Block       uint64
+}
+
+type TXEntry struct {
+	Hash           string
+	Exchange       string
+	Token          string
+	MiningStatus   string
+	ExchangeStatus string
+	Amount         float64
+	Timestamp      Timestamp
 }
 
 type RateResponse struct {

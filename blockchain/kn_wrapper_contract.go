@@ -1,27 +1,26 @@
 package blockchain
 
 import (
+	"context"
 	"log"
 	"math/big"
-	"os"
+	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-type KNWrapperContract struct {
-	*KNContractBase
-}
-
-func (self *KNWrapperContract) GetBalances(opts *bind.CallOpts, atBlock *big.Int, reserve ethereum.Address, tokens []ethereum.Address) ([]*big.Int, error) {
+func (self *Blockchain) GeneratedGetBalances(opts blockchain.CallOpts, reserve ethereum.Address, tokens []ethereum.Address) ([]*big.Int, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	out := new([]*big.Int)
-	err := self.KNContractBase.Call(opts, atBlock, out, "getBalances", reserve, tokens)
+	err := self.Call(timeout, opts, self.wrapper, out, "getBalances", reserve, tokens)
 	return *out, err
 }
 
-func (self *KNWrapperContract) GetTokenIndicies(opts *bind.CallOpts, atBlock *big.Int, ratesContract ethereum.Address, tokenList []ethereum.Address) ([]*big.Int, []*big.Int, error) {
+func (self *Blockchain) GeneratedGetTokenIndicies(opts blockchain.CallOpts, ratesContract ethereum.Address, tokenList []ethereum.Address) ([]*big.Int, []*big.Int, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	var (
 		ret0 = new([]*big.Int)
 		ret1 = new([]*big.Int)
@@ -30,14 +29,16 @@ func (self *KNWrapperContract) GetTokenIndicies(opts *bind.CallOpts, atBlock *bi
 		ret0,
 		ret1,
 	}
-	err := self.KNContractBase.Call(opts, atBlock, out, "getTokenIndicies", ratesContract, tokenList)
+	err := self.Call(timeout, opts, self.wrapper, out, "getTokenIndicies", ratesContract, tokenList)
 	return *ret0, *ret1, err
 }
 
-func (self *KNWrapperContract) GetTokenRates(
-	opts *bind.CallOpts, atBlock *big.Int,
+func (self *Blockchain) GeneratedGetTokenRates(
+	opts blockchain.CallOpts,
 	ratesContract ethereum.Address,
 	tokenList []ethereum.Address) ([]*big.Int, []*big.Int, []int8, []int8, []*big.Int, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	var (
 		ret0 = new([]*big.Int)
 		ret1 = new([]*big.Int)
@@ -52,15 +53,17 @@ func (self *KNWrapperContract) GetTokenRates(
 		ret3,
 		ret4,
 	}
-	err := self.KNContractBase.Call(opts, atBlock, out, "getTokenRates", ratesContract, tokenList)
+	err := self.Call(timeout, opts, self.wrapper, out, "getTokenRates", ratesContract, tokenList)
 	return *ret0, *ret1, *ret2, *ret3, *ret4, err
 }
 
-func (self *KNWrapperContract) GetReserveRates(
-	opts *bind.CallOpts, atBlock *big.Int,
+func (self *Blockchain) GeneratedGetReserveRates(
+	opts blockchain.CallOpts,
 	reserveAddress ethereum.Address,
 	srcAddresses []ethereum.Address,
 	destAddresses []ethereum.Address) ([]*big.Int, []*big.Int, error) {
+	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
 	var (
 		ret0 = new([]*big.Int)
 		ret1 = new([]*big.Int)
@@ -69,24 +72,9 @@ func (self *KNWrapperContract) GetReserveRates(
 		ret0,
 		ret1,
 	}
-	err := self.KNContractBase.Call(opts, atBlock, out, "getReserveRate", reserveAddress, srcAddresses, destAddresses)
+	err := self.Call(timeout, opts, self.wrapper, out, "getReserveRate", reserveAddress, srcAddresses, destAddresses)
 	if err != nil {
 		log.Println("cannot get reserve rates: ", err.Error())
 	}
 	return *ret0, *ret1, err
-}
-
-func NewKNWrapperContract(address ethereum.Address, client *ethclient.Client) (*KNWrapperContract, error) {
-	file, err := os.Open(
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/wrapper.abi")
-	if err != nil {
-		return nil, err
-	}
-	parsed, err := abi.JSON(file)
-	if err != nil {
-		return nil, err
-	}
-	return &KNWrapperContract{
-		NewKNContractBase(address, parsed, client),
-	}, nil
 }

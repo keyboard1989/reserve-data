@@ -4,23 +4,33 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"math/big"
 	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
+	huobiblockchain "github.com/KyberNetwork/reserve-data/exchange/huobi/blockchain"
+	huobihttp "github.com/KyberNetwork/reserve-data/exchange/huobi/http"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
-const HUOBI_EPSILON float64 = 0.0000000001 // 10e-10
+const (
+	HUOBI_EPSILON float64 = 0.0000000001 // 10e-10
+)
 
 type Huobi struct {
-	interf       HuobiInterface
-	pairs        []common.TokenPair
-	addresses    *common.ExchangeAddresses
-	exchangeInfo *common.ExchangeInfo
-	fees         common.ExchangeFees
+	interf            HuobiInterface
+	pairs             []common.TokenPair
+	addresses         *common.ExchangeAddresses
+	exchangeInfo      *common.ExchangeInfo
+	fees              common.ExchangeFees
+	blockchain        HuobiBlockchain
+	intermediatorAddr ethereum.Address
+	storage           HuobiStorage
 }
 
 func (self *Huobi) MarshalText() (text []byte, err error) {
@@ -32,7 +42,9 @@ func (self *Huobi) TokenAddresses() map[string]ethereum.Address {
 }
 
 func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses.Get(token.ID)
+
+	_, supported := self.addresses.Get(token.ID)
+	addr := self.intermediatorAddr
 	return addr, supported
 }
 
@@ -344,18 +356,160 @@ func (self *Huobi) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][
 	return result, nil
 }
 
-func (self *Huobi) DepositStatus(
-	id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, error) {
-	deposits, err := self.interf.DepositHistory()
-	if err != nil && deposits.Status != "ok" {
-		return "", err
+func getDepositInfo(id common.ActivityID) (string, float64, string) {
+	idParts := strings.Split(id.EID, "|")
+	txID := idParts[0]
+	sentAmount, err := strconv.ParseFloat(idParts[2], 64)
+	if err != nil {
+		log.Println("The ID is malform, cannot get Amount from EID")
 	}
-	for _, deposit := range deposits.Data {
-		if deposit.TxHash == txHash {
-			if deposit.State == "safe" {
-				return "done", nil
+	tokenID := idParts[1]
+	return txID, sentAmount, tokenID
+}
+
+func getBigIntFromFloat(amount float64, decimal int64) *big.Int {
+	FAmount := big.NewFloat(amount)
+
+	power := math.Pow10(int(decimal))
+
+	FDecimal := (big.NewFloat(0)).SetFloat64(power)
+	FAmount.Mul(FAmount, FDecimal)
+	IAmount := big.NewInt(0)
+	FAmount.Int(IAmount)
+	return IAmount
+}
+
+func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchangeAddress ethereum.Address) (*types.Transaction, error) {
+	IAmount := getBigIntFromFloat(amount, token.Decimal)
+	// Check balance, removed from huobi's blockchain object.
+	// currBalance := self.blockchain.CheckBalance(token)
+	// log.Printf("current balance of token %s is %d", token.ID, currBalance)
+	// //self.blockchain.
+	// if currBalance.Cmp(IAmount) < 0 {
+	// 	log.Printf("balance is not enough, wait till next check")
+	// 	return nil, errors.New("balance is not enough")
+	// }
+	var tx *types.Transaction
+	var err error
+	if token.ID == "ETH" {
+		tx, err = self.blockchain.SendETHFromAccountToExchange(IAmount, exchangeAddress)
+	} else {
+		tx, err = self.blockchain.SendTokenFromAccountToExchange(IAmount, exchangeAddress, ethereum.HexToAddress(token.Address))
+	}
+	if err != nil {
+		log.Printf("ERROR: Can not send transaction to exchange: %v", err)
+		return nil, err
+	}
+	log.Printf("Transaction submitted. Tx is: \n %v", tx)
+	return tx, nil
+
+}
+
+func (self *Huobi) PendingIntermediateTxs() (map[common.ActivityID]common.TXEntry, error) {
+	result, err := self.storage.GetPendingIntermediateTXs()
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
+}
+
+func (self *Huobi) FindTx2Pending(id common.ActivityID) (common.TXEntry, bool) {
+	pendings, err := self.storage.GetPendingIntermediateTXs()
+	if err != nil {
+		log.Printf("can't get pendings tx2 records: %v", err)
+		return common.TXEntry{}, false
+	}
+	for actID, txentry := range pendings {
+		if actID == id {
+			return txentry, true
+		}
+	}
+	return common.TXEntry{}, false
+}
+
+func (self *Huobi) DepositStatus(id common.ActivityID, txHash, currency string, sentAmount float64, timepoint uint64) (string, error) {
+	tx2Entry, found := self.storage.GetIntermedatorTx(id)
+	var isPending bool
+	var data common.TXEntry
+	if found != nil {
+		tx2Entry, isPending = self.FindTx2Pending(id)
+	}
+	if (found != nil) && (!isPending) {
+		//if the 2nd transaction is not in the current Deposit status, check the 1st tx first.
+		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(txHash))
+		if err != nil {
+			log.Println("Can not get TX status")
+		}
+		log.Printf("Status was %s at block %d ", status, blockno)
+		if status == "mined" {
+			//if it is mined, send 2nd tx.
+			log.Printf("found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, currency)
+			//check if the token is supported
+			token, err := common.GetToken(currency)
+			if err != nil {
+				return "", err
 			}
+			exchangeAddress, ok := self.addresses.Get(currency)
+			if !ok {
+				return "", errors.New("Wrong token address configuration")
+			}
+			tx2, err := self.Send2ndTransaction(sentAmount, token, exchangeAddress)
+			if err != nil {
+				return "failed", err
+			}
+			Txhash := tx2.Hash().Hex()
+			data = common.TXEntry{Txhash, self.Name(), currency, "submitted", "", sentAmount, common.GetTimestamp()}
+			err = self.storage.StorePendingIntermediateTx(id, data)
+			//err = self.storage.StoreIntermediateTx(Txhash, self.Name(), currency, "submitted", "", sentAmount, common.GetTimestamp(), id)
+			if err != nil {
+				return "", err
+			}
+		} else {
 			return "", nil
+		}
+	} else {
+		//if the 2nd transaction is in the Deposit Status, check its status.
+		status, _, err := self.blockchain.TxStatus(ethereum.HexToHash(tx2Entry.Hash))
+		if err != nil {
+			return "", err
+		}
+		if status == "mined" {
+			log.Println("2nd Transaction is mined. Processed to store it and check the Deposit history")
+			data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "mined", "", sentAmount, common.GetTimestamp()}
+			err = self.storage.StorePendingIntermediateTx(id, data)
+			if err != nil {
+				return "", err
+			}
+			deposits, err := self.interf.DepositHistory()
+			if err != nil && deposits.Status != "ok" {
+				return "", err
+			}
+			for _, deposit := range deposits.Data {
+				log.Printf("deposit tx is %s, with token %s", deposit.TxHash, deposit.Currency)
+				if deposit.TxHash == tx2Entry.Hash {
+					if deposit.State == "safe" {
+						data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "mined", "done", sentAmount, common.GetTimestamp()}
+						err = self.storage.StoreIntermediateTx(id, data)
+						if err != nil {
+							return "", err
+						}
+						err = self.storage.RemovePendingIntermediateTx(id)
+						return "done", nil
+					}
+				}
+			}
+			return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.SupportedTokens)*2))
+		} else if status == "failed" || status == "lost" {
+			data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "failed", "failed", sentAmount, common.GetTimestamp()}
+			err = self.storage.StoreIntermediateTx(id, data)
+			if err != nil {
+				return "failed", err
+			}
+			err = self.storage.RemovePendingIntermediateTx(id)
+			if err != nil {
+				return "failed", err
+			}
+			return "failed", nil
 		}
 	}
 	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.SupportedTokens)*2))
@@ -397,13 +551,35 @@ func (self *Huobi) OrderStatus(id string, base, quote common.Token) (string, err
 	}
 }
 
-func NewHuobi(addressConfig map[string]string, feeConfig common.ExchangeFees, interf HuobiInterface) *Huobi {
+func NewHuobi(
+	addressConfig map[string]string,
+	feeConfig common.ExchangeFees,
+	interf HuobiInterface, blockchain *blockchain.BaseBlockchain,
+	signer blockchain.Signer, nonce blockchain.NonceCorpus, storage HuobiStorage) *Huobi {
+
 	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
-	return &Huobi{
+	bc, err := huobiblockchain.NewBlockchain(blockchain, signer, nonce)
+	if err != nil {
+		log.Printf("Cant create Huobi's blockchain: %v", err)
+		panic(err)
+	}
+
+	// huobiStorage, err := huobistorage.NewBoltStorage(huobiConfig.StoragePath)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	huobiObj := Huobi{
 		interf,
 		pairs,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,
+		bc,
+		signer.GetAddress(),
+		storage,
 	}
+	huobiServer := huobihttp.NewHuobiHTTPServer(&huobiObj)
+	go huobiServer.Run()
+	return &huobiObj
 }

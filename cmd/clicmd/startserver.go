@@ -11,17 +11,15 @@ import (
 
 	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/blockchain"
-	"github.com/KyberNetwork/reserve-data/blockchain/nonce"
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/stat"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
@@ -78,7 +76,7 @@ func configLog() {
 	c.Start()
 }
 
-func initInterface(kyberENV string) {
+func InitInterface(kyberENV string) {
 	if base_url != configuration.Baseurl {
 		log.Printf("Overwriting base URL with %s \n", base_url)
 	}
@@ -95,7 +93,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if kyberENV == "" {
 		kyberENV = "dev"
 	}
-	initInterface(kyberENV)
+	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
 
 	var dataFetcher *fetcher.Fetcher
@@ -115,8 +113,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			config.FetcherStorage,
 			config.FetcherRunner,
 			config.ReserveAddress,
-			true,
-			// kyberENV == "simulation",
+			kyberENV == "simulation",
 		)
 		for _, ex := range config.FetcherExchanges {
 			dataFetcher.AddExchange(ex)
@@ -140,46 +137,26 @@ func serverStart(cmd *cobra.Command, args []string) {
 		)
 	}
 
-	//set client & endpoint
-	client, err := rpc.Dial(config.EthereumEndpoint)
-	if err != nil {
-		panic(err)
-	}
-	infura := ethclient.NewClient(client)
-	bkclients := map[string]*ethclient.Client{}
-	for _, ep := range config.BackupEthereumEndpoints {
-		bkclient, err := ethclient.Dial(ep)
-		if err != nil {
-			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, err)
-		} else {
-			bkclients[ep] = bkclient
-		}
-	}
-
 	var nonceCorpus *nonce.TimeWindow
 	var nonceDeposit *nonce.TimeWindow
 
 	if !noCore {
-		nonceCorpus = nonce.NewTimeWindow(infura, config.BlockchainSigner)
-		nonceDeposit = nonce.NewTimeWindow(infura, config.DepositSigner)
+		nonceCorpus = nonce.NewTimeWindow(config.BlockchainSigner.GetAddress())
+		nonceDeposit = nonce.NewTimeWindow(config.DepositSigner.GetAddress())
 	}
 	//set block chain
 	bc, err := blockchain.NewBlockchain(
-		client,
-		infura,
-		bkclients,
+		config.Blockchain,
+		config.BlockchainSigner,
+		config.DepositSigner,
+		nonceCorpus,
+		nonceDeposit,
 		config.WrapperAddress,
 		config.PricingAddress,
 		config.FeeBurnerAddress,
 		config.NetworkAddress,
 		config.ReserveAddress,
 		config.WhitelistAddress,
-		config.BlockchainSigner,
-		config.DepositSigner,
-		nonceCorpus,
-		nonceDeposit,
-		blockchain.NewCMCEthUSDRate(),
-		config.ChainType,
 	)
 	if err != nil {
 		panic(err)
@@ -228,6 +205,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		)
 
 		server.Run()
+
 	}
 }
 

@@ -8,9 +8,10 @@ import (
 )
 
 type token struct {
-	Address  string `json:"address"`
-	Name     string `json:"name"`
-	Decimals int64  `json:"decimals"`
+	Address          string `json:"address"`
+	Name             string `json:"name"`
+	Decimals         int64  `json:"decimals"`
+	KNReserveSupport bool   `json:"internal use"`
 }
 
 type exchange map[string]string
@@ -31,6 +32,7 @@ type AddressConfig struct {
 	FeeBurner          string              `json:"feeburner"`
 	Whitelist          string              `json:"whitelist"`
 	ThirdPartyReserves []string            `json:"third_party_reserves"`
+	Intermediator      string              `json:"intermediator"`
 }
 
 func GetAddressConfigFromFile(path string) (AddressConfig, error) {

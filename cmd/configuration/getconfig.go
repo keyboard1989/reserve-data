@@ -4,7 +4,10 @@ import (
 	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 func GetAddressConfig(filePath string) common.AddressConfig {
@@ -61,7 +64,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
-
 	var endpoint string
 	if endpointOW != "" {
 		log.Printf("overwriting Endpoint with %s\n", endpointOW)
@@ -71,19 +73,48 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	}
 
 	common.SupportedTokens = map[string]common.Token{}
+	common.ExternalTokens = map[string]common.Token{}
 	tokens := []common.Token{}
 	for id, t := range addressConfig.Tokens {
 		tok := common.Token{
 			id, t.Address, t.Decimals,
 		}
-		common.SupportedTokens[id] = tok
-		tokens = append(tokens, tok)
+		if t.KNReserveSupport {
+			common.SupportedTokens[id] = tok
+			tokens = append(tokens, tok)
+		} else {
+			common.ExternalTokens[id] = tok
+		}
 	}
 
 	bkendpoints := setPath.bkendpoints
 	chainType := GetChainType(kyberENV)
 
+	//set client & endpoint
+	client, err := rpc.Dial(endpoint)
+	if err != nil {
+		panic(err)
+	}
+	infura := ethclient.NewClient(client)
+	bkclients := map[string]*ethclient.Client{}
+	for _, ep := range bkendpoints {
+		bkclient, err := ethclient.Dial(ep)
+		if err != nil {
+			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, err)
+		} else {
+			bkclients[ep] = bkclient
+		}
+	}
+
+	blockchain := blockchain.NewBaseBlockchain(
+		client, infura, map[string]*blockchain.Operator{},
+		blockchain.NewBroadcaster(bkclients),
+		blockchain.NewCMCEthUSDRate(),
+		chainType,
+	)
+
 	config := &Config{
+		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
 		SupportedTokens:         tokens,
@@ -100,6 +131,5 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if !noCore {
 		config.AddCoreConfig(setPath, authEnbl, addressConfig, kyberENV)
 	}
-
 	return config
 }
