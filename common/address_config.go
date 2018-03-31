@@ -8,9 +8,10 @@ import (
 )
 
 type token struct {
-	Address  string `json:"address"`
-	Name     string `json:"name"`
-	Decimals int64  `json:"decimals"`
+	Address          string `json:"address"`
+	Name             string `json:"name"`
+	Decimals         int64  `json:"decimals"`
+	KNReserveSupport bool   `json:"internal use"`
 }
 
 type exchange map[string]string

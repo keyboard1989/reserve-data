@@ -73,13 +73,18 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	}
 
 	common.SupportedTokens = map[string]common.Token{}
+	common.ExternalTokens = map[string]common.Token{}
 	tokens := []common.Token{}
 	for id, t := range addressConfig.Tokens {
 		tok := common.Token{
 			id, t.Address, t.Decimals,
 		}
-		common.SupportedTokens[id] = tok
-		tokens = append(tokens, tok)
+		if t.KNReserveSupport {
+			common.SupportedTokens[id] = tok
+			tokens = append(tokens, tok)
+		} else {
+			common.ExternalTokens[id] = tok
+		}
 	}
 
 	bkendpoints := setPath.bkendpoints

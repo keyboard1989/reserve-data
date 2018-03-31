@@ -52,6 +52,7 @@ func MustCreateTokenPair(base, quote string) TokenPair {
 }
 
 var SupportedTokens map[string]Token
+var ExternalTokens map[string]Token
 
 func GetToken(id string) (Token, error) {
 	t := SupportedTokens[strings.ToUpper(id)]
