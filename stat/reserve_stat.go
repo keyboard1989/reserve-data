@@ -147,20 +147,39 @@ func (self ReserveStats) GetGeoData(fromTime, toTime uint64, country string, tzp
 	return result, err
 }
 
-func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, token string, tzparam int64) (common.Heatmap, error) {
+func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (common.Heatmap, error) {
 	result := common.Heatmap{}
 	var err error
+	fromTime, toTime, err = validateTimeWindow(fromTime, toTime, "D")
+	if err != nil {
+		return result, err
+	}
 	countries, err := self.statStorage.GetCountries()
 	if err != nil {
 		return result, err
 	}
 	for _, c := range countries {
-		_, err := self.statStorage.GetCountryStats(fromTime, toTime, c, tzparam)
+		cStats, err := self.statStorage.GetCountryStats(fromTime, toTime, c, tzparam)
 		if err != nil {
 			return result, err
 		}
+		log.Printf("Heat map: %s - %v", c, cStats)
+		for _, stat := range cStats {
+			s := stat.(map[string]float64)
+			currentETHValue := result[c].TotalETHValue
+			currentFiatValue := result[c].TotalFiatValue
+			result[c] = common.HeatmapType{
+				TotalETHValue:  currentETHValue + s["total_eth_volume"],
+				TotalFiatValue: currentFiatValue + s["total_usd_amount"],
+			}
+		}
 	}
 	return result, err
+}
+
+func (self ReserveStats) GetCountries() ([]string, error) {
+	result, _ := self.statStorage.GetCountries()
+	return result, nil
 }
 
 func (self ReserveStats) GetCatLogs(fromTime uint64, toTime uint64) ([]common.SetCatLog, error) {

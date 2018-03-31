@@ -1598,16 +1598,9 @@ func (self *HTTPServer) ValidateTimeInput(c *gin.Context) (uint64, uint64, bool)
 		)
 		return 0, 0, false
 	}
-	toTime, ok := strconv.ParseUint(c.Query("toTime"), 10, 64)
-	if ok != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"success": false,
-				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
-			},
-		)
-		return 0, 0, false
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if toTime == 0 {
+		toTime = common.GetTimepoint()
 	}
 	return fromTime, toTime, true
 }
@@ -2039,12 +2032,10 @@ func (self *HTTPServer) GetCountryStats(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetHeatMap(c *gin.Context) {
-	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
-	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
-	if toTime == 0 {
-		toTime = common.GetTimepoint()
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
 	}
-	token := c.Query("token")
 	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
 	if (tzparam < START_TIMEZONE) || (tzparam > END_TIMEZONE) {
 		c.JSON(
@@ -2056,7 +2047,8 @@ func (self *HTTPServer) GetHeatMap(c *gin.Context) {
 		)
 		return
 	}
-	data, err := self.stat.GetHeatMap(fromTime, toTime, token, tzparam)
+
+	data, err := self.stat.GetHeatMap(fromTime, toTime, tzparam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2067,6 +2059,17 @@ func (self *HTTPServer) GetHeatMap(c *gin.Context) {
 		)
 		return
 	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetCountries(c *gin.Context) {
+	data, _ := self.stat.GetCountries()
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -2146,6 +2149,8 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-wallet-stats", self.GetWalletStats)
 		self.r.GET("/get-wallet-address", self.GetWalletAddress)
 		self.r.GET("/get-country-stats", self.GetCountryStats)
+		self.r.GET("/get-heat-map", self.GetHeatMap)
+		self.r.GET("/get-countries", self.GetCountries)
 	}
 
 	self.r.Run(self.host)

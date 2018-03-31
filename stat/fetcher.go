@@ -310,7 +310,7 @@ func (self *Fetcher) RunBlockFetcher() {
 	}
 }
 
-func getTradeGeo(txHash string) (string, string, error) {
+func (self *Fetcher) GetTradeGeo(txHash string) (string, string, error) {
 	url := fmt.Sprintf("https://broadcast.kyber.network/get-tx-info/%s", txHash)
 
 	resp, err := http.Get(url)
@@ -320,7 +320,6 @@ func getTradeGeo(txHash string) (string, string, error) {
 	response := common.TradeLogGeoInfoResp{}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
-	log.Println("Tx Geo: ", string(body))
 	if err != nil {
 		return "", "", err
 	}
@@ -358,9 +357,14 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 					l := il.(common.TradeLog)
 					// log.Printf("LogFetcher - blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
 					txHash := il.TxHash()
-					ip, country, err := getTradeGeo(txHash.Hex())
+					ip, country, err := self.GetTradeGeo(txHash.Hex())
 					l.IP = ip
 					l.Country = country
+					err = self.statStorage.SetCountry(country)
+					if err != nil {
+						log.Printf("Cannot store country: %s", err.Error())
+					}
+
 					err = self.logStorage.StoreTradeLog(l, timepoint)
 					if err != nil {
 						log.Printf("LogFetcher - storing trade log failed, ignore that log and proceed with remaining logs, err: %+v", err)
@@ -528,8 +532,6 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 		fmt.Sprintf("geo_burn_fee_%s", country):    burnFee,
 		fmt.Sprintf("geo_trade_count_%s", country): 1,
 	}
-
-	log.Printf("geo_eth_volume_%s_%d", country, trade.Timestamp)
 
 	if err = self.updateTimeZoneBuckets(trade.Timestamp, updates); err != nil {
 		return

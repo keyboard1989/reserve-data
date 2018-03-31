@@ -646,8 +646,8 @@ type TradeLogGeoInfoResp struct {
 }
 
 type HeatmapType struct {
-	token string
-	value float64
+	TotalETHValue  float64 `json:"total_eth_value"`
+	TotalFiatValue float64 `json:"total_fiat_value"`
 }
 
 type Heatmap map[string]HeatmapType

@@ -67,6 +67,7 @@ func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 		tx.CreateBucket([]byte(TRADE_STATS_BUCKET))
 		tx.CreateBucket([]byte(TRADELOG_PROCESSOR_STATE))
 		tx.CreateBucket([]byte(WALLET_ADDRESS_BUCKET))
+		tx.CreateBucket([]byte(COUNTRY_BUCKET))
 		//create timezone buckets
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		frequencies := []string{MINUTE_BUCKET, HOUR_BUCKET, DAY_BUCKET}
@@ -569,8 +570,8 @@ func (self *BoltStatStorage) GetCountries() ([]string, error) {
 	self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(COUNTRY_BUCKET))
 		c := b.Cursor()
-		for _, v := c.First(); v != nil; _, v = c.Next() {
-			countries = append(countries, string(v))
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			countries = append(countries, string(k))
 		}
 		return err
 	})
