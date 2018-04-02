@@ -35,9 +35,8 @@ func (self *Blockchain) GeneratedSetQtyStepFunction(opts blockchain.TxOpts, toke
 }
 
 func (self *Blockchain) GeneratedGetRate(opts blockchain.CallOpts, token ethereum.Address, currentBlockNumber *big.Int, buy bool, qty *big.Int) (*big.Int, error) {
-	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
+	timeOut := 2 * time.Second
 	out := big.NewInt(0)
-	err := self.Call(timeout, opts, self.pricing, out, "getRate", token, currentBlockNumber, buy, qty)
+	err := self.Call(timeOut, opts, self.pricing, out, "getRate", token, currentBlockNumber, buy, qty)
 	return out, err
 }

@@ -31,15 +31,16 @@ const (
 // It has convenient logic of broadcasting tx to multiple nodes at once.
 // It has convenient functions to init proper CallOpts and TxOpts.
 // It has eth usd rate lookup function.
-type BaseBlockchain struct {
-	client      *ethclient.Client
-	rpcClient   *rpc.Client
-	operators   map[string]*Operator
-	broadcaster *Broadcaster
-	ethRate     EthUSDRate
-	chainType   string
 
-	erc20abi abi.ABI
+type BaseBlockchain struct {
+	client         *ethclient.Client
+	rpcClient      *rpc.Client
+	operators      map[string]*Operator
+	broadcaster    *Broadcaster
+	ethRate        EthUSDRate
+	chainType      string
+	contractCaller *ContractCaller
+	erc20abi       abi.ABI
 }
 
 func (self *BaseBlockchain) OperatorAddresses() map[string]ethereum.Address {
@@ -111,7 +112,7 @@ func (self *BaseBlockchain) SignAndBroadcast(tx *types.Transaction, from string)
 	}
 }
 
-func (self *BaseBlockchain) Call(context context.Context, opts CallOpts, contract *Contract, result interface{}, method string, params ...interface{}) error {
+func (self *BaseBlockchain) Call(timeOut time.Duration, opts CallOpts, contract *Contract, result interface{}, method string, params ...interface{}) error {
 	// Pack the input, call and unpack the results
 	input, err := contract.ABI.Pack(method, params...)
 	if err != nil {
@@ -119,17 +120,17 @@ func (self *BaseBlockchain) Call(context context.Context, opts CallOpts, contrac
 	}
 	var (
 		msg    = ether.CallMsg{From: ethereum.HexToAddress(ZeroAddress), To: &contract.Address, Data: input}
-		ctx    = ensureContext(context)
 		code   []byte
 		output []byte
 	)
 	if opts.Block == nil || opts.Block.Cmp(ethereum.Big0) == 0 {
 		// calling in pending state
-		output, err = self.client.CallContract(ctx, msg, nil)
+		output, err = self.contractCaller.CallContract(msg, nil, timeOut)
 	} else {
-		output, err = self.client.CallContract(ctx, msg, opts.Block)
+		output, err = self.contractCaller.CallContract(msg, opts.Block, timeOut)
 	}
 	if err == nil && len(output) == 0 {
+		ctx := context.Background()
 		// Make sure we have a contract to operate on, and bail out otherwise.
 		if opts.Block == nil || opts.Block.Cmp(ethereum.Big0) == 0 {
 			code, err = self.client.CodeAt(ctx, contract.Address, nil)
@@ -386,7 +387,8 @@ func NewBaseBlockchain(
 	operators map[string]*Operator,
 	broadcaster *Broadcaster,
 	ethRate EthUSDRate,
-	chainType string) *BaseBlockchain {
+	chainType string,
+	contractcaller *ContractCaller) *BaseBlockchain {
 
 	file, err := os.Open(
 		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/ERC20.abi")
@@ -399,12 +401,13 @@ func NewBaseBlockchain(
 	}
 
 	return &BaseBlockchain{
-		client:      client,
-		rpcClient:   rpcClient,
-		operators:   operators,
-		broadcaster: broadcaster,
-		ethRate:     ethRate,
-		chainType:   chainType,
-		erc20abi:    packabi,
+		client:         client,
+		rpcClient:      rpcClient,
+		operators:      operators,
+		broadcaster:    broadcaster,
+		ethRate:        ethRate,
+		chainType:      chainType,
+		erc20abi:       packabi,
+		contractCaller: contractcaller,
 	}
 }
