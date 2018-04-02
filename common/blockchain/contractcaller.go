@@ -10,8 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-const TIMEOUT = 2 * time.Second
-
 type ContractCaller struct {
 	clients []*ethclient.Client
 	urls    []string
@@ -22,9 +20,6 @@ func NewContractCaller(clients []*ethclient.Client, urls []string) *ContractCall
 		clients: clients,
 		urls:    urls,
 	}
-}
-func (self ContractCaller) call(ctx context.Context, msg ether.CallMsg, blockNo *big.Int) {
-
 }
 
 func (self ContractCaller) CallContract(msg ether.CallMsg, blockNo *big.Int, timeOut time.Duration) (output []byte, err error) {
