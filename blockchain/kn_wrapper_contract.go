@@ -3,6 +3,7 @@ package blockchain
 import (
 	"log"
 	"math/big"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -10,7 +11,8 @@ import (
 
 func (self *Blockchain) GeneratedGetBalances(opts blockchain.CallOpts, reserve ethereum.Address, tokens []ethereum.Address) ([]*big.Int, error) {
 	out := new([]*big.Int)
-	err := self.Call(opts, self.wrapper, out, "getBalances", reserve, tokens)
+	timeOut := 2 * time.Second
+	err := self.Call(timeOut, opts, self.wrapper, out, "getBalances", reserve, tokens)
 	return *out, err
 }
 
@@ -23,7 +25,8 @@ func (self *Blockchain) GeneratedGetTokenIndicies(opts blockchain.CallOpts, rate
 		ret0,
 		ret1,
 	}
-	err := self.Call(opts, self.wrapper, out, "getTokenIndicies", ratesContract, tokenList)
+	timeOut := 2 * time.Second
+	err := self.Call(timeOut, opts, self.wrapper, out, "getTokenIndicies", ratesContract, tokenList)
 	return *ret0, *ret1, err
 }
 
@@ -45,7 +48,8 @@ func (self *Blockchain) GeneratedGetTokenRates(
 		ret3,
 		ret4,
 	}
-	err := self.Call(opts, self.wrapper, out, "getTokenRates", ratesContract, tokenList)
+	timeOut := 2 * time.Second
+	err := self.Call(timeOut, opts, self.wrapper, out, "getTokenRates", ratesContract, tokenList)
 	return *ret0, *ret1, *ret2, *ret3, *ret4, err
 }
 
@@ -62,7 +66,8 @@ func (self *Blockchain) GeneratedGetReserveRates(
 		ret0,
 		ret1,
 	}
-	err := self.Call(opts, self.wrapper, out, "getReserveRate", reserveAddress, srcAddresses, destAddresses)
+	timeOut := 2 * time.Second
+	err := self.Call(timeOut, opts, self.wrapper, out, "getReserveRate", reserveAddress, srcAddresses, destAddresses)
 	if err != nil {
 		log.Println("cannot get reserve rates: ", err.Error())
 	}

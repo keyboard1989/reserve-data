@@ -112,7 +112,7 @@ func (self *BaseBlockchain) SignAndBroadcast(tx *types.Transaction, from string)
 	}
 }
 
-func (self *BaseBlockchain) Call(opts CallOpts, contract *Contract, result interface{}, method string, params ...interface{}) error {
+func (self *BaseBlockchain) Call(timeOut time.Duration, opts CallOpts, contract *Contract, result interface{}, method string, params ...interface{}) error {
 	// Pack the input, call and unpack the results
 	input, err := contract.ABI.Pack(method, params...)
 	if err != nil {
@@ -125,9 +125,9 @@ func (self *BaseBlockchain) Call(opts CallOpts, contract *Contract, result inter
 	)
 	if opts.Block == nil || opts.Block.Cmp(ethereum.Big0) == 0 {
 		// calling in pending state
-		output, err = self.contractCaller.CallContract(msg, nil)
+		output, err = self.contractCaller.CallContract(msg, nil, timeOut)
 	} else {
-		output, err = self.contractCaller.CallContract(msg, opts.Block)
+		output, err = self.contractCaller.CallContract(msg, opts.Block, timeOut)
 	}
 	if err == nil && len(output) == 0 {
 		ctx := context.Background()

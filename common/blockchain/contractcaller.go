@@ -27,10 +27,10 @@ func (self ContractCaller) call(ctx context.Context, msg ether.CallMsg, blockNo 
 
 }
 
-func (self ContractCaller) CallContract(msg ether.CallMsg, blockNo *big.Int) (output []byte, err error) {
+func (self ContractCaller) CallContract(msg ether.CallMsg, blockNo *big.Int, timeOut time.Duration) (output []byte, err error) {
 	for i, client := range self.clients {
 		urlstring := self.urls[i]
-		ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), timeOut)
 
 		defer cancel()
 		output, err = client.CallContract(ctx, msg, blockNo)
