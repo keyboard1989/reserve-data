@@ -39,7 +39,7 @@ type BaseBlockchain struct {
 	broadcaster *Broadcaster
 	ethRate     EthUSDRate
 	chainType   string
-	callOrder   []string
+	callClients *CallClients
 	erc20abi    abi.ABI
 }
 
@@ -126,9 +126,9 @@ func (self *BaseBlockchain) Call(context context.Context, opts CallOpts, contrac
 	)
 	if opts.Block == nil || opts.Block.Cmp(ethereum.Big0) == 0 {
 		// calling in pending state
-		output, err = self.broadcaster.CallContract(ctx, msg, nil, self.callOrder)
+		output, err = self.callClients.CallContract(ctx, msg, nil)
 	} else {
-		output, err = self.broadcaster.CallContract(ctx, msg, opts.Block, self.callOrder)
+		output, err = self.callClients.CallContract(ctx, msg, opts.Block)
 	}
 	if err == nil && len(output) == 0 {
 		// Make sure we have a contract to operate on, and bail out otherwise.
@@ -388,7 +388,7 @@ func NewBaseBlockchain(
 	broadcaster *Broadcaster,
 	ethRate EthUSDRate,
 	chainType string,
-	prt []string) *BaseBlockchain {
+	clients *CallClients) *BaseBlockchain {
 
 	file, err := os.Open(
 		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/ERC20.abi")
@@ -408,6 +408,6 @@ func NewBaseBlockchain(
 		ethRate:     ethRate,
 		chainType:   chainType,
 		erc20abi:    packabi,
-		callOrder:   prt,
+		callClients: clients,
 	}
 }
