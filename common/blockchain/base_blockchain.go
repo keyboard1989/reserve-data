@@ -19,6 +19,10 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
+const (
+	ZeroAddress string = "0x0000000000000000000000000000000000000000"
+)
+
 // BaseBlockchain interact with the blockchain in a way that eases
 // other blockchain types in KyberNetwork.
 // It manages multiple operators (address, signer and nonce)
@@ -114,7 +118,7 @@ func (self *BaseBlockchain) Call(context context.Context, opts CallOpts, contrac
 		return err
 	}
 	var (
-		msg    = ether.CallMsg{From: opts.Operator.Address, To: &contract.Address, Data: input}
+		msg    = ether.CallMsg{From: ethereum.HexToAddress(ZeroAddress), To: &contract.Address, Data: input}
 		ctx    = ensureContext(context)
 		code   []byte
 		output []byte
@@ -197,15 +201,13 @@ func (self *BaseBlockchain) transactTx(context context.Context, opts TxOpts, con
 	return rawTx, nil
 }
 
-func (self *BaseBlockchain) GetCallOpts(op string, block uint64) CallOpts {
-	operator := self.GetOperator(op)
+func (self *BaseBlockchain) GetCallOpts(block uint64) CallOpts {
 	var blockBig *big.Int
 	if block != 0 {
 		blockBig = big.NewInt(int64(block))
 	}
 	return CallOpts{
-		Operator: operator,
-		Block:    blockBig,
+		Block: blockBig,
 	}
 }
 

@@ -14,6 +14,5 @@ type TxOpts struct {
 }
 
 type CallOpts struct {
-	Operator *Operator // Ethereum account to send the transaction from
-	Block    *big.Int  // Block number that the call is invoked at. Nil means calling in pending state
+	Block *big.Int // Block number that the call is invoked at. Nil means calling in pending state
 }

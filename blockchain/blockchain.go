@@ -103,7 +103,7 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
 		}
 	}
-	opts := self.GetCallOpts(PRICING_OP, 0)
+	opts := self.GetCallOpts(0)
 	bulkIndices, indicesInBulk, err := self.GeneratedGetTokenIndicies(
 		opts,
 		self.pricingAddr,
@@ -120,6 +120,16 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	}
 	log.Printf("Token indices: %+v", self.tokenIndices)
 	return nil
+}
+
+func (self *Blockchain) RegisterPricingOperator(signer blockchain.Signer, nonceCorpus blockchain.NonceCorpus) {
+	log.Printf("reserve pricing address: %s", signer.GetAddress().Hex())
+	self.RegisterOperator(PRICING_OP, blockchain.NewOperator(signer, nonceCorpus))
+}
+
+func (self *Blockchain) RegisterDepositOperator(signer blockchain.Signer, nonceCorpus blockchain.NonceCorpus) {
+	log.Printf("reserve depositor address: %s", signer.GetAddress().Hex())
+	self.RegisterOperator(DEPOSIT_OP, blockchain.NewOperator(signer, nonceCorpus))
 }
 
 func readablePrint(data map[ethereum.Address]byte) string {
@@ -145,7 +155,7 @@ func (self *Blockchain) SetRates(
 	gasPrice *big.Int) (*types.Transaction, error) {
 
 	block.Add(block, big.NewInt(1))
-	copts := self.GetCallOpts(PRICING_OP, 0)
+	copts := self.GetCallOpts(0)
 	baseBuys, baseSells, _, _, _, err := self.GeneratedGetTokenRates(
 		copts, self.pricingAddr, tokens,
 	)
@@ -281,7 +291,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint6
 		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 	}
 	timestamp := common.GetTimestamp()
-	opts := self.GetCallOpts(PRICING_OP, atBlock)
+	opts := self.GetCallOpts(atBlock)
 	balances, err := self.GeneratedGetBalances(opts, reserve, tokens)
 	returnTime := common.GetTimestamp()
 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
@@ -329,7 +339,7 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 		}
 	}
 	timestamp := common.GetTimestamp()
-	opts := self.GetCallOpts(PRICING_OP, atBlock)
+	opts := self.GetCallOpts(atBlock)
 	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.GeneratedGetTokenRates(
 		opts, self.pricingAddr, tokenAddrs,
 	)
@@ -372,7 +382,7 @@ func (self *Blockchain) GetReserveRates(
 		destAddresses = append(destAddresses, ethereum.HexToAddress(ETH.Address), ethereum.HexToAddress(token.Address))
 	}
 
-	opts := self.GetCallOpts(PRICING_OP, atBlock)
+	opts := self.GetCallOpts(atBlock)
 	reserveRate, sanityRate, err := self.GeneratedGetReserveRates(opts, reserveAddress, srcAddresses, destAddresses)
 	if err != nil {
 		return rates, err
@@ -395,7 +405,7 @@ func (self *Blockchain) GetReserveRates(
 }
 
 func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock uint64) (*big.Int, error) {
-	opts := self.GetCallOpts(PRICING_OP, atBlock)
+	opts := self.GetCallOpts(atBlock)
 	if priceType == "buy" {
 		return self.GeneratedGetRate(opts, token, block, true, qty)
 	} else {
@@ -552,8 +562,6 @@ func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
 
 func NewBlockchain(
 	base *blockchain.BaseBlockchain,
-	signer blockchain.Signer, depositSigner blockchain.Signer,
-	nonceCorpus blockchain.NonceCorpus, nonceDeposit blockchain.NonceCorpus,
 	wrapperAddr, pricingAddr, burnerAddr,
 	networkAddr, reserveAddr, whitelistAddr ethereum.Address) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
@@ -561,9 +569,6 @@ func NewBlockchain(
 		wrapperAddr,
 		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/wrapper.abi",
 	)
-	if signer != nil {
-		log.Printf("reserve owner address: %s", signer.GetAddress().Hex())
-	}
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve := blockchain.NewContract(
 		reserveAddr,
@@ -574,12 +579,10 @@ func NewBlockchain(
 		pricingAddr,
 		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/pricing.abi",
 	)
+
 	log.Printf("burner address: %s", burnerAddr.Hex())
 	log.Printf("network address: %s", networkAddr.Hex())
 	log.Printf("whitelist address: %s", whitelistAddr.Hex())
-
-	base.RegisterOperator(PRICING_OP, blockchain.NewOperator(signer, nonceCorpus))
-	base.RegisterOperator(DEPOSIT_OP, blockchain.NewOperator(depositSigner, nonceDeposit))
 
 	return &Blockchain{
 		BaseBlockchain: base,
