@@ -137,20 +137,9 @@ func serverStart(cmd *cobra.Command, args []string) {
 		)
 	}
 
-	var nonceCorpus *nonce.TimeWindow
-	var nonceDeposit *nonce.TimeWindow
-
-	if !noCore {
-		nonceCorpus = nonce.NewTimeWindow(config.BlockchainSigner.GetAddress())
-		nonceDeposit = nonce.NewTimeWindow(config.DepositSigner.GetAddress())
-	}
 	//set block chain
 	bc, err := blockchain.NewBlockchain(
 		config.Blockchain,
-		config.BlockchainSigner,
-		config.DepositSigner,
-		nonceCorpus,
-		nonceDeposit,
 		config.WrapperAddress,
 		config.PricingAddress,
 		config.FeeBurnerAddress,
@@ -161,6 +150,14 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if err != nil {
 		panic(err)
 	}
+
+	if !noCore {
+		nonceCorpus := nonce.NewTimeWindow(config.BlockchainSigner.GetAddress())
+		nonceDeposit := nonce.NewTimeWindow(config.DepositSigner.GetAddress())
+		bc.RegisterPricingOperator(config.BlockchainSigner, nonceCorpus)
+		bc.RegisterDepositOperator(config.DepositSigner, nonceDeposit)
+	}
+
 	// we need to implicitly add old contract addresses to production
 	if kyberENV == "production" || kyberENV == "mainnet" {
 		// bc.AddOldNetwork(...)
