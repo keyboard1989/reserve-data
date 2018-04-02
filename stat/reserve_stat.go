@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -147,23 +148,25 @@ func (self ReserveStats) GetGeoData(fromTime, toTime uint64, country string, tzp
 	return result, err
 }
 
-func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (common.Heatmap, error) {
+func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (common.HeatmapResponse, error) {
 	result := common.Heatmap{}
+	var arrResult common.HeatmapResponse
 	var err error
 	fromTime, toTime, err = validateTimeWindow(fromTime, toTime, "D")
 	if err != nil {
-		return result, err
+		return arrResult, err
 	}
 	countries, err := self.statStorage.GetCountries()
 	if err != nil {
-		return result, err
+		return arrResult, err
 	}
+
+	// get stats
 	for _, c := range countries {
 		cStats, err := self.statStorage.GetCountryStats(fromTime, toTime, c, tzparam)
 		if err != nil {
-			return result, err
+			return arrResult, err
 		}
-		log.Printf("Heat map: %s - %v", c, cStats)
 		for _, stat := range cStats {
 			s := stat.(map[string]float64)
 			currentETHValue := result[c].TotalETHValue
@@ -174,7 +177,17 @@ func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (com
 			}
 		}
 	}
-	return result, err
+
+	// sort heatmap
+	for k, v := range result {
+		arrResult = append(arrResult, common.HeatmapObject{
+			Country:        k,
+			TotalETHValue:  v.TotalETHValue,
+			TotalFiatValue: v.TotalFiatValue,
+		})
+	}
+	sort.Sort(sort.Reverse(arrResult))
+	return arrResult, err
 }
 
 func (self ReserveStats) GetCountries() ([]string, error) {

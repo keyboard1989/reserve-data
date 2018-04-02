@@ -651,3 +651,18 @@ type HeatmapType struct {
 }
 
 type Heatmap map[string]HeatmapType
+
+type HeatmapObject struct {
+	Country        string  `json:"country"`
+	TotalETHValue  float64 `json:"total_eth_value"`
+	TotalFiatValue float64 `json:"total_fiat_value"`
+}
+
+type HeatmapResponse []HeatmapObject
+
+func (h HeatmapResponse) Less(i, j int) bool {
+	return h[i].TotalETHValue < h[j].TotalETHValue
+}
+
+func (h HeatmapResponse) Len() int      { return len(h) }
+func (h HeatmapResponse) Swap(i, j int) { h[i], h[j] = h[j], h[i] }

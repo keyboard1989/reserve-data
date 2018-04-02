@@ -1593,7 +1593,7 @@ func (self *HTTPServer) ValidateTimeInput(c *gin.Context) (uint64, uint64, bool)
 			http.StatusOK,
 			gin.H{
 				"success": false,
-				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
+				"reason":  fmt.Sprintf("fromTime param is invalid: %s", ok),
 			},
 		)
 		return 0, 0, false
@@ -1993,10 +1993,9 @@ func (self *HTTPServer) UpdateExchangeStatus(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetCountryStats(c *gin.Context) {
-	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
-	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
-	if toTime == 0 {
-		toTime = common.GetTimepoint()
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
 	}
 	country := c.Query("country")
 	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
