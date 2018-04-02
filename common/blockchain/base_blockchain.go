@@ -27,6 +27,7 @@ import (
 // It has convenient logic of broadcasting tx to multiple nodes at once.
 // It has convenient functions to init proper CallOpts and TxOpts.
 // It has eth usd rate lookup function.
+
 type BaseBlockchain struct {
 	client      *ethclient.Client
 	rpcClient   *rpc.Client
@@ -115,15 +116,15 @@ func (self *BaseBlockchain) Call(context context.Context, opts CallOpts, contrac
 	}
 	var (
 		msg    = ether.CallMsg{From: opts.Operator.Address, To: &contract.Address, Data: input}
-		ctx    = ensureContext(context)
+		ctx    = context
 		code   []byte
 		output []byte
 	)
 	if opts.Block == nil || opts.Block.Cmp(ethereum.Big0) == 0 {
 		// calling in pending state
-		output, err = self.client.CallContract(ctx, msg, nil)
+		output, err = self.broadcaster.CallContract(ctx, msg, nil)
 	} else {
-		output, err = self.client.CallContract(ctx, msg, opts.Block)
+		output, err = self.broadcaster.CallContract(ctx, msg, opts.Block)
 	}
 	if err == nil && len(output) == 0 {
 		// Make sure we have a contract to operate on, and bail out otherwise.
