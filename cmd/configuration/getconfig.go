@@ -113,7 +113,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		blockchain.NewBroadcaster(bkclients),
 		blockchain.NewCMCEthUSDRate(),
 		chainType,
-		blockchain.NewCallClients(callClients, setPath.bkendpoints),
+		blockchain.NewContractCaller(callClients, setPath.bkendpoints),
 	)
 
 	config := &Config{

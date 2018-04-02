@@ -12,22 +12,26 @@ import (
 
 const TIMEOUT = 2 * time.Second
 
-type CallClients struct {
+type ContractCaller struct {
 	clients []*ethclient.Client
 	urls    []string
 }
 
-func NewCallClients(clients []*ethclient.Client, urls []string) *CallClients {
-	return &CallClients{
+func NewContractCaller(clients []*ethclient.Client, urls []string) *ContractCaller {
+	return &ContractCaller{
 		clients: clients,
 		urls:    urls,
 	}
 }
+func (self ContractCaller) call(ctx context.Context, msg ether.CallMsg, blockNo *big.Int) {
 
-func (self CallClients) CallContract(ctx context.Context, msg ether.CallMsg, blockNo *big.Int) (output []byte, err error) {
+}
+
+func (self ContractCaller) CallContract(msg ether.CallMsg, blockNo *big.Int) (output []byte, err error) {
 	for i, client := range self.clients {
 		urlstring := self.urls[i]
-		ctx, cancel := context.WithTimeout(ctx, TIMEOUT)
+		ctx, cancel := context.WithTimeout(context.Background(), TIMEOUT)
+
 		defer cancel()
 		output, err = client.CallContract(ctx, msg, blockNo)
 		if err != nil {
@@ -36,7 +40,6 @@ func (self CallClients) CallContract(ctx context.Context, msg ether.CallMsg, blo
 			log.Printf("FALLBACK: Ether client %s done, returnning result...", urlstring)
 			return
 		}
-
 	}
 	return
 }
