@@ -289,6 +289,30 @@ func (self *BoltStatStorage) getTradeStats(fromTime, toTime uint64, freq string)
 	return result, err
 }
 
+func getUserStatsBucket(tx *bolt.Tx,
+	stats common.TradeStats, timestamp uint64, timezone int64,
+	firstTradeBucket, firstTradeEverBucket, kycInDay string,
+	dailyAddrKey, addrKey, dailyUserKey string, kycEd bool) {
+	dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
+	dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
+	if v := dailyAddrBk.Get([]byte(dailyAddrKey)); v == nil {
+		stats[firstTradeBucket] = 1 // FIRST TRADE IN DAY
+		addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
+		addrBk := tx.Bucket([]byte(addrBucketName))
+		if v := addrBk.Get([]byte(addrKey)); v == nil {
+			stats[firstTradeEverBucket] = 1 // FIRST TRADE EVER
+		}
+
+		if kycEd {
+			dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
+			dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
+			if v := dailyUserBk.Get([]byte(dailyUserKey)); v == nil {
+				stats[kycInDay] = 1
+			}
+		}
+	}
+}
+
 func (self *BoltStatStorage) GetUserStats(timestamp uint64,
 	addr, email, wallet, country string, kycEd bool, timezone int64) (common.TradeStats, error) {
 	stats := common.TradeStats{}
@@ -297,67 +321,30 @@ func (self *BoltStatStorage) GetUserStats(timestamp uint64,
 	self.db.View(func(tx *bolt.Tx) error {
 		freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 		dailyTimestamp := string(getTimestampByFreq(timestamp, freq))
-		dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
-		dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
 		dailyAddrKey := fmt.Sprintf("%s_%s", dailyTimestamp, addr)
-		if v := dailyAddrBk.Get([]byte(dailyAddrKey)); v == nil {
-			stats["first_trade_in_day"] = 1 // FIRST TRADE IN DAY
-
-			addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
-			addrBk := tx.Bucket([]byte(addrBucketName))
-			if v := addrBk.Get([]byte(addr)); v == nil {
-				stats["first_trade_ever"] = 1 // FIRST TRADE EVER
-			}
-
-			if kycEd {
-				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
-				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
-				dailyUserKey := fmt.Sprintf("%s_%s", dailyTimestamp, email)
-				if v := dailyUserBk.Get([]byte(dailyUserKey)); v == nil {
-					stats["kyced_in_day"] = 1
-				}
-			}
-		}
+		dailyUserKey := fmt.Sprintf("%s_%s", dailyTimestamp, email)
+		getUserStatsBucket(tx, stats, timestamp, timezone,
+			"first_trade_in_day", "first_trade_ever", "kyced_in_day", dailyAddrKey, addr, dailyUserKey, kycEd)
 
 		//Get user stat for the current Wallet address
 		dailyAddrWalletKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, addr, wallet)
-		if v := dailyAddrBk.Get([]byte(dailyAddrWalletKey)); v == nil {
-			stats[fmt.Sprintf("wallet_first_trade_in_day_%s", wallet)] = 1
-			addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
-			addrBk := tx.Bucket([]byte(addrBucketName))
-			if v := addrBk.Get([]byte(fmt.Sprintf("%s_%s", addr, wallet))); v == nil {
-				stats[fmt.Sprintf("wallet_first_trade_ever_%s", wallet)] = 1
-			}
-			if kycEd {
-				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
-				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
-				dailyUserWalletKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, email, wallet)
-				if v := dailyUserBk.Get([]byte(dailyUserWalletKey)); v == nil {
-					stats[fmt.Sprintf("wallet_kyced_in_day_%s", wallet)] = 1
-				}
-			}
-
-		}
+		walletFirstTrade := fmt.Sprintf("wallet_first_trade_in_day_%s", wallet)
+		walletFirstTradeEver := fmt.Sprintf("wallet_first_trade_ever_%s", wallet)
+		walletKycedInday := fmt.Sprintf("wallet_kyced_in_day_%s", wallet)
+		addrWalletKey := fmt.Sprintf("%s_%s", addr, wallet)
+		dailyUserWalletKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, email, wallet)
+		getUserStatsBucket(tx, stats, timestamp, timezone,
+			walletFirstTrade, walletFirstTradeEver, walletKycedInday, dailyAddrWalletKey, addrWalletKey, dailyUserWalletKey, kycEd)
 
 		//Get user stat for the current Wallet address
+		geoFirstTradeInDay := fmt.Sprintf("geo_first_trade_in_day_%s", country)
+		geoFirstTradeEver := fmt.Sprintf("geo_first_trade_ever_%s", country)
+		geoKycedInDay := fmt.Sprintf("geo_kyced_in_day_%s", country)
+		addrCountryKey := fmt.Sprintf("%s_%s", addr, country)
 		dailyAddrCountryKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, addr, country)
-		if v := dailyAddrBk.Get([]byte(dailyAddrCountryKey)); v == nil {
-			stats[fmt.Sprintf("geo_first_trade_in_day_%s", country)] = 1
-			addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
-			addrBk := tx.Bucket([]byte(addrBucketName))
-			if v := addrBk.Get([]byte(fmt.Sprintf("%s_%s", addr, country))); v == nil {
-				stats[fmt.Sprintf("geo_first_trade_ever_%s", country)] = 1
-			}
-			if kycEd {
-				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
-				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
-				dailyUserCountryKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, email, wallet)
-				if v := dailyUserBk.Get([]byte(dailyUserCountryKey)); v == nil {
-					stats[fmt.Sprintf("geo_kyced_in_day_%s", country)] = 1
-				}
-			}
-
-		}
+		dailyUserCountryKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, email, wallet)
+		getUserStatsBucket(tx, stats, timestamp, timezone,
+			geoFirstTradeInDay, geoFirstTradeEver, geoKycedInDay, dailyAddrCountryKey, addrCountryKey, dailyUserCountryKey, kycEd)
 
 		return nil
 	})
