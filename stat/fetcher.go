@@ -1,14 +1,19 @@
 package stat
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/big"
+	"net/http"
 	"strings"
 	"sync"
+
 	// "sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/stat/util"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -305,6 +310,36 @@ func (self *Fetcher) RunBlockFetcher() {
 	}
 }
 
+func (self *Fetcher) GetTradeGeo(txHash string) (string, string, error) {
+	url := fmt.Sprintf("https://broadcast.kyber.network/get-tx-info/%s", txHash)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", "", err
+	}
+	response := common.TradeLogGeoInfoResp{}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", err
+	}
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		return "", "", err
+	}
+	if response.Success {
+		if response.Data.Country != "" {
+			return response.Data.IP, response.Data.Country, err
+		}
+		country, err := util.IpToCountry(response.Data.IP)
+		if err != nil {
+			return "", "", err
+		}
+		return response.Data.IP, country, err
+	}
+	return "", "unknown", err
+}
+
 // return block number that we just fetched the logs
 func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint64) uint64 {
 	logs, err := self.blockchain.GetLogs(fromBlock, toBlock)
@@ -320,15 +355,21 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 			for _, il := range logs {
 				if il.Type() == "TradeLog" {
 					l := il.(common.TradeLog)
-					// log.Printf("LogFetcher - blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
+					txHash := il.TxHash()
+					ip, country, err := self.GetTradeGeo(txHash.Hex())
+					l.IP = ip
+					l.Country = country
+					err = self.statStorage.SetCountry(country)
+					if err != nil {
+						log.Printf("Cannot store country: %s", err.Error())
+					}
+
 					err = self.logStorage.StoreTradeLog(l, timepoint)
 					if err != nil {
 						log.Printf("LogFetcher - storing trade log failed, ignore that log and proceed with remaining logs, err: %+v", err)
 					}
 				} else if il.Type() == "SetCatLog" {
 					l := il.(common.SetCatLog)
-					// log.Printf("LogFetcher - blockno: %d", l.BlockNumber)
-					// log.Printf("LogFetcher - log: %+v", l)
 					err = self.logStorage.StoreCatLog(l)
 					if err != nil {
 						log.Printf("LogFetcher - storing cat log failed, ignore that log and proceed with remaining logs, err: %+v", err)
@@ -376,9 +417,12 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 	reserveAddr := common.AddrToString(trade.ReserveAddress)
 	walletAddr := common.AddrToString(trade.WalletAddress)
 	userAddr := common.AddrToString(trade.UserAddress)
+	country := trade.Country
+
 	if checkWalletAddress(walletAddr) {
 		self.statStorage.SetWalletAddress(walletAddr)
 	}
+
 	var srcAmount, destAmount, ethAmount, burnFee, walletFee float64
 	var tokenAddr string
 	for _, token := range common.SupportedTokens {
@@ -453,13 +497,13 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 		kycEd = true
 	}
 	for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
-		userStats, err := self.statStorage.GetUserStats(trade.Timestamp, userAddr, email, walletAddr, kycEd, i)
+		userStats, err := self.statStorage.GetUserStats(trade.Timestamp, userAddr, email, walletAddr, country, kycEd, i)
 		if err != nil {
 			return err
 		}
 
 		if len(userStats) > 0 {
-			if err := self.statStorage.SetUserStats(trade.Timestamp, userAddr, email, walletAddr, kycEd, i, userStats); err != nil {
+			if err := self.statStorage.SetUserStats(trade.Timestamp, userAddr, email, walletAddr, country, kycEd, i, userStats); err != nil {
 				log.Println("Set user stats failed: ", err)
 				return err
 			}
@@ -474,6 +518,18 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 		fmt.Sprintf("wallet_trade_count_%s", walletAddr): 1,
 	}
 	//update to timezone buckets
+	if err = self.updateTimeZoneBuckets(trade.Timestamp, updates); err != nil {
+		return
+	}
+
+	// update geo stats
+	updates = common.TradeStats{
+		fmt.Sprintf("geo_eth_volume_%s", country):  ethAmount,
+		fmt.Sprintf("geo_usd_volume_%s", country):  trade.FiatAmount,
+		fmt.Sprintf("geo_burn_fee_%s", country):    burnFee,
+		fmt.Sprintf("geo_trade_count_%s", country): 1,
+	}
+
 	if err = self.updateTimeZoneBuckets(trade.Timestamp, updates); err != nil {
 		return
 	}

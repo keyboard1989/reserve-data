@@ -586,6 +586,8 @@ type TradeLog struct {
 	WalletAddress  ethereum.Address
 	WalletFee      *big.Int
 	BurnFee        *big.Int
+	IP             string
+	Country        string
 }
 
 type ReserveRateEntry struct {
@@ -634,3 +636,33 @@ type ExStatus struct {
 }
 
 type ExchangesStatus map[string]ExStatus
+
+type TradeLogGeoInfoResp struct {
+	Success bool `json:"success"`
+	Data    struct {
+		IP      string `json:"IP"`
+		Country string `json:"Country"`
+	} `json:"data"`
+}
+
+type HeatmapType struct {
+	TotalETHValue  float64 `json:"total_eth_value"`
+	TotalFiatValue float64 `json:"total_fiat_value"`
+}
+
+type Heatmap map[string]HeatmapType
+
+type HeatmapObject struct {
+	Country        string  `json:"country"`
+	TotalETHValue  float64 `json:"total_eth_value"`
+	TotalFiatValue float64 `json:"total_fiat_value"`
+}
+
+type HeatmapResponse []HeatmapObject
+
+func (h HeatmapResponse) Less(i, j int) bool {
+	return h[i].TotalETHValue < h[j].TotalETHValue
+}
+
+func (h HeatmapResponse) Len() int      { return len(h) }
+func (h HeatmapResponse) Swap(i, j int) { h[i], h[j] = h[j], h[i] }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -134,6 +135,64 @@ func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 
 	result, err := self.logStorage.GetTradeLogs(fromTime*1000000, toTime*1000000)
 	return result, err
+}
+
+func (self ReserveStats) GetGeoData(fromTime, toTime uint64, country string, tzparam int64) (common.StatTicks, error) {
+	var err error
+	result := common.StatTicks{}
+	fromTime, toTime, err = validateTimeWindow(fromTime, toTime, "D")
+	if err != nil {
+		return result, err
+	}
+	result, err = self.statStorage.GetCountryStats(fromTime, toTime, country, tzparam)
+	return result, err
+}
+
+func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (common.HeatmapResponse, error) {
+	result := common.Heatmap{}
+	var arrResult common.HeatmapResponse
+	var err error
+	fromTime, toTime, err = validateTimeWindow(fromTime, toTime, "D")
+	if err != nil {
+		return arrResult, err
+	}
+	countries, err := self.statStorage.GetCountries()
+	if err != nil {
+		return arrResult, err
+	}
+
+	// get stats
+	for _, c := range countries {
+		cStats, err := self.statStorage.GetCountryStats(fromTime, toTime, c, tzparam)
+		if err != nil {
+			return arrResult, err
+		}
+		for _, stat := range cStats {
+			s := stat.(map[string]float64)
+			currentETHValue := result[c].TotalETHValue
+			currentFiatValue := result[c].TotalFiatValue
+			result[c] = common.HeatmapType{
+				TotalETHValue:  currentETHValue + s["total_eth_volume"],
+				TotalFiatValue: currentFiatValue + s["total_usd_amount"],
+			}
+		}
+	}
+
+	// sort heatmap
+	for k, v := range result {
+		arrResult = append(arrResult, common.HeatmapObject{
+			Country:        k,
+			TotalETHValue:  v.TotalETHValue,
+			TotalFiatValue: v.TotalFiatValue,
+		})
+	}
+	sort.Sort(sort.Reverse(arrResult))
+	return arrResult, err
+}
+
+func (self ReserveStats) GetCountries() ([]string, error) {
+	result, _ := self.statStorage.GetCountries()
+	return result, nil
 }
 
 func (self ReserveStats) GetCatLogs(fromTime uint64, toTime uint64) ([]common.SetCatLog, error) {

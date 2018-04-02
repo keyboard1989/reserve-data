@@ -1593,21 +1593,14 @@ func (self *HTTPServer) ValidateTimeInput(c *gin.Context) (uint64, uint64, bool)
 			http.StatusOK,
 			gin.H{
 				"success": false,
-				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
+				"reason":  fmt.Sprintf("fromTime param is invalid: %s", ok),
 			},
 		)
 		return 0, 0, false
 	}
-	toTime, ok := strconv.ParseUint(c.Query("toTime"), 10, 64)
-	if ok != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"success": false,
-				"reason":  fmt.Sprintf("fromTime or toTime param is invalid: %s", ok),
-			},
-		)
-		return 0, 0, false
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	if toTime == 0 {
+		toTime = common.GetTimepoint()
 	}
 	return fromTime, toTime, true
 }
@@ -1999,6 +1992,92 @@ func (self *HTTPServer) UpdateExchangeStatus(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetCountryStats(c *gin.Context) {
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	country := c.Query("country")
+	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
+	if (tzparam < START_TIMEZONE) || (tzparam > END_TIMEZONE) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "Timezone is not supported",
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetGeoData(fromTime, toTime, country, tzparam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetHeatMap(c *gin.Context) {
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	tzparam, _ := strconv.ParseInt(c.Query("timeZone"), 10, 64)
+	if (tzparam < START_TIMEZONE) || (tzparam > END_TIMEZONE) {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "Timezone is not supported",
+			},
+		)
+		return
+	}
+
+	data, err := self.stat.GetHeatMap(fromTime, toTime, tzparam)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetCountries(c *gin.Context) {
+	data, _ := self.stat.GetCountries()
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -2068,6 +2147,9 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-reserve-rate", self.GetReserveRate)
 		self.r.GET("/get-wallet-stats", self.GetWalletStats)
 		self.r.GET("/get-wallet-address", self.GetWalletAddress)
+		self.r.GET("/get-country-stats", self.GetCountryStats)
+		self.r.GET("/get-heat-map", self.GetHeatMap)
+		self.r.GET("/get-countries", self.GetCountries)
 	}
 
 	self.r.Run(self.host)

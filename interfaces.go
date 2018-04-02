@@ -26,6 +26,10 @@ type ReserveStats interface {
 	GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error)
 	UpdateUserAddresses(userID string, addresses []ethereum.Address, timestamps []uint64) error
 
+	GetGeoData(fromTime, toTime uint64, country string, tzparam int64) (common.StatTicks, error)
+	GetHeatMap(fromTime, toTime uint64, tzparam int64) (common.HeatmapResponse, error)
+	GetCountries() ([]string, error)
+
 	Run() error
 	Stop() error
 }
