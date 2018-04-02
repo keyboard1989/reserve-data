@@ -355,7 +355,6 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 			for _, il := range logs {
 				if il.Type() == "TradeLog" {
 					l := il.(common.TradeLog)
-					// log.Printf("LogFetcher - blockno: %d - %d", l.BlockNumber, l.TransactionIndex)
 					txHash := il.TxHash()
 					ip, country, err := self.GetTradeGeo(txHash.Hex())
 					l.IP = ip
@@ -371,8 +370,6 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 					}
 				} else if il.Type() == "SetCatLog" {
 					l := il.(common.SetCatLog)
-					// log.Printf("LogFetcher - blockno: %d", l.BlockNumber)
-					// log.Printf("LogFetcher - log: %+v", l)
 					err = self.logStorage.StoreCatLog(l)
 					if err != nil {
 						log.Printf("LogFetcher - storing cat log failed, ignore that log and proceed with remaining logs, err: %+v", err)

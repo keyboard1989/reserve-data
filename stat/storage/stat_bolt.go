@@ -398,6 +398,33 @@ func (self *BoltStatStorage) PruneDailyBucket(timepoint uint64, timezone int64) 
 	return
 }
 
+func setUserBucket(tx *bolt.Tx,
+	stats common.TradeStats, firstTradeBucket, firstTradeEverBucket, addr, dailyTimestamp, email string,
+	dailyAddrBkname, dailyAddrKey, dailyUserBkname, dailyUserKey, addrBucketKey string,
+	timezone int64, kycEd bool) error {
+	if _, traded := stats[firstTradeBucket]; traded {
+		dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
+		if err := dailyAddrBk.Put([]byte(dailyAddrKey), []byte("1")); err != nil {
+			return err
+		}
+		if _, traded := stats[firstTradeEverBucket]; traded {
+			addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
+			addrBk := tx.Bucket([]byte(addrBucketName))
+			if err := addrBk.Put([]byte(addrBucketKey), []byte("1")); err != nil {
+				return err
+			}
+		}
+
+		if kycEd {
+			dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
+			if err := dailyUserBk.Put([]byte(dailyUserKey), []byte("1")); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func (self *BoltStatStorage) SetUserStats(timestamp uint64,
 	addr, email, wallet, country string, kycEd bool, timezone int64, stats common.TradeStats) error {
 	var err error
@@ -410,82 +437,29 @@ func (self *BoltStatStorage) SetUserStats(timestamp uint64,
 	self.db.Update(func(tx *bolt.Tx) error {
 
 		dailyTimestamp := string(getTimestampByFreq(timestamp, freq))
-		if _, traded := stats["first_trade_in_day"]; traded {
-			dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
-			dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
-			dailyAddrKey := fmt.Sprintf("%s_%s", dailyTimestamp, addr)
-			if err := dailyAddrBk.Put([]byte(dailyAddrKey), []byte("1")); err != nil {
-				return err
-			}
-			if _, traded := stats["first_trade_ever"]; traded {
-				addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
-				addrBk := tx.Bucket([]byte(addrBucketName))
-				if err := addrBk.Put([]byte(addr), []byte("1")); err != nil {
-					return err
-				}
-			}
-
-			if kycEd {
-				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
-				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
-				dailyUserKey := fmt.Sprintf("%s_%s", dailyTimestamp, email)
-				if err := dailyUserBk.Put([]byte(dailyUserKey), []byte("1")); err != nil {
-					return err
-				}
-			}
-		}
+		dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
+		dailyAddrKey := fmt.Sprintf("%s_%s", dailyTimestamp, addr)
+		dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
+		dailyUserKey := fmt.Sprintf("%s_%s", dailyTimestamp, email)
+		setUserBucket(tx, stats, "first_trade_in_day", "first_trade_ever", addr, dailyTimestamp, email, dailyAddrBkname, dailyAddrKey, dailyUserBkname, dailyUserKey, addr, timezone, kycEd)
 
 		//Set user stat for the current Wallet address
-		if _, walletTraded := stats[fmt.Sprintf("wallet_first_trade_in_day_%s", wallet)]; walletTraded {
-			dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
-			dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
-			dailyAddrWalletKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, addr, wallet)
-			if err := dailyAddrBk.Put([]byte(dailyAddrWalletKey), []byte("1")); err != nil {
-				return err
-			}
-
-			if _, walletTraded := stats[fmt.Sprintf("wallet_first_trade_ever_%s", wallet)]; walletTraded {
-				addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
-				addrBk := tx.Bucket([]byte(addrBucketName))
-				if err := addrBk.Put([]byte(fmt.Sprintf("%s_%s", addr, wallet)), []byte("1")); err != nil {
-					return err
-				}
-			}
-			if kycEd {
-				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
-				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
-				dailyUserWalletKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, email, wallet)
-				if err := dailyUserBk.Put([]byte(dailyUserWalletKey), []byte("1")); err != nil {
-					return err
-				}
-			}
-		}
+		walletFirstTradeBucket := fmt.Sprintf("wallet_first_trade_in_day_%s", wallet)
+		walletFirstTradeEverBucket := fmt.Sprintf("wallet_first_trade_ever_%s", wallet)
+		dailyAddrWalletKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, addr, wallet)
+		dailyUserWalletKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, email, wallet)
+		addrWalletKey := fmt.Sprintf("%s_%s", addr, wallet)
+		setUserBucket(tx, stats, walletFirstTradeBucket, walletFirstTradeEverBucket, addr, dailyTimestamp, email,
+			dailyAddrBkname, dailyAddrWalletKey, dailyUserBkname, dailyUserWalletKey, addrWalletKey, timezone, kycEd)
 
 		// Set user stat for the current country
-		if _, countryTraded := stats[fmt.Sprintf("geo_first_trade_in_day_%s", country)]; countryTraded {
-			dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
-			dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
-			dailyAddrCountryKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, addr, country)
-			if err := dailyAddrBk.Put([]byte(dailyAddrCountryKey), []byte("1")); err != nil {
-				return err
-			}
-
-			if _, countryTraded := stats[fmt.Sprintf("geo_first_trade_ever_%s", country)]; countryTraded {
-				addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
-				addrBk := tx.Bucket([]byte(addrBucketName))
-				if err := addrBk.Put([]byte(fmt.Sprintf("%s_%s", addr, country)), []byte("1")); err != nil {
-					return err
-				}
-			}
-			if kycEd {
-				dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
-				dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
-				dailyUserCountryKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, email, country)
-				if err := dailyUserBk.Put([]byte(dailyUserCountryKey), []byte("1")); err != nil {
-					return err
-				}
-			}
-		}
+		countryFirstTradeBucket := fmt.Sprintf("geo_first_trade_in_day_%s", country)
+		countryFirstTradeEverBucket := fmt.Sprintf("geo_first_trade_ever_%s", country)
+		dailyAddrCountryKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, addr, country)
+		dailyUserCountryKey := fmt.Sprintf("%s_%s_%s", dailyTimestamp, email, country)
+		addrCountryKey := fmt.Sprintf("%s_%s", addr, country)
+		setUserBucket(tx, stats, countryFirstTradeBucket, countryFirstTradeEverBucket, addr, dailyTimestamp, email,
+			dailyAddrBkname, dailyAddrCountryKey, dailyUserBkname, dailyUserCountryKey, addrCountryKey, timezone, kycEd)
 		return nil
 	})
 	return err
