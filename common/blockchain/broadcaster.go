@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-const DEADLINE = 1*time.Second - 10*time.Millisecond
+const DEADLINE = 2 * time.Second
 
 // Broadcaster takes a signed tx and try to broadcast it to all
 // nodes that it manages as fast as possible. It returns a map of
