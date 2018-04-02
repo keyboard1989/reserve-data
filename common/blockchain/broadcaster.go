@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-const DEADLINE = 2 * time.Second
+const DEADLINE = 1*time.Second - 10*time.Millisecond
 
 // Broadcaster takes a signed tx and try to broadcast it to all
 // nodes that it manages as fast as possible. It returns a map of
@@ -58,24 +58,26 @@ func NewBroadcaster(clients map[string]*ethclient.Client) *Broadcaster {
 	}
 }
 
-func (self Broadcaster) CallContract(ctx context.Context, msg ether.CallMsg, blockNo *big.Int) ([]byte, error) {
-	for urlstring, client := range self.clients {
-		//ctx, cancel := context.WithDeadline(ctx, DEADLINE)
+func (self Broadcaster) CallContract(ctx context.Context, msg ether.CallMsg, blockNo *big.Int, callOder []string) (output []byte, err error) {
+	for _, urlstring := range callOder {
+		client, _ := self.clients[urlstring]
 		ctx, cancel := context.WithTimeout(ctx, DEADLINE)
 		defer cancel()
-		output, err := client.CallContract(ctx, msg, blockNo)
-		if err != nil {
-			log.Printf("FALLBACK: Call contract to Ether client %s getting error: %v", urlstring, err)
-		} else {
-			select {
-			case <-time.After(DEADLINE):
-				log.Printf("FALLBACK: Ether client %s time out, trying next one...")
-			case <-ctx.Done():
-				return output, err
-				log.Printf("FALLBACK: Ether client %s time out, trying next one...")
-
+		output, err = client.CallContract(ctx, msg, blockNo)
+		select {
+		case <-time.After(DEADLINE):
+			log.Printf("FALLBACK: Ether client %s time out, trying next one...", urlstring)
+		case <-ctx.Done():
+			if err != nil {
+				log.Printf("FALLBACK: Ether client %s done, getting err %v, trying next one...", urlstring, err)
+			} else {
+				log.Printf("FALLBACK: Ether client %s done, returnning result...", urlstring)
+				return
 			}
 		}
 	}
-	return nil, errors.New("No eth endpoint is responsive")
+	if err == nil {
+		return nil, errors.New("No eth endpoint is responsive")
+	}
+	return
 }
