@@ -2078,6 +2078,7 @@ func (self *HTTPServer) GetCountries(c *gin.Context) {
 		},
 	)
 }
+
 func (self *HTTPServer) UpdatePriceAnalyticData(c *gin.Context) {
 	postForm, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
 	if !ok {
@@ -2123,6 +2124,39 @@ func (self *HTTPServer) UpdatePriceAnalyticData(c *gin.Context) {
 		},
 	)
 }
+func (self *HTTPServer) GetPriceAnalyticData(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	if toTime == 0 {
+		toTime = common.GetTimepoint()
+	}
+
+	data, err := self.stat.GetPriceAnalyticData(fromTime, toTime)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -2174,7 +2208,7 @@ func (self *HTTPServer) Run() {
 
 		self.r.GET("/get-exchange-status", self.GetExchangesStatus)
 		self.r.POST("/update-exchange-status", self.UpdateExchangeStatus)
-		self.r.POST("/set-price-analytic-data", self.UpdatePriceAnalyticData)
+
 	}
 
 	if self.stat != nil {
@@ -2196,6 +2230,8 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-country-stats", self.GetCountryStats)
 		self.r.GET("/get-heat-map", self.GetHeatMap)
 		self.r.GET("/get-countries", self.GetCountries)
+		self.r.POST("/update-price-analytic-data", self.UpdatePriceAnalyticData)
+		self.r.GET("/get-price-analytic-data", self.GetPriceAnalyticData)
 	}
 
 	self.r.Run(self.host)

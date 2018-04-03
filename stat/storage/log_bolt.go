@@ -12,10 +12,9 @@ import (
 )
 
 const (
-	MAX_GET_LOG_PERIOD uint64 = 86400000000000 //1 days in milisec
-
-	TRADELOG_BUCKET string = "logs"
-	CATLOG_BUCKET   string = "cat_logs"
+	MAX_GET_LOG_PERIOD uint64 = 86400000000000 //1 days in nanosecond
+	TRADELOG_BUCKET    string = "logs"
+	CATLOG_BUCKET      string = "cat_logs"
 )
 
 type BoltLogStorage struct {

@@ -950,6 +950,75 @@ response:
 {"data":[{"country":"US","total_eth_value":51.741131567319854,"total_fiat_value":19804.392524011764},{"country":"unknown","total_eth_value":31.28130484378119,"total_fiat_value":12268.937507634406},{"country":"TW","total_eth_value":15,"total_fiat_value":5916.6900000000005},{"country":"KR","total_eth_value":13.280037553077175,"total_fiat_value":5016.70456645198},{"country":"JP","total_eth_value":10.277090646,"total_fiat_value":3857.271305900826},{"country":"TH","total_eth_value":8.241091466923997,"total_fiat_value":3195.368602817533},{"country":"CA","total_eth_value":3.8122812821017558,"total_fiat_value":1445.8819158742285},{"country":"AU","total_eth_value":2.6,"total_fiat_value":969.02},{"country":"DE","total_eth_value":1.823287,"total_fiat_value":697.502009413},{"country":"ID","total_eth_value":1.7178731840736186,"total_fiat_value":674.8439050493492},{"country":"RO","total_eth_value":1.4009999999999998,"total_fiat_value":529.075415},{"country":"VN","total_eth_value":1.3951777988339262,"total_fiat_value":548.8376078547749},{"country":"CN","total_eth_value":1.0121575386522288,"total_fiat_value":401.6824093511598},{"country":"PL","total_eth_value":0.379699,"total_fiat_value":144.141714079},{"country":"FR","total_eth_value":0.319624,"total_fiat_value":122.92586391999998},{"country":"SG","total_eth_value":0.15642985716526572,"total_fiat_value":64.06928945889221},{"country":"ES","total_eth_value":0.09344946,"total_fiat_value":35.176806429959996},{"country":"XX","total_eth_value":0.09,"total_fiat_value":36.86148},{"country":"IN","total_eth_value":0.0714026952146661,"total_fiat_value":27.977050948875906},{"country":"AR","total_eth_value":0.02751473,"total_fiat_value":10.92519129691},{"country":"RU","total_eth_value":0.024162,"total_fiat_value":9.61210186},{"country":"SE","total_eth_value":0.023,"total_fiat_value":9.132541},{"country":"LV","total_eth_value":0.01,"total_fiat_value":3.9209899999999998},{"country":"AL","total_eth_value":0.003,"total_fiat_value":1.126449}],"success":true}
 ```
 
+### Update Price Analytic Data - (signing required) set a record marking the condition because of which the set price is called. 
+```
+<host>:8000/update-price-analytic-data
+POST request
+params:
+ - timestamp - the timestamp of the action (real time ) in millisecond
+ - value - the json enconded object to save. 
+
+Note: the data sent over must be encoded in Json in order to make it valid for output operation
+  In Python, the data would be encoded as:
+   data = {"timestamp": timestamp, "value": json.dumps(analytic_data)} 
+ ```
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+
+### Get Price Analytic Data - (signing required) list of price analytic data, sorted by timestamp 
+```
+<host>:8000/get-heat-map
+GET request
+params:
+ - fromTime (integer) - from timestamp (millisecond)
+ - toTime (integer) - to timestamp (millisecond)
+```
+example:
+curl -x GET \
+  http://localhost:8000/get-price-analytic-data?fromTime=1522753160000&toTime=1522755792000
+```
+ 
+response:
+```
+{
+  "data": [
+    {
+      "Timestamp": 1522755271000,
+      "Data": {
+        "block_expiration": false,
+        "trigger_price_update": true,
+        "triggering_tokens_list": [
+          {
+            "ask_price": 0.002,
+            "bid_price": 0.003,
+            "mid afp_old_price": 0.34555,
+            "mid_afp_price": 0.6555,
+            "min_spread": 0.233,
+            "token": "OMG"
+          },
+          {
+            "ask_price": 0.004,
+            "bid_price": 0.005,
+            "mid afp_old_price": 0.21555,
+            "mid_afp_price": 0.4355,
+            "min_spread": 0.133,
+            "token": "KNC"
+          }
+        ]
+      }
+    }
+  ],
+  "success": true
+}
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 

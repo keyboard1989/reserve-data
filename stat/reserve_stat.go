@@ -26,11 +26,11 @@ type ReserveStats struct {
 }
 
 func NewReserveStats(
+	analyticStorage AnalyticStorage,
 	statStorage StatStorage,
 	logStorage LogStorage,
 	rateStorage RateStorage,
 	userStorage UserStorage,
-	analyticStorage AnalyticStorage,
 	fetcher *Fetcher) *ReserveStats {
 	return &ReserveStats{
 		analyticStorage: analyticStorage,
@@ -338,4 +338,8 @@ func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error
 
 func (self ReserveStats) UpdatePriceAnalyticData(timestamp uint64, value []byte) error {
 	return self.analyticStorage.UpdatePriceAnalyticData(timestamp, value)
+}
+
+func (self ReserveStats) GetPriceAnalyticData(fromTime uint64, toTime uint64) ([]common.AnalyticPriceResponse, error) {
+	return self.analyticStorage.GetPriceAnalyticData(fromTime, toTime)
 }

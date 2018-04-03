@@ -666,3 +666,8 @@ func (h HeatmapResponse) Less(i, j int) bool {
 
 func (h HeatmapResponse) Len() int      { return len(h) }
 func (h HeatmapResponse) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+
+type AnalyticPriceResponse struct {
+	Timestamp uint64
+	Data      map[string]interface{}
+}

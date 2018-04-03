@@ -183,6 +183,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		if enableStat {
 			statFetcher.SetBlockchain(bc)
 			rStat = stat.NewReserveStats(
+				config.AnalyticStorage,
 				config.StatStorage,
 				config.LogStorage,
 				config.RateStorage,

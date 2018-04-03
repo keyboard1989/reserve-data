@@ -2,14 +2,17 @@ package storage
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 
+	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/boltdb/bolt"
 )
 
 const (
-	PRICE_ANALYTIC_BUCKET string = "price_analytic"
+	PRICE_ANALYTIC_BUCKET   string = "price_analytic"
+	MAX_GET_ANALYTIC_PERIOD uint64 = 86400000 //1 sec in milisecond
 )
 
 type BoltAnalyticStorage struct {
@@ -48,12 +51,12 @@ func (self *BoltAnalyticStorage) UpdatePriceAnalyticData(timestamp uint64, value
 	return err
 }
 
-func (self *BoltAnalyticStorage) GetPriceAnalyticData(fromTime uint64, toTime uint64) (map[uint64][]byte, error) {
+func (self *BoltAnalyticStorage) GetPriceAnalyticData(fromTime uint64, toTime uint64) ([]common.AnalyticPriceResponse, error) {
 	var err error
 	min := uint64ToBytes(fromTime)
 	max := uint64ToBytes(toTime)
-	result := make(map[uint64][]byte)
-	if toTime-fromTime > MAX_GET_LOG_PERIOD {
+	var result []common.AnalyticPriceResponse
+	if toTime-fromTime > MAX_GET_ANALYTIC_PERIOD {
 		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
 	}
 
@@ -62,7 +65,16 @@ func (self *BoltAnalyticStorage) GetPriceAnalyticData(fromTime uint64, toTime ui
 		c := b.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			timestamp := bytesToUint64(k)
-			result[timestamp] = v
+			temp := make(map[string]interface{})
+			err = json.Unmarshal(v, &temp)
+			if err != nil {
+				return err
+			}
+			record := common.AnalyticPriceResponse{
+				timestamp,
+				temp,
+			}
+			result = append(result, record)
 		}
 		return nil
 	})
