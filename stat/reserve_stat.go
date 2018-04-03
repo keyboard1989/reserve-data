@@ -17,11 +17,12 @@ const (
 )
 
 type ReserveStats struct {
-	statStorage StatStorage
-	logStorage  LogStorage
-	userStorage UserStorage
-	rateStorage RateStorage
-	fetcher     *Fetcher
+	analyticStorage AnalyticStorage
+	statStorage     StatStorage
+	logStorage      LogStorage
+	userStorage     UserStorage
+	rateStorage     RateStorage
+	fetcher         *Fetcher
 }
 
 func NewReserveStats(
@@ -29,13 +30,15 @@ func NewReserveStats(
 	logStorage LogStorage,
 	rateStorage RateStorage,
 	userStorage UserStorage,
+	analyticStorage AnalyticStorage,
 	fetcher *Fetcher) *ReserveStats {
 	return &ReserveStats{
-		statStorage: statStorage,
-		logStorage:  logStorage,
-		rateStorage: rateStorage,
-		userStorage: userStorage,
-		fetcher:     fetcher,
+		analyticStorage: analyticStorage,
+		statStorage:     statStorage,
+		logStorage:      logStorage,
+		rateStorage:     rateStorage,
+		userStorage:     userStorage,
+		fetcher:         fetcher,
 	}
 }
 
@@ -331,4 +334,8 @@ func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error
 	} else {
 		return false, nil
 	}
+}
+
+func (self ReserveStats) UpdatePriceAnalyticData(timestamp uint64, value []byte) error {
+	return self.analyticStorage.UpdatePriceAnalyticData(timestamp, value)
 }
