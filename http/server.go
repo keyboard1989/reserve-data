@@ -1318,7 +1318,7 @@ func (self *HTTPServer) HoldSetrate(c *gin.Context) {
 }
 
 func (self *HTTPServer) EnableSetrate(c *gin.Context) {
-	_, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission})
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
 	if !ok {
 		return
 	}
@@ -2080,7 +2080,7 @@ func (self *HTTPServer) GetCountries(c *gin.Context) {
 }
 
 func (self *HTTPServer) UpdatePriceAnalyticData(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
