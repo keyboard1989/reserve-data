@@ -602,7 +602,10 @@ func (db *DB) Update(fn func(*Tx) error) error {
 		return err
 	}
 
-	return t.Commit()
+	log.Printf("AGGREGATE bolt.SetTradeStats: %f", float64(time.Now().UnixNano())/1000000.0)
+	res := t.Commit()
+	log.Printf("AGGREGATE bolt.SetTradeStats: %f", float64(time.Now().UnixNano())/1000000.0)
+	return res
 }
 
 // View executes a function within the context of a managed read-only transaction.

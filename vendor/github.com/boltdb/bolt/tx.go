@@ -3,6 +3,7 @@ package bolt
 import (
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"sort"
 	"strings"
@@ -151,6 +152,7 @@ func (tx *Tx) Commit() error {
 
 	// TODO(benbjohnson): Use vectorized I/O to write out dirty pages.
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step1: %f", float64(time.Now().UnixNano())/1000000.0)
 	// Rebalance nodes which have had deletions.
 	var startTime = time.Now()
 	tx.root.rebalance()
@@ -158,6 +160,7 @@ func (tx *Tx) Commit() error {
 		tx.stats.RebalanceTime += time.Since(startTime)
 	}
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step2: %f", float64(time.Now().UnixNano())/1000000.0)
 	// spill data onto dirty pages.
 	startTime = time.Now()
 	if err := tx.root.spill(); err != nil {
@@ -171,6 +174,7 @@ func (tx *Tx) Commit() error {
 
 	opgid := tx.meta.pgid
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step3: %f", float64(time.Now().UnixNano())/1000000.0)
 	// Free the freelist and allocate new pages for it. This will overestimate
 	// the size of the freelist but not underestimate the size (which would be bad).
 	tx.db.freelist.free(tx.meta.txid, tx.db.page(tx.meta.freelist))
@@ -185,6 +189,7 @@ func (tx *Tx) Commit() error {
 	}
 	tx.meta.freelist = p.id
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step4: %f", float64(time.Now().UnixNano())/1000000.0)
 	// If the high water mark has moved up then attempt to grow the database.
 	if tx.meta.pgid > opgid {
 		if err := tx.db.grow(int(tx.meta.pgid+1) * tx.db.pageSize); err != nil {
@@ -193,6 +198,7 @@ func (tx *Tx) Commit() error {
 		}
 	}
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step5: %f", float64(time.Now().UnixNano())/1000000.0)
 	// Write dirty pages to disk.
 	startTime = time.Now()
 	if err := tx.write(); err != nil {
@@ -200,6 +206,7 @@ func (tx *Tx) Commit() error {
 		return err
 	}
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step6: %f", float64(time.Now().UnixNano())/1000000.0)
 	// If strict mode is enabled then perform a consistency check.
 	// Only the first consistency error is reported in the panic.
 	if tx.db.StrictMode {
@@ -217,6 +224,7 @@ func (tx *Tx) Commit() error {
 		}
 	}
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step7: %f", float64(time.Now().UnixNano())/1000000.0)
 	// Write meta to disk.
 	if err := tx.writeMeta(); err != nil {
 		tx.rollback()
@@ -224,13 +232,16 @@ func (tx *Tx) Commit() error {
 	}
 	tx.stats.WriteTime += time.Since(startTime)
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step8: %f", float64(time.Now().UnixNano())/1000000.0)
 	// Finalize the transaction.
 	tx.close()
 
+	log.Printf("AGGREGATE bolt.SetTradeStats--step9: %f", float64(time.Now().UnixNano())/1000000.0)
 	// Execute commit handlers now that the locks have been removed.
 	for _, fn := range tx.commitHandlers {
 		fn()
 	}
+	log.Printf("AGGREGATE bolt.SetTradeStats--step10: %f", float64(time.Now().UnixNano())/1000000.0)
 
 	return nil
 }

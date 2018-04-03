@@ -277,7 +277,7 @@ func (self *Fetcher) RunLogFetcher() {
 			lastBlock = self.deployBlock
 		}
 		if err == nil {
-			toBlock := lastBlock + 1 + 1440 // 1440 is considered as 6 hours
+			toBlock := lastBlock + 1 + 5760 // 1440 * 4 = 5760 is considered as 24 hours
 			if toBlock > self.currentBlock-REORG_BLOCK_SAFE {
 				toBlock = self.currentBlock - REORG_BLOCK_SAFE
 			}

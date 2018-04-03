@@ -213,6 +213,8 @@ func getTimestampByFreq(t uint64, freq string) (result []byte) {
 }
 
 func (self *BoltStatStorage) SetTradeStats(freq string, t uint64, tradeStats common.TradeStats) (err error) {
+	var time1 uint64
+	var time2 uint64
 	self.db.Update(func(tx *bolt.Tx) error {
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 
@@ -250,10 +252,12 @@ func (self *BoltStatStorage) SetTradeStats(freq string, t uint64, tradeStats com
 			return err
 		}
 		log.Printf("AGGREGATE SetTradeStats, finish")
-
+		time1 = uint64(time.Now().UnixNano())
 		return err
 	})
 	log.Printf("AGGREGATE SetTradeStats, updated the db")
+	time2 = uint64(time.Now().UnixNano())
+	log.Printf("AGGREGATE bolt.SetTradeStats took: %f ms", float64(time2-time1)/1000000.0)
 	return
 }
 
