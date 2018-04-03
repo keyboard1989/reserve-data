@@ -184,9 +184,8 @@ func (self *Fetcher) RunTradeLogProcessor() {
 		log.Printf("AGGREGATE %d trades from %d to %d", len(tradeLogs), fromTime, toTime)
 		if len(tradeLogs) > 0 {
 			var last uint64
-			for i := len(tradeLogs) - 1; i >= 0; i-- {
+			for _, trade := range tradeLogs {
 				log.Printf("AGGREGATE going to aggregate log %d", i)
-				trade := tradeLogs[i]
 				if err := self.aggregateTradeLog(trade); err == nil {
 					if trade.Timestamp > last {
 						last = trade.Timestamp
