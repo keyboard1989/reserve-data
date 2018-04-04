@@ -23,22 +23,24 @@ import (
 )
 
 type SettingPaths struct {
-	settingPath     string
-	feePath         string
-	dataStoragePath string
-	statStoragePath string
-	logStoragePath  string
-	rateStoragePath string
-	userStoragePath string
-	secretPath      string
-	endPoint        string
-	bkendpoints     []string
+	settingPath         string
+	feePath             string
+	dataStoragePath     string
+	analyticStoragePath string
+	statStoragePath     string
+	logStoragePath      string
+	rateStoragePath     string
+	userStoragePath     string
+	secretPath          string
+	endPoint            string
+	bkendpoints         []string
 }
 
 type Config struct {
 	ActivityStorage core.ActivityStorage
 	DataStorage     data.Storage
 	StatStorage     stat.StatStorage
+	AnalyticStorage stat.AnalyticStorage
 	UserStorage     stat.UserStorage
 	LogStorage      stat.LogStorage
 	RateStorage     stat.RateStorage
@@ -85,6 +87,11 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 		thirdpartyReserves = append(thirdpartyReserves, ethereum.HexToAddress(address))
 	}
 
+	analyticStorage, err := statstorage.NewBoltAnalyticStorage(settingPath.analyticStoragePath)
+	if err != nil {
+		panic(err)
+	}
+
 	statStorage, err := statstorage.NewBoltStatStorage(settingPath.statStoragePath)
 	if err != nil {
 		panic(err)
@@ -114,6 +121,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 	}
 
 	self.StatStorage = statStorage
+	self.AnalyticStorage = analyticStorage
 	self.UserStorage = userStorage
 	self.LogStorage = logStorage
 	self.RateStorage = rateStorage
@@ -200,6 +208,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_analytics.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_rates.db",
@@ -218,6 +227,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_analytics.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_rates.db",
@@ -230,6 +240,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_analytics.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
@@ -248,6 +259,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_analytics.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
@@ -266,6 +278,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_analytics.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_logs.db",
@@ -284,6 +297,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_analytics.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_rates.db",
@@ -298,6 +312,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_analytics.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_stats.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_rates.db",

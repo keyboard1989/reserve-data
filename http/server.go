@@ -35,6 +35,7 @@ type HTTPServer struct {
 
 const (
 	MAX_TIMESPOT   uint64 = 18446744073709551615
+	MAX_DATA_SIZE  int    = 1000000 //1 Megabyte in byte
 	START_TIMEZONE int64  = -11
 	END_TIMEZONE   int64  = 14
 )
@@ -2078,6 +2079,84 @@ func (self *HTTPServer) GetCountries(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) UpdatePriceAnalyticData(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission})
+	if !ok {
+		return
+	}
+	timestamp, err := strconv.ParseUint(postForm.Get("timestamp"), 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	value := []byte(postForm.Get("value"))
+	if len(value) > MAX_DATA_SIZE {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "the data size must be less than 1 MB",
+			},
+		)
+		return
+	}
+	err = self.stat.UpdatePriceAnalyticData(timestamp, value)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+func (self *HTTPServer) GetPriceAnalyticData(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	if toTime == 0 {
+		toTime = common.GetTimepoint()
+	}
+
+	data, err := self.stat.GetPriceAnalyticData(fromTime, toTime)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -2129,6 +2208,7 @@ func (self *HTTPServer) Run() {
 
 		self.r.GET("/get-exchange-status", self.GetExchangesStatus)
 		self.r.POST("/update-exchange-status", self.UpdateExchangeStatus)
+
 	}
 
 	if self.stat != nil {
@@ -2150,6 +2230,8 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-country-stats", self.GetCountryStats)
 		self.r.GET("/get-heat-map", self.GetHeatMap)
 		self.r.GET("/get-countries", self.GetCountries)
+		self.r.POST("/update-price-analytic-data", self.UpdatePriceAnalyticData)
+		self.r.GET("/get-price-analytic-data", self.GetPriceAnalyticData)
 	}
 
 	self.r.Run(self.host)

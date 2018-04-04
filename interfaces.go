@@ -25,6 +25,8 @@ type ReserveStats interface {
 	GetWalletStats(fromTime uint64, toTime uint64, walletAddr string, timezone int64) (common.StatTicks, error)
 	GetReserveRates(fromTime, toTime uint64, reserveAddr ethereum.Address) ([]common.ReserveRates, error)
 	UpdateUserAddresses(userID string, addresses []ethereum.Address, timestamps []uint64) error
+	UpdatePriceAnalyticData(timestamp uint64, value []byte) error
+	GetPriceAnalyticData(fromTime uint64, toTime uint64) ([]common.AnalyticPriceResponse, error)
 
 	GetGeoData(fromTime, toTime uint64, country string, tzparam int64) (common.StatTicks, error)
 	GetHeatMap(fromTime, toTime uint64, tzparam int64) (common.HeatmapResponse, error)
