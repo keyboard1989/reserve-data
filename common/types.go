@@ -671,3 +671,15 @@ type AnalyticPriceResponse struct {
 	Timestamp uint64
 	Data      map[string]interface{}
 }
+type ExchangeNotiContent struct {
+	FromTime  uint64 `json:"fromTime"`
+	ToTime    uint64 `json:"toTime"`
+	IsWarning bool   `json:"isWarning"`
+	Message   string `json:"msg"`
+}
+
+type ExchangeTokenNoti map[string]ExchangeNotiContent
+
+type ExchangeActionNoti map[string]ExchangeTokenNoti
+
+type ExchangeNotifications map[string]ExchangeActionNoti
