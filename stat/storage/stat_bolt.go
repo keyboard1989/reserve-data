@@ -34,7 +34,7 @@ const (
 	WALLET_ADDRESS_BUCKET       string = "wallet_address"
 	RESERVE_RATES               string = "reserve_rates"
 	EXPIRED                     uint64 = uint64(7 * time.Hour * 24)
-	COUNTRY_BUCKET              string = "country_bucket"
+	COUNTRY_BUCKET              string = "country_stat_bucket"
 )
 
 type BoltStatStorage struct {
@@ -243,16 +243,16 @@ func getTimestampByFreq(t uint64, freq string) (result []byte) {
 	return
 }
 
-func (self *BoltStatStorage) SetTradeStats(freq string, t uint64, tradeStats common.TradeStats) (err error) {
-	err = self.db.Update(func(tx *bolt.Tx) error {
+func (self *BoltStatStorage) SetTradeStats(freq string, timepoint uint64, tradeStats common.TradeStats) (err error) {
+	self.db.Update(func(tx *bolt.Tx) error {
 		tradeStatsBk := tx.Bucket([]byte(TRADE_STATS_BUCKET))
 		freqBkName, err := getBucketNameByFreq(freq)
 		if err != nil {
 			return err
 		}
 		freqBk := tradeStatsBk.Bucket([]byte(freqBkName))
-		timestamp := getTimestampByFreq(t, freq)
-		//log.Printf("AGGREGATE SetTradeStats, getting raw stat")
+		timestamp := getTimestampByFreq(timepoint, freq)
+		log.Printf("AGGREGATE SetTradeStats, getting raw stat")
 		rawStats := freqBk.Get(timestamp)
 		var stats common.TradeStats
 
@@ -301,9 +301,6 @@ func (self *BoltStatStorage) getTradeStats(fromTime, toTime uint64, freq string)
 		}
 		freqBk := tradeStatsBk.Bucket([]byte(freqBkName))
 		c := freqBk.Cursor()
-		// min := getTimestampByFreq(fromTime, freq)
-		// max := getTimestampByFreq(toTime, freq)
-		// log.Printf("from %d to %d", min, max)
 
 		min := uint64ToBytes(fromTime)
 		max := uint64ToBytes(toTime)
@@ -311,7 +308,6 @@ func (self *BoltStatStorage) getTradeStats(fromTime, toTime uint64, freq string)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			stats := common.TradeStats{}
 			err = json.Unmarshal(v, &stats)
-			// log.Printf("%v", stats)
 			if err != nil {
 				return err
 			}
@@ -578,37 +574,77 @@ func (self *BoltStatStorage) GetCountries() ([]string, error) {
 	return countries, err
 }
 
+func (self *BoltStatStorage) SetCountryStat(country string, stat common.CountryStats, timepoint uint64) error {
+	var err error
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte(country))
+		if err != nil {
+			return err
+		}
+		// update to timezone buckets
+		for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
+			freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
+			countryTzBucket, err := b.CreateBucketIfNotExists([]byte(freq))
+			if err != nil {
+				return err
+			}
+			timestamp := getTimestampByFreq(timepoint, freq)
+			dataJSON, err := json.Marshal(stat)
+			if err != nil {
+				return err
+			}
+			return countryTzBucket.Put(timestamp, dataJSON)
+		}
+		return nil
+	})
+	return err
+}
+
 func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country string, timezone int64) (common.StatTicks, error) {
 	result := common.StatTicks{}
 	tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
-	stats, err := self.getTradeStats(fromTime, toTime, tzstring)
-	if err != nil {
-		return result, err
-	}
+	// stats, err := self.getTradeStats(fromTime, toTime, tzstring)
+	// if err != nil {
+	// 	return result, err
+	// }
+	self.db.View(func(tx *bolt.Tx) error {
+		countryBk := tx.Bucket([]byte(country))
+		timezoneBk := countryBk.Bucket([]byte(tzstring))
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
+		c := timezoneBk.Cursor()
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) == -1; k, v = c.Next() {
+			countryStat := common.CountryStats{}
+			json.Unmarshal(v, &countryStat)
+			key := bytesToUint64(k)
+			result[key] = countryStat
+		}
+		return nil
+	})
 
-	for timestamp, stat := range stats {
-		trade_countstr, found := stat[fmt.Sprintf("geo_trade_count_%s", country)]
-		if !found {
-			continue
-		}
-		tradeCount := float64(trade_countstr)
-		var avgEth, avgUsd float64
-		if tradeCount > 0 {
-			avgEth = float64(stat[fmt.Sprintf("geo_eth_volume_%s", country)]) / tradeCount
-			avgUsd = float64(stat[fmt.Sprintf("geo_usd_volume_%s", country)]) / tradeCount
-		}
-		result[timestamp] = map[string]float64{
-			"total_eth_volume":     stat[fmt.Sprintf("geo_eth_volume_%s", country)],
-			"total_usd_amount":     stat[fmt.Sprintf("geo_usd_volume_%s", country)],
-			"total_burn_fee":       stat[fmt.Sprintf("geo_burn_fee_%s", country)],
-			"unique_addresses":     stat[fmt.Sprintf("geo_first_trade_in_day_%s", country)],
-			"new_unique_addresses": stat[fmt.Sprintf("geo_first_trade_ever_%s", country)],
-			"kyced_addresses":      stat[fmt.Sprintf("geo_kyced_in_day_%s", country)],
-			"total_trade":          tradeCount,
-			"eth_per_trade":        avgEth,
-			"usd_per_trade":        avgUsd,
-		}
-	}
+	// for timestamp, stat := range stats {
+	// 	trade_countstr, found := stat[fmt.Sprintf("geo_trade_count_%s", country)]
+	// 	if !found {
+	// 		continue
+	// 	}
+	// 	tradeCount := float64(trade_countstr)
+	// 	var avgEth, avgUsd float64
+	// 	if tradeCount > 0 {
+	// 		avgEth = float64(stat[fmt.Sprintf("geo_eth_volume_%s", country)]) / tradeCount
+	// 		avgUsd = float64(stat[fmt.Sprintf("geo_usd_volume_%s", country)]) / tradeCount
+	// 	}
+	// 	result[timestamp] = map[string]float64{
+	// 		"total_eth_volume":     stat[fmt.Sprintf("geo_eth_volume_%s", country)],
+	// 		"total_usd_amount":     stat[fmt.Sprintf("geo_usd_volume_%s", country)],
+	// 		"total_burn_fee":       stat[fmt.Sprintf("geo_burn_fee_%s", country)],
+	// 		"unique_addresses":     stat[fmt.Sprintf("geo_first_trade_in_day_%s", country)],
+	// 		"new_unique_addresses": stat[fmt.Sprintf("geo_first_trade_ever_%s", country)],
+	// 		"kyced_addresses":      stat[fmt.Sprintf("geo_kyced_in_day_%s", country)],
+	// 		"total_trade":          tradeCount,
+	// 		"eth_per_trade":        avgEth,
+	// 		"usd_per_trade":        avgUsd,
+	// 	}
+	// }
 	return result, nil
 
 }
