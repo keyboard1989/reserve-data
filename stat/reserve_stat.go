@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -17,12 +18,13 @@ const (
 )
 
 type ReserveStats struct {
-	analyticStorage AnalyticStorage
-	statStorage     StatStorage
-	logStorage      LogStorage
-	userStorage     UserStorage
-	rateStorage     RateStorage
-	fetcher         *Fetcher
+	analyticStorage  AnalyticStorage
+	statStorage      StatStorage
+	logStorage       LogStorage
+	userStorage      UserStorage
+	rateStorage      RateStorage
+	fetcher          *Fetcher
+	controllerRunner ControllerRunner
 }
 
 func NewReserveStats(
@@ -31,14 +33,16 @@ func NewReserveStats(
 	logStorage LogStorage,
 	rateStorage RateStorage,
 	userStorage UserStorage,
+	controllerRunner ControllerRunner,
 	fetcher *Fetcher) *ReserveStats {
 	return &ReserveStats{
-		analyticStorage: analyticStorage,
-		statStorage:     statStorage,
-		logStorage:      logStorage,
-		rateStorage:     rateStorage,
-		userStorage:     userStorage,
-		fetcher:         fetcher,
+		analyticStorage:  analyticStorage,
+		statStorage:      statStorage,
+		logStorage:       logStorage,
+		rateStorage:      rateStorage,
+		userStorage:      userStorage,
+		fetcher:          fetcher,
+		controllerRunner: controllerRunner,
 	}
 }
 
@@ -206,7 +210,40 @@ func (self ReserveStats) GetPendingAddresses() ([]string, error) {
 	return self.userStorage.GetPendingAddresses()
 }
 
+func (self ReserveStats) RunAnalyticStorageController() {
+	for {
+		log.Printf("waiting for signal from analytic storage control channel")
+		t := <-self.controllerRunner.GetAnalyticStorageControlTicker()
+		timepoint := common.TimeToTimepoint(t)
+		log.Printf("got signal in analytic storage control channel with timestamp %d", timepoint)
+		fileName := fmt.Sprintf("ExpiredPriceAnalyticData_%s", time.Unix(int64(timepoint/1000), 0).UTC())
+		nRecord, err := self.analyticStorage.ExportPruneExpired(common.GetTimepoint(), fileName)
+		if err != nil {
+			log.Printf("export and prune operation failed: %s", err)
+		} else {
+			if nRecord > 0 {
+				err := self.analyticStorage.BackupFile(fileName)
+				if err != nil {
+					log.Printf("AnalyticPriceData: Back up file failed: %s", err)
+				} else {
+					log.Printf("AnalyticPriceData: Back up file successfully.")
+				}
+
+			} else {
+				//remove the empty file
+				os.Remove(fileName)
+			}
+			log.Printf("AnalyticPriceData: exported and pruned %d expired records from storage controll block from blockchain", nRecord)
+		}
+	}
+}
+
 func (self ReserveStats) Run() error {
+	err := self.controllerRunner.Start()
+	if err != nil {
+		return err
+	}
+	go self.RunAnalyticStorageController()
 	return self.fetcher.Run()
 }
 

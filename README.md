@@ -983,6 +983,7 @@ params:
 example:
 curl -x GET \
   http://localhost:8000/get-price-analytic-data?fromTime=1522753160000&toTime=1522755792000
+```
  
 response:
 ```

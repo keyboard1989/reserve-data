@@ -35,10 +35,10 @@ func NewBoltLogStorage(path string) (*BoltLogStorage, error) {
 	}
 	// init buckets
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, uErr := tx.CreateBucket([]byte(TRADELOG_BUCKET)); uErr != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(TRADELOG_BUCKET)); uErr != nil {
 			return uErr
 		}
-		_, uErr := tx.CreateBucket([]byte(CATLOG_BUCKET))
+		_, uErr := tx.CreateBucketIfNotExists([]byte(CATLOG_BUCKET))
 		return uErr
 	})
 
@@ -55,6 +55,9 @@ func NewBoltLogStorage(path string) (*BoltLogStorage, error) {
 		storage.block = block
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 	return storage, nil
 }
 

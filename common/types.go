@@ -486,7 +486,7 @@ type AuthDataResponse struct {
 	Version    Version
 	Timestamp  Timestamp
 	ReturnTime Timestamp
-	Data struct {
+	Data       struct {
 		Valid             bool
 		Error             string
 		Timestamp         Timestamp
@@ -639,7 +639,7 @@ type ExchangesStatus map[string]ExStatus
 
 type TradeLogGeoInfoResp struct {
 	Success bool `json:"success"`
-	Data struct {
+	Data    struct {
 		IP      string `json:"IP"`
 		Country string `json:"Country"`
 	} `json:"data"`
