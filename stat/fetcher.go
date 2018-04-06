@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/stat/util"
@@ -182,13 +183,15 @@ func (self *Fetcher) RunTradeLogProcessor() {
 		log.Printf("AGGREGATE %d trades from %d to %d", len(tradeLogs), fromTime, toTime)
 		if len(tradeLogs) > 0 {
 			var last uint64
+			countryStats := map[string]common.CountryStatsTimeZone{}
 			for _, trade := range tradeLogs {
-				if err := self.aggregateTradeLog(trade); err == nil {
+				if err := self.aggregateTradeLog(trade, countryStats); err == nil {
 					if trade.Timestamp > last {
 						last = trade.Timestamp
 					}
 				}
 			}
+			self.statStorage.SetCountryStat(countryStats)
 			self.statStorage.SetLastProcessedTradeLogTimepoint(last)
 			log.Printf("AGGREGATE finished all logs in the batch")
 		} else {
@@ -418,7 +421,20 @@ func checkWalletAddress(wallet string) bool {
 	return true
 }
 
-func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
+func getTimestampFromTimeZone(timepoint uint64, timezone int64) uint64 {
+	ui64offset := uint64(int64(time.Hour) * timezone)
+	ui64Day := uint64(time.Hour * 24)
+	var result uint64
+	if timezone > 0 {
+		result = (timepoint+ui64offset)/ui64Day*ui64Day + ui64offset
+	} else {
+		timezone = 0 - timezone
+		result = (timepoint-ui64offset)/ui64Day*ui64Day - ui64offset
+	}
+	return result
+}
+
+func (self *Fetcher) aggregateTradeLog(trade common.TradeLog, countryStats map[string]common.CountryStatsTimeZone) (err error) {
 	srcAddr := common.AddrToString(trade.SrcAddress)
 	dstAddr := common.AddrToString(trade.DestAddress)
 	reserveAddr := common.AddrToString(trade.ReserveAddress)
@@ -539,18 +555,31 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog) (err error) {
 	}
 	log.Printf("AGGREGATE step 10")
 
-	// update geo stats
-	updates = common.TradeStats{
-		fmt.Sprintf("geo_eth_volume_%s", country):  ethAmount,
-		fmt.Sprintf("geo_usd_volume_%s", country):  trade.FiatAmount,
-		fmt.Sprintf("geo_burn_fee_%s", country):    burnFee,
-		fmt.Sprintf("geo_trade_count_%s", country): 1,
-	}
+	// update geo stats follow timezone
+	for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
+		// daily timestamp
+		timestamp := getTimestampFromTimeZone(trade.Timestamp, i)
+		currentCountryData, exist := countryStats[country]
+		if !exist {
+			currentCountryData = common.CountryStatsTimeZone{}
+		}
+		dataTimeZone, exist := currentCountryData[i]
+		if !exist {
+			dataTimeZone = map[uint64]common.CountryStats{}
+		}
+		data, exist := dataTimeZone[timestamp]
+		if !exist {
+			data = common.CountryStats{}
+		}
+		data.ETHVolume += ethAmount
+		data.BurnFee += burnFee
+		data.TradeCount += 1
+		data.USDVolume += trade.FiatAmount
 
-	if err = self.updateTimeZoneBuckets(trade.Timestamp, updates); err != nil {
-		return
+		dataTimeZone[timestamp] = data
+		currentCountryData[i] = dataTimeZone
+		countryStats[country] = currentCountryData
 	}
-	log.Printf("AGGREGATE step 11")
 
 	return
 }
