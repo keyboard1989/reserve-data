@@ -176,11 +176,14 @@ func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (com
 		}
 		for _, stat := range cStats {
 			s := stat.(map[string]float64)
-			currentETHValue := result[c].TotalETHValue
-			currentFiatValue := result[c].TotalFiatValue
+			current := result[c]
 			result[c] = common.HeatmapType{
-				TotalETHValue:  currentETHValue + s["total_eth_volume"],
-				TotalFiatValue: currentFiatValue + s["total_usd_amount"],
+				TotalETHValue:        current.TotalETHValue + s["total_eth_volume"],
+				TotalFiatValue:       current.TotalFiatValue + s["total_usd_amount"],
+				ToTalBurnFee:         current.ToTalBurnFee + s["total_burn_fee"],
+				TotalTrade:           current.TotalTrade + s["total_trade"],
+				TotalUniqueAddresses: current.TotalUniqueAddresses + s["unique_addresses"],
+				TotalKYCUser:         current.TotalKYCUser + s["kyced_addresses"],
 			}
 		}
 	}
