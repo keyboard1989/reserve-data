@@ -381,6 +381,38 @@ func (self *BaseBlockchain) GetEthRate(timepoint uint64) float64 {
 	return rate
 }
 
+func NewMinimalBaseBlockchain(
+	endpoints []string, operators map[string]*Operator, chainType string) (*BaseBlockchain, error) {
+
+	if len(endpoints) == 0 {
+		return nil, errors.New("At least one endpoint is required to init a blockchain")
+	}
+	endpoint := endpoints[0]
+	rpcClient, err := rpc.Dial(endpoint)
+	if err != nil {
+		return nil, err
+	}
+	ethClient := ethclient.NewClient(rpcClient)
+	bkclients := map[string]*ethclient.Client{}
+	callClients := []*ethclient.Client{}
+	for _, ep := range endpoints {
+		bkclient, err := ethclient.Dial(ep)
+		if err != nil {
+			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, err)
+		} else {
+			bkclients[ep] = bkclient
+			callClients = append(callClients, bkclient)
+		}
+	}
+	return NewBaseBlockchain(
+		rpcClient, ethClient, operators,
+		NewBroadcaster(bkclients),
+		NewCMCEthUSDRate(),
+		chainType,
+		NewContractCaller(callClients, endpoints),
+	), nil
+}
+
 func NewBaseBlockchain(
 	rpcClient *rpc.Client,
 	client *ethclient.Client,
