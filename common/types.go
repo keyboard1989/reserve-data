@@ -616,22 +616,30 @@ type StatTicks map[uint64]interface{}
 type TradeStats map[string]float64
 
 type WalletStats struct {
-	ETHVolume  float64 `json:"eth_volume"`
-	USDVolume  float64 `json:"usd_volume"`
-	BurnFee    float64 `json:"burn_fee"`
-	TradeCount int     `json:"trade_count"`
-	UniqueAddr int     `json:"unique_addr"`
-	KYCEd      int     `json:"kyced"`
+	ETHVolume          float64 `json:"total_eth_volume"`
+	USDVolume          float64 `json:"total_usd_volume"`
+	BurnFee            float64 `json:"total_burn_fee"`
+	TradeCount         int     `json:"trade_count"`
+	UniqueAddr         int     `json:"unique_addr"`
+	KYCEd              int     `json:"kyced"`
+	NewUniqueAddresses int     `json:"new_unique_addresses"`
+	USDPerTrade        float64 `json:"usd_per_trade"`
+	ETHPerTrade        float64 `json:"eth_per_trade`
 }
 
 type CountryStats struct {
-	ETHVolume  float64 `json:"eth_volume"`
-	USDVolume  float64 `json:"usd_volume"`
-	BurnFee    float64 `json:"burn_fee"`
-	TradeCount int     `json:"trade_count"`
-	UniqueAddr int     `json:"unique_addr"`
-	KYCEd      int     `json:"kyced"`
+	ETHVolume          float64 `json:"total_eth_volume"`
+	USDVolume          float64 `json:"total_usd_volume"`
+	BurnFee            float64 `json:"total_burn_fee"`
+	TradeCount         int     `json:"total_trade"`
+	UniqueAddr         int     `json:"unique_addresses"`
+	KYCEd              int     `json:"kyced_addresses"`
+	NewUniqueAddresses int     `json:"new_unique_addresses"`
+	USDPerTrade        float64 `json:"usd_per_trade"`
+	ETHPerTrade        float64 `json:"eth_per_trade"`
 }
+
+type CountryStatsTimeZone map[int64]map[uint64]CountryStats // key by timezonze and daily timepoint
 
 type TradeHistory struct {
 	ID        string

@@ -574,26 +574,43 @@ func (self *BoltStatStorage) GetCountries() ([]string, error) {
 	return countries, err
 }
 
-func (self *BoltStatStorage) SetCountryStat(country string, stat common.CountryStats, timepoint uint64) error {
+func (self *BoltStatStorage) SetCountryStat(stats map[string]common.CountryStatsTimeZone) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucketIfNotExists([]byte(country))
-		if err != nil {
-			return err
-		}
-		// update to timezone buckets
-		for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
-			freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
-			countryTzBucket, err := b.CreateBucketIfNotExists([]byte(freq))
+		for country, timeZoneStat := range stats {
+			b, err := tx.CreateBucketIfNotExists([]byte(country))
 			if err != nil {
 				return err
 			}
-			timestamp := getTimestampByFreq(timepoint, freq)
-			dataJSON, err := json.Marshal(stat)
-			if err != nil {
-				return err
+			// update to timezone buckets
+			for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
+				stats := timeZoneStat[i]
+				freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
+				countryTzBucket, err := b.CreateBucketIfNotExists([]byte(freq))
+				if err != nil {
+					return err
+				}
+				for timepoint, stat := range stats {
+					timestamp := uint64ToBytes(timepoint)
+					// try get data from this timestamp, if exist then add more data
+					currentData := common.CountryStats{}
+					v := countryTzBucket.Get(timestamp)
+					if v != nil {
+						json.Unmarshal(v, &currentData)
+					}
+					currentData.ETHVolume += stat.ETHVolume
+					currentData.USDVolume += stat.USDVolume
+					currentData.BurnFee += stat.BurnFee
+					currentData.TradeCount += stat.TradeCount
+					currentData.UniqueAddr += stat.UniqueAddr
+					currentData.KYCEd += stat.KYCEd
+					dataJSON, err := json.Marshal(currentData)
+					if err != nil {
+						return err
+					}
+					countryTzBucket.Put(timestamp, dataJSON)
+				}
 			}
-			return countryTzBucket.Put(timestamp, dataJSON)
 		}
 		return nil
 	})
@@ -603,15 +620,12 @@ func (self *BoltStatStorage) SetCountryStat(country string, stat common.CountryS
 func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country string, timezone int64) (common.StatTicks, error) {
 	result := common.StatTicks{}
 	tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
-	// stats, err := self.getTradeStats(fromTime, toTime, tzstring)
-	// if err != nil {
-	// 	return result, err
-	// }
-	self.db.View(func(tx *bolt.Tx) error {
-		countryBk := tx.Bucket([]byte(country))
-		timezoneBk := countryBk.Bucket([]byte(tzstring))
+	self.db.Update(func(tx *bolt.Tx) error {
+		countryBk, _ := tx.CreateBucketIfNotExists([]byte(country))
+		timezoneBk, _ := countryBk.CreateBucketIfNotExists([]byte(tzstring))
 		min := uint64ToBytes(fromTime)
 		max := uint64ToBytes(toTime)
+		log.Printf("Get country from %s bucket and timezone %s and from %d to %d", country, tzstring, fromTime, toTime)
 		c := timezoneBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) == -1; k, v = c.Next() {
 			countryStat := common.CountryStats{}
