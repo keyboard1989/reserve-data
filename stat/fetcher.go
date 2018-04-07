@@ -203,7 +203,7 @@ func (self *Fetcher) RunTradeLogProcessor() {
 				}
 			}
 			self.statStorage.SetCountryStat(countryStats)
-			// self.statStorage.SetWalletStat(walletStats)
+			self.statStorage.SetWalletStat(walletStats)
 			self.statStorage.SetTradeSummary(tradeSummary)
 			self.statStorage.SetLastProcessedTradeLogTimepoint(last)
 			log.Printf("AGGREGATE finished all logs in the batch")
@@ -213,7 +213,6 @@ func (self *Fetcher) RunTradeLogProcessor() {
 				log.Printf("can't get last trade log: err(%s)", err)
 				continue
 			} else {
-				// log.Printf("got last trade: %+v", l)
 				if toTime < l.Timestamp {
 					// if we are querying on past logs, store toTime as the last
 					// processed trade log timepoint
