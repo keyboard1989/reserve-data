@@ -654,7 +654,7 @@ type TradeSummary struct {
 	ETHPerTrade        float64 `json:"eth_per_trade"`
 }
 
-type TradeSummaryTimeZone map[int64]map[uint64]CountryStats
+type TradeSummaryTimeZone map[int64]map[uint64]TradeSummary
 
 type TradeHistory struct {
 	ID        string
