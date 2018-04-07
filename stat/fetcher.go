@@ -194,8 +194,9 @@ func (self *Fetcher) RunTradeLogProcessor() {
 
 			countryStats := map[string]common.CountryStatsTimeZone{}
 			walletStats := map[string]common.WalletStatsTimeZone{}
+			tradeSummary := common.TradeSummaryTimeZone{}
 			for _, trade := range tradeLogs {
-				if err := self.aggregateTradeLog(trade, countryStats, walletStats); err == nil {
+				if err := self.aggregateTradeLog(trade, countryStats, walletStats, tradeSummary); err == nil {
 					if trade.Timestamp > last {
 						last = trade.Timestamp
 					}
@@ -203,6 +204,7 @@ func (self *Fetcher) RunTradeLogProcessor() {
 			}
 			self.statStorage.SetCountryStat(countryStats)
 			// self.statStorage.SetWalletStat(walletStats)
+			self.statStorage.SetTradeSummary(tradeSummary)
 			self.statStorage.SetLastProcessedTradeLogTimepoint(last)
 			log.Printf("AGGREGATE finished all logs in the batch")
 		} else {
@@ -439,7 +441,8 @@ func getTimestampFromTimeZone(timepoint uint64, timezone int64) uint64 {
 
 func (self *Fetcher) aggregateTradeLog(trade common.TradeLog,
 	countryStats map[string]common.CountryStatsTimeZone,
-	walletStats map[string]common.WalletStatsTimeZone) (err error) {
+	walletStats map[string]common.WalletStatsTimeZone,
+	tradeSummary common.TradeSummaryTimeZone) (err error) {
 
 	srcAddr := common.AddrToString(trade.SrcAddress)
 	dstAddr := common.AddrToString(trade.DestAddress)
@@ -515,15 +518,56 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog,
 	if email != "" && email != userAddr && trade.Timestamp > regTime {
 		kycEd = true
 	}
+	self.aggregateTradeSummary(trade, ethAmount, burnFee, tradeSummary, kycEd)
 	self.aggregateWalletStat(trade, ethAmount, burnFee, walletStats, kycEd)
 	self.aggregateCountryStat(trade, ethAmount, burnFee, countryStats, kycEd)
 
 	return
 }
 
+func (self *Fetcher) aggregateTradeSummary(trade common.TradeLog, ethAmount, burnFee float64,
+	tradeSummary common.TradeSummaryTimeZone, kycEd bool) {
+	for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
+		timestamp := getTimestampFromTimeZone(trade.Timestamp, i)
+		userAddr := common.AddrToString(trade.UserAddress)
+
+		dataTimeZone, exist := tradeSummary[i]
+		if !exist {
+			dataTimeZone = map[uint64]common.TradeSummary{}
+		}
+		data, exist := dataTimeZone[timestamp]
+		if !exist {
+			data = common.TradeSummary{}
+		}
+		timeFirstTrade := self.statStorage.GetFirstTradeEver(userAddr)
+		if timeFirstTrade == trade.Timestamp {
+			data.NewUniqueAddresses++
+			data.UniqueAddr++
+			if kycEd {
+				data.KYCEd++
+			}
+		} else {
+			firstTradeInday := self.statStorage.GetFirstTradeInDay(userAddr, trade.Timestamp, i)
+			if firstTradeInday == trade.Timestamp {
+				data.UniqueAddr++
+				if kycEd {
+					data.KYCEd++
+				}
+			}
+		}
+		data.ETHVolume += ethAmount
+		data.BurnFee += burnFee
+		data.TradeCount++
+		data.USDVolume += trade.FiatAmount
+		dataTimeZone[timestamp] = data
+		tradeSummary[i] = dataTimeZone
+	}
+	return
+}
+
 func (self *Fetcher) aggregateWalletStat(trade common.TradeLog, ethAmount, burnFee float64,
 	walletStats map[string]common.WalletStatsTimeZone,
-	kycEd bool) error {
+	kycEd bool) {
 	for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
 		timestamp := getTimestampFromTimeZone(trade.Timestamp, i)
 		walletAddr := common.AddrToString(trade.WalletAddress)
@@ -565,12 +609,12 @@ func (self *Fetcher) aggregateWalletStat(trade common.TradeLog, ethAmount, burnF
 		currentWalletData[i] = dataTimeZone
 		walletStats[walletAddr] = currentWalletData
 	}
-	return nil
+	return
 }
 
 func (self *Fetcher) aggregateCountryStat(trade common.TradeLog, ethAmount, burnFee float64,
 	countryStats map[string]common.CountryStatsTimeZone,
-	kycEd bool) error {
+	kycEd bool) {
 	userAddr := common.AddrToString(trade.UserAddress)
 
 	for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
@@ -612,7 +656,7 @@ func (self *Fetcher) aggregateCountryStat(trade common.TradeLog, ethAmount, burn
 		currentCountryData[i] = dataTimeZone
 		countryStats[trade.Country] = currentCountryData
 	}
-	return nil
+	return
 }
 
 func (self *Fetcher) FetchCurrentBlock() {
