@@ -322,49 +322,6 @@ func (self *BoltStatStorage) getTradeStats(fromTime, toTime uint64, freq string)
 	return result, err
 }
 
-// func getUserStatsBucket(tx *bolt.Tx,
-// 	stats common.TradeStats, timestamp uint64, timezone int64,
-// 	firstTradeBucket, firstTradeEverBucket, kycInDay string,
-// 	dailyAddrKey, addrKey, dailyUserKey string, kycEd bool) {
-// 	dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
-// 	dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
-// 	if v := dailyAddrBk.Get([]byte(dailyAddrKey)); v == nil {
-// 		stats[firstTradeBucket] = 1 // FIRST TRADE IN DAY
-// 		addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
-// 		addrBk := tx.Bucket([]byte(addrBucketName))
-// 		if v := addrBk.Get([]byte(addrKey)); v == nil {
-// 			stats[firstTradeEverBucket] = 1 // FIRST TRADE EVER
-// 		}
-
-// 		if kycEd {
-// 			dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
-// 			dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
-// 			if v := dailyUserBk.Get([]byte(dailyUserKey)); v == nil {
-// 				stats[kycInDay] = 1
-// 			}
-// 		}
-// 	}
-// }
-
-// func (self *BoltStatStorage) GetUserStats(timestamp uint64,
-// 	addr, email string, kycEd bool, timezone int64) (common.TradeStats, error) {
-// 	stats := common.TradeStats{}
-// 	var err error
-
-// 	self.db.View(func(tx *bolt.Tx) error {
-// 		freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
-// 		dailyTimestamp := string(getTimestampByFreq(timestamp, freq))
-// 		dailyAddrKey := fmt.Sprintf("%s_%s", dailyTimestamp, addr)
-// 		dailyUserKey := fmt.Sprintf("%s_%s", dailyTimestamp, email)
-// 		getUserStatsBucket(tx, stats, timestamp, timezone,
-// 			"first_trade_in_day", "first_trade_ever", "kyced_in_day", dailyAddrKey, addr, dailyUserKey, kycEd)
-
-// 		return nil
-// 	})
-
-// 	return stats, err
-// }
-
 func isEalier(k, timestamp []byte) bool {
 	temps := strings.Split(string(k), "_")
 	return (bytes.Compare([]byte(temps[0]), timestamp) <= 0)
@@ -401,56 +358,6 @@ func (self *BoltStatStorage) PruneDailyBucket(timepoint uint64, timezone int64) 
 	return err
 }
 
-// func setUserBucket(tx *bolt.Tx,
-// 	stats common.TradeStats, firstTradeBucket, firstTradeEverBucket, addr, dailyTimestamp, email string,
-// 	dailyAddrBkname, dailyAddrKey, dailyUserBkname, dailyUserKey, addrBucketKey string,
-// 	timezone int64, kycEd bool) error {
-// 	if _, traded := stats[firstTradeBucket]; traded {
-// 		dailyAddrBk := tx.Bucket([]byte(dailyAddrBkname))
-// 		if err := dailyAddrBk.Put([]byte(dailyAddrKey), []byte("1")); err != nil {
-// 			return err
-// 		}
-// 		if _, traded := stats[firstTradeEverBucket]; traded {
-// 			addrBucketName := fmt.Sprintf("%s%d", ADDRESS_BUCKET_PREFIX, timezone)
-// 			addrBk := tx.Bucket([]byte(addrBucketName))
-// 			if err := addrBk.Put([]byte(addrBucketKey), []byte("1")); err != nil {
-// 				return err
-// 			}
-// 		}
-
-// 		if kycEd {
-// 			dailyUserBk := tx.Bucket([]byte(dailyUserBkname))
-// 			if err := dailyUserBk.Put([]byte(dailyUserKey), []byte("1")); err != nil {
-// 				return err
-// 			}
-// 		}
-// 	}
-// 	return nil
-// }
-
-// func (self *BoltStatStorage) SetUserStats(timestamp uint64,
-// 	addr, email string, kycEd bool, timezone int64, stats common.TradeStats) error {
-// 	var err error
-// 	freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
-// 	if err = self.SetTradeStats(freq, timestamp, stats); err != nil {
-// 		return err
-// 	}
-// 	self.PruneDailyBucket(timestamp, timezone)
-
-// 	self.db.Update(func(tx *bolt.Tx) error {
-
-// 		dailyTimestamp := string(getTimestampByFreq(timestamp, freq))
-// 		dailyAddrBkname := fmt.Sprintf("%s%d", DAILY_ADDRESS_BUCKET_PREFIX, timezone)
-// 		dailyAddrKey := fmt.Sprintf("%s_%s", dailyTimestamp, addr)
-// 		dailyUserBkname := fmt.Sprintf("%s%d", DAILY_USER_BUCKET_PREFIX, timezone)
-// 		dailyUserKey := fmt.Sprintf("%s_%s", dailyTimestamp, email)
-// 		setUserBucket(tx, stats, "first_trade_in_day", "first_trade_ever", addr, dailyTimestamp, email, dailyAddrBkname, dailyAddrKey, dailyUserBkname, dailyUserKey, addr, timezone, kycEd)
-
-// 		return nil
-// 	})
-// 	return err
-// }
-
 func (self *BoltStatStorage) SetWalletAddress(walletAddr string) (err error) {
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		walletBucket := tx.Bucket([]byte(WALLET_ADDRESS_BUCKET))
@@ -478,6 +385,54 @@ func (self *BoltStatStorage) GetWalletAddress() ([]string, error) {
 	return result, err
 }
 
+func (self *BoltStatStorage) SetWalletStat(stats map[string]common.WalletStatsTimeZone) error {
+	var err error
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		for wallet, timeZoneStat := range stats {
+			b, err := tx.CreateBucketIfNotExists([]byte(wallet))
+			if err != nil {
+				return err
+			}
+			// update to timezone buckets
+			for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
+				stats := timeZoneStat[i]
+				freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
+				walletTzBucket, err := b.CreateBucketIfNotExists([]byte(freq))
+				if err != nil {
+					return err
+				}
+				for timepoint, stat := range stats {
+					timestamp := uint64ToBytes(timepoint)
+					// try get data from this timestamp, if exist then add more data
+					currentData := common.WalletStats{}
+					v := walletTzBucket.Get(timestamp)
+					if v != nil {
+						json.Unmarshal(v, &currentData)
+					}
+					currentData.ETHVolume += stat.ETHVolume
+					currentData.USDVolume += stat.USDVolume
+					currentData.BurnFee += stat.BurnFee
+					currentData.TradeCount += stat.TradeCount
+					currentData.UniqueAddr += stat.UniqueAddr
+					currentData.NewUniqueAddresses += stat.NewUniqueAddresses
+					currentData.KYCEd += stat.KYCEd
+					if currentData.TradeCount > 0 {
+						currentData.ETHPerTrade = currentData.ETHVolume / float64(currentData.TradeCount)
+						currentData.USDPerTrade = currentData.USDVolume / float64(currentData.TradeCount)
+					}
+					dataJSON, err := json.Marshal(currentData)
+					if err != nil {
+						return err
+					}
+					walletTzBucket.Put(timestamp, dataJSON)
+				}
+			}
+		}
+		return nil
+	})
+	return err
+}
+
 func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, walletAddr string, timezone int64) (common.StatTicks, error) {
 
 	result := common.StatTicks{}
@@ -488,10 +443,10 @@ func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, wall
 		min := uint64ToBytes(fromTime)
 		max := uint64ToBytes(toTime)
 		c := timezoneBk.Cursor()
-		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) == -1; k, v = c.Next() {
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			countryStat := common.CountryStats{}
 			json.Unmarshal(v, &countryStat)
-			key := bytesToUint64(k)
+			key := bytesToUint64(k) / 1000000
 			result[key] = countryStat
 		}
 		return nil
@@ -581,10 +536,10 @@ func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country st
 		max := uint64ToBytes(toTime)
 
 		c := timezoneBk.Cursor()
-		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) == -1; k, v = c.Next() {
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			countryStat := common.CountryStats{}
 			json.Unmarshal(v, &countryStat)
-			key := bytesToUint64(k)
+			key := bytesToUint64(k) / 1000000
 			result[key] = countryStat
 		}
 		return nil
@@ -613,7 +568,7 @@ func (self *BoltStatStorage) SetFirstTradeEver(userAddrs map[string]uint64) erro
 			userAddr := strings.Split(k, "_")[0]
 			if !self.DidTrade(tx, userAddr, timepoint) {
 				timestampByte := uint64ToBytes(timepoint)
-				return b.Put([]byte(userAddr), timestampByte)
+				b.Put([]byte(userAddr), timestampByte)
 			}
 		}
 		return nil
@@ -799,7 +754,7 @@ func (self *BoltStatStorage) GetTradeSummary(fromTime uint64, toTime uint64, tim
 		max := uint64ToBytes(toTime)
 
 		c := timezoneBk.Cursor()
-		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) == -1; k, v = c.Next() {
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			summary := common.TradeSummary{}
 			json.Unmarshal(v, &summary)
 			key := bytesToUint64(k) / 1000000
@@ -809,33 +764,4 @@ func (self *BoltStatStorage) GetTradeSummary(fromTime uint64, toTime uint64, tim
 	})
 
 	return result, err
-	// result := common.StatTicks{}
-	// tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
-	// stats, err := self.getTradeStats(fromTime, toTime, tzstring)
-	// if err != nil {
-	// 	return result, err
-	// }
-
-	// for timestamp, stat := range stats {
-	// 	tradeCount := float64(stat["trade_count"])
-	// 	var avgEth, avgUsd float64
-	// 	if tradeCount > 0 {
-	// 		avgEth = float64(stat["eth_volume"]) / tradeCount
-	// 		avgUsd = float64(stat["usd_volume"]) / tradeCount
-	// 	}
-
-	// 	result[timestamp] = map[string]float64{
-	// 		"total_eth_volume":     stat["eth_volume"],
-	// 		"total_usd_amount":     stat["usd_volume"],
-	// 		"total_burn_fee":       stat["burn_fee"],
-	// 		"unique_addresses":     stat["first_trade_in_day"],
-	// 		"new_unique_addresses": stat["first_trade_ever"],
-	// 		"kyced_addresses":      stat["kyced_in_day"],
-	// 		"total_trade":          tradeCount,
-	// 		"eth_per_trade":        avgEth,
-	// 		"usd_per_trade":        avgUsd,
-	// 	}
-	// }
-
-	// return result, err
 }
