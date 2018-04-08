@@ -180,6 +180,7 @@ func (self *Fetcher) RunTradeLogProcessor() {
 			log.Printf("get trade log from db failed: %v", err)
 			continue
 		}
+		startTime := time.Now()
 		log.Printf("AGGREGATE %d trades from %d to %d", len(tradeLogs), fromTime, toTime)
 		if len(tradeLogs) > 0 {
 			var last uint64
@@ -220,9 +221,18 @@ func (self *Fetcher) RunTradeLogProcessor() {
 				}
 			}
 		}
-		log.Println("aggregated trade stats")
+		if len(tradeLogs) > 0 {
+			timeTook := time.Since(startTime).Seconds()
+			totalTime += timeTook
+			totalTrade += float64(len(tradeLogs))
+			log.Printf("AGGREGATERESULT %d trades from %d to %d, took %v ", len(tradeLogs), fromTime, toTime, timeTook)
+			log.Printf("AGGREGATERESULT totalTime %v, totalTrade %v", totalTime, totalTrade)
+		}
 	}
 }
+
+var totalTime float64 = 0
+var totalTrade float64 = 0
 
 func (self *Fetcher) RunReserveRatesFetcher() {
 	for {
