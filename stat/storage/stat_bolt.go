@@ -529,6 +529,7 @@ func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, wall
 
 	result := common.StatTicks{}
 	tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
+	log.Printf("Get wallet stats: %s and %d", walletAddr, timezone)
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		walletBk, _ := tx.CreateBucketIfNotExists([]byte(walletAddr))
 		timezoneBk, _ := walletBk.CreateBucketIfNotExists([]byte(tzstring))

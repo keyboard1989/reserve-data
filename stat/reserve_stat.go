@@ -305,6 +305,7 @@ func (self ReserveStats) GetWalletStats(fromTime uint64, toTime uint64, walletAd
 	if err != nil {
 		return nil, err
 	}
+	walletAddr = strings.ToLower(walletAddr)
 	return self.statStorage.GetWalletStats(fromTime, toTime, walletAddr, timezone)
 }
 
