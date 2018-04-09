@@ -625,27 +625,13 @@ type BurnFeeStats struct {
 	TotalBurnFee float64
 }
 
-type BurnFeeStatsTimeZone map[int64]map[uint64]BurnFeeStats
+type BurnFeeStatsTimeZone map[string]map[uint64]BurnFeeStats
 
-type VolumeStatsTimeZone map[int64]map[uint64]VolumeStats
+type VolumeStatsTimeZone map[string]map[uint64]VolumeStats
 
 type FeeStats map[int64]map[uint64]float64
 
-type WalletStats struct {
-	ETHVolume          float64 `json:"total_eth_volume"`
-	USDVolume          float64 `json:"total_usd_volume"`
-	BurnFee            float64 `json:"total_burn_fee"`
-	TradeCount         int     `json:"trade_count"`
-	UniqueAddr         int     `json:"unique_addr"`
-	KYCEd              int     `json:"kyced"`
-	NewUniqueAddresses int     `json:"new_unique_addresses"`
-	USDPerTrade        float64 `json:"usd_per_trade"`
-	ETHPerTrade        float64 `json:"eth_per_trade`
-}
-
-type WalletStatsTimeZone map[int64]map[uint64]WalletStats
-
-type CountryStats struct {
+type MetricStats struct {
 	ETHVolume          float64 `json:"total_eth_volume"`
 	USDVolume          float64 `json:"total_usd_volume"`
 	BurnFee            float64 `json:"total_burn_fee"`
@@ -657,20 +643,7 @@ type CountryStats struct {
 	ETHPerTrade        float64 `json:"eth_per_trade"`
 }
 
-type CountryStatsTimeZone map[int64]map[uint64]CountryStats // key by timezonze and daily timepoint
-type TradeSummary struct {
-	ETHVolume          float64 `json:"total_eth_volume"`
-	USDVolume          float64 `json:"total_usd_volume"`
-	BurnFee            float64 `json:"total_burn_fee"`
-	TradeCount         int     `json:"total_trade"`
-	UniqueAddr         int     `json:"unique_addresses"`
-	KYCEd              int     `json:"kyced_addresses"`
-	NewUniqueAddresses int     `json:"new_unique_addresses"`
-	USDPerTrade        float64 `json:"usd_per_trade"`
-	ETHPerTrade        float64 `json:"eth_per_trade"`
-}
-
-type TradeSummaryTimeZone map[int64]map[uint64]TradeSummary
+type MetricStatsTimeZone map[int64]map[uint64]MetricStats
 
 type TradeHistory struct {
 	ID        string

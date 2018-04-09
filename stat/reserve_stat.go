@@ -175,7 +175,7 @@ func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (com
 			return arrResult, err
 		}
 		for _, stat := range cStats {
-			s := stat.(common.CountryStats)
+			s := stat.(common.MetricStats)
 			current := result[c]
 			result[c] = common.HeatmapType{
 				TotalETHValue:        current.TotalETHValue + s.ETHVolume,

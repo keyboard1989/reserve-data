@@ -123,8 +123,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if enableStat {
 		var deployBlock uint64
 		if kyberENV == "mainnet" || kyberENV == "production" || kyberENV == "dev" {
-			// deployBlock = 5069586
-			deployBlock = 5357820
+			deployBlock = 5069586
 		}
 		statFetcher = stat.NewFetcher(
 			config.StatStorage,
