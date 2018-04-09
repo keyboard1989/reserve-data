@@ -279,18 +279,24 @@ func (self *Fetcher) RunLogFetcher() {
 			if lastBlock+1 > toBlock {
 				continue
 			}
-			nextBlock := self.FetchLogs(lastBlock+1, toBlock, timepoint)
-			if nextBlock == lastBlock && toBlock != 0 {
-				// in case that we are querying old blocks (6 hours in the past)
-				// and got no logs. we will still continue with next block
-				// It is not the case if toBlock == 0, means we are querying
-				// best window, we should keep querying it in order not to
-				// miss any logs due to node inconsistency
-				nextBlock = toBlock
+			nextBlock, err := self.FetchLogs(lastBlock+1, toBlock, timepoint)
+			if err != nil {
+				// in case there is error, we roll back and try it again.
+				// dont have to do anything here. just continute with the loop.
+				log.Printf("LogFetcher - continue with the loop to try it again")
+			} else {
+				if nextBlock == lastBlock && toBlock != 0 {
+					// in case that we are querying old blocks (6 hours in the past)
+					// and got no logs. we will still continue with next block
+					// It is not the case if toBlock == 0, means we are querying
+					// best window, we should keep querying it in order not to
+					// miss any logs due to node inconsistency
+					nextBlock = toBlock
+				}
+				log.Printf("LogFetcher - update log block: %d", nextBlock)
+				self.logStorage.UpdateLogBlock(nextBlock, timepoint)
+				log.Printf("LogFetcher - nextBlock: %d", nextBlock)
 			}
-			log.Printf("LogFetcher - update log block: %d", nextBlock)
-			self.logStorage.UpdateLogBlock(nextBlock, timepoint)
-			log.Printf("LogFetcher - nextBlock: %d", nextBlock)
 		} else {
 			log.Printf("LogFetcher - failed to get last fetched log block, err: %+v", err)
 		}
@@ -339,14 +345,14 @@ func (self *Fetcher) GetTradeGeo(txHash string) (string, string, error) {
 }
 
 // return block number that we just fetched the logs
-func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint64) uint64 {
+func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint64) (uint64, error) {
 	logs, err := self.blockchain.GetLogs(fromBlock, toBlock)
 	if err != nil {
 		log.Printf("LogFetcher - fetching logs data from block %d failed, error: %v", fromBlock, err)
 		if fromBlock == 0 {
-			return 0
+			return 0, err
 		} else {
-			return fromBlock - 1
+			return fromBlock - 1, err
 		}
 	} else {
 		if len(logs) > 0 {
@@ -380,9 +386,9 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 					max = l.BlockNo()
 				}
 			}
-			return max
+			return max, nil
 		} else {
-			return fromBlock - 1
+			return fromBlock - 1, nil
 		}
 	}
 }
