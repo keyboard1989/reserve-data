@@ -37,6 +37,7 @@ const (
 	COUNTRY_BUCKET              string = "country_stat_bucket"
 	USER_FIRST_TRADE_EVER       string = "user_first_trade_ever"
 	USER_STAT_BUCKET            string = "user_stat_bucket"
+	VOLUME_STAT_BUCKET          string = "volume_stat_bucket"
 )
 
 type BoltStatStorage struct {
@@ -263,7 +264,6 @@ func (self *BoltStatStorage) SetTradeStats(freq string, timepoint uint64, tradeS
 		} else {
 			stats = common.TradeStats{}
 		}
-		//log.Printf("AGGREGATE SetTradeStats, unmarshaled stat, len(raw)=%d", len(rawStats))
 		for key, value := range tradeStats {
 			sum, ok := stats[key]
 			if ok {
@@ -273,7 +273,6 @@ func (self *BoltStatStorage) SetTradeStats(freq string, timepoint uint64, tradeS
 			}
 		}
 		dataJSON, err := json.Marshal(stats)
-		//log.Printf("AGGREGATE SetTradeStats, marshal updated stat, len(raw)=%d", len(dataJSON))
 		if err != nil {
 			return err
 		}
@@ -281,11 +280,9 @@ func (self *BoltStatStorage) SetTradeStats(freq string, timepoint uint64, tradeS
 		if err := freqBk.Put(timestamp, dataJSON); err != nil {
 			return err
 		}
-		//log.Printf("AGGREGATE SetTradeStats, finish")
 
 		return err
 	})
-	//log.Printf("AGGREGATE SetTradeStats, updated the db")
 	return err
 }
 
@@ -385,6 +382,100 @@ func (self *BoltStatStorage) GetWalletAddress() ([]string, error) {
 	return result, err
 }
 
+func (self *BoltStatStorage) SetBurnFeeStat(burnFeeStats map[string]common.BurnFeeStatsTimeZone) error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		for key, timezoneData := range burnFeeStats {
+			burnFeeBk, _ := tx.CreateBucketIfNotExists([]byte(key))
+			for timezone := START_TIMEZONE; timezone <= END_TIMEZONE; timezone++ {
+				stats := timezoneData[timezone]
+				freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
+				timezoneBk, _ := burnFeeBk.CreateBucketIfNotExists([]byte(freq))
+				for timepoint, stat := range stats {
+					timestamp := uint64ToBytes(timepoint)
+					currentData := common.BurnFeeStats{}
+					v := timezoneBk.Get(timestamp)
+					if v != nil {
+						json.Unmarshal(v, currentData)
+					}
+					currentData.TotalBurnFee += stat.TotalBurnFee
+
+					dataJSON, _ := json.Marshal(currentData)
+					timezoneBk.Put(timestamp, dataJSON)
+				}
+			}
+
+			for _, freq := range []string{"H", "D", "M"} {
+				stats := timezoneData[0]
+				freqBkName, _ := getBucketNameByFreq(freq)
+				freqBk, _ := burnFeeBk.CreateBucketIfNotExists([]byte(freqBkName))
+				for timepoint, stat := range stats {
+					timestamp := uint64ToBytes(timepoint)
+					currentData := common.BurnFeeStats{}
+					v := freqBk.Get(timestamp)
+					if v != nil {
+						json.Unmarshal(v, currentData)
+					}
+					currentData.TotalBurnFee += stat.TotalBurnFee
+
+					dataJSON, _ := json.Marshal(currentData)
+					freqBk.Put(timestamp, dataJSON)
+				}
+			}
+		}
+		return nil
+	})
+	return err
+}
+
+func (self *BoltStatStorage) SetVolumeStat(volumeStats map[string]common.VolumeStatsTimeZone) error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		for asset, timezoneData := range volumeStats {
+			volumeBk, _ := tx.CreateBucketIfNotExists([]byte(asset))
+			for timezone := START_TIMEZONE; timezone <= END_TIMEZONE; timezone++ {
+				stats := timezoneData[timezone]
+				freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
+				timezoneBk, _ := volumeBk.CreateBucketIfNotExists([]byte(freq))
+				for timepoint, stat := range stats {
+					timestamp := uint64ToBytes(timepoint)
+					currentData := common.VolumeStats{}
+					v := timezoneBk.Get(timestamp)
+					if v != nil {
+						json.Unmarshal(v, currentData)
+					}
+					currentData.ETHVolume += stat.ETHVolume
+					currentData.USDAmount += currentData.USDAmount
+					currentData.Volume += stat.Volume
+
+					dataJSON, _ := json.Marshal(currentData)
+					timezoneBk.Put(timestamp, dataJSON)
+				}
+			}
+
+			for _, freq := range []string{"H", "D", "M"} {
+				stats := timezoneData[0]
+				freqBkName, _ := getBucketNameByFreq(freq)
+				freqBk, _ := volumeBk.CreateBucketIfNotExists([]byte(freqBkName))
+				for timepoint, stat := range stats {
+					timestamp := uint64ToBytes(timepoint)
+					currentData := common.VolumeStats{}
+					v := freqBk.Get(timestamp)
+					if v != nil {
+						json.Unmarshal(v, currentData)
+					}
+					currentData.ETHVolume += stat.ETHVolume
+					currentData.USDAmount += currentData.USDAmount
+					currentData.Volume += stat.Volume
+
+					dataJSON, _ := json.Marshal(currentData)
+					freqBk.Put(timestamp, dataJSON)
+				}
+			}
+		}
+		return nil
+	})
+	return err
+}
+
 func (self *BoltStatStorage) SetWalletStat(stats map[string]common.WalletStatsTimeZone) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
@@ -444,10 +535,10 @@ func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, wall
 		max := uint64ToBytes(toTime)
 		c := timezoneBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
-			countryStat := common.CountryStats{}
-			json.Unmarshal(v, &countryStat)
+			walletStat := common.WalletStats{}
+			json.Unmarshal(v, &walletStat)
 			key := bytesToUint64(k) / 1000000
-			result[key] = countryStat
+			result[key] = walletStat
 		}
 		return nil
 	})
@@ -587,6 +678,20 @@ func (self *BoltStatStorage) GetFirstTradeEver(userAddr string) uint64 {
 	return result
 }
 
+func (self *BoltStatStorage) GetAllFirstTradeEver() (map[string]uint64, error) {
+	result := map[string]uint64{}
+	err := self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(USER_FIRST_TRADE_EVER))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			value := bytesToUint64(v)
+			result[string(k)] = value
+		}
+		return nil
+	})
+	return result, err
+}
+
 func (self *BoltStatStorage) DidTradeInDay(tx *bolt.Tx, userAddr string, timepoint uint64, timezone int64) bool {
 	result := false
 	userStatBk, _ := tx.CreateBucketIfNotExists([]byte(USER_STAT_BUCKET))
@@ -647,27 +752,50 @@ func (self *BoltStatStorage) SetFirstTradeInDay(userAddrs map[string]uint64) err
 	return err
 }
 
-func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {
+// func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, asset string) (common.StatTicks, error) {
+// 	result := common.StatTicks{}
+
+// 	stats, err := self.getTradeStats(fromTime, toTime, freq)
+// 	eth := common.SupportedTokens["ETH"]
+
+// 	for timestamp, stat := range stats {
+// 		if strings.ToLower(eth.Address) == asset {
+// 			result[timestamp] = map[string]float64{
+// 				"volume":     stat[fmt.Sprintf("assets_volume_%s", asset)],
+// 				"usd_amount": stat[fmt.Sprintf("assets_usd_amount_%s", asset)],
+// 			}
+// 		} else {
+// 			result[timestamp] = map[string]float64{
+// 				"volume":     stat[fmt.Sprintf("assets_volume_%s", asset)],
+// 				"eth_amount": stat[fmt.Sprintf("assets_eth_amount_%s", asset)],
+// 				"usd_amount": stat[fmt.Sprintf("assets_usd_amount_%s", asset)],
+// 			}
+// 		}
+// 	}
+
+// 	return result, err
+// }
+
+func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq string, assetAddr string) (common.StatTicks, error) {
 	result := common.StatTicks{}
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b, _ := tx.CreateBucketIfNotExists([]byte(assetAddr))
 
-	stats, err := self.getTradeStats(fromTime, toTime, freq)
-	eth := common.SupportedTokens["ETH"]
+		freqBkName, _ := getBucketNameByFreq(freq)
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
 
-	for timestamp, stat := range stats {
-		if strings.ToLower(eth.Address) == asset {
-			result[timestamp] = map[string]float64{
-				"volume":     stat[fmt.Sprintf("assets_volume_%s", asset)],
-				"usd_amount": stat[fmt.Sprintf("assets_usd_amount_%s", asset)],
-			}
-		} else {
-			result[timestamp] = map[string]float64{
-				"volume":     stat[fmt.Sprintf("assets_volume_%s", asset)],
-				"eth_amount": stat[fmt.Sprintf("assets_eth_amount_%s", asset)],
-				"usd_amount": stat[fmt.Sprintf("assets_usd_amount_%s", asset)],
-			}
+		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
+		c := freqBk.Cursor()
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			value := common.VolumeStats{}
+			json.Unmarshal(v, &value)
+			key := bytesToUint64(k) / 1000000
+			result[key] = value
 		}
-	}
 
+		return nil
+	})
 	return result, err
 }
 

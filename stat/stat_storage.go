@@ -15,6 +15,9 @@ type StatStorage interface {
 	// GetUserStats(timestamp uint64, addr, email string, kycEd bool, timezone int64) (common.TradeStats, error)
 	// SetUserStats(timestamp uint64, addr, email string, kycEd bool, timezone int64, stats common.TradeStats) error
 
+	SetVolumeStat(volumeStat map[string]common.VolumeStatsTimeZone) error
+	SetBurnFeeStat(burnFeeStat map[string]common.BurnFeeStatsTimeZone) error
+
 	SetTradeStats(freq string, t uint64, tradeStats common.TradeStats) error
 	SetWalletAddress(walletAddr string) error
 	GetWalletAddress() ([]string, error)
@@ -27,6 +30,7 @@ type StatStorage interface {
 
 	SetFirstTradeEver(userAddrs map[string]uint64) error
 	GetFirstTradeEver(userAddr string) uint64
+	GetAllFirstTradeEver() (map[string]uint64, error)
 	SetFirstTradeInDay(userAddr map[string]uint64) error
 	GetFirstTradeInDay(userAddr string, timepoint uint64, timezone int64) uint64
 
