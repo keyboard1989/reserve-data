@@ -443,7 +443,7 @@ func (self *BoltStatStorage) SetVolumeStat(volumeStats map[string]common.VolumeS
 						json.Unmarshal(v, currentData)
 					}
 					currentData.ETHVolume += stat.ETHVolume
-					currentData.USDAmount += currentData.USDAmount
+					currentData.USDAmount += stat.USDAmount
 					currentData.Volume += stat.Volume
 
 					dataJSON, _ := json.Marshal(currentData)
@@ -480,6 +480,7 @@ func (self *BoltStatStorage) SetWalletStat(stats map[string]common.WalletStatsTi
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		for wallet, timeZoneStat := range stats {
+			log.Printf("Set wallet stats:  %s", wallet)
 			b, err := tx.CreateBucketIfNotExists([]byte(wallet))
 			if err != nil {
 				return err
@@ -802,21 +803,54 @@ func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq
 func (self *BoltStatStorage) GetBurnFee(fromTime uint64, toTime uint64, freq string, reserveAddr string) (common.StatTicks, error) {
 	result := common.StatTicks{}
 
-	stats, err := self.getTradeStats(fromTime, toTime, freq)
-	for timestamp, stat := range stats {
-		result[timestamp] = stat[fmt.Sprintf("burn_fee_%s", reserveAddr)]
-	}
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b, _ := tx.CreateBucketIfNotExists([]byte(reserveAddr))
+		freqBkName, _ := getBucketNameByFreq(freq)
+		// stats, err := self.getTradeStats(fromTime, toTime, freq)
 
+		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
+
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
+
+		c := freqBk.Cursor()
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			value := common.BurnFeeStats{}
+			json.Unmarshal(v, &value)
+			key := bytesToUint64(k) / 1000000
+			result[key] = value.TotalBurnFee
+		}
+		return nil
+	})
 	return result, err
 }
 
 func (self *BoltStatStorage) GetWalletFee(fromTime uint64, toTime uint64, freq string, reserveAddr string, walletAddr string) (common.StatTicks, error) {
 	result := common.StatTicks{}
 
-	stats, err := self.getTradeStats(fromTime, toTime, freq)
-	for timestamp, stat := range stats {
-		result[timestamp] = stat[fmt.Sprintf("wallet_fee_%s_%s", reserveAddr, walletAddr)]
-	}
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		bucketName := fmt.Sprintf("%s_%s", reserveAddr, walletAddr)
+		b, _ := tx.CreateBucketIfNotExists([]byte(bucketName))
+		freqBkName, _ := getBucketNameByFreq(freq)
+		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
+
+		min := uint64ToBytes(fromTime)
+		max := uint64ToBytes(toTime)
+
+		c := freqBk.Cursor()
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			value := common.BurnFeeStats{}
+			json.Unmarshal(v, &value)
+			key := bytesToUint64(k) / 1000000
+			result[key] = value.TotalBurnFee
+		}
+		return nil
+	})
+
+	// stats, err := self.getTradeStats(fromTime, toTime, freq)
+	// for timestamp, stat := range stats {
+	// 	result[timestamp] = stat[fmt.Sprintf("wallet_fee_%s_%s", reserveAddr, walletAddr)]
+	// }
 
 	return result, err
 }

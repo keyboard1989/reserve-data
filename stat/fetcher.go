@@ -382,10 +382,6 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 					ip, country, err := self.GetTradeGeo(txHash.Hex())
 					l.IP = ip
 					l.Country = country
-					err = self.statStorage.SetCountry(country)
-					if err != nil {
-						log.Printf("Cannot store country: %s", err.Error())
-					}
 
 					err = self.logStorage.StoreTradeLog(l, timepoint)
 					if err != nil {
@@ -461,6 +457,11 @@ func (self *Fetcher) aggregateTradeLog(trade common.TradeLog,
 	reserveAddr := common.AddrToString(trade.ReserveAddress)
 	walletAddr := common.AddrToString(trade.WalletAddress)
 	userAddr := common.AddrToString(trade.UserAddress)
+
+	err = self.statStorage.SetCountry(trade.Country)
+	if err != nil {
+		log.Printf("Cannot store country: %s", err.Error())
+	}
 
 	if checkWalletAddress(walletAddr) {
 		self.statStorage.SetWalletAddress(walletAddr)
