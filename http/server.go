@@ -1567,6 +1567,16 @@ func (self *HTTPServer) GetUserVolume(c *gin.Context) {
 	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
 	freq := c.Query("freq")
 	userAddr := c.Query("userAddr")
+	if userAddr == "" {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "User address is required",
+			},
+		)
+		return
+	}
 	data, err := self.stat.GetUserVolume(fromTime, toTime, freq, userAddr)
 	if err != nil {
 		c.JSON(

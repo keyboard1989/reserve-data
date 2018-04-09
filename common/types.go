@@ -615,6 +615,36 @@ type StatTicks map[uint64]interface{}
 
 type TradeStats map[string]float64
 
+type VolumeStats struct {
+	ETHVolume float64 `json:"eth_amount"`
+	USDAmount float64 `json:"usd_amount"`
+	Volume    float64 `json:"volume"`
+}
+
+type BurnFeeStats struct {
+	TotalBurnFee float64
+}
+
+type BurnFeeStatsTimeZone map[string]map[uint64]BurnFeeStats
+
+type VolumeStatsTimeZone map[string]map[uint64]VolumeStats
+
+type FeeStats map[int64]map[uint64]float64
+
+type MetricStats struct {
+	ETHVolume          float64 `json:"total_eth_volume"`
+	USDVolume          float64 `json:"total_usd_volume"`
+	BurnFee            float64 `json:"total_burn_fee"`
+	TradeCount         int     `json:"total_trade"`
+	UniqueAddr         int     `json:"unique_addresses"`
+	KYCEd              int     `json:"kyced_addresses"`
+	NewUniqueAddresses int     `json:"new_unique_addresses"`
+	USDPerTrade        float64 `json:"usd_per_trade"`
+	ETHPerTrade        float64 `json:"eth_per_trade"`
+}
+
+type MetricStatsTimeZone map[int64]map[uint64]MetricStats
+
 type TradeHistory struct {
 	ID        string
 	Price     float64
@@ -646,16 +676,24 @@ type TradeLogGeoInfoResp struct {
 }
 
 type HeatmapType struct {
-	TotalETHValue  float64 `json:"total_eth_value"`
-	TotalFiatValue float64 `json:"total_fiat_value"`
+	TotalETHValue        float64 `json:"total_eth_value"`
+	TotalFiatValue       float64 `json:"total_fiat_value"`
+	ToTalBurnFee         float64 `json:"total_burn_fee"`
+	TotalTrade           int     `json:"total_trade"`
+	TotalUniqueAddresses int     `json:"total_unique_addr"`
+	TotalKYCUser         int     `json:"total_kyc_user"`
 }
 
 type Heatmap map[string]HeatmapType
 
 type HeatmapObject struct {
-	Country        string  `json:"country"`
-	TotalETHValue  float64 `json:"total_eth_value"`
-	TotalFiatValue float64 `json:"total_fiat_value"`
+	Country              string  `json:"country"`
+	TotalETHValue        float64 `json:"total_eth_value"`
+	TotalFiatValue       float64 `json:"total_fiat_value"`
+	ToTalBurnFee         float64 `json:"total_burn_fee"`
+	TotalTrade           int     `json:"total_trade"`
+	TotalUniqueAddresses int     `json:"total_unique_addr"`
+	TotalKYCUser         int     `json:"total_kyc_user"`
 }
 
 type HeatmapResponse []HeatmapObject

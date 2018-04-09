@@ -175,12 +175,15 @@ func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (com
 			return arrResult, err
 		}
 		for _, stat := range cStats {
-			s := stat.(map[string]float64)
-			currentETHValue := result[c].TotalETHValue
-			currentFiatValue := result[c].TotalFiatValue
+			s := stat.(common.MetricStats)
+			current := result[c]
 			result[c] = common.HeatmapType{
-				TotalETHValue:  currentETHValue + s["total_eth_volume"],
-				TotalFiatValue: currentFiatValue + s["total_usd_amount"],
+				TotalETHValue:        current.TotalETHValue + s.ETHVolume,
+				TotalFiatValue:       current.TotalFiatValue + s.USDVolume,
+				ToTalBurnFee:         current.ToTalBurnFee + s.BurnFee,
+				TotalTrade:           current.TotalTrade + s.TradeCount,
+				TotalUniqueAddresses: current.TotalUniqueAddresses + s.UniqueAddr,
+				TotalKYCUser:         current.TotalKYCUser + s.KYCEd,
 			}
 		}
 	}
@@ -188,9 +191,13 @@ func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (com
 	// sort heatmap
 	for k, v := range result {
 		arrResult = append(arrResult, common.HeatmapObject{
-			Country:        k,
-			TotalETHValue:  v.TotalETHValue,
-			TotalFiatValue: v.TotalFiatValue,
+			Country:              k,
+			TotalETHValue:        v.TotalETHValue,
+			TotalFiatValue:       v.TotalFiatValue,
+			ToTalBurnFee:         v.ToTalBurnFee,
+			TotalTrade:           v.TotalTrade,
+			TotalUniqueAddresses: v.TotalUniqueAddresses,
+			TotalKYCUser:         v.TotalKYCUser,
 		})
 	}
 	sort.Sort(sort.Reverse(arrResult))
@@ -298,6 +305,7 @@ func (self ReserveStats) GetWalletStats(fromTime uint64, toTime uint64, walletAd
 	if err != nil {
 		return nil, err
 	}
+	walletAddr = strings.ToLower(walletAddr)
 	return self.statStorage.GetWalletStats(fromTime, toTime, walletAddr, timezone)
 }
 

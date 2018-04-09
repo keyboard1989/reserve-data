@@ -85,7 +85,6 @@ func (self *BoltLogStorage) LoadLastLogIndex(tx *bolt.Tx) (uint64, uint, error) 
 
 	if k == nil {
 		return 0, 0, nil
-
 	}
 
 	record := common.TradeLog{}
