@@ -27,7 +27,7 @@ func NewBoltUserStorage(path string) (*BoltUserStorage, error) {
 	var err error
 	var db *bolt.DB
 	db, err = bolt.Open(path, 0600, nil)
-	if err != nil {
+	if db == nil {
 		return nil, err
 	}
 

@@ -283,10 +283,10 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_analytics.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
 		"https://semi-node.kyber.network",
 		[]string{
 			"https://semi-node.kyber.network",
