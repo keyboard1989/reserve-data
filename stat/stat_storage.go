@@ -5,7 +5,7 @@ import (
 )
 
 type StatStorage interface {
-	GetAssetVolume(fromTime, toTime uint64, freq, asset string) (common.StatTicks, error)
+	GetAssetVolume(fromTime, toTime uint64, freq, assetAddr string) (common.StatTicks, error)
 	GetBurnFee(fromTime, toTime uint64, freq, reserveAddr string) (common.StatTicks, error)
 	GetWalletFee(fromTime, toTime uint64, freq, reserveAddr string, walletAddr string) (common.StatTicks, error)
 	GetUserVolume(fromTime, toTime uint64, freq, userAddr string) (common.StatTicks, error)
