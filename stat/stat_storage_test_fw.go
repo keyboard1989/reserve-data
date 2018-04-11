@@ -16,6 +16,7 @@ const (
 	TESTWALLETADDR string = "0xdd61803d4a56c597e0fc864f7a20ec7158c6cba5"
 	TESTCOUNTRY    string = "unknown"
 	TESTASSETADDR  string = "0x2aab2b157a03915c8a73adae735d0cf51c872f31"
+	TESTUSERADDR   string = "0x778599Dd7893C8166D313F0F9B5F6cbF7536c293"
 )
 
 func NewStatStorageTest(storage StatStorage) *StatStorageTest {
@@ -187,7 +188,7 @@ func (self *StatStorageTest) TestBurnFee() error {
 	}
 	burnFee, err := self.storage.GetBurnFee(0, 86400000, "D", TESTASSETADDR)
 	log.Println(burnFee)
-	//Note : This is only temporary, burn free return needs to be casted to common.BurnFeeStats for consistent in design
+	//Note : This is only temporary, burn fee return needs to be casted to common.BurnFeeStats for consistent in design
 	result, ok := (burnFee[0]).(float64)
 	if !ok {
 		return errors.New(" Type mismatched: get burn fee return wrong type")
@@ -239,4 +240,40 @@ func (self *StatStorageTest) TestWalletAddress() error {
 		return errors.New(fmt.Sprintf("expected address 0xdd61803d4a56c597e0fc864f7a20ec7158c6cba5, got %s instead", walletaddresses[0]))
 	}
 	return err
+}
+
+func (self *StatStorageTest) TestLastProcessedTradeLogTimePoint() error {
+	var err error
+	err = self.storage.SetLastProcessedTradeLogTimepoint(45678)
+	if err != nil {
+		return err
+	}
+	lastTimePoint, err := self.storage.GetLastProcessedTradeLogTimepoint()
+	if err != nil {
+		return err
+	}
+	if lastTimePoint != 45678 {
+		return errors.New(fmt.Sprintf("expected last time point to be 45678, got %d instead", lastTimePoint))
+	}
+	return err
+}
+
+func (self *StatStorageTest) TestCountries() error {
+	var err error
+	err = self.storage.SetCountry("bunny")
+	if err != nil {
+		return err
+	}
+	countries, err := self.storage.GetCountries()
+	if err != nil {
+		return err
+	}
+	if len(countries) != 1 {
+		return errors.New(fmt.Sprintf("wrong countries len, expect 1, got %d", len(countries)))
+	}
+	if countries[0] != "bunny" {
+		return errors.New(fmt.Sprintf("wrong country result, expect bunny, got %s", countries[0]))
+	}
+	return err
+
 }
