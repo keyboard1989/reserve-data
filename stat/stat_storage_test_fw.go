@@ -13,9 +13,9 @@ type StatStorageTest struct {
 }
 
 const (
-	TESTWALLETADDR string = "0xdd61803d4a56c597e0fc864f7a20ec7158c6cba5"
-	TESTCOUNTRY    string = "unknown"
-	TESTASSETADDR  string = "0x2aab2b157a03915c8a73adae735d0cf51c872f31"
+	TESTWALLETADDR string = "0xdd61803d4a56c597e0fC864f7a20Ec7158c6Cba5"
+	TESTCOUNTRY    string = "unKnown"
+	TESTASSETADDR  string = "0x2aab2b157a03915c8A73aDae735d0cf51c872f31"
 	TESTUSERADDR   string = "0x778599Dd7893C8166D313F0F9B5F6cbF7536c293"
 )
 
@@ -45,7 +45,9 @@ func (self *StatStorageTest) TestTradeStatsSummary() error {
 	if err != nil {
 		return err
 	}
-	//log.Println(tradeSum)
+	if tradeSum == nil || len(tradeSum) == 0 {
+		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+	}
 	result, ok := (tradeSum[0]).(common.MetricStats)
 	if !ok {
 		return errors.New("Type mismatched: get trade stat summary return wrong type")
@@ -80,7 +82,10 @@ func (self *StatStorageTest) TestWalletStats() error {
 	if err != nil {
 		return err
 	}
-	walletStat, err := self.storage.GetWalletStats(0, 86400000, TESTWALLETADDR, 0)
+	walletStat, err := self.storage.GetWalletStats(0, 86400000, strings.ToUpper(TESTWALLETADDR), 0)
+	if walletStat == nil || len(walletStat) == 0 {
+		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+	}
 	result, ok := (walletStat[0]).(common.MetricStats)
 	if !ok {
 		return errors.New("Type mismatched: get wallet stat return wrong type")
@@ -114,8 +119,11 @@ func (self *StatStorageTest) TestCountryStats() error {
 	if err != nil {
 		return err
 	}
-	walletStat, err := self.storage.GetCountryStats(0, 86400000, TESTCOUNTRY, 0)
-	result, ok := (walletStat[0]).(common.MetricStats)
+	countryStat, err := self.storage.GetCountryStats(0, 86400000, strings.ToLower(TESTCOUNTRY), 0)
+	if countryStat == nil || len(countryStat) == 0 {
+		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+	}
+	result, ok := (countryStat[0]).(common.MetricStats)
 	if !ok {
 		return errors.New("Type mismatched: get country stats return wrong type")
 	}
@@ -143,7 +151,10 @@ func (self *StatStorageTest) TestVolumeStats() error {
 	if err != nil {
 		return err
 	}
-	assetVol, err := self.storage.GetAssetVolume(0, 86400000, "D", TESTASSETADDR)
+	assetVol, err := self.storage.GetAssetVolume(0, 86400000, "D", strings.ToLower(TESTASSETADDR))
+	if assetVol == nil || len(assetVol) == 0 {
+		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+	}
 	result, ok := (assetVol[0]).(common.VolumeStats)
 	if !ok {
 		return errors.New("Type mismatched: get volume stat return wrong type")
@@ -156,7 +167,10 @@ func (self *StatStorageTest) TestVolumeStats() error {
 		return fmt.Errorf("Wrong usd volume value returned: %v expected 4567.8 ", usdVol)
 
 	}
-	assetVol, err = self.storage.GetUserVolume(0, 86400000, "D", TESTASSETADDR)
+	assetVol, err = self.storage.GetUserVolume(0, 86400000, "D", strings.ToUpper(TESTASSETADDR))
+	if (assetVol == nil) || len(assetVol) == 0 {
+		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+	}
 	result, ok = (assetVol[0]).(common.VolumeStats)
 	if !ok {
 		return errors.New("Type mismatched: get user volume summary return wrong type")
@@ -185,7 +199,10 @@ func (self *StatStorageTest) TestBurnFee() error {
 	if err != nil {
 		return err
 	}
-	burnFee, err := self.storage.GetBurnFee(0, 86400000, "D", TESTASSETADDR)
+	burnFee, err := self.storage.GetBurnFee(0, 86400000, "D", strings.ToUpper(TESTASSETADDR))
+	if (burnFee == nil) || len(burnFee) == 0 {
+		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+	}
 	//Note : This is only temporary, burn fee return needs to be casted to common.BurnFeeStats for consistent in design
 	result, ok := (burnFee[0]).(float64)
 	if !ok {
@@ -200,12 +217,15 @@ func (self *StatStorageTest) TestBurnFee() error {
 
 	}
 
-	updates = map[string]common.BurnFeeStatsTimeZone{fmt.Sprintf("%s_%s", TESTASSETADDR, TESTWALLETADDR): tzbfStat}
+	updates = map[string]common.BurnFeeStatsTimeZone{fmt.Sprintf("%s_%s", strings.ToLower(TESTASSETADDR), TESTWALLETADDR): tzbfStat}
 	err = self.storage.SetBurnFeeStat(updates)
 	if err != nil {
 		return err
 	}
-	burnFee, err = self.storage.GetWalletFee(0, 86400000, "D", TESTASSETADDR, TESTWALLETADDR)
+	burnFee, err = self.storage.GetWalletFee(0, 86400000, "D", TESTASSETADDR, strings.ToUpper(TESTWALLETADDR))
+	if burnFee == nil || len(burnFee) == 0 {
+		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+	}
 	result, ok = (burnFee[0]).(float64)
 	if !ok {
 		return errors.New("Type mismatched: get burn fee return wrong type")
@@ -223,7 +243,7 @@ func (self *StatStorageTest) TestBurnFee() error {
 
 func (self *StatStorageTest) TestWalletAddress() error {
 	var err error
-	err = self.storage.SetWalletAddress("0xdd61803d4a56c597e0fc864f7a20ec7158c6cba5")
+	err = self.storage.SetWalletAddress("0xdd61803d4A56C597e0fc864f7a20ec7158c6cba5")
 	if err != nil {
 		return err
 	}
@@ -258,7 +278,7 @@ func (self *StatStorageTest) TestLastProcessedTradeLogTimePoint() error {
 
 func (self *StatStorageTest) TestCountries() error {
 	var err error
-	err = self.storage.SetCountry("bunny")
+	err = self.storage.SetCountry("Bunny")
 	if err != nil {
 		return err
 	}
