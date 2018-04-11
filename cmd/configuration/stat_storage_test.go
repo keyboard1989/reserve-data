@@ -29,7 +29,7 @@ func doStatBoltTest(f func(tester *stat.StatStorageTest, t *testing.T), t *testi
 	dbname := "boltstattest1.db"
 	tester, tearDownFn, err := SetupBoltStatStorageTester(dbname)
 	if err != nil {
-		t.Fatalf("Testing stat_bolt as a stat storage: init failed(%s)", err)
+		t.Fatalf("Testing stat_bolt as a stat storage: init failed (%s)", err)
 	}
 	defer tearDownFn()
 	f(tester, t)
@@ -38,43 +38,49 @@ func doStatBoltTest(f func(tester *stat.StatStorageTest, t *testing.T), t *testi
 func TestBoltStatForStatStorage(t *testing.T) {
 	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
 		if err := tester.TestTradeStatsSummary(); err != nil {
-			t.Fatalf("Testing stat_bolt as a stat storage: Test Trade Stats Summary failed(%s)", err)
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Trade Stats Summary failed (%s)", err)
 
 		}
 	}, t)
 	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
 		if err := tester.TestWalletAddress(); err != nil {
-			t.Fatalf("Testing stat_bolt as a stat storage: Test Wallet Address  failed(%s)", err)
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Wallet Address  failed (%s)", err)
 
 		}
 	}, t)
 	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
 		if err := tester.TestWalletStats(); err != nil {
-			t.Fatalf("Testing stat_bolt as a stat storage: Test Wallet Stats failed(%s)", err)
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Wallet Stats failed (%s)", err)
 
 		}
 	}, t)
 	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
 		if err := tester.TestCountryStats(); err != nil {
-			t.Fatalf("Testing stat_bolt as a stat storage: Test Country Stats failed(%s)", err)
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Country Stats failed (%s)", err)
 
 		}
 	}, t)
 	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
 		if err := tester.TestVolumeStats(); err != nil {
-			t.Fatalf("Testing stat_bolt as a stat storage: Test Volume Stats failed(%s)", err)
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Volume Stats failed (%s)", err)
 
 		}
 	}, t)
 	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
 		if err := tester.TestBurnFee(); err != nil {
-			t.Fatalf("Testing stat_bolt as a stat storage: Test Burn Fee failed(%s)", err)
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Burn Fee failed (%s)", err)
 
 		}
 	}, t)
 	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
 		if err := tester.TestCountries(); err != nil {
-			t.Fatalf("Testing stat_bolt as a stat storage: Test Last Processed Trade Log Timepointfailed(%s)", err)
+			t.Fatalf("Testing stat_bolt as a stat storage: Test countries failed (%s)", err)
+
+		}
+	}, t)
+	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
+		if err := tester.TestFirstTradeEver(); err != nil {
+			t.Fatalf("Testing stat_bolt as a stat storage: Test first trade ever failed (%s)", err)
 
 		}
 	}, t)

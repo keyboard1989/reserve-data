@@ -3,7 +3,7 @@ package stat
 import (
 	"errors"
 	"fmt"
-	"log"
+	"strings"
 
 	"github.com/KyberNetwork/reserve-data/common"
 )
@@ -55,7 +55,7 @@ func (self *StatStorageTest) TestTradeStatsSummary() error {
 		return errors.New("Type mismatched: get trade stat summary return missing field")
 	}
 	if usdVol != 4567.8 {
-		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
+		return fmt.Errorf("Wrong usd volume value returned: %v expected 4567.8 ", usdVol)
 
 	}
 	return nil
@@ -90,7 +90,7 @@ func (self *StatStorageTest) TestWalletStats() error {
 		return errors.New("Type mismatched: get wallet stat return missing field")
 	}
 	if usdVol != 4567.8 {
-		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
+		return fmt.Errorf("Wrong usd volume value returned: %v expected 4567.8 ", usdVol)
 	}
 	return nil
 }
@@ -124,7 +124,7 @@ func (self *StatStorageTest) TestCountryStats() error {
 		return errors.New("Type mismatched: get country stats return missing field")
 	}
 	if usdVol != 4567.8 {
-		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
+		return fmt.Errorf("Wrong usd volume value returned: %v expected 4567.8 ", usdVol)
 
 	}
 	return nil
@@ -153,7 +153,7 @@ func (self *StatStorageTest) TestVolumeStats() error {
 		return errors.New("Type mismatched: get volume stat return missing field")
 	}
 	if usdVol != 4567.8 {
-		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
+		return fmt.Errorf("Wrong usd volume value returned: %v expected 4567.8 ", usdVol)
 
 	}
 	assetVol, err = self.storage.GetUserVolume(0, 86400000, "D", TESTASSETADDR)
@@ -166,8 +166,7 @@ func (self *StatStorageTest) TestVolumeStats() error {
 		return errors.New("Type mismatched: get user volume summary return missing field")
 	}
 	if usdVol != 4567.8 {
-		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
-
+		return fmt.Errorf("Wrong usd volume value returned: %v expected 4567.8 ", usdVol)
 	}
 
 	return nil
@@ -187,7 +186,6 @@ func (self *StatStorageTest) TestBurnFee() error {
 		return err
 	}
 	burnFee, err := self.storage.GetBurnFee(0, 86400000, "D", TESTASSETADDR)
-	log.Println(burnFee)
 	//Note : This is only temporary, burn fee return needs to be casted to common.BurnFeeStats for consistent in design
 	result, ok := (burnFee[0]).(float64)
 	if !ok {
@@ -198,7 +196,7 @@ func (self *StatStorageTest) TestBurnFee() error {
 		return errors.New("Type mismatched: get burn fee return missing field")
 	}
 	if burnVol != 4567.8 {
-		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
+		return fmt.Errorf("Wrong burn fee value returned: %v expected 4567.8 ", burnVol)
 
 	}
 
@@ -217,7 +215,7 @@ func (self *StatStorageTest) TestBurnFee() error {
 		return errors.New("Type mismatched: get burn fee return missing field")
 	}
 	if burnVol != 4567.8 {
-		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
+		return fmt.Errorf("Wrong wallet fee value returned: %v expected 4567.8 ", burnVol)
 
 	}
 	return nil
@@ -234,10 +232,10 @@ func (self *StatStorageTest) TestWalletAddress() error {
 		return err
 	}
 	if len(walletaddresses) != 1 {
-		return errors.New(fmt.Sprintf("expected 1 record, got %d record of wallet addresses returned", len(walletaddresses)))
+		return fmt.Errorf("expected 1 record, got %d record of wallet addresses returned", len(walletaddresses))
 	}
 	if walletaddresses[0] != "0xdd61803d4a56c597e0fc864f7a20ec7158c6cba5" {
-		return errors.New(fmt.Sprintf("expected address 0xdd61803d4a56c597e0fc864f7a20ec7158c6cba5, got %s instead", walletaddresses[0]))
+		return fmt.Errorf("expected address 0xdd61803d4a56c597e0fc864f7a20ec7158c6cba5, got %s instead", walletaddresses[0])
 	}
 	return err
 }
@@ -253,7 +251,7 @@ func (self *StatStorageTest) TestLastProcessedTradeLogTimePoint() error {
 		return err
 	}
 	if lastTimePoint != 45678 {
-		return errors.New(fmt.Sprintf("expected last time point to be 45678, got %d instead", lastTimePoint))
+		return fmt.Errorf("expected last time point to be 45678, got %d instead", lastTimePoint)
 	}
 	return err
 }
@@ -269,10 +267,81 @@ func (self *StatStorageTest) TestCountries() error {
 		return err
 	}
 	if len(countries) != 1 {
-		return errors.New(fmt.Sprintf("wrong countries len, expect 1, got %d", len(countries)))
+		return fmt.Errorf("wrong countries len, expect 1, got %d", len(countries))
 	}
 	if countries[0] != "bunny" {
-		return errors.New(fmt.Sprintf("wrong country result, expect bunny, got %s", countries[0]))
+		return fmt.Errorf("wrong country result, expect bunny, got %s", countries[0])
+	}
+	return err
+
+}
+
+func (self *StatStorageTest) TestFirstTradeEver() error {
+	var err error
+	userAddrs := map[string]uint64{(TESTUSERADDR + "_45678"): 45678}
+	err = self.storage.SetFirstTradeEver(userAddrs)
+	if err != nil {
+		return err
+	}
+
+	timepoint, err := self.storage.GetFirstTradeEver(TESTUSERADDR)
+	if err != nil {
+		return err
+	}
+	if timepoint != 45678 {
+		return fmt.Errorf("first trade ever error, expect timepoint 45678, got %d", timepoint)
+	}
+	timepoint, err = self.storage.GetFirstTradeEver(strings.ToLower(TESTUSERADDR))
+	if err != nil {
+		return err
+	}
+	if timepoint != 45678 {
+		return (fmt.Errorf("first trade ever error with lower case addr, expect timepoint 45678, got %d", timepoint))
+	}
+	timepoint, err = self.storage.GetFirstTradeEver(strings.ToUpper(TESTUSERADDR))
+	if err != nil {
+		return err
+	}
+	if timepoint != 45678 {
+		return (fmt.Errorf("first trade ever error with upper case addr, expect timepoint 45678, got %d", timepoint))
+	}
+	userAddrs = map[string]uint64{TESTWALLETADDR: 45678}
+	err = self.storage.SetFirstTradeEver(userAddrs)
+	if err != nil {
+		return err
+	}
+	allFirstTradeEver, err := self.storage.GetAllFirstTradeEver()
+	if len(allFirstTradeEver) != 2 {
+		return fmt.Errorf("wrong all first trade ever  len, expect 2, got %d", len(allFirstTradeEver))
+	}
+	return err
+
+}
+
+func (self *StatStorageTest) TestFirstTradeInDay() error {
+	var err error
+	userAddrs := map[string]uint64{(TESTUSERADDR + "_45678"): 45678}
+	err = self.storage.SetFirstTradeInDay(userAddrs)
+	if err != nil {
+		return err
+	}
+
+	timepoint, err := self.storage.GetFirstTradeInDay(TESTUSERADDR, 0, 0)
+	if err != nil {
+		return err
+	}
+	if timepoint != 45678 {
+		return fmt.Errorf("first trade in day error, expect timepoint 45678, got %d", timepoint)
+	}
+	return err
+	timepoint, err = self.storage.GetFirstTradeInDay(strings.ToLower(TESTUSERADDR), 0, 0)
+	if timepoint != 45678 {
+		return (fmt.Errorf("first trade in day error with lower case addr, expect timepoint 45678, got %d", timepoint))
+	}
+	return err
+	timepoint, err = self.storage.GetFirstTradeInDay(strings.ToUpper(TESTUSERADDR), 0, 0)
+	if timepoint != 45678 {
+		return (fmt.Errorf("first trade in day error with upper case addr, expect timepoint 45678, got %d", timepoint))
 	}
 	return err
 
