@@ -3,6 +3,7 @@ package stat
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
 )
@@ -81,15 +82,14 @@ func (self *StatStorageTest) TestWalletStats() error {
 	walletStat, err := self.storage.GetWalletStats(0, 86400000, TESTWALLETADDR, 0)
 	result, ok := (walletStat[0]).(common.MetricStats)
 	if !ok {
-		return errors.New("Type mismatched: get trade stat summary return wrong type")
+		return errors.New("Type mismatched: get wallet stat return wrong type")
 	}
 	usdVol := (result.USDVolume)
 	if !ok {
-		return errors.New("Type mismatched: get trade stat summary return missing field")
+		return errors.New("Type mismatched: get wallet stat return missing field")
 	}
 	if usdVol != 4567.8 {
 		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
-
 	}
 	return nil
 }
@@ -116,11 +116,11 @@ func (self *StatStorageTest) TestCountryStats() error {
 	walletStat, err := self.storage.GetCountryStats(0, 86400000, TESTCOUNTRY, 0)
 	result, ok := (walletStat[0]).(common.MetricStats)
 	if !ok {
-		return errors.New("Type mismatched: get trade stat summary return wrong type")
+		return errors.New("Type mismatched: get country stats return wrong type")
 	}
 	usdVol := (result.USDVolume)
 	if !ok {
-		return errors.New("Type mismatched: get trade stat summary return missing field")
+		return errors.New("Type mismatched: get country stats return missing field")
 	}
 	if usdVol != 4567.8 {
 		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
@@ -145,11 +145,11 @@ func (self *StatStorageTest) TestVolumeStats() error {
 	assetVol, err := self.storage.GetAssetVolume(0, 86400000, "D", TESTASSETADDR)
 	result, ok := (assetVol[0]).(common.VolumeStats)
 	if !ok {
-		return errors.New("Type mismatched: get trade stat summary return wrong type")
+		return errors.New("Type mismatched: get volume stat return wrong type")
 	}
 	usdVol := (result.USDAmount)
 	if !ok {
-		return errors.New("Type mismatched: get trade stat summary return missing field")
+		return errors.New("Type mismatched: get volume stat return missing field")
 	}
 	if usdVol != 4567.8 {
 		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
@@ -158,11 +158,11 @@ func (self *StatStorageTest) TestVolumeStats() error {
 	assetVol, err = self.storage.GetUserVolume(0, 86400000, "D", TESTASSETADDR)
 	result, ok = (assetVol[0]).(common.VolumeStats)
 	if !ok {
-		return errors.New("Type mismatched: get trade stat summary return wrong type")
+		return errors.New("Type mismatched: get user volume summary return wrong type")
 	}
 	usdVol = (result.USDAmount)
 	if !ok {
-		return errors.New("Type mismatched: get trade stat summary return missing field")
+		return errors.New("Type mismatched: get user volume summary return missing field")
 	}
 	if usdVol != 4567.8 {
 		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
@@ -175,7 +175,51 @@ func (self *StatStorageTest) TestVolumeStats() error {
 
 func (self *StatStorageTest) TestBurnFee() error {
 	var err error
-	return err
+	bfStat := common.BurnFeeStats{
+		4567.8,
+	}
+
+	tzbfStat := common.BurnFeeStatsTimeZone{"D": {0: bfStat}}
+	updates := map[string]common.BurnFeeStatsTimeZone{TESTASSETADDR: tzbfStat}
+	err = self.storage.SetBurnFeeStat(updates)
+	if err != nil {
+		return err
+	}
+	burnFee, err := self.storage.GetBurnFee(0, 86400000, "D", TESTASSETADDR)
+	log.Println(burnFee)
+	//Note : This is only temporary, burn free return needs to be casted to common.BurnFeeStats for consistent in design
+	result, ok := (burnFee[0]).(float64)
+	if !ok {
+		return errors.New(" Type mismatched: get burn fee return wrong type")
+	}
+	burnVol := (result)
+	if !ok {
+		return errors.New("Type mismatched: get burn fee return missing field")
+	}
+	if burnVol != 4567.8 {
+		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
+
+	}
+
+	updates = map[string]common.BurnFeeStatsTimeZone{fmt.Sprintf("%s_%s", TESTASSETADDR, TESTWALLETADDR): tzbfStat}
+	err = self.storage.SetBurnFeeStat(updates)
+	if err != nil {
+		return err
+	}
+	burnFee, err = self.storage.GetWalletFee(0, 86400000, "D", TESTASSETADDR, TESTWALLETADDR)
+	result, ok = (burnFee[0]).(float64)
+	if !ok {
+		return errors.New("Type mismatched: get burn fee return wrong type")
+	}
+	burnVol = (result)
+	if !ok {
+		return errors.New("Type mismatched: get burn fee return missing field")
+	}
+	if burnVol != 4567.8 {
+		return errors.New("Wrong usd volume value returned: %v expected 4567.8 ")
+
+	}
+	return nil
 }
 
 func (self *StatStorageTest) TestWalletAddress() error {

@@ -66,5 +66,10 @@ func TestBoltStatForStatStorage(t *testing.T) {
 
 		}
 	}, t)
+	doStatBoltTest(func(tester *stat.StatStorageTest, t *testing.T) {
+		if err := tester.TestBurnFee(); err != nil {
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Burn Fee failed(%s)", err)
 
+		}
+	}, t)
 }
