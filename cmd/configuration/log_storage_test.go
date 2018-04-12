@@ -41,4 +41,14 @@ func TestBoltLogForStatStorage(t *testing.T) {
 			t.Fatalf("Testing stat_bolt as a stat storage: Test Cat Log failed (%s)", err)
 		}
 	}, t)
+	doBoltLogTest(func(tester *stat.LogStorageTest, t *testing.T) {
+		if err := tester.TestTradeLog(); err != nil {
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Trade Log failed (%s)", err)
+		}
+	}, t)
+	doBoltLogTest(func(tester *stat.LogStorageTest, t *testing.T) {
+		if err := tester.TestUtil(); err != nil {
+			t.Fatalf("Testing stat_bolt as a stat storage: Test Trade Log failed (%s)", err)
+		}
+	}, t)
 }

@@ -112,3 +112,25 @@ func (self *LogStorageTest) TestTradeLog() error {
 	}
 	return err
 }
+
+func (self *LogStorageTest) TestUtil() error {
+	var err error
+	err = self.storage.UpdateLogBlock(222, 111)
+	if err != nil {
+		return err
+	}
+	err = self.storage.UpdateLogBlock(333, 112)
+	if err != nil {
+		return err
+	}
+	lastBlock, err := self.storage.LastBlock()
+	if lastBlock != 333 {
+		return fmt.Errorf("LastBlock return wrong result, expect 333, got %d", lastBlock)
+	}
+	maxlogrange := self.storage.MaxRange()
+	if maxlogrange <= 0 {
+		return fmt.Errorf("Check maxrange return, got unexpected result %d", maxlogrange)
+	}
+	return err
+
+}
