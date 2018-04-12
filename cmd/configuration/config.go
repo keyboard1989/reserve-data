@@ -123,7 +123,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 			5*time.Second,  // authdata fetching interval
 			3*time.Second,  // rate fetching interval
 			5*time.Second,  // block fetching interval
-			5*time.Second,  // tradeHistory fetching interval
+			10*time.Minute, // tradeHistory fetching interval
 			10*time.Second, // reserve rates fetching interval
 			7*time.Second,  // log fetching interval
 			2*time.Second,  // trade log processing interval
@@ -165,7 +165,16 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, authEnbl bool, addre
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
 	} else {
-		fetcherRunner = fetcher.NewTickerRunner(7*time.Second, 5*time.Second, 3*time.Second, 5*time.Second, 5*time.Second, 10*time.Second, 7*time.Second, 2*time.Second, 2*time.Second)
+		fetcherRunner = fetcher.NewTickerRunner(
+			7*time.Second,  // orderbook fetching interval
+			5*time.Second,  // authdata fetching interval
+			3*time.Second,  // rate fetching interval
+			5*time.Second,  // block fetching interval
+			10*time.Minute, // tradeHistory fetching interval
+			10*time.Second, // reserve rates fetching interval
+			7*time.Second,  // log fetching interval
+			2*time.Second,  // trade log processing interval
+			2*time.Second)  // cat log processing interval
 	}
 
 	pricingSigner := PricingSignerFromConfigFile(settingPath.secretPath)
