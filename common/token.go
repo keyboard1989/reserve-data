@@ -54,13 +54,27 @@ func MustCreateTokenPair(base, quote string) TokenPair {
 var SupportedTokens map[string]Token
 var ExternalTokens map[string]Token
 
+// Get token from SupportedToken and returns error
+// if the token is not supported
 func GetToken(id string) (Token, error) {
 	t := SupportedTokens[strings.ToUpper(id)]
 	if t.ID == "" {
-		return t, errors.New(fmt.Sprintf("Token %s is not supported", id))
+		return t, errors.New(fmt.Sprintf("Token %s is not supported by core", id))
 	} else {
 		return t, nil
 	}
+}
+
+func GetNetworkToken(id string) (Token, error) {
+	t, err := GetToken(id)
+	if err != nil {
+		t, found := ExternalTokens[strings.ToUpper(id)]
+		if !found {
+			return t, errors.New(fmt.Sprintf("Token %s is not supported by the network", id))
+		}
+		return t, nil
+	}
+	return t, nil
 }
 
 func MustGetToken(id string) Token {

@@ -76,7 +76,7 @@ func (self ReserveStats) GetAssetVolume(fromTime, toTime uint64, freq, asset str
 		return data, err
 	}
 
-	token, err := common.GetToken(asset)
+	token, err := common.GetNetworkToken(asset)
 	if err != nil {
 		return data, errors.New(fmt.Sprintf("assets %s is not supported", asset))
 	}
