@@ -125,6 +125,20 @@ func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr s
 	return data, err
 }
 
+func (self ReserveStats) GetReserveVolume(fromTime, toTime uint64, freq, reserveAddr, tokenAddr string) (common.StatTicks, error) {
+	data := common.StatTicks{}
+
+	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, freq)
+	if err != nil {
+		return data, err
+	}
+
+	reserveAddr = strings.ToLower(reserveAddr)
+	tokenAddr = strings.ToLower(tokenAddr)
+	data, err = self.statStorage.GetReserveVolume(fromTime, toTime, freq, reserveAddr, tokenAddr)
+	return data, err
+}
+
 func (self ReserveStats) GetTradeSummary(fromTime, toTime uint64, timezone int64) (common.StatTicks, error) {
 	data := common.StatTicks{}
 

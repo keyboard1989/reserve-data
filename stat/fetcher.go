@@ -23,13 +23,14 @@ const (
 	START_TIMEZONE         int64  = -11
 	END_TIMEZONE           int64  = 14
 
-	TRADE_SUMMARY_AGGREGATION string = "trade_summary_aggregation"
-	WALLET_AGGREGATION        string = "wallet_aggregation"
-	COUNTRY_AGGREGATION       string = "country_aggregation"
-	USER_AGGREGATION          string = "user_aggregation"
-	VOLUME_STAT_AGGREGATION   string = "volume_stat_aggregation"
-	BURNFEE_AGGREGATION       string = "burn_fee_aggregation"
-	USER_INFO_AGGREGATION     string = "user_info_aggregation"
+	TRADE_SUMMARY_AGGREGATION  string = "trade_summary_aggregation"
+	WALLET_AGGREGATION         string = "wallet_aggregation"
+	COUNTRY_AGGREGATION        string = "country_aggregation"
+	USER_AGGREGATION           string = "user_aggregation"
+	VOLUME_STAT_AGGREGATION    string = "volume_stat_aggregation"
+	BURNFEE_AGGREGATION        string = "burn_fee_aggregation"
+	USER_INFO_AGGREGATION      string = "user_info_aggregation"
+	RESERVE_VOLUME_AGGREGATION string = "reserve_volume_aggregation"
 )
 
 type Fetcher struct {
@@ -777,6 +778,7 @@ func (self *Fetcher) aggregateVolumeStats(trade common.TradeLog, volumeStats map
 	srcAddr := common.AddrToString(trade.SrcAddress)
 	dstAddr := common.AddrToString(trade.DestAddress)
 	userAddr := common.AddrToString(trade.UserAddress)
+	reserveAddr := common.AddrToString(trade.ReserveAddress)
 
 	srcAmount, destAmount, ethAmount, _, _, _ := self.getTradeInfo(trade)
 	// token volume
@@ -784,7 +786,27 @@ func (self *Fetcher) aggregateVolumeStats(trade common.TradeLog, volumeStats map
 	self.aggregateVolumeStat(trade, dstAddr, destAmount, ethAmount, trade.FiatAmount, volumeStats)
 
 	//user volume
-	self.aggregateVolumeStat(trade, userAddr, srcAmount, destAmount, trade.FiatAmount, volumeStats)
+	self.aggregateVolumeStat(trade, userAddr, srcAmount, ethAmount, trade.FiatAmount, volumeStats)
+
+	// reserve volume
+	eth := common.MustGetToken("ETH")
+	var assetAddr string
+	var assetAmount float64
+	if srcAddr != eth.Address {
+		assetAddr = srcAddr
+		assetAmount = srcAmount
+	} else {
+		assetAddr = dstAddr
+		assetAmount = destAmount
+	}
+
+	// token volume
+	key := fmt.Sprintf("%s_%s", reserveAddr, assetAddr)
+	self.aggregateVolumeStat(trade, key, assetAmount, ethAmount, trade.FiatAmount, volumeStats)
+
+	// eth volume
+	key = fmt.Sprintf("%s_%s", reserveAddr, eth.Address)
+	self.aggregateVolumeStat(trade, key, ethAmount, ethAmount, trade.FiatAmount, volumeStats)
 	return nil
 }
 
@@ -884,11 +906,11 @@ func (self *Fetcher) aggregateVolumeStat(
 	trade common.TradeLog,
 	assetAddr string,
 	assetAmount, ethAmount, fiatAmount float64,
-	assetVolumtStats map[string]common.VolumeStatsTimeZone) {
+	assetVolumetStats map[string]common.VolumeStatsTimeZone) {
 	for _, freq := range []string{"M", "H", "D"} {
 		timestamp := getTimestampFromTimeZone(trade.Timestamp, freq)
 
-		currentVolume, exist := assetVolumtStats[assetAddr]
+		currentVolume, exist := assetVolumetStats[assetAddr]
 		if !exist {
 			currentVolume = common.VolumeStatsTimeZone{}
 		}
@@ -905,7 +927,7 @@ func (self *Fetcher) aggregateVolumeStat(
 		data.Volume += assetAmount
 		dataTimeZone[timestamp] = data
 		currentVolume[freq] = dataTimeZone
-		assetVolumtStats[assetAddr] = currentVolume
+		assetVolumetStats[assetAddr] = currentVolume
 	}
 }
 
