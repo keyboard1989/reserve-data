@@ -93,6 +93,7 @@ func (self ReserveStats) GetBurnFee(fromTime, toTime uint64, freq, reserveAddr s
 		return data, err
 	}
 
+	reserveAddr = strings.ToLower(reserveAddr)
 	data, err = self.statStorage.GetBurnFee(fromTime, toTime, freq, reserveAddr)
 	return data, err
 }
@@ -105,6 +106,8 @@ func (self ReserveStats) GetWalletFee(fromTime, toTime uint64, freq, reserveAddr
 		return data, err
 	}
 
+	reserveAddr = strings.ToLower(reserveAddr)
+	walletAddr = strings.ToLower(walletAddr)
 	data, err = self.statStorage.GetWalletFee(fromTime, toTime, freq, reserveAddr, walletAddr)
 	return data, err
 }
@@ -117,6 +120,7 @@ func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr s
 		return data, err
 	}
 
+	userAddr = strings.ToLower(userAddr)
 	data, err = self.statStorage.GetUserVolume(fromTime, toTime, freq, userAddr)
 	return data, err
 }
