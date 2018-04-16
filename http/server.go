@@ -343,7 +343,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	afpMid := postForm.Get("afp_mid")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenAddrs, "-") {
-		token, err := common.GetToken(tok)
+		token, err := common.GetInternalToken(tok)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -440,7 +440,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		)
 		return
 	}
-	base, err := common.GetToken(baseTokenParam)
+	base, err := common.GetInternalToken(baseTokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -448,7 +448,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		)
 		return
 	}
-	quote, err := common.GetToken(quoteTokenParam)
+	quote, err := common.GetInternalToken(quoteTokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -561,7 +561,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		)
 		return
 	}
-	token, err := common.GetToken(tokenParam)
+	token, err := common.GetInternalToken(tokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -613,7 +613,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 		)
 		return
 	}
-	token, err := common.GetToken(tokenParam)
+	token, err := common.GetInternalToken(tokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -787,7 +787,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 	toParam := postForm.Get("to")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenParam, "-") {
-		token, err := common.GetToken(tok)
+		token, err := common.GetInternalToken(tok)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -1137,7 +1137,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 		reserve, _ := strconv.ParseFloat(dataParts[2], 64)
 		rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
 		transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
-		_, err = common.GetToken(token)
+		_, err = common.GetInternalToken(token)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -1459,7 +1459,7 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 			return
 		}
 		token := dataParts[0]
-		_, err = common.GetToken(token)
+		_, err = common.GetInternalToken(token)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -2301,7 +2301,7 @@ func (self *HTTPServer) GetReserveVolume(c *gin.Context) {
 		)
 		return
 	}
-	token, err := common.GetToken(tokenName)
+	token, err := common.GetNetworkToken(tokenName)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

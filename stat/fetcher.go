@@ -510,7 +510,7 @@ func (self *Fetcher) GetReserveRates(
 func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	log.Printf("Fetching reserve and sanity rate from blockchain")
 	tokens := []common.Token{}
-	for _, token := range common.SupportedTokens {
+	for _, token := range common.NetworkTokens() {
 		if token.ID != "ETH" {
 			tokens = append(tokens, token)
 		}
@@ -705,23 +705,36 @@ func (self *Fetcher) getTradeInfo(trade common.TradeLog) (float64, float64, floa
 	userAddr := common.AddrToString(trade.UserAddress)
 
 	var srcAmount, destAmount, ethAmount, burnFee float64
-	for _, token := range common.SupportedTokens {
-		if strings.ToLower(token.Address) == srcAddr {
-			srcAmount = common.BigToFloat(trade.SrcAmount, token.Decimal)
-			if token.IsETH() {
-				ethAmount = srcAmount
-			}
-		}
 
-		if strings.ToLower(token.Address) == dstAddr {
-			destAmount = common.BigToFloat(trade.DestAmount, token.Decimal)
-			if token.IsETH() {
-				ethAmount = destAmount
-			}
-		}
+	srcToken := common.MustGetNetworkTokenByAddress(srcAddr)
+	srcAmount = common.BigToFloat(trade.SrcAmount, srcToken.Decimal)
+	if srcToken.IsETH() {
+		ethAmount = srcAmount
 	}
 
-	eth := common.SupportedTokens["ETH"]
+	destToken := common.MustGetNetworkTokenByAddress(dstAddr)
+	destAmount = common.BigToFloat(trade.DestAmount, destToken.Decimal)
+	if destToken.IsETH() {
+		ethAmount = destAmount
+	}
+
+	// for _, token := range common.SupportedTokens {
+	// 	if strings.ToLower(token.Address) == srcAddr {
+	// 		srcAmount = common.BigToFloat(trade.SrcAmount, token.Decimal)
+	// 		if token.IsETH() {
+	// 			ethAmount = srcAmount
+	// 		}
+	// 	}
+
+	// 	if strings.ToLower(token.Address) == dstAddr {
+	// 		destAmount = common.BigToFloat(trade.DestAmount, token.Decimal)
+	// 		if token.IsETH() {
+	// 			ethAmount = destAmount
+	// 		}
+	// 	}
+	// }
+
+	eth := common.ETHToken()
 	if trade.BurnFee != nil {
 		burnFee = common.BigToFloat(trade.BurnFee, eth.Decimal)
 	}
@@ -789,7 +802,7 @@ func (self *Fetcher) aggregateVolumeStats(trade common.TradeLog, volumeStats map
 	self.aggregateVolumeStat(trade, userAddr, srcAmount, ethAmount, trade.FiatAmount, volumeStats)
 
 	// reserve volume
-	eth := common.MustGetToken("ETH")
+	eth := common.ETHToken()
 	var assetAddr string
 	var assetAmount float64
 	if srcAddr != eth.Address {
@@ -820,7 +833,7 @@ func (self *Fetcher) aggregateBurnFeeStats(trade common.TradeLog, burnFeeStats m
 
 	// wallet fee
 	var walletFee float64
-	eth := common.MustGetToken("ETH")
+	eth := common.ETHToken()
 	if trade.WalletFee != nil {
 		walletFee = common.BigToFloat(trade.WalletFee, eth.Decimal)
 	}
@@ -834,21 +847,34 @@ func (self *Fetcher) aggregateUserInfo(trade common.TradeLog, userInfos map[stri
 	dstAddr := common.AddrToString(trade.DestAddress)
 
 	var srcAmount, destAmount, ethAmount float64
-	for _, token := range common.SupportedTokens {
-		if strings.ToLower(token.Address) == srcAddr {
-			srcAmount = common.BigToFloat(trade.SrcAmount, token.Decimal)
-			if token.IsETH() {
-				ethAmount = srcAmount
-			}
-		}
 
-		if strings.ToLower(token.Address) == dstAddr {
-			destAmount = common.BigToFloat(trade.DestAmount, token.Decimal)
-			if token.IsETH() {
-				ethAmount = destAmount
-			}
-		}
+	srcToken := common.MustGetNetworkTokenByAddress(srcAddr)
+	srcAmount = common.BigToFloat(trade.SrcAmount, srcToken.Decimal)
+	if srcToken.IsETH() {
+		ethAmount = srcAmount
 	}
+
+	destToken := common.MustGetNetworkTokenByAddress(dstAddr)
+	destAmount = common.BigToFloat(trade.DestAmount, destToken.Decimal)
+	if destToken.IsETH() {
+		ethAmount = destAmount
+	}
+
+	// for _, token := range common.SupportedTokens {
+	// 	if strings.ToLower(token.Address) == srcAddr {
+	// 		srcAmount = common.BigToFloat(trade.SrcAmount, token.Decimal)
+	// 		if token.IsETH() {
+	// 			ethAmount = srcAmount
+	// 		}
+	// 	}
+
+	// 	if strings.ToLower(token.Address) == dstAddr {
+	// 		destAmount = common.BigToFloat(trade.DestAmount, token.Decimal)
+	// 		if token.IsETH() {
+	// 			ethAmount = destAmount
+	// 		}
+	// 	}
+	// }
 	email, _, err := self.userStorage.GetUserOfAddress(userAddr)
 	if err != nil {
 		return
