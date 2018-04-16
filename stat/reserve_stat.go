@@ -125,6 +125,20 @@ func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr s
 	return data, err
 }
 
+func (self ReserveStats) GetReserveVolume(fromTime, toTime uint64, freq, reserveAddr, tokenAddr string) (common.StatTicks, error) {
+	data := common.StatTicks{}
+
+	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, freq)
+	if err != nil {
+		return data, err
+	}
+
+	reserveAddr = strings.ToLower(reserveAddr)
+	tokenAddr = strings.ToLower(tokenAddr)
+	data, err = self.statStorage.GetReserveVolume(fromTime, toTime, freq, reserveAddr, tokenAddr)
+	return data, err
+}
+
 func (self ReserveStats) GetTradeSummary(fromTime, toTime uint64, timezone int64) (common.StatTicks, error) {
 	data := common.StatTicks{}
 
@@ -334,6 +348,20 @@ func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr et
 		latest = rate
 	}
 	log.Printf("Get reserve rate: %v", result)
+	return result, err
+}
+
+func (self ReserveStats) GetUserList(fromTime, toTime uint64, timezone int64) (common.UserListResponse, error) {
+	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, "D")
+	if err != nil {
+		return []common.UserInfo{}, err
+	}
+	result := common.UserListResponse{}
+	data, err := self.statStorage.GetUserList(fromTime, toTime, timezone)
+	for _, v := range data {
+		result = append(result, v)
+	}
+	sort.Sort(sort.Reverse(result))
 	return result, err
 }
 
