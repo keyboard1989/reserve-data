@@ -77,8 +77,10 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 			id, t.Address, t.Decimals,
 		}
 		if t.KNReserveSupport {
+			log.Printf("register internal token: %v", tok)
 			common.RegisterInternalToken(tok)
 		} else {
+			log.Printf("register external token: %v", tok)
 			common.RegisterExternalToken(tok)
 		}
 	}
@@ -111,6 +113,8 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		chainType,
 		blockchain.NewContractCaller(callClients, setPath.bkendpoints),
 	)
+
+	log.Printf("internal tokens: %v", common.InternalTokens())
 
 	config := &Config{
 		Blockchain:              blockchain,
