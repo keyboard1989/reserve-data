@@ -126,7 +126,7 @@ func (self *Fetcher) RunCatLogProcessor() {
 			var last uint64
 			for _, l := range catLogs {
 				err := self.userStorage.UpdateAddressCategory(
-					strings.ToLower(l.Address.Hex()),
+					l.Address,
 					l.Category,
 				)
 				if err != nil {
@@ -404,8 +404,8 @@ func (self *Fetcher) RunUserAggregation(t time.Time) {
 				last = trade.Timestamp
 			}
 		}
-		self.statStorage.SetFirstTradeEver(userTradeList, last)
-		self.statStorage.SetFirstTradeInDay(userTradeList, last)
+		self.statStorage.SetFirstTradeEver(&tradeLogs, last)
+		self.statStorage.SetFirstTradeInDay(&tradeLogs, last)
 		self.statStorage.SetLastProcessedTradeLogTimepoint(USER_AGGREGATION, last)
 	} else {
 		l, err := self.logStorage.GetLastTradeLog()
@@ -501,7 +501,7 @@ func (self *Fetcher) GetReserveRates(
 	if err != nil {
 		log.Println(err.Error())
 	}
-	data.Store(string(reserveAddr.Hex()), rates)
+	data.Store(reserveAddr, rates)
 }
 
 func (self *Fetcher) FetchReserveRates(timepoint uint64) {
@@ -526,7 +526,7 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	}
 	wg.Wait()
 	data.Range(func(key, value interface{}) bool {
-		reserveAddr := key.(string)
+		reserveAddr := key.(ethereum.Address)
 		rates := value.(common.ReserveRates)
 		log.Printf("Storing reserve rates to db...")
 		self.rateStorage.StoreReserveRates(reserveAddr, rates, common.GetTimepoint())
@@ -662,8 +662,7 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 	}
 }
 
-func checkWalletAddress(wallet string) bool {
-	walletAddr := ethereum.HexToAddress(wallet)
+func checkWalletAddress(walletAddr ethereum.Address) bool {
 	cap := big.NewInt(0)
 	cap.Exp(big.NewInt(2), big.NewInt(128), big.NewInt(0))
 	if walletAddr.Big().Cmp(cap) < 0 {
@@ -902,13 +901,13 @@ func (self *Fetcher) aggregateBurnfee(key string, fee float64, trade common.Trad
 
 func (self *Fetcher) aggregateVolumeStat(
 	trade common.TradeLog,
-	assetAddr string,
+	key string,
 	assetAmount, ethAmount, fiatAmount float64,
 	assetVolumetStats map[string]common.VolumeStatsTimeZone) {
 	for _, freq := range []string{"M", "H", "D"} {
 		timestamp := getTimestampFromTimeZone(trade.Timestamp, freq)
 
-		currentVolume, exist := assetVolumetStats[assetAddr]
+		currentVolume, exist := assetVolumetStats[key]
 		if !exist {
 			currentVolume = common.VolumeStatsTimeZone{}
 		}
@@ -925,15 +924,15 @@ func (self *Fetcher) aggregateVolumeStat(
 		data.Volume += assetAmount
 		dataTimeZone[timestamp] = data
 		currentVolume[freq] = dataTimeZone
-		assetVolumetStats[assetAddr] = currentVolume
+		assetVolumetStats[key] = currentVolume
 	}
 }
 
 func (self *Fetcher) aggregateMetricStat(trade common.TradeLog, statKey string, ethAmount, burnFee float64,
 	metricStats map[string]common.MetricStatsTimeZone,
 	kycEd bool,
-	allFirstTradeEver map[string]uint64) {
-	userAddr := common.AddrToString(trade.UserAddress)
+	allFirstTradeEver map[ethereum.Address]uint64) {
+	userAddr := trade.UserAddress
 
 	for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
 		freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
@@ -950,7 +949,7 @@ func (self *Fetcher) aggregateMetricStat(trade common.TradeLog, statKey string, 
 		if !exist {
 			data = common.MetricStats{}
 		}
-		timeFirstTrade := allFirstTradeEver[userAddr]
+		timeFirstTrade := allFirstTradeEver[trade.UserAddress]
 		if timeFirstTrade == trade.Timestamp {
 			data.NewUniqueAddresses++
 			data.UniqueAddr++
@@ -958,7 +957,10 @@ func (self *Fetcher) aggregateMetricStat(trade common.TradeLog, statKey string, 
 				data.KYCEd++
 			}
 		} else {
-			firstTradeInday := self.statStorage.GetFirstTradeInDay(userAddr, trade.Timestamp, i)
+			firstTradeInday, err := self.statStorage.GetFirstTradeInDay(userAddr, trade.Timestamp, i)
+			if err != nil {
+				log.Printf("ERROR: get first traede in day fail. %v", err)
+			}
 			if firstTradeInday == trade.Timestamp {
 				data.UniqueAddr++
 				if kycEd {
