@@ -507,14 +507,26 @@ func (self *Fetcher) GetReserveRates(
 	data.Store(reserveAddr, rates)
 }
 
-func (self *Fetcher) FetchReserveRates(timepoint uint64) {
-	log.Printf("Fetching reserve and sanity rate from blockchain")
+func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) []common.Token {
 	tokens := []common.Token{}
-	for _, token := range common.NetworkTokens() {
-		if token.ID != "ETH" {
-			tokens = append(tokens, token)
+	if reserve == self.reserveAddress {
+		for _, token := range common.InternalTokens() {
+			if token.ID != "ETH" {
+				tokens = append(tokens, token)
+			}
+		}
+	} else {
+		for _, token := range common.NetworkTokens() {
+			if token.ID != "ETH" {
+				tokens = append(tokens, token)
+			}
 		}
 	}
+	return tokens
+}
+
+func (self *Fetcher) FetchReserveRates(timepoint uint64) {
+	log.Printf("Fetching reserve and sanity rate from blockchain")
 	supportedReserves := append(self.thirdPartyReserves, self.reserveAddress)
 	data := sync.Map{}
 	wg := sync.WaitGroup{}
@@ -525,6 +537,7 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	block := self.currentBlock
 	for _, reserveAddr := range supportedReserves {
 		wg.Add(1)
+		tokens := self.ReserveSupportedTokens(reserveAddr)
 		go self.GetReserveRates(block, reserveAddr, tokens, &data, &wg)
 	}
 	wg.Wait()
