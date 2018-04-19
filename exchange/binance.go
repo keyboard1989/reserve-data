@@ -1,7 +1,6 @@
 package exchange
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -437,7 +436,8 @@ func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string
 				}
 			}
 		}
-		return "", errors.New("Deposit is not found in deposit list returned from Binance. This might cause by wrong start/end time, please check again.")
+		log.Printf("Deposit is not found in deposit list returned from Binance. This might cause by wrong start/end time, please check again.")
+		return "", nil
 	}
 }
 
@@ -457,7 +457,8 @@ func (self *Binance) WithdrawStatus(id, currency string, amount float64, timepoi
 				}
 			}
 		}
-		return "", "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
+		log.Printf("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
+		return "", "", nil
 	}
 }
 

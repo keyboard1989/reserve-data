@@ -238,7 +238,8 @@ func (self *Bittrex) WithdrawStatus(id, currency string, amount float64, timepoi
 				}
 			}
 		}
-		return "", "", errors.New("Withdraw with uuid " + id + " of currency " + currency + " is not found on bittrex")
+		log.Printf("Withdraw with uuid " + id + " of currency " + currency + " is not found on bittrex")
+		return "", "", nil
 	}
 }
 
