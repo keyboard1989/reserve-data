@@ -192,6 +192,8 @@ func (self *Fetcher) RunCountryStatAggregation(t time.Time) {
 		return
 	}
 	if len(tradeLogs) > 0 {
+		self.statStorage.SetFirstTradeEver(tradeLogs)
+		self.statStorage.SetFirstTradeInDay(tradeLogs)
 		var last uint64
 		countryStats := map[string]common.MetricStatsTimeZone{}
 		allFirstTradeEver, _ := self.statStorage.GetAllFirstTradeEver()
@@ -233,8 +235,9 @@ func (self *Fetcher) RunTradeSummaryAggregation(t time.Time) {
 		return
 	}
 	if len(tradeLogs) > 0 {
+		self.statStorage.SetFirstTradeEver(tradeLogs)
+		self.statStorage.SetFirstTradeInDay(tradeLogs)
 		var last uint64
-
 		tradeSummary := map[string]common.MetricStatsTimeZone{}
 		allFirstTradeEver, _ := self.statStorage.GetAllFirstTradeEver()
 		kycEdUsers, _ := self.userStorage.GetKycUsers()
@@ -275,8 +278,9 @@ func (self *Fetcher) RunWalletStatAggregation(t time.Time) {
 		return
 	}
 	if len(tradeLogs) > 0 {
+		self.statStorage.SetFirstTradeEver(tradeLogs)
+		self.statStorage.SetFirstTradeInDay(tradeLogs)
 		var last uint64
-
 		walletStats := map[string]common.MetricStatsTimeZone{}
 		allFirstTradeEver, _ := self.statStorage.GetAllFirstTradeEver()
 		kycEdUsers, _ := self.userStorage.GetKycUsers()
@@ -380,45 +384,45 @@ func (self *Fetcher) RunVolumeStatAggregation(t time.Time) {
 	return
 }
 
-func (self *Fetcher) RunUserAggregation(t time.Time) {
-	// get trade log from db
-	fromTime, err := self.statStorage.GetLastProcessedTradeLogTimepoint(USER_AGGREGATION)
-	if err != nil {
-		log.Printf("get trade log processor state from db failed: %v", err)
-		return
-	}
-	fromTime, toTime := self.GetTradeLogTimeRange(fromTime, t)
-	tradeLogs, err := self.logStorage.GetTradeLogs(fromTime, toTime)
-	if err != nil {
-		log.Printf("get trade log from db failed: %v", err)
-		return
-	}
-	if len(tradeLogs) > 0 {
-		var last uint64
-		userTradeList := map[string]uint64{} // map of user address and fist trade timestamp
-		for _, trade := range tradeLogs {
-			userAddr := common.AddrToString(trade.UserAddress)
-			key := fmt.Sprintf("%s_%d", userAddr, trade.Timestamp)
-			userTradeList[key] = trade.Timestamp
-			if trade.Timestamp > last {
-				last = trade.Timestamp
-			}
-		}
-		self.statStorage.SetFirstTradeEver(&tradeLogs, last)
-		self.statStorage.SetFirstTradeInDay(&tradeLogs, last)
-		self.statStorage.SetLastProcessedTradeLogTimepoint(USER_AGGREGATION, last)
-	} else {
-		l, err := self.logStorage.GetLastTradeLog()
-		if err != nil {
-			log.Printf("can't get last trade log: err(%s)", err)
-			return
-		} else {
-			if toTime < l.Timestamp {
-				self.statStorage.SetLastProcessedTradeLogTimepoint(USER_AGGREGATION, toTime)
-			}
-		}
-	}
-}
+// func (self *Fetcher) RunUserAggregation(t time.Time) {
+// 	// get trade log from db
+// 	fromTime, err := self.statStorage.GetLastProcessedTradeLogTimepoint(USER_AGGREGATION)
+// 	if err != nil {
+// 		log.Printf("get trade log processor state from db failed: %v", err)
+// 		return
+// 	}
+// 	fromTime, toTime := self.GetTradeLogTimeRange(fromTime, t)
+// 	tradeLogs, err := self.logStorage.GetTradeLogs(fromTime, toTime)
+// 	if err != nil {
+// 		log.Printf("get trade log from db failed: %v", err)
+// 		return
+// 	}
+// 	if len(tradeLogs) > 0 {
+// 		var last uint64
+// 		userTradeList := map[string]uint64{} // map of user address and fist trade timestamp
+// 		for _, trade := range tradeLogs {
+// 			userAddr := common.AddrToString(trade.UserAddress)
+// 			key := fmt.Sprintf("%s_%d", userAddr, trade.Timestamp)
+// 			userTradeList[key] = trade.Timestamp
+// 			if trade.Timestamp > last {
+// 				last = trade.Timestamp
+// 			}
+// 		}
+// 		self.statStorage.SetFirstTradeEver(tradeLogs, last)
+// 		self.statStorage.SetFirstTradeInDay(tradeLogs, last)
+// 		self.statStorage.SetLastProcessedTradeLogTimepoint(USER_AGGREGATION, last)
+// 	} else {
+// 		l, err := self.logStorage.GetLastTradeLog()
+// 		if err != nil {
+// 			log.Printf("can't get last trade log: err(%s)", err)
+// 			return
+// 		} else {
+// 			if toTime < l.Timestamp {
+// 				self.statStorage.SetLastProcessedTradeLogTimepoint(USER_AGGREGATION, toTime)
+// 			}
+// 		}
+// 	}
+// }
 
 func (self *Fetcher) RunUserInfoAggregation(t time.Time) {
 	// get trade log from db
@@ -464,7 +468,7 @@ func runAggregationInParallel(wg *sync.WaitGroup, t time.Time, f func(t time.Tim
 func (self *Fetcher) RunTradeLogProcessor() {
 	for {
 		t := <-self.runner.GetTradeLogProcessorTicker()
-		self.RunUserAggregation(t)
+		// self.RunUserAggregation(t)
 		wg := sync.WaitGroup{}
 		wg.Add(1)
 		go runAggregationInParallel(&wg, t, self.RunBurnFeeAggregation)
