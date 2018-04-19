@@ -59,6 +59,9 @@ func NewExchangePool(
 	exparams := strings.Split(params, ",")
 	for _, exparam := range exparams {
 		switch exparam {
+		case "stable_exchange":
+			stableEx := exchange.NewStableEx(addressConfig.Exchanges["dgx"], feeConfig.Exchanges["dgx"])
+			exchanges[stableEx.ID()] = stableEx
 		case "bittrex":
 			bittrexSigner := bittrex.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := bittrex.NewBittrexEndpoint(bittrexSigner, getBittrexInterface(kyberENV))
