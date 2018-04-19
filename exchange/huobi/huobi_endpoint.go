@@ -39,7 +39,7 @@ func (self *HuobiEndpoint) fillRequest(req *http.Request, signNeeded bool) {
 		hostname := req.URL.Hostname()
 		path := req.URL.Path
 		payload := strings.Join([]string{method, hostname, path, auth}, "\n")
-		sig.Set("Signature", self.signer.HuobiSign(payload))
+		sig.Set("Signature", self.signer.Sign(payload))
 		req.URL.RawQuery = q.Encode() + "&" + sig.Encode()
 	}
 }
@@ -63,7 +63,7 @@ func (self *HuobiEndpoint) GetResponse(
 		timestamp := fmt.Sprintf("%s", time.Now().Format("2006-01-02T15:04:05"))
 		params["SignatureMethod"] = "HmacSHA256"
 		params["SignatureVersion"] = "2"
-		params["AccessKeyId"] = self.signer.GetHuobiKey()
+		params["AccessKeyId"] = self.signer.GetKey()
 		params["Timestamp"] = timestamp
 	}
 	var sortedParams []string
@@ -78,7 +78,7 @@ func (self *HuobiEndpoint) GetResponse(
 	self.fillRequest(req, signNeeded)
 	var err error
 	var resp_body []byte
-	log.Printf("request to huobi: %s\n", req.URL)
+	//log.Printf("request to huobi: %s\n", req.URL)
 	resp, err := client.Do(req)
 	if err != nil {
 		return resp_body, err
@@ -161,7 +161,7 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 
 func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 	result := exchange.HuobiWithdraws{}
-	size := len(common.SupportedTokens) * 2
+	size := len(common.InternalTokens()) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
@@ -183,7 +183,7 @@ func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 
 func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
 	result := exchange.HuobiDeposits{}
-	size := len(common.SupportedTokens) * 2
+	size := len(common.InternalTokens()) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
@@ -241,7 +241,7 @@ func (self *HuobiEndpoint) OrderStatus(symbol string, id uint64) (exchange.Huobi
 	return result, err
 }
 
-func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address, timepoint uint64) (string, error) {
+func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) (string, error) {
 	result := exchange.HuobiWithdraw{}
 	resp_body, err := self.GetResponse(
 		"POST",

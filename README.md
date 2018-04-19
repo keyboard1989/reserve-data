@@ -834,6 +834,7 @@ GET request
 Url params:
   - fromTime (millisecond - required): from time stamp
   - toTime (millisecond - required): to time stamp  
+  - timeZone (in range [-12,14], default to 0): the integer specific which UTC timezone to query
 ```
 
 ```
@@ -844,6 +845,235 @@ response
 {"data":{"1519344000000":{"eth_per_trade":0.55402703087424,"kyced_addresses":0,"new_unique_addresses":35,"total_burn_fee":0,"total_eth_volume":44.3221624699392,"total_trade":80,"total_usd_amount":30981.281202536768,"unique_addresses":50,"usd_per_trade":387.26601503170957},"1519430400000":{"eth_per_trade":0.17008867987348247,"kyced_addresses":0,"new_unique_addresses":17,"total_burn_fee":0,"total_eth_volume":8.674522673547607,"total_trade":51,"total_usd_amount":6060.828270348999,"unique_addresses":29,"usd_per_trade":118.83977000684311},"1519516800000":{"eth_per_trade":0.14234886960871,"kyced_addresses":0,"new_unique_addresses":9,"total_burn_fee":1.1025,"total_eth_volume":5.40925704513098,"total_trade":38,"total_usd_amount":3779.4100326337,"unique_addresses":18,"usd_per_trade":99.45815875351843},"1519603200000":{"eth_per_trade":0.5430574166436676,"kyced_addresses":0,"new_unique_addresses":39,"total_burn_fee":42.85336706164196,"total_eth_volume":45.07376558142441,"total_trade":83,"total_usd_amount":31497.3427579499,"unique_addresses":56,"usd_per_trade":379.4860573246976},"1519689600000":{"eth_per_trade":0.6014134385918366,"kyced_addresses":0,"new_unique_addresses":69,"total_burn_fee":79.03472646631772,"total_eth_volume":78.7851604555306,"total_trade":131,"total_usd_amount":55076.026979006005,"unique_addresses":92,"usd_per_trade":420.4276868626413},"1519776000000":{"eth_per_trade":0.40083191776618454,"kyced_addresses":0,"new_unique_addresses":64,"total_burn_fee":48.899026261678536,"total_eth_volume":52.50898122737018,"total_trade":131,"total_usd_amount":36662.138255818456,"unique_addresses":94,"usd_per_trade":279.8636508077745}},"success":true}
 ```
 
+### Get a specific wallet's stats summary follow timeframe (day)
+```
+<host>:8000/get-wallet-stats
+GET request
+
+Url params:
+  - fromTime (millisecond - required): from time stamp
+  - toTime (millisecond - required): to time stamp  
+  - timeZone (in range [-12,14], default to 0): the integer specific which UTC timezone to query
+  - walletAddr (hex string - required) : to specific which wallet Address to query data from. It must be larger than 2^128 to be valid.
+```
+
+```
+curl -x GET http://localhost:8000/get-wallet-stats?fromTime=1521914061000&toTime=1523000461000&walletAddr=0xb9e29984fe50602e7a619662ebed4f90d93824c7
+```
+response
+```
+{"data":{"1521936000000":{"eth_per_trade":0.15169175185997197,"kyced_addresses":0,"new_unique_addresses":27,"total_burn_fee":3.5843774403434443,"total_eth_volume":9.101505111598318,"total_trade":60,"total_usd_amount":4738.284168671162,"unique_addresses":40,"usd_per_trade":78.97140281118602},"1522022400000":{"eth_per_trade":0.1305336778977258,"kyced_addresses":0,"new_unique_addresses":13,"total_burn_fee":1.2758795269915402,"total_eth_volume":2.3496062021590642,"total_trade":18,"total_usd_amount":1230.3892752776494,"unique_addresses":18,"usd_per_trade":68.35495973764719}},"success":true}
+```
+
+### Get a list of wallet that has ever traded with core
+```
+<host>:8000/get-wallet-address 
+GET request
+
+URL params:
+  Nil
+```
+
+
+```
+curl -x GET http://localhost:8000/get-wallet-address
+```
+response
+```
+{"data":["0xb9e29984fe50602e7a619662ebed4f90d93824c7","0xf1aa99c69715f423086008eb9d06dc1e35cc504d"],"success":true}
+``` 
+
+### Get exchanges status
+```
+<host>:8000/get-exchange-status
+GET request
+```
+
+eg:
+```
+curl -x GET http://localhost:8000/get-exchange-status
+```
+
+response:
+```
+{"data":{"binance":{"timestamp":1521532176702,"status":true},"bittrex":{"timestamp":1521532176704,"status":true},"huobi":{"timestamp":1521532176703,"status":true}},"success":true}
+```
+
+### Update exchanges status
+```
+<host>:8000/update-exchange-status
+POST request
+
+params: 
+exchange (string): exchange name (eg: 'binance')
+status (bool): true (up), false (down)
+timestamp (integer): timestamp of the exchange status
+```
+
+eg:
+```
+curl -X POST \
+  http://localhost:8000/update-exchange-status \
+  -H 'content-type: multipart/form-data' \
+  -F exchange=binance \
+  -F status=false
+```
+
+### Get country stats
+```
+<host>:8000/get-country-stats
+GET request
+params:
+ - fromTime (integer) - from timestamp (millisecond)
+ - toTime (integer) - to timestamp (millisecond)
+ - country (string) - internatinal country 
+ - timezone (integer) - timezone to get country stats from -11 to 14
+```
+
+response: 
+```
+{"data":{"1522368000000":{"eth_per_trade":1.1759348083481784,"kyced_addresses":0,"new_unique_addresses":23,"total_burn_fee":40.10625390027786,"total_eth_volume":51.741131567319854,"total_trade":44,"total_usd_amount":19804.392524011764,"unique_addresses":26,"usd_per_trade":450.09983009117644}},"success":true}
+```
+
+### Get heatmap - list of countries sort by total ETH value
+```
+<host>:8000/get-heat-map
+GET request
+params:
+ - fromTime (integer) - from timestamp (millisecond)
+ - toTime (integer) - to timestamp (millisecond)
+ - timezone (integer) - timezone to get country stats from -11 to 14
+```
+
+response:
+```
+{"data":[{"country":"US","total_eth_value":51.741131567319854,"total_fiat_value":19804.392524011764},{"country":"unknown","total_eth_value":31.28130484378119,"total_fiat_value":12268.937507634406},{"country":"TW","total_eth_value":15,"total_fiat_value":5916.6900000000005},{"country":"KR","total_eth_value":13.280037553077175,"total_fiat_value":5016.70456645198},{"country":"JP","total_eth_value":10.277090646,"total_fiat_value":3857.271305900826},{"country":"TH","total_eth_value":8.241091466923997,"total_fiat_value":3195.368602817533},{"country":"CA","total_eth_value":3.8122812821017558,"total_fiat_value":1445.8819158742285},{"country":"AU","total_eth_value":2.6,"total_fiat_value":969.02},{"country":"DE","total_eth_value":1.823287,"total_fiat_value":697.502009413},{"country":"ID","total_eth_value":1.7178731840736186,"total_fiat_value":674.8439050493492},{"country":"RO","total_eth_value":1.4009999999999998,"total_fiat_value":529.075415},{"country":"VN","total_eth_value":1.3951777988339262,"total_fiat_value":548.8376078547749},{"country":"CN","total_eth_value":1.0121575386522288,"total_fiat_value":401.6824093511598},{"country":"PL","total_eth_value":0.379699,"total_fiat_value":144.141714079},{"country":"FR","total_eth_value":0.319624,"total_fiat_value":122.92586391999998},{"country":"SG","total_eth_value":0.15642985716526572,"total_fiat_value":64.06928945889221},{"country":"ES","total_eth_value":0.09344946,"total_fiat_value":35.176806429959996},{"country":"XX","total_eth_value":0.09,"total_fiat_value":36.86148},{"country":"IN","total_eth_value":0.0714026952146661,"total_fiat_value":27.977050948875906},{"country":"AR","total_eth_value":0.02751473,"total_fiat_value":10.92519129691},{"country":"RU","total_eth_value":0.024162,"total_fiat_value":9.61210186},{"country":"SE","total_eth_value":0.023,"total_fiat_value":9.132541},{"country":"LV","total_eth_value":0.01,"total_fiat_value":3.9209899999999998},{"country":"AL","total_eth_value":0.003,"total_fiat_value":1.126449}],"success":true}
+```
+
+### Update Price Analytic Data - (signing required) set a record marking the condition because of which the set price is called. 
+```
+<host>:8000/update-price-analytic-data
+POST request
+params:
+ - timestamp - the timestamp of the action (real time ) in millisecond
+ - value - the json enconded object to save. 
+
+Note: the data sent over must be encoded in Json in order to make it valid for output operation
+  In Python, the data would be encoded as:
+   data = {"timestamp": timestamp, "value": json.dumps(analytic_data)} 
+ ```
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+
+### Get Price Analytic Data - (signing required) list of price analytic data, sorted by timestamp 
+```
+<host>:8000/get-heat-map
+GET request
+params:
+ - fromTime (integer) - from timestamp (millisecond)
+ - toTime (integer) - to timestamp (millisecond)
+```
+example:
+```
+curl -x GET \
+  http://localhost:8000/get-price-analytic-data?fromTime=1522753160000&toTime=1522755792000
+```
+ 
+response:
+```
+{
+  "data": [
+    {
+      "Timestamp": 1522755271000,
+      "Data": {
+        "block_expiration": false,
+        "trigger_price_update": true,
+        "triggering_tokens_list": [
+          {
+            "ask_price": 0.002,
+            "bid_price": 0.003,
+            "mid afp_old_price": 0.34555,
+            "mid_afp_price": 0.6555,
+            "min_spread": 0.233,
+            "token": "OMG"
+          },
+          {
+            "ask_price": 0.004,
+            "bid_price": 0.005,
+            "mid afp_old_price": 0.21555,
+            "mid_afp_price": 0.4355,
+            "min_spread": 0.133,
+            "token": "KNC"
+          }
+        ]
+      }
+    }
+  ],
+  "success": true
+}
+```
+
+### Update exchange notifications 
+```
+<host>:8000/exchange-notification
+POST request
+params:
+ - exchange (string) - exchange name
+ - action (string) - action name
+ - token (string) - token pair
+ - fromTime (integer) - from timestamp
+ - toTime (integer) - to timestamp
+ - isWarning (bool) - is exchange warning or not
+ - msg (string) - message for the notification
+```
+
+response:
+```
+  {
+    "success": true
+  }
+```
+
+### Get exchange notifications
+```
+<host>:8000/exchange-notifications
+GET request
+```
+
+response:
+```
+{"data":{"binance":{"trade":{"OMG":{"fromTime":123,"toTime":125,"isWarning":true,"msg":"3 times"}}}},"success":true}
+```
+
+### Get reserve volume
+```
+<host>:8000/exchange-notifications
+GET request
+URL Params:
+  - fromTime (integer): millisecond
+  - toTime (integer): millisecond
+  - token (string): name of token to get volume (eg: ETH)
+  - reserveAddr (string): reserve address to get volume of token
+  - freq (string): frequency to get volume ("M", "H", "D" - Minute, Hour, Day)
+```
+
+example:
+```
+curl -x GET \
+http://localhost:8000/get-reserve-volume?fromTime=1522540800000&toTime=1522627200000&freq=D&token=KNC&reserveAddr=0x63825c174ab367968EC60f061753D3bbD36A0D8F
+```
+
+response:
+```
+{"data":{"1522540800000":{"eth_amount":9.971150530912206,"usd_amount":3838.6105908493496,"volume":3945.5899585215247},"1522627200000":{"eth_amount":14.749439804645423,"usd_amount":5766.650333669346,"volume":5884.90733954939}},"success":true}
+```
 
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:

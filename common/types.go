@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math"
 	"math/big"
 	"strconv"
 	"strings"
@@ -346,6 +347,16 @@ type ExchangePrice struct {
 	ReturnTime Timestamp
 }
 
+func FloatToBigInt(amount float64, decimal int64) *big.Int {
+	// 6 is our smallest precision
+	if decimal < 6 {
+		return big.NewInt(int64(amount * math.Pow10(int(decimal))))
+	} else {
+		result := big.NewInt(int64(amount * math.Pow10(6)))
+		return result.Mul(result, big.NewInt(0).Exp(big.NewInt(10), big.NewInt(decimal-6), nil))
+	}
+}
+
 func BigToFloat(b *big.Int, decimal int64) float64 {
 	f := new(big.Float).SetInt(b)
 	power := new(big.Float).SetInt(new(big.Int).Exp(
@@ -410,16 +421,16 @@ type AllBalanceResponse struct {
 }
 
 type Order struct {
-	ID          string `standard id across multiple exchanges`
+	ID          string // standard id across multiple exchanges
 	Base        string
 	Quote       string
 	OrderId     string
 	Price       float64
-	OrigQty     float64 `original quantity`
-	ExecutedQty float64 `matched quantity`
+	OrigQty     float64 // original quantity
+	ExecutedQty float64 // matched quantity
 	TimeInForce string
-	Type        string `market or limit`
-	Side        string `buy or sell`
+	Type        string // market or limit
+	Side        string // buy or sell
 	StopPrice   string
 	IcebergQty  string
 	Time        uint64
@@ -450,6 +461,7 @@ type EBalanceEntry struct {
 	AvailableBalance map[string]float64
 	LockedBalance    map[string]float64
 	DepositBalance   map[string]float64
+	Status           bool
 }
 
 type AllEBalanceResponse struct {
@@ -492,6 +504,16 @@ type RateEntry struct {
 	BaseSell    *big.Int
 	CompactSell int8
 	Block       uint64
+}
+
+type TXEntry struct {
+	Hash           string
+	Exchange       string
+	Token          string
+	MiningStatus   string
+	ExchangeStatus string
+	Amount         float64
+	Timestamp      Timestamp
 }
 
 type RateResponse struct {
@@ -564,6 +586,8 @@ type TradeLog struct {
 	WalletAddress  ethereum.Address
 	WalletFee      *big.Int
 	BurnFee        *big.Int
+	IP             string
+	Country        string
 }
 
 type ReserveRateEntry struct {
@@ -591,6 +615,54 @@ type StatTicks map[uint64]interface{}
 
 type TradeStats map[string]float64
 
+type VolumeStats struct {
+	ETHVolume float64 `json:"eth_amount"`
+	USDAmount float64 `json:"usd_amount"`
+	Volume    float64 `json:"volume"`
+}
+
+type BurnFeeStats struct {
+	TotalBurnFee float64
+}
+
+type BurnFeeStatsTimeZone map[string]map[uint64]BurnFeeStats
+
+type VolumeStatsTimeZone map[string]map[uint64]VolumeStats
+
+type FeeStats map[int64]map[uint64]float64
+
+type MetricStats struct {
+	ETHVolume          float64 `json:"total_eth_volume"`
+	USDVolume          float64 `json:"total_usd_amount"`
+	BurnFee            float64 `json:"total_burn_fee"`
+	TradeCount         int     `json:"total_trade"`
+	UniqueAddr         int     `json:"unique_addresses"`
+	KYCEd              int     `json:"kyced_addresses"`
+	NewUniqueAddresses int     `json:"new_unique_addresses"`
+	USDPerTrade        float64 `json:"usd_per_trade"`
+	ETHPerTrade        float64 `json:"eth_per_trade"`
+}
+
+type MetricStatsTimeZone map[int64]map[uint64]MetricStats
+
+type UserInfo struct {
+	Addr      string  `json:"user_address"`
+	Email     string  `json:"email"`
+	ETHVolume float64 `json:"total_eth_volume"`
+	USDVolume float64 `json:"total_usd_volume"`
+}
+
+type UserListResponse []UserInfo
+
+func (h UserListResponse) Less(i, j int) bool {
+	return h[i].ETHVolume < h[j].ETHVolume
+}
+
+func (h UserListResponse) Len() int      { return len(h) }
+func (h UserListResponse) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+
+type UserInfoTimezone map[int64]map[uint64]UserInfo
+
 type TradeHistory struct {
 	ID        string
 	Price     float64
@@ -605,3 +677,65 @@ type AllTradeHistory struct {
 	Timestamp Timestamp
 	Data      map[ExchangeID]ExchangeTradeHistory
 }
+
+type ExStatus struct {
+	Timestamp uint64 `json:"timestamp"`
+	Status    bool   `json:"status"`
+}
+
+type ExchangesStatus map[string]ExStatus
+
+type TradeLogGeoInfoResp struct {
+	Success bool `json:"success"`
+	Data    struct {
+		IP      string `json:"IP"`
+		Country string `json:"Country"`
+	} `json:"data"`
+}
+
+type HeatmapType struct {
+	TotalETHValue        float64 `json:"total_eth_value"`
+	TotalFiatValue       float64 `json:"total_fiat_value"`
+	ToTalBurnFee         float64 `json:"total_burn_fee"`
+	TotalTrade           int     `json:"total_trade"`
+	TotalUniqueAddresses int     `json:"total_unique_addr"`
+	TotalKYCUser         int     `json:"total_kyc_user"`
+}
+
+type Heatmap map[string]HeatmapType
+
+type HeatmapObject struct {
+	Country              string  `json:"country"`
+	TotalETHValue        float64 `json:"total_eth_value"`
+	TotalFiatValue       float64 `json:"total_fiat_value"`
+	ToTalBurnFee         float64 `json:"total_burn_fee"`
+	TotalTrade           int     `json:"total_trade"`
+	TotalUniqueAddresses int     `json:"total_unique_addr"`
+	TotalKYCUser         int     `json:"total_kyc_user"`
+}
+
+type HeatmapResponse []HeatmapObject
+
+func (h HeatmapResponse) Less(i, j int) bool {
+	return h[i].TotalETHValue < h[j].TotalETHValue
+}
+
+func (h HeatmapResponse) Len() int      { return len(h) }
+func (h HeatmapResponse) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+
+type AnalyticPriceResponse struct {
+	Timestamp uint64
+	Data      map[string]interface{}
+}
+type ExchangeNotiContent struct {
+	FromTime  uint64 `json:"fromTime"`
+	ToTime    uint64 `json:"toTime"`
+	IsWarning bool   `json:"isWarning"`
+	Message   string `json:"msg"`
+}
+
+type ExchangeTokenNoti map[string]ExchangeNotiContent
+
+type ExchangeActionNoti map[string]ExchangeTokenNoti
+
+type ExchangeNotifications map[string]ExchangeActionNoti

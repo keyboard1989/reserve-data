@@ -1,24 +1,22 @@
 package blockchain
 
 import (
-	"context"
-	"errors"
 	"fmt"
 	"log"
 	"math"
 	"math/big"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	ether "github.com/ethereum/go-ethereum"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/ethereum/go-ethereum/rpc"
+)
+
+const (
+	PRICING_OP string = "pricingOP"
+	DEPOSIT_OP string = "depositOP"
 )
 
 type tbindex struct {
@@ -39,11 +37,10 @@ var (
 )
 
 type Blockchain struct {
-	rpcClient     *rpc.Client
-	client        *ethclient.Client
-	wrapper       *KNWrapperContract
-	pricing       *KNPricingContract
-	reserve       *KNReserveContract
+	*blockchain.BaseBlockchain
+	wrapper       *blockchain.Contract
+	pricing       *blockchain.Contract
+	reserve       *blockchain.Contract
 	rm            ethereum.Address
 	wrapperAddr   ethereum.Address
 	pricingAddr   ethereum.Address
@@ -52,15 +49,8 @@ type Blockchain struct {
 	whitelistAddr ethereum.Address
 	oldNetworks   []ethereum.Address
 	oldBurners    []ethereum.Address
-	signer        Signer
-	depositSigner Signer
 	tokens        []common.Token
 	tokenIndices  map[string]tbindex
-	nonce         NonceCorpus
-	nonceDeposit  NonceCorpus
-	broadcaster   *Broadcaster
-	ethRate       EthUSDRate
-	chainType     string
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
@@ -87,6 +77,7 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 			Decimals: t.Decimal,
 		}
 	}
+	opAddrs := self.OperatorAddresses()
 	return &common.Addresses{
 		Tokens:           tokens,
 		Exchanges:        exs,
@@ -95,8 +86,8 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 		ReserveAddress:   self.rm,
 		FeeBurnerAddress: self.burnerAddr,
 		NetworkAddress:   self.networkAddr,
-		PricingOperator:  self.signer.GetAddress(),
-		DepositOperator:  self.depositSigner.GetAddress(),
+		PricingOperator:  opAddrs[PRICING_OP],
+		DepositOperator:  opAddrs[DEPOSIT_OP],
 	}
 }
 
@@ -104,6 +95,7 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	tokens := []ethereum.Address{}
 	self.tokenIndices = map[string]tbindex{}
 
+	log.Printf("tokens: %v", self.tokens)
 	for _, tok := range self.tokens {
 		if tok.ID != "ETH" {
 			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
@@ -112,8 +104,10 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
 		}
 	}
-	bulkIndices, indicesInBulk, err := self.wrapper.GetTokenIndicies(
-		nil, nil,
+	opts := self.GetCallOpts(0)
+	log.Printf("tokens: %v", tokens)
+	bulkIndices, indicesInBulk, err := self.GeneratedGetTokenIndicies(
+		opts,
 		self.pricingAddr,
 		tokens,
 	)
@@ -130,120 +124,14 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 	return nil
 }
 
-func getNextNonce(n NonceCorpus) (*big.Int, error) {
-	var nonce *big.Int
-	var err error
-	for i := 0; i < 3; i++ {
-		nonce, err = n.GetNextNonce()
-		if err == nil {
-			return nonce, nil
-		}
-	}
-	return nonce, err
+func (self *Blockchain) RegisterPricingOperator(signer blockchain.Signer, nonceCorpus blockchain.NonceCorpus) {
+	log.Printf("reserve pricing address: %s", signer.GetAddress().Hex())
+	self.RegisterOperator(PRICING_OP, blockchain.NewOperator(signer, nonceCorpus))
 }
 
-func donothing() {}
-
-func (self *Blockchain) getTransactOpts(nonce *big.Int, gasPrice *big.Int) (*bind.TransactOpts, context.CancelFunc, error) {
-	shared := self.signer.GetTransactOpts()
-	var err error
-	if nonce == nil {
-		nonce, err = getNextNonce(self.nonce)
-	}
-	if err != nil {
-		return nil, donothing, err
-	}
-	if gasPrice == nil {
-		gasPrice = big.NewInt(50100000000)
-	}
-	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	result := bind.TransactOpts{
-		shared.From,
-		nonce,
-		shared.Signer,
-		shared.Value,
-		gasPrice,
-		shared.GasLimit,
-		timeout,
-	}
-	return &result, cancel, nil
-}
-
-func (self *Blockchain) getDepositTransactOpts(nonce, gasPrice *big.Int) (*bind.TransactOpts, context.CancelFunc, error) {
-	shared := self.depositSigner.GetTransactOpts()
-	var err error
-	if nonce == nil {
-		nonce, err = getNextNonce(self.nonceDeposit)
-	}
-	if err != nil {
-		return nil, donothing, err
-	}
-	if gasPrice == nil {
-		gasPrice = big.NewInt(50100000000)
-	}
-	timeout, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	result := bind.TransactOpts{
-		shared.From,
-		nonce,
-		shared.Signer,
-		shared.Value,
-		gasPrice,
-		shared.GasLimit,
-		timeout,
-	}
-	return &result, cancel, nil
-}
-
-func toBlockNumArg(number *big.Int) string {
-	if number == nil {
-		return "latest"
-	}
-	return hexutil.EncodeBig(number)
-}
-
-func toFilterArg(q ether.FilterQuery) interface{} {
-	arg := map[string]interface{}{
-		"fromBlock": toBlockNumArg(q.FromBlock),
-		"toBlock":   toBlockNumArg(q.ToBlock),
-		"address":   q.Addresses,
-		"topics":    q.Topics,
-	}
-	if q.FromBlock == nil {
-		arg["fromBlock"] = "0x0"
-	}
-	return arg
-}
-
-func (self *Blockchain) signAndBroadcast(tx *types.Transaction, singer Signer) (*types.Transaction, error) {
-	if tx == nil {
-		panic(errors.New("Nil tx is forbidden here"))
-	} else {
-		signedTx, err := singer.Sign(tx)
-		if err != nil {
-			return nil, err
-		}
-		failures, ok := self.broadcaster.Broadcast(signedTx)
-		log.Printf("Rebroadcasting failures: %s", failures)
-		if !ok {
-			log.Printf("Broadcasting transaction failed!!!!!!!, err: %s, retry failures: %s", err, failures)
-			if signedTx != nil {
-				return signedTx, errors.New(fmt.Sprintf("Broadcasting transaction %s failed, err: %s, retry failures: %s", tx.Hash().Hex(), err, failures))
-			} else {
-				return signedTx, errors.New(fmt.Sprintf("Broadcasting transaction failed, err: %s, retry failures: %s", err, failures))
-			}
-		} else {
-			return signedTx, nil
-		}
-	}
-}
-
-func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
-	nonce, err := self.nonce.MinedNonce()
-	if err != nil {
-		return 0, err
-	} else {
-		return nonce.Uint64(), err
-	}
+func (self *Blockchain) RegisterDepositOperator(signer blockchain.Signer, nonceCorpus blockchain.NonceCorpus) {
+	log.Printf("reserve depositor address: %s", signer.GetAddress().Hex())
+	self.RegisterOperator(DEPOSIT_OP, blockchain.NewOperator(signer, nonceCorpus))
 }
 
 func readablePrint(data map[ethereum.Address]byte) string {
@@ -268,48 +156,47 @@ func (self *Blockchain) SetRates(
 	nonce *big.Int,
 	gasPrice *big.Int) (*types.Transaction, error) {
 
-	opts, cancel, err := self.getTransactOpts(nonce, gasPrice)
-
-	defer cancel()
 	block.Add(block, big.NewInt(1))
+	copts := self.GetCallOpts(0)
+	baseBuys, baseSells, _, _, _, err := self.GeneratedGetTokenRates(
+		copts, self.pricingAddr, tokens,
+	)
+	if err != nil {
+		return nil, err
+	}
+	baseTokens := []ethereum.Address{}
+	newBSells := []*big.Int{}
+	newBBuys := []*big.Int{}
+	newCSells := map[ethereum.Address]byte{}
+	newCBuys := map[ethereum.Address]byte{}
+	for i, token := range tokens {
+		compactSell, overflow1 := BigIntToCompactRate(sells[i], baseSells[i])
+		compactBuy, overflow2 := BigIntToCompactRate(buys[i], baseBuys[i])
+		if overflow1 || overflow2 {
+			baseTokens = append(baseTokens, token)
+			newBSells = append(newBSells, sells[i])
+			newBBuys = append(newBBuys, buys[i])
+			newCSells[token] = 0
+			newCBuys[token] = 0
+		} else {
+			newCSells[token] = compactSell.Compact
+			newCBuys[token] = compactBuy.Compact
+		}
+	}
+	bbuys, bsells, indices := BuildCompactBulk(
+		newCBuys,
+		newCSells,
+		self.tokenIndices,
+	)
+	opts, err := self.GetTxOpts(PRICING_OP, nonce, gasPrice, nil)
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
 		return nil, err
 	} else {
-		baseBuys, baseSells, _, _, _, err := self.wrapper.GetTokenRates(
-			nil, nil, self.pricingAddr, tokens,
-		)
-		if err != nil {
-			return nil, err
-		}
-		baseTokens := []ethereum.Address{}
-		newBSells := []*big.Int{}
-		newBBuys := []*big.Int{}
-		newCSells := map[ethereum.Address]byte{}
-		newCBuys := map[ethereum.Address]byte{}
-		for i, token := range tokens {
-			compactSell, overflow1 := BigIntToCompactRate(sells[i], baseSells[i])
-			compactBuy, overflow2 := BigIntToCompactRate(buys[i], baseBuys[i])
-			if overflow1 || overflow2 {
-				baseTokens = append(baseTokens, token)
-				newBSells = append(newBSells, sells[i])
-				newBBuys = append(newBBuys, buys[i])
-				newCSells[token] = 0
-				newCBuys[token] = 0
-			} else {
-				newCSells[token] = compactSell.Compact
-				newCBuys[token] = compactBuy.Compact
-			}
-		}
-		bbuys, bsells, indices := BuildCompactBulk(
-			newCBuys,
-			newCSells,
-			self.tokenIndices,
-		)
 		var tx *types.Transaction
 		if len(baseTokens) > 0 {
 			// set base tx
-			tx, err = self.pricing.SetBaseRate(
+			tx, err = self.GeneratedSetBaseRate(
 				opts, baseTokens, newBBuys, newBSells,
 				bbuys, bsells, block, indices)
 			if tx != nil {
@@ -325,7 +212,7 @@ func (self *Blockchain) SetRates(
 			}
 		} else {
 			// update compact tx
-			tx, err = self.pricing.SetCompactData(
+			tx, err = self.GeneratedSetCompactData(
 				opts, bbuys, bsells, block, indices)
 			if tx != nil {
 				log.Printf(
@@ -344,7 +231,7 @@ func (self *Blockchain) SetRates(
 		if err != nil {
 			return nil, err
 		} else {
-			return self.signAndBroadcast(tx, self.signer)
+			return self.SignAndBroadcast(tx, PRICING_OP)
 		}
 	}
 }
@@ -354,144 +241,65 @@ func (self *Blockchain) Send(
 	amount *big.Int,
 	dest ethereum.Address) (*types.Transaction, error) {
 
-	opts, cancel, err := self.getDepositTransactOpts(nil, nil)
-	defer cancel()
+	opts, err := self.GetTxOpts(DEPOSIT_OP, nil, nil, nil)
 	if err != nil {
 		return nil, err
 	} else {
-		tx, err := self.reserve.Withdraw(
+		tx, err := self.GeneratedWithdraw(
 			opts,
 			ethereum.HexToAddress(token.Address),
 			amount, dest)
 		if err != nil {
 			return nil, err
 		} else {
-			return self.signAndBroadcast(tx, self.depositSigner)
+			return self.SignAndBroadcast(tx, DEPOSIT_OP)
 		}
 	}
 }
 
 func (self *Blockchain) SetImbalanceStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (*types.Transaction, error) {
-	opts, cancel, err := self.getTransactOpts(nil, nil)
-	defer cancel()
+	opts, err := self.GetTxOpts(PRICING_OP, nil, nil, nil)
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
 		return nil, err
 	} else {
-		tx, err := self.pricing.SetImbalanceStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
+		tx, err := self.GeneratedSetImbalanceStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
 		if err != nil {
 			return nil, err
 		}
-		return self.signAndBroadcast(tx, self.signer)
+		return self.SignAndBroadcast(tx, PRICING_OP)
 	}
 }
 
 func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.Int, yBuy []*big.Int, xSell []*big.Int, ySell []*big.Int) (*types.Transaction, error) {
-	opts, cancel, err := self.getTransactOpts(nil, nil)
-	defer cancel()
+	opts, err := self.GetTxOpts(PRICING_OP, nil, nil, nil)
 	if err != nil {
 		log.Printf("Getting transaction opts failed, err: %s", err)
 		return nil, err
 	} else {
-		tx, err := self.pricing.SetQtyStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
+		tx, err := self.GeneratedSetQtyStepFunction(opts, token, xBuy, yBuy, xSell, ySell)
 		if err != nil {
 			return nil, err
 		}
-		return self.signAndBroadcast(tx, self.signer)
+		return self.SignAndBroadcast(tx, PRICING_OP)
 	}
 }
 
 //====================== Readonly calls ============================
-func (self *Blockchain) CurrentBlock() (uint64, error) {
-	var blockno string
-	err := self.rpcClient.Call(&blockno, "eth_blockNumber")
-	if err != nil {
-		return 0, err
-	}
-	result, err := strconv.ParseUint(blockno, 0, 64)
-	return result, err
-}
-
-func (self *Blockchain) TransactionByHash(ctx context.Context, hash ethereum.Hash) (tx *rpcTransaction, isPending bool, err error) {
-	var json *rpcTransaction
-	err = self.rpcClient.CallContext(ctx, &json, "eth_getTransactionByHash", hash)
-	if err != nil {
-		return nil, false, err
-	} else if json == nil {
-		return nil, false, ether.NotFound
-	} else if _, r, _ := json.tx.RawSignatureValues(); r == nil {
-		return nil, false, fmt.Errorf("server returned transaction without signature")
-	}
-	setSenderFromServer(json.tx, json.From, json.BlockHash)
-	return json, json.BlockNumber == nil, nil
-}
-
-func (self *Blockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
-	option := context.Background()
-	tx, pending, err := self.TransactionByHash(option, hash)
-	if err == nil {
-		// tx exist
-		if pending {
-			return "", 0, nil
-		} else {
-			receipt, err := self.client.TransactionReceipt(option, hash)
-			if err != nil {
-				// incompatibily between geth and parity
-				// so even err is not nil, receipt is still there
-				// and have valid fields
-				if receipt != nil {
-					// only byzantium has status field at the moment
-					// mainnet, ropsten are byzantium, other chains such as
-					// devchain, kovan are not
-					if self.chainType == "byzantium" {
-						if receipt.Status == 1 {
-							// successful tx
-							return "mined", tx.BlockNumber().Uint64(), nil
-						} else {
-							// failed tx
-							return "failed", tx.BlockNumber().Uint64(), nil
-						}
-					} else {
-						return "mined", tx.BlockNumber().Uint64(), nil
-					}
-				} else {
-					// networking issue
-					return "", 0, err
-				}
-			} else {
-				if receipt.Status == 1 {
-					// successful tx
-					return "mined", tx.BlockNumber().Uint64(), nil
-				} else {
-					// failed tx
-					return "failed", tx.BlockNumber().Uint64(), nil
-				}
-			}
-		}
-	} else {
-		if err == ether.NotFound {
-			// tx doesn't exist. it failed
-			return "lost", 0, nil
-		} else {
-			// networking issue
-			return "", 0, err
-		}
-	}
-}
-
-func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock *big.Int) (map[string]common.BalanceEntry, error) {
+func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint64) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
 	for _, tok := range self.tokens {
 		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 	}
 	timestamp := common.GetTimestamp()
-	balances, err := self.wrapper.GetBalances(nil, atBlock, reserve, tokens)
+	opts := self.GetCallOpts(atBlock)
+	balances, err := self.GeneratedGetBalances(opts, reserve, tokens)
 	returnTime := common.GetTimestamp()
 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
 	if err != nil {
-		for tokenID, _ := range common.SupportedTokens {
-			result[tokenID] = common.BalanceEntry{
+		for _, token := range common.InternalTokens() {
+			result[token.ID] = common.BalanceEntry{
 				Valid:      false,
 				Error:      err.Error(),
 				Timestamp:  timestamp,
@@ -533,8 +341,9 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 		}
 	}
 	timestamp := common.GetTimestamp()
-	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.wrapper.GetTokenRates(
-		nil, big.NewInt(int64(atBlock)), self.pricingAddr, tokenAddrs,
+	opts := self.GetCallOpts(atBlock)
+	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.GeneratedGetTokenRates(
+		opts, self.pricingAddr, tokenAddrs,
 	)
 	returnTime := common.GetTimestamp()
 	result.Timestamp = timestamp
@@ -567,7 +376,7 @@ func (self *Blockchain) GetReserveRates(
 	rates := common.ReserveRates{}
 	rates.Timestamp = common.GetTimepoint()
 
-	ETH := common.MustGetToken("ETH")
+	ETH := common.ETHToken()
 	srcAddresses := []ethereum.Address{}
 	destAddresses := []ethereum.Address{}
 	for _, token := range tokens {
@@ -575,7 +384,8 @@ func (self *Blockchain) GetReserveRates(
 		destAddresses = append(destAddresses, ethereum.HexToAddress(ETH.Address), ethereum.HexToAddress(token.Address))
 	}
 
-	reserveRate, sanityRate, err := self.wrapper.GetReserveRates(nil, big.NewInt(int64(atBlock)), reserveAddress, srcAddresses, destAddresses)
+	opts := self.GetCallOpts(atBlock)
+	reserveRate, sanityRate, err := self.GeneratedGetReserveRates(opts, reserveAddress, srcAddresses, destAddresses)
 	if err != nil {
 		return rates, err
 	}
@@ -596,16 +406,16 @@ func (self *Blockchain) GetReserveRates(
 	return rates, err
 }
 
-func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock *big.Int) (*big.Int, error) {
+func (self *Blockchain) GetPrice(token ethereum.Address, block *big.Int, priceType string, qty *big.Int, atBlock uint64) (*big.Int, error) {
+	opts := self.GetCallOpts(atBlock)
 	if priceType == "buy" {
-		return self.pricing.GetRate(nil, atBlock, token, block, true, qty)
+		return self.GeneratedGetRate(opts, token, block, true, qty)
 	} else {
-		return self.pricing.GetRate(nil, atBlock, token, block, false, qty)
+		return self.GeneratedGetRate(opts, token, block, false, qty)
 	}
 }
 
 func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Log, error) {
-	result := []types.Log{}
 	var to *big.Int
 	if toBlock != 0 {
 		to = big.NewInt(int64(toBlock))
@@ -630,14 +440,7 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 		},
 	}
 	log.Printf("LogFetcher - fetching logs data from block %d, to block %d", fromBlock, to.Uint64())
-	err := self.rpcClient.Call(&result, "eth_getLogs", toFilterArg(param))
-	return result, err
-}
-
-func (self *Blockchain) GetEthRate(timepoint uint64) float64 {
-	rate := self.ethRate.GetUSDRate(timepoint)
-	log.Printf("ETH-USD rate: %f", rate)
-	return rate
+	return self.BaseBlockchain.GetLogs(param)
 }
 
 // return timestamp increasing array of trade log
@@ -728,7 +531,7 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 
 					if ethRate := self.GetEthRate(tradeLog.Timestamp / 1000000); ethRate != 0 {
 						// fiatAmount = amount * ethRate
-						eth := common.SupportedTokens["ETH"]
+						eth := common.ETHToken()
 						f := new(big.Float)
 						if strings.ToLower(eth.Address) == strings.ToLower(srcAddr.String()) {
 							f.SetInt(tradeLog.SrcAmount)
@@ -755,84 +558,40 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 	return result, nil
 }
 
-// func (self *Blockchain) sendToken(token common.Token, amount *big.Int, address ethereum.Address) (ethereum.Hash, error) {
-// 	erc20, err := NewErc20Contract(
-// 		ethereum.HexToAddress(token.Address),
-// 		self.ethclient,
-// 	)
-// 	fmt.Printf("address: %s\n", token.Address)
-// 	if err != nil {
-// 		return ethereum.Hash{}, err
-// 	}
-// 	tx, err := erc20.Transfer(
-// 		self.signer.GetTransactOpts(),
-// 		address, amount)
-// 	if err != nil {
-// 		return ethereum.Hash{}, err
-// 	} else {
-// 		return tx.Hash(), nil
-// 	}
-// }
-//
-// func (self *Blockchain) sendETH(
-// 	amount *big.Int,
-// 	address ethereum.Address) (ethereum.Hash, error) {
-// 	// nonce, gasLimit, gasPrice gets from ethclient
-//
-// 	option := context.Background()
-// 	rm := self.signer.GetAddress()
-// 	nonce, err := self.ethclient.PendingNonceAt(
-// 		option, rm)
-// 	if err != nil {
-// 		return ethereum.Hash{}, err
-// 	}
-// 	gasLimit := big.NewInt(1000000)
-// 	gasPrice := big.NewInt(20000000000)
-// 	rawTx := types.NewTransaction(
-// 		nonce, address, amount, gasLimit, gasPrice, []byte{})
-// 	signedTx, err := self.signer.Sign(rm, rawTx)
-// 	if err != nil {
-// 		return ethereum.Hash{}, err
-// 	}
-// 	if err = self.ethclient.SendTransaction(option, signedTx); err != nil {
-// 		return ethereum.Hash{}, err
-// 	}
-// 	return signedTx.Hash(), nil
-// }
+func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
+	return self.GetMinedNonce(PRICING_OP)
+}
 
 func NewBlockchain(
-	client *rpc.Client,
-	etherCli *ethclient.Client,
-	clients map[string]*ethclient.Client,
-	wrapperAddr, pricingAddr, burnerAddr, networkAddr, reserveAddr, whitelistAddr ethereum.Address,
-	signer Signer, depositSigner Signer, nonceCorpus NonceCorpus,
-	nonceDeposit NonceCorpus,
-	ethUSDRate EthUSDRate,
-	chainType string) (*Blockchain, error) {
+	base *blockchain.BaseBlockchain,
+	wrapperAddr, pricingAddr, burnerAddr,
+	networkAddr, reserveAddr, whitelistAddr ethereum.Address) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
-	wrapper, err := NewKNWrapperContract(wrapperAddr, etherCli)
-	if err != nil {
-		return nil, err
-	}
-	if signer != nil {
-		log.Printf("reserve owner address: %s", signer.GetAddress().Hex())		
-	}
+	wrapper := blockchain.NewContract(
+		wrapperAddr,
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/wrapper.abi",
+	)
 	log.Printf("reserve address: %s", reserveAddr.Hex())
-	reserve, err := NewKNReserveContract(reserveAddr, etherCli)
-	if err != nil {
-		return nil, err
-	}
+	reserve := blockchain.NewContract(
+		reserveAddr,
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/reserve.abi",
+	)
 	log.Printf("pricing address: %s", pricingAddr.Hex())
-	pricing, err := NewKNPricingContract(pricingAddr, etherCli)
-	if err != nil {
-		return nil, err
-	}
+	pricing := blockchain.NewContract(
+		pricingAddr,
+		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/pricing.abi",
+	)
+
 	log.Printf("burner address: %s", burnerAddr.Hex())
 	log.Printf("network address: %s", networkAddr.Hex())
 	log.Printf("whitelist address: %s", whitelistAddr.Hex())
+
 	return &Blockchain{
-		rpcClient:     client,
-		client:        etherCli,
+		BaseBlockchain: base,
+		// blockchain.NewBaseBlockchain(
+		// 	client, etherCli, operators, blockchain.NewBroadcaster(clients),
+		// 	ethUSDRate, chainType,
+		// ),
 		wrapper:       wrapper,
 		pricing:       pricing,
 		reserve:       reserve,
@@ -844,13 +603,6 @@ func NewBlockchain(
 		whitelistAddr: whitelistAddr,
 		oldNetworks:   []ethereum.Address{},
 		oldBurners:    []ethereum.Address{},
-		signer:        signer,
-		depositSigner: depositSigner,
-		ethRate:       ethUSDRate,
 		tokens:        []common.Token{},
-		nonce:         nonceCorpus,
-		nonceDeposit:  nonceDeposit,
-		broadcaster:   NewBroadcaster(clients),
-		chainType:     chainType,
 	}, nil
 }

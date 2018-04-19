@@ -45,9 +45,9 @@ func (self *BitfinexEndpoint) fillRequest(req *http.Request, signNeeded bool, ti
 		}
 		payloadJson, _ := json.Marshal(payload)
 		payloadEnc := base64.StdEncoding.EncodeToString(payloadJson)
-		req.Header.Add("X-BFX-APIKEY", self.signer.GetBitfinexKey())
+		req.Header.Add("X-BFX-APIKEY", self.signer.GetKey())
 		req.Header.Add("X-BFX-PAYLOAD", payloadEnc)
-		req.Header.Add("X-BFX-SIGNATURE", self.signer.BitfinexSign(req.URL.String()))
+		req.Header.Add("X-BFX-SIGNATURE", self.signer.Sign(req.URL.String()))
 	}
 }
 
@@ -140,8 +140,8 @@ func (self *BitfinexEndpoint) Trade(tradeType string, base, quote common.Token, 
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", self.signer.GetBitfinexKey())
-	req.Header.Add("Sign", self.signer.BitfinexSign(params))
+	req.Header.Add("Key", self.signer.GetKey())
+	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
@@ -176,8 +176,8 @@ func (self *BitfinexEndpoint) Withdraw(token common.Token, amount *big.Int, addr
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", self.signer.GetBitfinexKey())
-	req.Header.Add("Sign", self.signer.BitfinexSign(params))
+	req.Header.Add("Key", self.signer.GetKey())
+	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
 		defer resp.Body.Close()
@@ -217,8 +217,8 @@ func (self *BitfinexEndpoint) GetInfo() (exchange.Bitfinfo, error) {
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Key", self.signer.GetBitfinexKey())
-	req.Header.Add("Sign", self.signer.BitfinexSign(params))
+	req.Header.Add("Key", self.signer.GetKey())
+	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil {
 		defer resp.Body.Close()

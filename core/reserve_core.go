@@ -35,7 +35,17 @@ func timebasedID(id string) common.ActivityID {
 }
 
 func (self ReserveCore) CancelOrder(id common.ActivityID, exchange common.Exchange) error {
-	return exchange.CancelOrder(id)
+	activity, err := self.activityStorage.GetActivity(id)
+	if err != nil {
+		return err
+	}
+	if activity.Action != "trade" {
+		return errors.New("This is not an order activity so cannot cancel")
+	}
+	base := activity.Params["base"].(string)
+	quote := activity.Params["quote"].(string)
+	orderId := id.EID
+	return exchange.CancelOrder(orderId, base, quote)
 }
 
 func (self ReserveCore) GetAddresses() *common.Addresses {
@@ -89,7 +99,7 @@ func (self ReserveCore) Trade(
 			"done":      done,
 			"remaining": remaining,
 			"finished":  finished,
-			"error":     err,
+			"error":     common.ErrorToString(err),
 		},
 		status,
 		"",
@@ -125,8 +135,12 @@ func (self ReserveCore) Deposit(
 
 	if !supported {
 		err = errors.New(fmt.Sprintf("Exchange %s doesn't support token %s", exchange.ID(), token.ID))
-	} else if self.activityStorage.HasPendingDeposit(token, exchange) {
-		err = errors.New(fmt.Sprintf("There is a pending %s deposit to %s currently, please try again", token.ID, exchange.ID()))
+	} else if ok, perr := self.activityStorage.HasPendingDeposit(token, exchange); ok {
+		if perr != nil {
+			err = perr
+		} else {
+			err = errors.New(fmt.Sprintf("There is a pending %s deposit to %s currently, please try again", token.ID, exchange.ID()))
+		}
 	} else {
 		err = sanityCheckAmount(exchange, token, amount)
 		if err == nil {
@@ -156,7 +170,7 @@ func (self ReserveCore) Deposit(
 			"tx":       txhex,
 			"nonce":    txnonce,
 			"gasPrice": txprice,
-			"error":    err,
+			"error":    common.ErrorToString(err),
 		},
 		"",
 		status,
@@ -201,7 +215,7 @@ func (self ReserveCore) Withdraw(
 			"amount":    strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
 			"timepoint": timepoint,
 		}, map[string]interface{}{
-			"error": err,
+			"error": common.ErrorToString(err),
 			"id":    id,
 			// this field will be updated with real tx when data fetcher can fetch it
 			// from exchanges
@@ -314,7 +328,7 @@ func (self ReserveCore) SetRates(
 			"tx":       txhex,
 			"nonce":    txnonce,
 			"gasPrice": txprice,
-			"error":    err,
+			"error":    common.ErrorToString(err),
 		},
 		"",
 		status,
