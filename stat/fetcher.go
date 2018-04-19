@@ -725,7 +725,7 @@ func (self *Fetcher) getTradeVolumeInfo(trade common.TradeLog) (float64, float64
 }
 
 func (self *Fetcher) aggregateCountryStats(trade common.TradeLog,
-	countryStats map[string]common.MetricStatsTimeZone, allFirstTradeEver, kycEdUsers map[string]uint64) error {
+	countryStats map[string]common.MetricStatsTimeZone, allFirstTradeEver map[ethereum.Address]uint64, kycEdUsers map[string]uint64) error {
 
 	userAddr := common.AddrToString(trade.UserAddress)
 	err := self.statStorage.SetCountry(trade.Country)
@@ -744,11 +744,10 @@ func (self *Fetcher) aggregateCountryStats(trade common.TradeLog,
 }
 
 func (self *Fetcher) aggregateWalletStats(trade common.TradeLog,
-	walletStats map[string]common.MetricStatsTimeZone, allFirstTradeEver, kycEdUsers map[string]uint64) error {
+	walletStats map[string]common.MetricStatsTimeZone, allFirstTradeEver map[ethereum.Address]uint64, kycEdUsers map[string]uint64) error {
 
-	walletAddr := common.AddrToString(trade.WalletAddress)
-	if checkWalletAddress(walletAddr) {
-		self.statStorage.SetWalletAddress(walletAddr)
+	if checkWalletAddress(trade.WalletAddress) {
+		self.statStorage.SetWalletAddress(trade.WalletAddress)
 	}
 	_, _, ethAmount, burnFee := self.getTradeVolumeInfo(trade)
 
@@ -758,12 +757,12 @@ func (self *Fetcher) aggregateWalletStats(trade common.TradeLog,
 	if exist && regTime < trade.Timestamp {
 		kycEd = true
 	}
-	self.aggregateMetricStat(trade, walletAddr, ethAmount, burnFee, walletStats, kycEd, allFirstTradeEver)
+	self.aggregateMetricStat(trade, common.AddrToString(trade.WalletAddress), ethAmount, burnFee, walletStats, kycEd, allFirstTradeEver)
 	return nil
 }
 
 func (self *Fetcher) aggregateTradeSumary(trade common.TradeLog,
-	tradeSummary map[string]common.MetricStatsTimeZone, allFirstTradeEver, kycEdUsers map[string]uint64) error {
+	tradeSummary map[string]common.MetricStatsTimeZone, allFirstTradeEver map[ethereum.Address]uint64, kycEdUsers map[string]uint64) error {
 
 	userAddr := common.AddrToString(trade.UserAddress)
 	_, _, ethAmount, burnFee := self.getTradeVolumeInfo(trade)
@@ -850,7 +849,7 @@ func (self *Fetcher) aggregateUserInfo(trade common.TradeLog, userInfos map[stri
 		ethAmount = destAmount
 	}
 
-	email, _, err := self.userStorage.GetUserOfAddress(userAddr)
+	email, _, err := self.userStorage.GetUserOfAddress(trade.UserAddress)
 	if err != nil {
 		return
 	}
