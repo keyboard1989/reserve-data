@@ -243,22 +243,13 @@ func (self *Fetcher) FetchAuthDataFromBlockchain(
 	var statuses map[common.ActivityID]common.ActivityStatus
 	var err error
 	for {
-		log.Printf("DEBUG balances %v statuses: %v", balances, statuses)
-
 		preStatuses := self.FetchStatusFromBlockchain(pendings)
-		log.Printf("DEBUG prestatus %v ", preStatuses)
-
 		balances, err = self.FetchBalanceFromBlockchain()
-		log.Printf("DEBUG balances %v ", balances)
-
 		if err != nil {
 			log.Printf("Fetching blockchain balances failed: %v", err)
 			break
 		}
-
 		statuses = self.FetchStatusFromBlockchain(pendings)
-		log.Printf("DEBUG statuses %v ", statuses)
-
 		if unchanged(preStatuses, statuses) {
 			break
 		}
