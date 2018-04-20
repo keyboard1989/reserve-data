@@ -974,7 +974,7 @@ on failure:
 
 ### Get Price Analytic Data - (signing required) list of price analytic data, sorted by timestamp 
 ```
-<host>:8000/get-heat-map
+<host>:8000/get-get-price-analytic-data
 GET request
 params:
  - fromTime (integer) - from timestamp (millisecond)
@@ -1075,6 +1075,111 @@ response:
 {"data":{"1522540800000":{"eth_amount":9.971150530912206,"usd_amount":3838.6105908493496,"volume":3945.5899585215247},"1522627200000":{"eth_amount":14.749439804645423,"usd_amount":5766.650333669346,"volume":5884.90733954939}},"success":true}
 ```
 
+### set stable token params - (signing required)
+```
+<host>:8000/set-stable-token-params
+POST request
+URL Params:
+  - value (string) : the json enconded string, represent a map (string : interface)
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+### confirm stable token params - (signing required)
+```
+<host>:8000/confirm-stable-token-params
+POST request
+URL Params:
+  - value (string) : the json enconded string, represent a map (string : interface), must be equal to current pending.
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+
+### reject stable token params - (signing required)
+```
+<host>:8000/reject-stable-token-params
+POST request
+URL Params:
+  nil
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+
+### Get stable token params- (signing required) return the current confirmed stable token params
+```
+<host>:8000/pending-stable-token-params
+GET request
+params:
+  - nonce (uint64) : the nonce to conform to signing requirement
+```
+example:
+```
+curl -x GET \
+  http://localhost:8000/pending-token-params?nonce=111111
+```
+ 
+response:
+```
+{
+  "data": {
+    "DGX": {
+      "AskSpread": 50,
+      "BidSpread": 50,
+      "PriceUpdateThreshold": 0.1
+    }
+  },
+  "success": true
+}
+```
+### Get pending stable token params- (signing required) return the current pending stable token params
+```
+<host>:8000/stable-token-params
+GET request
+params:
+  - nonce (uint64) : the nonce to conform to signing requirement
+```
+example:
+```
+curl -x GET \
+  http://localhost:8000/stable-token-params?nonce=111111
+```
+ 
+response:
+```
+{
+  "data": {
+    "DGX": {
+      "AskSpread": 50,
+      "BidSpread": 50,
+      "PriceUpdateThreshold": 0.1
+    }
+  },
+  "success": true
+}
+```
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 
