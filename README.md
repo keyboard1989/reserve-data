@@ -1075,6 +1075,16 @@ response:
 {"data":{"1522540800000":{"eth_amount":9.971150530912206,"usd_amount":3838.6105908493496,"volume":3945.5899585215247},"1522627200000":{"eth_amount":14.749439804645423,"usd_amount":5766.650333669346,"volume":5884.90733954939}},"success":true}
 ```
 
+### Get gold data
+```
+<host>:8000/gold-feed
+```
+
+response:
+```
+{"data":{"Valid":true,"Timestamp":1524240996931,"success":"","data":[{"symbol":"ETHDGX","price":0.08453708,"time":1524240993},{"symbol":"ETHUSD","price":586.6,"time":1524240993},{"symbol":"ETHSGD","price":771.8,"time":1524240993},{"symbol":"DGXUSD","price":49.59,"time":1524240993},{"symbol":"EURUSD","price":1.22871,"time":1524240993},{"symbol":"USDSGD","price":1.31572,"time":1524240993},{"symbol":"XAUUSD","price":1338.35,"time":1524240993},{"symbol":"USDJPY","price":107.608,"time":1524240993}]},"success":true}
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 

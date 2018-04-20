@@ -18,7 +18,12 @@ type HttpRunner struct {
 	lticker                 chan time.Time
 	tradeLogProcessorTicker chan time.Time
 	catLogProcessorTicker   chan time.Time
+	globalDataTicker        chan time.Time
 	server                  *HttpRunnerServer
+}
+
+func (self *HttpRunner) GetGlobalDataTicker() <-chan time.Time {
+	return self.globalDataTicker
 }
 
 func (self *HttpRunner) GetTradeLogProcessorTicker() <-chan time.Time {
@@ -91,6 +96,7 @@ func NewHttpRunner(port int) *HttpRunner {
 	lchan := make(chan time.Time)
 	tradeLogProcessorChan := make(chan time.Time)
 	catLogProcessorChan := make(chan time.Time)
+	globalDataChan := make(chan time.Time)
 	runner := HttpRunner{
 		port,
 		ochan,
@@ -102,6 +108,7 @@ func NewHttpRunner(port int) *HttpRunner {
 		lchan,
 		tradeLogProcessorChan,
 		catLogProcessorChan,
+		globalDataChan,
 		nil,
 	}
 	runner.Start()

@@ -5,8 +5,21 @@ import (
 )
 
 type ReserveData struct {
-	storage Storage
-	fetcher Fetcher
+	storage       Storage
+	globalStorage GlobalStorage
+	fetcher       Fetcher
+}
+
+func (self ReserveData) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
+	return self.globalStorage.CurrentGoldInfoVersion(timepoint)
+}
+
+func (self ReserveData) GetGoldData(timestamp uint64) (common.GoldData, error) {
+	version, err := self.CurrentGoldInfoVersion(timestamp)
+	if err != nil {
+		return common.GoldData{}, nil
+	}
+	return self.globalStorage.GetGoldInfo(version)
 }
 
 func (self ReserveData) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
@@ -240,6 +253,6 @@ func (self ReserveData) Stop() error {
 	return self.fetcher.Stop()
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher) *ReserveData {
-	return &ReserveData{storage, fetcher}
+func NewReserveData(storage Storage, globalStorage GlobalStorage, fetcher Fetcher) *ReserveData {
+	return &ReserveData{storage, globalStorage, fetcher}
 }

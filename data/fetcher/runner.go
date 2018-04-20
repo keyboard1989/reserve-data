@@ -6,6 +6,7 @@ import (
 
 // Runner to trigger fetcher
 type FetcherRunner interface {
+	GetGlobalDataTicker() <-chan time.Time
 	GetOrderbookTicker() <-chan time.Time
 	GetAuthDataTicker() <-chan time.Time
 	GetRateTicker() <-chan time.Time
@@ -29,6 +30,7 @@ type TickerRunner struct {
 	lduration                 time.Duration
 	tradeLogProcessorDuration time.Duration
 	catLogProcessorDuration   time.Duration
+	globalDataDuration        time.Duration
 	oclock                    *time.Ticker
 	aclock                    *time.Ticker
 	rclock                    *time.Ticker
@@ -38,7 +40,15 @@ type TickerRunner struct {
 	lclock                    *time.Ticker
 	tradeLogProcessorClock    *time.Ticker
 	catLogProcessorClock      *time.Ticker
+	globalDataClock           *time.Ticker
 	signal                    chan bool
+}
+
+func (self *TickerRunner) GetGlobalDataTicker() <-chan time.Time {
+	if self.globalDataClock == nil {
+		<-self.signal
+	}
+	return self.globalDataClock.C
 }
 
 func (self *TickerRunner) GetTradeLogProcessorTicker() <-chan time.Time {
@@ -118,6 +128,7 @@ func (self *TickerRunner) Start() error {
 	self.signal <- true
 	self.catLogProcessorClock = time.NewTicker(self.catLogProcessorDuration)
 	self.signal <- true
+	self.globalDataClock = time.NewTicker(self.globalDataDuration)
 	return nil
 }
 
@@ -131,6 +142,7 @@ func (self *TickerRunner) Stop() error {
 	self.lclock.Stop()
 	self.tradeLogProcessorClock.Stop()
 	self.catLogProcessorClock.Stop()
+	self.globalDataClock.Stop()
 	return nil
 }
 
@@ -139,7 +151,8 @@ func NewTickerRunner(
 	bduration, tduration, rsduration,
 	lduration,
 	tradeLogProcessorDuration,
-	catLogProcessorDuration time.Duration) *TickerRunner {
+	catLogProcessorDuration,
+	globalDataDuration time.Duration) *TickerRunner {
 	return &TickerRunner{
 		oduration,
 		aduration,
@@ -150,6 +163,7 @@ func NewTickerRunner(
 		lduration,
 		tradeLogProcessorDuration,
 		catLogProcessorDuration,
+		globalDataDuration,
 		nil,
 		nil,
 		nil,
@@ -159,6 +173,7 @@ func NewTickerRunner(
 		nil,
 		nil,
 		nil,
-		make(chan bool, 9),
+		nil,
+		make(chan bool, 10),
 	}
 }

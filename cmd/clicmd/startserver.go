@@ -19,6 +19,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/stat"
+	"github.com/KyberNetwork/reserve-data/world"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
@@ -111,6 +112,8 @@ func serverStart(cmd *cobra.Command, args []string) {
 		//get fetcher based on config and ENV == simulation.
 		dataFetcher = fetcher.NewFetcher(
 			config.FetcherStorage,
+			config.FetcherGlobalStorage,
+			world.NewTheWorld(kyberENV),
 			config.FetcherRunner,
 			config.ReserveAddress,
 			kyberENV == "simulation",
@@ -175,6 +178,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			dataFetcher.SetBlockchain(bc)
 			rData = data.NewReserveData(
 				config.DataStorage,
+				config.DataGlobalStorage,
 				dataFetcher,
 			)
 			rData.Run()

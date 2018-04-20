@@ -1213,6 +1213,26 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetGoldData(c *gin.Context) {
+	log.Printf("Getting gold data")
+
+	data, err := self.app.GetGoldData(getTimePoint(c, true))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) GetTimeServer(c *gin.Context) {
 	c.JSON(
 		http.StatusOK,
@@ -2386,6 +2406,8 @@ func (self *HTTPServer) Run() {
 
 		self.r.POST("/exchange-notification", self.ExchangeNotification)
 		self.r.GET("/exchange-notifications", self.GetNotifications)
+
+		self.r.GET("/gold-feed", self.GetGoldData)
 	}
 
 	if self.stat != nil {
