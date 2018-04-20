@@ -2332,6 +2332,153 @@ func (self *HTTPServer) GetReserveVolume(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) SetStableTokenParams(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission})
+	if !ok {
+		return
+	}
+	value := []byte(postForm.Get("value"))
+	if len(value) > MAX_DATA_SIZE {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "the data size must be less than 1 MB",
+			},
+		)
+		return
+	}
+	err := self.stat.SetStableTokenParams(value)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) ConfirmStableTokenParams(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	value := []byte(postForm.Get("value"))
+	if len(value) > MAX_DATA_SIZE {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "the data size must be less than 1 MB",
+			},
+		)
+		return
+	}
+	err := self.stat.ConfirmStableTokenParams(value)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) RejectStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	err := self.stat.RejectStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+
+}
+
+func (self *HTTPServer) GetPendingStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+
+	data, err := self.stat.GetPendingStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+
+	data, err := self.stat.GetStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -2411,6 +2558,12 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-price-analytic-data", self.GetPriceAnalyticData)
 		self.r.GET("/get-reserve-volume", self.GetReserveVolume)
 		self.r.GET("/get-user-list", self.GetUserList)
+
+		self.r.POST("/set-stable-token-params", self.SetStableTokenParams)
+		self.r.POST("/confirm-stable-token-params", self.ConfirmStableTokenParams)
+		self.r.POST("/reject-stable-token-params", self.RejectStableTokenParams)
+		self.r.GET("/pending-stable-token-params", self.GetPendingStableTokenParams)
+		self.r.GET("/stable-token-params", self.GetStableTokenParams)
 	}
 
 	self.r.Run(self.host)
