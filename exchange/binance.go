@@ -21,6 +21,7 @@ const (
 type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
+	tokens       []common.Token
 	addresses    *common.ExchangeAddresses
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
@@ -480,10 +481,11 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 }
 
 func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface) *Binance {
-	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "binance")
+	tokens, pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "binance")
 	return &Binance{
 		interf,
 		pairs,
+		tokens,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,

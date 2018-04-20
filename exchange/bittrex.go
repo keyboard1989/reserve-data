@@ -19,6 +19,7 @@ const BITTREX_EPSILON float64 = 0.000001
 type Bittrex struct {
 	interf       BittrexInterface
 	pairs        []common.TokenPair
+	tokens       []common.Token
 	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
 	exchangeInfo *common.ExchangeInfo
@@ -337,6 +338,13 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 					result.LockedBalance[tokenID] = 0
 				}
 			}
+			// check if bittrex returned balance for all of the
+			// supported token.
+			// If it didn't, it is considered invalid
+			if len(result.AvailableBalance) != len(self.tokens) {
+				result.Valid = false
+				result.Error = "Bittrex didn't return balance for all supported tokens"
+			}
 		} else {
 			result.Valid = false
 			result.Error = resp_data.Error
@@ -394,10 +402,11 @@ func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID
 }
 
 func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BittrexInterface, storage BittrexStorage) *Bittrex {
-	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "bittrex")
+	tokens, pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "bittrex")
 	return &Bittrex{
 		interf,
 		pairs,
+		tokens,
 		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),
