@@ -137,12 +137,12 @@ func (self *StatStorageTest) TestCountryStats() error {
 	}
 	tzmtStat := common.MetricStatsTimeZone{0: {0: mtStat}}
 	updates := map[string]common.MetricStatsTimeZone{TESTCOUNTRY: tzmtStat}
-	err = self.storage.SetWalletStat(updates, 0)
+	err = self.storage.SetCountryStat(updates, 0)
 	if err != nil {
 		return err
 	}
 
-	countryStat, err := self.storage.GetCountryStats(0, 86400000, strings.ToLower(TESTCOUNTRY), 0)
+	countryStat, err := self.storage.GetCountryStats(0, 86400000, TESTCOUNTRY, 0)
 	if countryStat == nil || len(countryStat) == 0 {
 		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
 	}
@@ -377,8 +377,8 @@ func (self *StatStorageTest) TestCountries() error {
 	if len(countries) != 1 {
 		return fmt.Errorf("wrong countries len, expect 1, got %d", len(countries))
 	}
-	if countries[0] != "bunny" {
-		return fmt.Errorf("wrong country result, expect bunny, got %s", countries[0])
+	if countries[0] != "BUNNY" {
+		return fmt.Errorf("wrong country result, expect BUNNY, got %s", countries[0])
 	}
 	return err
 

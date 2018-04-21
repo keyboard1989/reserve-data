@@ -974,7 +974,7 @@ on failure:
 
 ### Get Price Analytic Data - (signing required) list of price analytic data, sorted by timestamp 
 ```
-<host>:8000/get-heat-map
+<host>:8000/get-get-price-analytic-data
 GET request
 params:
  - fromTime (integer) - from timestamp (millisecond)
@@ -1075,14 +1075,139 @@ response:
 {"data":{"1522540800000":{"eth_amount":9.971150530912206,"usd_amount":3838.6105908493496,"volume":3945.5899585215247},"1522627200000":{"eth_amount":14.749439804645423,"usd_amount":5766.650333669346,"volume":5884.90733954939}},"success":true}
 ```
 
-### Get gold data
+### set stable token params - (signing required)
 ```
-<host>:8000/gold-feed
+<host>:8000/set-stable-token-params
+POST request
+URL Params:
+  - value (string) : the json enconded string, represent a map (string : interface)
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+### confirm stable token params - (signing required)
+```
+<host>:8000/confirm-stable-token-params
+POST request
+URL Params:
+  - value (string) : the json enconded string, represent a map (string : interface), must be equal to current pending.
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+
+### reject stable token params - (signing required)
+```
+<host>:8000/reject-stable-token-params
+POST request
+URL Params:
+  nil
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+
+### Get stable token params- (signing required) return the current confirmed stable token params
+```
+<host>:8000/pending-stable-token-params
+GET request
+params:
+  - nonce (uint64) : the nonce to conform to signing requirement
+```
+example:
+```
+curl -x GET \
+  http://localhost:8000/pending-token-params?nonce=111111
+```
+ 
+response:
+```
+{
+  "data": {
+    "DGX": {
+      "AskSpread": 50,
+      "BidSpread": 50,
+      "PriceUpdateThreshold": 0.1
+    }
+  },
+  "success": true
+}
+```
+### Get pending stable token params- (signing required) return the current pending stable token params
+```
+<host>:8000/stable-token-params
+GET request
+params:
+  - nonce (uint64) : the nonce to conform to signing requirement
+```
+example:
+```
+curl -x GET \
+  http://localhost:8000/stable-token-params?nonce=111111
+```
+ 
+response:
+```
+{
+  "data": {
+    "DGX": {
+      "AskSpread": 50,
+      "BidSpread": 50,
+      "PriceUpdateThreshold": 0.1
+    }
+  },
+  "success": true
+}
+```
+### Get heat map for token
+```
+<host>:8000/get-token-heatmap
+URL Params:
+  - fromTime (integer): millisecond
+  - toTime (integer): millisecond
+  - token (string): name of token to get heatmap
+  - freq (string): frequencty to get volume ("M", "H", "D" - Minute, Hour, Day)
+```
+
+example:
+```
+curl -x GET \
+http://localhost:8000/get-token-heatmap?fromTime=1518307200000&token=EOS&freq=D&toTime=1518911999999
 ```
 
 response:
 ```
-{"data":{"Valid":true,"Timestamp":1524240996931,"success":"","data":[{"symbol":"ETHDGX","price":0.08453708,"time":1524240993},{"symbol":"ETHUSD","price":586.6,"time":1524240993},{"symbol":"ETHSGD","price":771.8,"time":1524240993},{"symbol":"DGXUSD","price":49.59,"time":1524240993},{"symbol":"EURUSD","price":1.22871,"time":1524240993},{"symbol":"USDSGD","price":1.31572,"time":1524240993},{"symbol":"XAUUSD","price":1338.35,"time":1524240993},{"symbol":"USDJPY","price":107.608,"time":1524240993}]},"success":true}
+{"data":[{"country":"US","volume":2883.620428022146,"eth_volume":29.97000000311978,"usd_volume":28584.013502715607},{"country":"unknown","volume":663.7763113279779,"eth_volume":6.848675774186141,"usd_volume":5710.033060275751},{"country":"JP","volume":189.38349888667832,"eth_volume":1.99,"usd_volume":1881.86987},{"country":"KR","volume":93.83012247596538,"eth_volume":1,"usd_volume":857.766},{"country":"SI","volume":73.000042,"eth_volume":0.7584920000216375,"usd_volume":696.7810908998771},{"country":"IL","volume":9.757144977962138,"eth_volume":0.1,"usd_volume":85.47670000000001},{"country":"TH","volume":9.459436814264475,"eth_volume":0.1,"usd_volume":84.1759},{"country":"DE","volume":9.311558446913438,"eth_volume":0.09904,"usd_volume":85.93066944},{"country":"VN","volume":1.8918873628528947,"eth_volume":0.019789900740301923,"usd_volume":16.536080320374314}],"success":true}
+```
+
+### Get gold data
+```
+<host>:8000/gold-feed
+```
+response:
+```
+  {"data":{"Valid":true,"Timestamp":1524240996931,"success":"","data":[{"symbol":"ETHDGX","price":0.08453708,"time":1524240993},{"symbol":"ETHUSD","price":586.6,"time":1524240993},{"symbol":"ETHSGD","price":771.8,"time":1524240993},{"symbol":"DGXUSD","price":49.59,"time":1524240993},{"symbol":"EURUSD","price":1.22871,"time":1524240993},{"symbol":"USDSGD","price":1.31572,"time":1524240993},{"symbol":"XAUUSD","price":1338.35,"time":1524240993},{"symbol":"USDJPY","price":107.608,"time":1524240993}]},"success":true}
 ```
 
 ## Authentication
