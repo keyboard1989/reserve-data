@@ -432,23 +432,3 @@ func (self ReserveStats) UpdatePriceAnalyticData(timestamp uint64, value []byte)
 func (self ReserveStats) GetPriceAnalyticData(fromTime uint64, toTime uint64) ([]common.AnalyticPriceResponse, error) {
 	return self.analyticStorage.GetPriceAnalyticData(fromTime, toTime)
 }
-
-func (self ReserveStats) SetStableTokenParams(value []byte) error {
-	return self.analyticStorage.SetStableTokenParams(value)
-}
-
-func (self ReserveStats) ConfirmStableTokenParams(value []byte) error {
-	return self.analyticStorage.ConfirmStableTokenParams(value)
-}
-
-func (self ReserveStats) RejectStableTokenParams() error {
-	return self.analyticStorage.RemovePendingStableTokenParams()
-}
-
-func (self ReserveStats) GetPendingStableTokenParams() (map[string]interface{}, error) {
-	return self.analyticStorage.GetPendingStableTokenParams()
-}
-
-func (self ReserveStats) GetStableTokenParams() (map[string]interface{}, error) {
-	return self.analyticStorage.GetStableTokenParams()
-}

@@ -26,7 +26,7 @@ type MetricStorage interface {
 
 	SetStableTokenParams(value []byte) error
 	ConfirmStableTokenParams(value []byte) error
-	RejectStableTokenParams() error
+	RemovePendingStableTokenParams() error
 	GetPendingStableTokenParams() (map[string]interface{}, error)
 	GetStableTokenParams() (map[string]interface{}, error)
 }

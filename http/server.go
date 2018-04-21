@@ -2407,7 +2407,7 @@ func (self *HTTPServer) RejectStableTokenParams(c *gin.Context) {
 	if !ok {
 		return
 	}
-	err := self.metric.RejectStableTokenParams()
+	err := self.metric.RemovePendingStableTokenParams()
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

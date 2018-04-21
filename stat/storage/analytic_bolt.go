@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"reflect"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
@@ -21,8 +20,6 @@ const (
 	MAX_GET_ANALYTIC_PERIOD               uint64 = 86400000      //1 day in milisecond
 	PRICE_ANALYTIC_EXPIRED                uint64 = 30 * 86400000 //30 days in milisecond
 	EXPIRED_PRICE_ANALYTIC_AWSFOLDER_PATH string = ""
-	STABLE_TOKEN_PARAMS_BUCKET            string = "stable-token-params"
-	PENDING_STABLE_TOKEN_PARAMS_BUCKET    string = "pending-stable-token-params"
 )
 
 type BoltAnalyticStorage struct {
@@ -157,110 +154,4 @@ func (self *BoltAnalyticStorage) GetPriceAnalyticData(fromTime uint64, toTime ui
 		return nil
 	})
 	return result, err
-}
-
-func (self *BoltAnalyticStorage) SetStableTokenParams(value []byte) error {
-	var err error
-	k := uint64ToBytes(1)
-	temp := make(map[string]interface{})
-	vErr := json.Unmarshal(value, &temp)
-	if vErr != nil {
-		return fmt.Errorf("Rejected: Data could not be unmarshalled to defined format: %s", vErr)
-	}
-	err = self.db.Update(func(tx *bolt.Tx) error {
-		b, uErr := tx.CreateBucketIfNotExists([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET))
-		if uErr != nil {
-			return uErr
-		}
-		if b.Get(k) != nil {
-			return fmt.Errorf("Currently there is a pending record")
-		}
-		return b.Put(k, value)
-	})
-	return err
-}
-
-func (self *BoltAnalyticStorage) ConfirmStableTokenParams(value []byte) error {
-	var err error
-	k := uint64ToBytes(1)
-	temp := make(map[string]interface{})
-	vErr := json.Unmarshal(value, &temp)
-	if vErr != nil {
-		return fmt.Errorf("Rejected: Data could not be unmarshalled to defined format: %s", vErr)
-	}
-	pending, err := self.GetPendingStableTokenParams()
-	if eq := reflect.DeepEqual(pending, temp); !eq {
-		return fmt.Errorf("Rejected: confiming data isn't consistent")
-	}
-
-	err = self.db.Update(func(tx *bolt.Tx) error {
-		b, uErr := tx.CreateBucketIfNotExists([]byte(STABLE_TOKEN_PARAMS_BUCKET))
-		if uErr != nil {
-			return uErr
-		}
-		return b.Put(k, value)
-	})
-	if err != nil {
-		return err
-	}
-	err = self.RemovePendingStableTokenParams()
-	return err
-}
-
-func (self *BoltAnalyticStorage) GetStableTokenParams() (map[string]interface{}, error) {
-	k := uint64ToBytes(1)
-	result := make(map[string]interface{})
-	err := self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(STABLE_TOKEN_PARAMS_BUCKET))
-		if b == nil {
-			return fmt.Errorf("Bucket hasn't exist yet")
-		}
-		record := b.Get(k)
-		if record == nil {
-			return fmt.Errorf("Bucket is empty")
-		}
-		vErr := json.Unmarshal(record, &result)
-		if vErr != nil {
-			return vErr
-		}
-		return nil
-	})
-	return result, err
-}
-
-func (self *BoltAnalyticStorage) GetPendingStableTokenParams() (map[string]interface{}, error) {
-	k := uint64ToBytes(1)
-	result := make(map[string]interface{})
-	err := self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET))
-		if b == nil {
-			return fmt.Errorf("Bucket hasn't exist yet")
-		}
-		record := b.Get(k)
-		if record == nil {
-			return fmt.Errorf("Bucket is empty")
-		}
-		vErr := json.Unmarshal(record, &result)
-		if vErr != nil {
-			return vErr
-		}
-		return nil
-	})
-	return result, err
-}
-
-func (self *BoltAnalyticStorage) RemovePendingStableTokenParams() error {
-	k := uint64ToBytes(1)
-	err := self.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET))
-		if b == nil {
-			return fmt.Errorf("Bucket hasn't existed yet")
-		}
-		record := b.Get(k)
-		if record == nil {
-			return fmt.Errorf("Bucket is empty")
-		}
-		return b.Delete(k)
-	})
-	return err
 }
