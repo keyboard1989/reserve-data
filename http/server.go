@@ -2178,7 +2178,7 @@ func (self *HTTPServer) GetPriceAnalyticData(c *gin.Context) {
 
 func (self *HTTPServer) ExchangeNotification(c *gin.Context) {
 	postForm, ok := self.Authenticated(c, []string{
-		"exchange", "action", "token", "fromTime", "toTime", "isWarning", "msg"}, []Permission{RebalancePermission})
+		"exchange", "action", "token", "fromTime", "toTime", "isWarning"}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
@@ -2479,6 +2479,44 @@ func (self *HTTPServer) GetStableTokenParams(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetTokenHeatmap(c *gin.Context) {
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	freq := c.Query("freq")
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "token param is required",
+			},
+		)
+		return
+	}
+
+	data, err := self.stat.GetTokenHeatmap(fromTime, toTime, token, freq)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -2564,7 +2602,7 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-price-analytic-data", self.GetPriceAnalyticData)
 		self.r.GET("/get-reserve-volume", self.GetReserveVolume)
 		self.r.GET("/get-user-list", self.GetUserList)
-
+		self.r.GET("/get-token-heatmap", self.GetTokenHeatmap)
 	}
 
 	self.r.Run(self.host)
