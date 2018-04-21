@@ -12,8 +12,10 @@ import (
 
 type Fetcher struct {
 	storage                Storage
+	globalStorage          GlobalStorage
 	exchanges              []Exchange
 	blockchain             Blockchain
+	theworld               TheWorld
 	runner                 FetcherRunner
 	rmaddr                 ethereum.Address
 	currentBlock           uint64
@@ -23,13 +25,17 @@ type Fetcher struct {
 
 func NewFetcher(
 	storage Storage,
+	globalStorage GlobalStorage,
+	theworld TheWorld,
 	runner FetcherRunner,
 	address ethereum.Address,
 	simulationMode bool) *Fetcher {
 	return &Fetcher{
 		storage:        storage,
+		globalStorage:  globalStorage,
 		exchanges:      []Exchange{},
 		blockchain:     nil,
+		theworld:       theworld,
 		runner:         runner,
 		rmaddr:         address,
 		simulationMode: simulationMode,
@@ -71,8 +77,34 @@ func (self *Fetcher) Run() error {
 	go self.RunRateFetcher()
 	go self.RunBlockFetcher()
 	go self.RunTradeHistoryFetcher()
+	go self.RunGlobalDataFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
+}
+
+func (self *Fetcher) RunGlobalDataFetcher() {
+	for {
+		log.Printf("waiting for signal from global data channel")
+		t := <-self.runner.GetGlobalDataTicker()
+		log.Printf("got signal in global data channel with timestamp %d", common.TimeToTimepoint(t))
+		timepoint := common.TimeToTimepoint(t)
+		self.FetchGlobalData(timepoint)
+		log.Printf("fetched block from blockchain")
+	}
+}
+
+func (self *Fetcher) FetchGlobalData(timepoint uint64) {
+	data, err := self.theworld.GetGoldInfo()
+	if err != nil {
+		log.Printf("Fetching gold data failed: %s", err.Error())
+		data.Valid = false
+	}
+	data.Valid = true
+	data.Timestamp = common.GetTimepoint()
+	err = self.globalStorage.StoreGoldInfo(data)
+	if err != nil {
+		log.Printf("Storing gold info failed: %s", err.Error())
+	}
 }
 
 func (self *Fetcher) RunBlockFetcher() {
@@ -109,13 +141,13 @@ func (self *Fetcher) FetchRate(timepoint uint64) {
 		data, err = self.blockchain.FetchRates(self.currentBlock-1, self.currentBlock)
 	}
 	if err != nil {
-		log.Printf("Fetching rates from blockchain failed: %s\n", err)
+		log.Printf("Fetching rates from blockchain failed: %s", err.Error())
 	}
 	log.Printf("Got rates from blockchain: %+v", data)
 	err = self.storage.StoreRate(data, timepoint)
 	// fmt.Printf("balance data: %v\n", data)
 	if err != nil {
-		log.Printf("Storing rates failed: %s\n", err)
+		log.Printf("Storing rates failed: %s", err.Error())
 	}
 }
 

@@ -1201,6 +1201,15 @@ response:
 {"data":[{"country":"US","volume":2883.620428022146,"eth_volume":29.97000000311978,"usd_volume":28584.013502715607},{"country":"unknown","volume":663.7763113279779,"eth_volume":6.848675774186141,"usd_volume":5710.033060275751},{"country":"JP","volume":189.38349888667832,"eth_volume":1.99,"usd_volume":1881.86987},{"country":"KR","volume":93.83012247596538,"eth_volume":1,"usd_volume":857.766},{"country":"SI","volume":73.000042,"eth_volume":0.7584920000216375,"usd_volume":696.7810908998771},{"country":"IL","volume":9.757144977962138,"eth_volume":0.1,"usd_volume":85.47670000000001},{"country":"TH","volume":9.459436814264475,"eth_volume":0.1,"usd_volume":84.1759},{"country":"DE","volume":9.311558446913438,"eth_volume":0.09904,"usd_volume":85.93066944},{"country":"VN","volume":1.8918873628528947,"eth_volume":0.019789900740301923,"usd_volume":16.536080320374314}],"success":true}
 ```
 
+### Get gold data
+```
+<host>:8000/gold-feed
+```
+response:
+```
+  {"data":{"Valid":true,"Timestamp":1524240996931,"success":"","data":[{"symbol":"ETHDGX","price":0.08453708,"time":1524240993},{"symbol":"ETHUSD","price":586.6,"time":1524240993},{"symbol":"ETHSGD","price":771.8,"time":1524240993},{"symbol":"DGXUSD","price":49.59,"time":1524240993},{"symbol":"EURUSD","price":1.22871,"time":1524240993},{"symbol":"USDSGD","price":1.31572,"time":1524240993},{"symbol":"XAUUSD","price":1338.35,"time":1524240993},{"symbol":"USDJPY","price":107.608,"time":1524240993}]},"success":true}
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 

@@ -37,15 +37,17 @@ type SettingPaths struct {
 }
 
 type Config struct {
-	ActivityStorage core.ActivityStorage
-	DataStorage     data.Storage
-	StatStorage     stat.StatStorage
-	AnalyticStorage stat.AnalyticStorage
-	UserStorage     stat.UserStorage
-	LogStorage      stat.LogStorage
-	RateStorage     stat.RateStorage
-	FetcherStorage  fetcher.Storage
-	MetricStorage   metric.MetricStorage
+	ActivityStorage      core.ActivityStorage
+	DataStorage          data.Storage
+	DataGlobalStorage    data.GlobalStorage
+	StatStorage          stat.StatStorage
+	AnalyticStorage      stat.AnalyticStorage
+	UserStorage          stat.UserStorage
+	LogStorage           stat.LogStorage
+	RateStorage          stat.RateStorage
+	FetcherStorage       fetcher.Storage
+	FetcherGlobalStorage fetcher.GlobalStorage
+	MetricStorage        metric.MetricStorage
 	//ExchangeStorage exchange.Storage
 
 	FetcherRunner        fetcher.FetcherRunner
@@ -128,6 +130,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 			7*time.Second,  // log fetching interval
 			2*time.Second,  // trade log processing interval
 			2*time.Second,  // cat log processing interval
+			10*time.Second, // global data fetching interval
 		)
 		ControllerRunner = stat.NewTickerRunner(24 * time.Hour)
 	}
@@ -174,7 +177,9 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 			10*time.Second, // reserve rates fetching interval
 			7*time.Second,  // log fetching interval
 			2*time.Second,  // trade log processing interval
-			2*time.Second)  // cat log processing interval
+			2*time.Second,  // cat log processing interval
+			10*time.Second, // global data fetching interval
+		)
 	}
 
 	pricingSigner := PricingSignerFromConfigFile(settingPath.secretPath)
@@ -182,7 +187,9 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 
 	self.ActivityStorage = dataStorage
 	self.DataStorage = dataStorage
+	self.DataGlobalStorage = dataStorage
 	self.FetcherStorage = dataStorage
+	self.FetcherGlobalStorage = dataStorage
 	self.MetricStorage = dataStorage
 	self.FetcherRunner = fetcherRunner
 	self.BlockchainSigner = pricingSigner

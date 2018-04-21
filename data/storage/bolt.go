@@ -18,6 +18,8 @@ import (
 )
 
 const (
+  GOLD_BUCKET string = "gold_feeds"
+
 	PRICE_BUCKET                       string = "prices"
 	RATE_BUCKET                        string = "rates"
 	ORDER_BUCKET                       string = "orders"
@@ -56,6 +58,11 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	}
 	// init buckets
 	db.Update(func(tx *bolt.Tx) error {
+		_, err = tx.CreateBucketIfNotExists([]byte(GOLD_BUCKET))
+		if err != nil {
+			return err
+		}
+
 		_, err = tx.CreateBucketIfNotExists([]byte(PRICE_BUCKET))
 		if err != nil {
 			return err
@@ -173,6 +180,49 @@ func reverseSeek(timepoint uint64, c *bolt.Cursor) (uint64, error) {
 			}
 		}
 	}
+}
+
+func (self *BoltStorage) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
+	var result uint64
+	var err error
+	err = self.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(GOLD_BUCKET)).Cursor()
+		result, err = reverseSeek(timepoint, c)
+		return nil
+	})
+	return common.Version(result), err
+}
+
+func (self *BoltStorage) GetGoldInfo(version common.Version) (common.GoldData, error) {
+	result := common.GoldData{}
+	var err error
+	err = self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(GOLD_BUCKET))
+		data := b.Get(uint64ToBytes(uint64(version)))
+		if data == nil {
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", string(version)))
+		} else {
+			err = json.Unmarshal(data, &result)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
+	var err error
+	timepoint := data.Timestamp
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(GOLD_BUCKET))
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		err = b.Put(uint64ToBytes(timepoint), dataJson)
+		return err
+	})
+	return err
 }
 
 func (self *BoltStorage) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
