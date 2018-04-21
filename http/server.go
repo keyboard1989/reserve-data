@@ -2348,7 +2348,7 @@ func (self *HTTPServer) SetStableTokenParams(c *gin.Context) {
 		)
 		return
 	}
-	err := self.stat.SetStableTokenParams(value)
+	err := self.metric.SetStableTokenParams(value)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2383,7 +2383,7 @@ func (self *HTTPServer) ConfirmStableTokenParams(c *gin.Context) {
 		)
 		return
 	}
-	err := self.stat.ConfirmStableTokenParams(value)
+	err := self.metric.ConfirmStableTokenParams(value)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2407,7 +2407,7 @@ func (self *HTTPServer) RejectStableTokenParams(c *gin.Context) {
 	if !ok {
 		return
 	}
-	err := self.stat.RejectStableTokenParams()
+	err := self.metric.RejectStableTokenParams()
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2433,7 +2433,7 @@ func (self *HTTPServer) GetPendingStableTokenParams(c *gin.Context) {
 		return
 	}
 
-	data, err := self.stat.GetPendingStableTokenParams()
+	data, err := self.metric.GetPendingStableTokenParams()
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2459,7 +2459,7 @@ func (self *HTTPServer) GetStableTokenParams(c *gin.Context) {
 		return
 	}
 
-	data, err := self.stat.GetStableTokenParams()
+	data, err := self.metric.GetStableTokenParams()
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2533,6 +2533,12 @@ func (self *HTTPServer) Run() {
 
 		self.r.POST("/exchange-notification", self.ExchangeNotification)
 		self.r.GET("/exchange-notifications", self.GetNotifications)
+
+		self.r.POST("/set-stable-token-params", self.SetStableTokenParams)
+		self.r.POST("/confirm-stable-token-params", self.ConfirmStableTokenParams)
+		self.r.POST("/reject-stable-token-params", self.RejectStableTokenParams)
+		self.r.GET("/pending-stable-token-params", self.GetPendingStableTokenParams)
+		self.r.GET("/stable-token-params", self.GetStableTokenParams)
 	}
 
 	if self.stat != nil {
@@ -2559,11 +2565,6 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-reserve-volume", self.GetReserveVolume)
 		self.r.GET("/get-user-list", self.GetUserList)
 
-		self.r.POST("/set-stable-token-params", self.SetStableTokenParams)
-		self.r.POST("/confirm-stable-token-params", self.ConfirmStableTokenParams)
-		self.r.POST("/reject-stable-token-params", self.RejectStableTokenParams)
-		self.r.GET("/pending-stable-token-params", self.GetPendingStableTokenParams)
-		self.r.GET("/stable-token-params", self.GetStableTokenParams)
 	}
 
 	self.r.Run(self.host)

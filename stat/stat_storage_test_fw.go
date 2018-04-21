@@ -142,7 +142,7 @@ func (self *StatStorageTest) TestCountryStats() error {
 		return err
 	}
 
-	countryStat, err := self.storage.GetCountryStats(0, 86400000, strings.ToLower(TESTCOUNTRY), 0)
+	countryStat, err := self.storage.GetCountryStats(0, 86400000, TESTCOUNTRY, 0)
 	if countryStat == nil || len(countryStat) == 0 {
 		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
 	}
