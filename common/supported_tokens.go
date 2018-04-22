@@ -38,6 +38,9 @@ func NewSupportedTokens() *SupportedTokens {
 		eTokens:      []Token{},
 		eIDToToken:   map[string]Token{},
 		eAddrToToken: map[string]Token{},
+		aTokens:      []Token{},
+		aIDToToken:   map[string]Token{},
+		aAddrToToken: map[string]Token{},
 	}
 }
 
