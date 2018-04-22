@@ -8,7 +8,7 @@
       "maxPerBlockImbalance": "775091297865175138304",
       "maxTotalImbalance": "1096640332676811325440",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "KNC": {
       "name": "KyberNetwork",
@@ -19,7 +19,7 @@
 
       "maxTotalImbalance": "7501969266932570914816",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "EOS": {
       "name": "Eos",
@@ -29,7 +29,7 @@
       "maxPerBlockImbalance": "1210345280560014819328",
       "maxTotalImbalance": "1784654116185741721600",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "SNT": {
       "name": "STATUS",
@@ -39,7 +39,7 @@
       "maxPerBlockImbalance": "37434287125568931495936",
       "maxTotalImbalance": "38806865287259009056768",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "ELF": {
       "name": "AELF",
@@ -49,7 +49,7 @@
       "maxPerBlockImbalance": "6727090010493247553536",
       "maxTotalImbalance": "9489286595433755312128",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "POWR": {
       "name": "Power Ledger",
@@ -59,7 +59,7 @@
       "maxPerBlockImbalance": "8860273487",
       "maxTotalImbalance": "8860273487",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "MANA": {
       "name": "MANA",
@@ -69,7 +69,7 @@
       "maxPerBlockImbalance": "54907343857240902729728",
       "maxTotalImbalance": "54907343857240902729728",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "BAT": {
       "name": "Basic Attention Token",
@@ -79,7 +79,7 @@
       "maxPerBlockImbalance": "13480268257338322845696",
       "maxTotalImbalance": "13480268257338322845696",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "REQ": {
       "name": "Request",
@@ -89,7 +89,7 @@
       "maxPerBlockImbalance": "32547010644498297389056",
       "maxTotalImbalance": "33735087557886343118848",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "GTO": {
       "name": "Gifto",
@@ -99,7 +99,7 @@
       "maxPerBlockImbalance": "1617948441",
       "maxTotalImbalance": "1617948441",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "RDN": {
       "name": "Raiden",
@@ -109,7 +109,7 @@
       "maxPerBlockImbalance": "8000000000000000000000",
       "maxTotalImbalance": "8000000000000000000000",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "APPC": {
       "name": "AppCoins",
@@ -119,7 +119,7 @@
       "maxPerBlockImbalance": "24000000000000000000000",
       "maxTotalImbalance": "24000000000000000000000",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "ENG": {
       "name": "Enigma",
@@ -129,7 +129,7 @@
       "maxPerBlockImbalance": "800000000000",
       "maxTotalImbalance": "800000000000",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "SALT": {
       "name": "Salt",
@@ -139,7 +139,7 @@
       "maxPerBlockImbalance": "800000000000",
       "maxTotalImbalance": "800000000000",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "BQX": {
       "name" : "Ethos",
@@ -149,7 +149,7 @@
       "maxTotalImbalance": "114446593497",
       "minimalRecordResolution": "10000",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "ADX": {
       "name": "AdEx",
@@ -159,7 +159,7 @@
       "maxPerBlockImbalance" : "1925452883",
       "maxTotalImbalance" : "1925452883",
       "internal use": false,
-      "active": true
+      "listed": true
     },
     "AST": {
       "name": "AirSwap",
@@ -169,7 +169,7 @@
       "maxPerBlockImbalance" : "129253239",
       "maxTotalImbalance" : "129253239",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "RCN": {
       "name": "Ripio Credit Network",
@@ -179,7 +179,7 @@
       "maxPerBlockImbalance" : "1925452883",
       "maxTotalImbalance" : "1925452883",
       "internal use": false,
-      "active": true
+      "listed": true
     },
     "ZIL": {
       "name": "Zilliqa",
@@ -189,7 +189,7 @@
       "maxPerBlockImbalance" : "75922938217709024",
       "maxTotalImbalance" : "75922938217709024",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "LINK": {
       "name": "Chain Link",
@@ -199,7 +199,7 @@
       "maxPerBlockImbalance" : "10499583297787869003776",
       "maxTotalImbalance" : "10499583297787869003776",
       "internal use": true,
-      "active": true
+      "listed": true
     },
     "DAI": {
       "name" : "DAI",
@@ -209,21 +209,21 @@
       "maxPerBlockImbalance": "2711997842670896021504",
       "maxTotalImbalance": "3833713935933528080384",
       "internal use": false,
-      "active": true
+      "listed": true
     },
     "DGX": {
       "name": "Digix Gold",
       "decimals": 9,
       "address": "0x4f3afec4e5a3f2a6a1a411def7d7dfe50ee057bf",
       "internal use": true,
-      "active": false
+      "listed": false
     },
     "ETH": {
       "name": "Ethereum",
       "decimals": 18,
       "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       "internal use": true,
-      "active": true
+      "listed": true
     }
   },
   "exchanges": {
@@ -400,5 +400,10 @@
   "network": "0xD2D21FdeF0D054D2864ce328cc56D1238d6b239e",
   "wrapper": "0x6172AFC8c00c46E0D07ce3AF203828198194620a",
   "feeburner": "0xB2cB365D803Ad914e63EA49c95eC663715c2F673",
-  "whitelist" : "0x1b8a28d2185a7ab86ae40303b39f33278cc42130"
+  "whitelist" : "0x1b8a28d2185a7ab86ae40303b39f33278cc42130",
+  "third_party_reserves": [
+    "0xe1213e46efcb8785b47ae0620a51f490f747f1da",
+    "0x6f50e41885fdc44dbdf7797df0393779a9c0a3a6",
+    "0x1f58a138c976ceface828fd9e0b82295e85e7c81"
+  ]
 }
