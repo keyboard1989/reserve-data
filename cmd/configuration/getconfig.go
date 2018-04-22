@@ -80,10 +80,14 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		tok := common.Token{
 			id, t.Address, t.Decimals,
 		}
-		if t.KNReserveSupport {
-			common.RegisterInternalToken(tok)
+		if t.Active {
+			if t.KNReserveSupport {
+				common.RegisterInternalActiveToken(tok)
+			} else {
+				common.RegisterExternalActiveToken(tok)
+			}
 		} else {
-			common.RegisterExternalToken(tok)
+			common.RegisterInactiveToken(tok)
 		}
 	}
 

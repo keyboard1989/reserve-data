@@ -7,7 +7,8 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "775091297865175138304",
       "maxTotalImbalance": "1096640332676811325440",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "KNC": {
       "name": "KyberNetwork",
@@ -17,7 +18,8 @@
       "maxPerBlockImbalance": "5087805538780989882368",
 
       "maxTotalImbalance": "7501969266932570914816",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "EOS": {
       "name": "Eos",
@@ -26,7 +28,8 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "1210345280560014819328",
       "maxTotalImbalance": "1784654116185741721600",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "SNT": {
       "name": "STATUS",
@@ -35,7 +38,8 @@
       "minimalRecordResolution": "10000000000000000",
       "maxPerBlockImbalance": "37434287125568931495936",
       "maxTotalImbalance": "38806865287259009056768",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "ELF": {
       "name": "AELF",
@@ -44,7 +48,8 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "6727090010493247553536",
       "maxTotalImbalance": "9489286595433755312128",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "POWR": {
       "name": "Power Ledger",
@@ -53,7 +58,8 @@
       "minimalRecordResolution": "1000",
       "maxPerBlockImbalance": "8860273487",
       "maxTotalImbalance": "8860273487",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "MANA": {
       "name": "MANA",
@@ -62,7 +68,8 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "54907343857240902729728",
       "maxTotalImbalance": "54907343857240902729728",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "BAT": {
       "name": "Basic Attention Token",
@@ -71,7 +78,8 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "13480268257338322845696",
       "maxTotalImbalance": "13480268257338322845696",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "REQ": {
       "name": "Request",
@@ -80,7 +88,8 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "32547010644498297389056",
       "maxTotalImbalance": "33735087557886343118848",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "GTO": {
       "name": "Gifto",
@@ -89,7 +98,8 @@
       "minimalRecordResolution": "10",
       "maxPerBlockImbalance": "1617948441",
       "maxTotalImbalance": "1617948441",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "RDN": {
       "name": "Raiden",
@@ -98,7 +108,8 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "8000000000000000000000",
       "maxTotalImbalance": "8000000000000000000000",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "APPC": {
       "name": "AppCoins",
@@ -107,7 +118,8 @@
       "minimalRecordResolution": "100000000000000",
       "maxPerBlockImbalance": "24000000000000000000000",
       "maxTotalImbalance": "24000000000000000000000",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "ENG": {
       "name": "Enigma",
@@ -116,7 +128,8 @@
       "minimalRecordResolution": "10000",
       "maxPerBlockImbalance": "800000000000",
       "maxTotalImbalance": "800000000000",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "SALT": {
       "name": "Salt",
@@ -125,7 +138,8 @@
       "minimalRecordResolution": "10000",
       "maxPerBlockImbalance": "800000000000",
       "maxTotalImbalance": "800000000000",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "BQX": {
       "name" : "Ethos",
@@ -134,7 +148,8 @@
       "maxPerBlockImbalance": "114446593497",
       "maxTotalImbalance": "114446593497",
       "minimalRecordResolution": "10000",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "ADX": {
       "name": "AdEx",
@@ -143,7 +158,8 @@
       "minimalRecordResolution" : "10",
       "maxPerBlockImbalance" : "1925452883",
       "maxTotalImbalance" : "1925452883",
-      "internal use": false
+      "internal use": false,
+      "active": true
     },
     "AST": {
       "name": "AirSwap",
@@ -152,7 +168,8 @@
       "minimalRecordResolution" : "10",
       "maxPerBlockImbalance" : "129253239",
       "maxTotalImbalance" : "129253239",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "RCN": {
       "name": "Ripio Credit Network",
@@ -161,7 +178,8 @@
       "minimalRecordResolution" : "10",
       "maxPerBlockImbalance" : "1925452883",
       "maxTotalImbalance" : "1925452883",
-      "internal use": false
+      "internal use": false,
+      "active": true
     },
     "ZIL": {
       "name": "Zilliqa",
@@ -170,7 +188,8 @@
       "minimalRecordResolution" : "10000000000",
       "maxPerBlockImbalance" : "75922938217709024",
       "maxTotalImbalance" : "75922938217709024",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "LINK": {
       "name": "Chain Link",
@@ -179,7 +198,8 @@
       "minimalRecordResolution" : "1000000000000000",
       "maxPerBlockImbalance" : "10499583297787869003776",
       "maxTotalImbalance" : "10499583297787869003776",
-      "internal use": true
+      "internal use": true,
+      "active": true
     },
     "DAI": {
       "name" : "DAI",
@@ -188,13 +208,22 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "2711997842670896021504",
       "maxTotalImbalance": "3833713935933528080384",
-      "internal use": false
+      "internal use": false,
+      "active": true
+    },
+    "DGX": {
+      "name": "Digix Gold",
+      "decimals": 9,
+      "address": "0x4f3afec4e5a3f2a6a1a411def7d7dfe50ee057bf",
+      "internal use": true,
+      "active": false
     },
     "ETH": {
       "name": "Ethereum",
       "decimals": 18,
       "address": "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-      "internal use": true
+      "internal use": true,
+      "active": true
     }
   },
   "exchanges": {

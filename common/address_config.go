@@ -12,6 +12,7 @@ type token struct {
 	Name             string `json:"name"`
 	Decimals         int64  `json:"decimals"`
 	KNReserveSupport bool   `json:"internal use"`
+	Active           bool   `json:"active"`
 }
 
 type exchange map[string]string
