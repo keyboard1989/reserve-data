@@ -43,6 +43,20 @@ func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 
 func (self *Fetcher) AddExchange(exchange Exchange) {
 	self.exchanges = append(self.exchanges, exchange)
+	// initiate exchange status as up
+	exchangeStatus, _ := self.storage.GetExchangeStatus()
+	if exchangeStatus == nil {
+		exchangeStatus = map[string]common.ExStatus{}
+	}
+	exchangeID := string(exchange.ID())
+	_, exist := exchangeStatus[exchangeID]
+	if !exist {
+		exchangeStatus[exchangeID] = common.ExStatus{
+			Timestamp: common.GetTimepoint(),
+			Status:    true,
+		}
+	}
+	self.storage.UpdateExchangeStatus(exchangeStatus)
 }
 
 func (self *Fetcher) Stop() error {
@@ -90,9 +104,9 @@ func (self *Fetcher) FetchRate(timepoint uint64) {
 	var err error
 	var data common.AllRateEntry
 	if self.simulationMode {
-		data, err = self.blockchain.FetchRates(timepoint, 0, self.currentBlock)
+		data, err = self.blockchain.FetchRates(0, self.currentBlock)
 	} else {
-		data, err = self.blockchain.FetchRates(timepoint, self.currentBlock-1, self.currentBlock)
+		data, err = self.blockchain.FetchRates(self.currentBlock-1, self.currentBlock)
 	}
 	if err != nil {
 		log.Printf("Fetching rates from blockchain failed: %s\n", err)
@@ -141,8 +155,25 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 			pendings, timepoint)
 	}
 	wait.Wait()
+	// if we got tx info of withdrawals from the cexs, we have to
+	// update them to pending activities in order to also check
+	// their mining status.
+	// otherwise, if the txs are already mined and the reserve
+	// balances are already changed, their mining statuses will
+	// still be "", which can lead analytic to intepret the balances
+	// wrongly.
+	for _, activity := range pendings {
+		status, found := estatuses.Load(activity.ID)
+		if found {
+			activityStatus := status.(common.ActivityStatus)
+			if activity.Result["tx"] != nil && activity.Result["tx"].(string) == "" {
+				activity.Result["tx"] = activityStatus.Tx
+			}
+		}
+	}
+
 	self.FetchAuthDataFromBlockchain(
-		bbalances, &bstatuses, pendings, timepoint)
+		bbalances, &bstatuses, pendings)
 	snapshot.Block = self.currentBlock
 	snapshot.ReturnTime = common.GetTimestamp()
 	err = self.PersistSnapshot(
@@ -205,8 +236,7 @@ func (self *Fetcher) RunTradeHistoryFetcher() {
 func (self *Fetcher) FetchAuthDataFromBlockchain(
 	allBalances map[string]common.BalanceEntry,
 	allStatuses *sync.Map,
-	pendings []common.ActivityRecord,
-	timepoint uint64) {
+	pendings []common.ActivityRecord) {
 	// we apply double check strategy to mitigate race condition on exchange side like this:
 	// 1. Get list of pending activity status (A)
 	// 2. Get list of balances (B)
@@ -217,9 +247,9 @@ func (self *Fetcher) FetchAuthDataFromBlockchain(
 	var err error
 	for {
 		preStatuses := self.FetchStatusFromBlockchain(pendings)
-		balances, err = self.FetchBalanceFromBlockchain(timepoint)
+		balances, err = self.FetchBalanceFromBlockchain()
 		if err != nil {
-			log.Printf("Fetching blockchain balances failed: %v\n", err)
+			log.Printf("Fetching blockchain balances failed: %v", err)
 			break
 		}
 		statuses = self.FetchStatusFromBlockchain(pendings)
@@ -249,8 +279,8 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 	}
 }
 
-func (self *Fetcher) FetchBalanceFromBlockchain(timepoint uint64) (map[string]common.BalanceEntry, error) {
-	return self.blockchain.FetchBalanceData(self.rmaddr, nil, timepoint)
+func (self *Fetcher) FetchBalanceFromBlockchain() (map[string]common.BalanceEntry, error) {
+	return self.blockchain.FetchBalanceData(self.rmaddr, 0)
 }
 
 func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord) map[common.ActivityID]common.ActivityStatus {
@@ -308,7 +338,7 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			case "lost":
 				elapsed := common.GetTimepoint() - activity.Timestamp.ToUint64()
 				if elapsed > uint64(15*time.Minute/time.Millisecond) {
-					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %s", activity.Result["tx"].(string), elapsed)
+					log.Printf("Fetcher tx status: tx(%s) is lost, elapsed time: %d", activity.Result["tx"].(string), elapsed)
 					result[activity.ID] = common.ActivityStatus{
 						activity.ExchangeStatus,
 						activity.Result["tx"].(string),
@@ -356,6 +386,23 @@ func (self *Fetcher) PersistSnapshot(
 		v := value.(common.EBalanceEntry)
 		allEBalances[key.(common.ExchangeID)] = v
 		if !v.Valid {
+			// get old auth data, because get balance error then we have to keep
+			// balance to the latest version then analytic won't get exchange balance to zero
+			authVersion, err := self.storage.CurrentAuthDataVersion(common.GetTimepoint())
+			if err == nil {
+				oldAuth, err := self.storage.GetAuthData(authVersion)
+				if err != nil {
+					allEBalances[key.(common.ExchangeID)] = common.EBalanceEntry{
+						Error: err.Error(),
+					}
+				} else {
+					// update old auth to current
+					newEbalance := oldAuth.ExchangeBalances[key.(common.ExchangeID)]
+					newEbalance.Error = v.Error
+					newEbalance.Status = false
+					allEBalances[key.(common.ExchangeID)] = newEbalance
+				}
+			}
 			snapshot.Valid = false
 			snapshot.Error = v.Error
 		}
@@ -369,29 +416,34 @@ func (self *Fetcher) PersistSnapshot(
 		if status != nil {
 			activityStatus := status.(common.ActivityStatus)
 			log.Printf("In PersistSnapshot: exchange activity status for %+v: %+v", activity.ID, activityStatus)
-			if activityStatus.Error == nil {
-				if activity.IsExchangePending() {
-					activity.ExchangeStatus = activityStatus.ExchangeStatus
-				}
-				if activity.Result["tx"] != nil && activity.Result["tx"].(string) == "" {
-					activity.Result["tx"] = activityStatus.Tx
-				}
-			} else {
+			if activity.IsExchangePending() {
+				activity.ExchangeStatus = activityStatus.ExchangeStatus
+			}
+			if activity.Result["tx"] != nil && activity.Result["tx"].(string) == "" {
+				activity.Result["tx"] = activityStatus.Tx
+			}
+			if activityStatus.Error != nil {
 				snapshot.Valid = false
 				snapshot.Error = activityStatus.Error.Error()
+				activity.Result["status_error"] = activityStatus.Error.Error()
+			} else {
+				activity.Result["status_error"] = ""
 			}
 		}
 		status, _ = bstatuses.Load(activity.ID)
 		if status != nil {
 			activityStatus = status.(common.ActivityStatus)
 			log.Printf("In PersistSnapshot: blockchain activity status for %+v: %+v", activity.ID, activityStatus)
-			if activityStatus.Error == nil {
-				if activity.IsBlockchainPending() {
-					activity.MiningStatus = activityStatus.MiningStatus
-				}
-			} else {
+
+			if activity.IsBlockchainPending() {
+				activity.MiningStatus = activityStatus.MiningStatus
+			}
+			if activityStatus.Error != nil {
 				snapshot.Valid = false
 				snapshot.Error = activityStatus.Error.Error()
+				activity.Result["status_error"] = activityStatus.Error.Error()
+			} else {
+				activity.Result["status_error"] = ""
 			}
 		}
 		log.Printf("Aggregate statuses, final activity: %+v", activity)
@@ -457,14 +509,23 @@ func (self *Fetcher) FetchStatusFromExchange(exchange Exchange, pendings []commo
 
 			id := activity.ID
 			if activity.Action == "trade" {
-				status, err = exchange.OrderStatus(id, timepoint)
+				orderID := id.EID
+				base := activity.Params["base"].(string)
+				quote := activity.Params["quote"].(string)
+				status, err = exchange.OrderStatus(orderID, base, quote)
 			} else if activity.Action == "deposit" {
-				status, err = exchange.DepositStatus(id, timepoint)
+				txHash := activity.Result["tx"].(string)
+				amountStr := activity.Params["amount"].(string)
+				amount, _ := strconv.ParseFloat(amountStr, 64)
+				currency := activity.Params["token"].(string)
+				status, err = exchange.DepositStatus(id, txHash, currency, amount, timepoint)
 				log.Printf("Got deposit status for %v: (%s), error(%v)", activity, status, err)
 			} else if activity.Action == "withdraw" {
-				log.Printf("Activity: %+v", activity)
+				amountStr := activity.Params["amount"].(string)
+				amount, _ := strconv.ParseFloat(amountStr, 64)
+				currency := activity.Params["token"].(string)
 				tx = activity.Result["tx"].(string)
-				status, tx, err = exchange.WithdrawStatus(id, timepoint)
+				status, tx, err = exchange.WithdrawStatus(id.EID, currency, amount, timepoint)
 				log.Printf("Got withdraw status for %v: (%s), error(%v)", activity, status, err)
 			} else {
 				continue
