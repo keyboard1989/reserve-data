@@ -34,7 +34,7 @@ func (self *FetcherRunnerTest) TestFetcherConcurrency(nanosec int64) error {
 		go func(ticker func() <-chan time.Time) {
 			defer wg.Done()
 			t := <-ticker()
-			log.Printf("got a signal after %v", t.Sub(startTime).Seconds)
+			log.Printf("got a signal after %v", t.Sub(startTime).Seconds())
 		}(ticker)
 	}
 	wg.Wait()
