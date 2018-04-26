@@ -21,7 +21,6 @@
 - Analytic dev mode to support dev environment for analytic team
 - API for analytic to submit pricing data
 
-
 ## Bug fixes:
 - fix bunch of errors in order to ensure stat server will not miss any tradelogs (including making log aggregation and last log id persistence atomic)
 - return log in correct order to ensure consistent stat results
