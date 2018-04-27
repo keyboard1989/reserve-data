@@ -218,6 +218,13 @@
       "internal use": true,
       "listed": false
     },
+    "MOT": {
+      "name": "Olympus Labs",
+      "decimals": 18,
+      "address": "0x263c618480dbe35c300d8d5ecda19bbb986acaed",
+      "internal use": false,
+      "listed": true
+    },
     "IOST": {
       "name": "IOStoken",
       "decimals": 18,
