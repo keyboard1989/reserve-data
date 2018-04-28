@@ -444,7 +444,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 
 		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(tx1Hash))
 		if err != nil {
-			log.Println("Can not get TX status (%s)", err)
+			log.Printf("Can not get TX status (%s)", err.Error())
 			return "", err
 		}
 		log.Printf("Status for Tx1 was %s at block %d ", status, blockno)
@@ -511,7 +511,8 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 						return "done", nil
 					} else {
 						//TODO : handle other states following https://github.com/huobiapi/API_Docs_en/wiki/REST_Reference#deposit-states
-						return "", errors.New(fmt.Sprintf("Deposit found on huobi, status was not done but %s", deposit.State))
+						log.Printf("Tx %s is found but the status was not safe but %s", deposit.TxHash, deposit.State)
+						return "", nil
 					}
 				}
 			}
