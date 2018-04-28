@@ -7,9 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/metric"
@@ -17,25 +19,28 @@ import (
 )
 
 const (
-	PRICE_BUCKET            string = "prices"
-	RATE_BUCKET             string = "rates"
-	ORDER_BUCKET            string = "orders"
-	ACTIVITY_BUCKET         string = "activities"
-	AUTH_DATA_BUCKET        string = "auth_data"
-	PENDING_ACTIVITY_BUCKET string = "pending_activities"
-	METRIC_BUCKET           string = "metrics"
-	METRIC_TARGET_QUANTITY  string = "target_quantity"
-	PENDING_TARGET_QUANTITY string = "pending_target_quantity"
-	TRADE_HISTORY           string = "trade_history"
-	ENABLE_REBALANCE        string = "enable_rebalance"
-	SETRATE_CONTROL         string = "setrate_control"
-	PENDING_PWI_EQUATION    string = "pending_pwi_equation"
-	PWI_EQUATION            string = "pwi_equation"
-	INTERMEDIATE_TX         string = "intermediate_tx"
-	EXCHANGE_STATUS         string = "exchange_status"
-	EXCHANGE_NOTIFICATIONS  string = "exchange_notifications"
-	MAX_NUMBER_VERSION      int    = 1000
-	MAX_GET_RATES_PERIOD    uint64 = 86400000 //1 days in milisec
+	PRICE_BUCKET               string = "prices"
+	RATE_BUCKET                string = "rates"
+	ORDER_BUCKET               string = "orders"
+	ACTIVITY_BUCKET            string = "activities"
+	AUTH_DATA_BUCKET           string = "auth_data"
+	PENDING_ACTIVITY_BUCKET    string = "pending_activities"
+	METRIC_BUCKET              string = "metrics"
+	METRIC_TARGET_QUANTITY     string = "target_quantity"
+	PENDING_TARGET_QUANTITY    string = "pending_target_quantity"
+	TRADE_HISTORY              string = "trade_history"
+	ENABLE_REBALANCE           string = "enable_rebalance"
+	SETRATE_CONTROL            string = "setrate_control"
+	PENDING_PWI_EQUATION       string = "pending_pwi_equation"
+	PWI_EQUATION               string = "pwi_equation"
+	INTERMEDIATE_TX            string = "intermediate_tx"
+	EXCHANGE_STATUS            string = "exchange_status"
+	EXCHANGE_NOTIFICATIONS     string = "exchange_notifications"
+	MAX_NUMBER_VERSION         int    = 1000
+	MAX_GET_RATES_PERIOD       uint64 = 86400000 //1 days in milisec
+	UI64DAY                    uint64 = uint64(time.Hour * 24)
+	EXPORT_BATCH               int    = 1
+	AUTH_DATA_EXPIRED_DURATION uint64 = 10 * 86400000 //10day in milisec
 )
 
 type BoltStorage struct {
@@ -186,22 +191,84 @@ func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, bucket string) int {
 	return result
 }
 
+// StoreIntoFile store the outdate record into a file named after the bucketname and
+// the start of the day timestamp regard to the timestamp of the record
+func StoreIntoFile(bucket string, timestamp uint64, data []byte) error {
+	timestamp = timestamp / UI64DAY * UI64DAY
+	filename := fmt.Sprintf("%s_%d", bucket, timestamp)
+	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	if err != nil {
+		return err
+	}
+	if _, err := f.Write(data); err != nil {
+		return err
+	}
+	if err := f.Close(); err != nil {
+		log.Fatal(err)
+	}
+	return nil
+}
+
+// func (self *BoltStorage) ExportOutdateAuthData(bucket string, currentTime uint64, expired uint64) error {
+// 	expiredTimestampByte := uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
+// 	outFile, err := os.Create(fileName)
+// 	defer outFile.Close()
+// 	if err != nil {
+// 		return 0, err
+// 	}
+// 	err = self.db.Update(func(tx *bolt.Tx) error {
+// 		b := tx.Bucket([]byte(PRICE_ANALYTIC_BUCKET))
+// 		c := b.Cursor()
+// 		for k, v := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, v = c.Next() {
+// 			timestamp := bytesToUint64(k)
+// 			temp := make(map[string]interface{})
+// 			err = json.Unmarshal(v, &temp)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			record := common.AnalyticPriceResponse{
+// 				timestamp,
+// 				temp,
+// 			}
+// 			var output []byte
+// 			output, err = json.Marshal(record)
+// 			if err != nil {
+// 				return err
+// 			}
+// 			_, err = outFile.WriteString(string(output) + "\n")
+// 			if err != nil {
+// 				return err
+// 			}
+// 			nRecord++
+// 			err = b.Delete(k)
+// 			if err != nil {
+// 				return err
+// 			}
+// 		}
+// 		return nil
+// 	})
+// 	return
+// }
+
 // PruneOutdatedData Remove first version out of database
 func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	var err error
 	b := tx.Bucket([]byte(bucket))
 	c := b.Cursor()
-	for self.GetNumberOfVersion(tx, bucket) >= MAX_NUMBER_VERSION {
-		k, _ := c.First()
+	nExcess := self.GetNumberOfVersion(tx, bucket) - MAX_NUMBER_VERSION
+	for i := 0; i < nExcess; i++ {
+		k, v := c.First()
 		if k == nil {
-			err = errors.New(fmt.Sprintf("There no version in %s", bucket))
+			err = fmt.Errorf("There is no previous version in %s", bucket)
 			return err
 		}
+		StoreIntoFile(bucket, bytesToUint64(k), v)
 		err = b.Delete([]byte(k))
 		if err != nil {
 			panic(err)
 		}
 	}
+
 	return err
 }
 
@@ -1083,13 +1150,15 @@ func (self *BoltStorage) GetExchangeStatus() (common.ExchangesStatus, error) {
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_STATUS))
 		c := b.Cursor()
-		_, v := c.Last()
-		if v == nil {
-			err = errors.New("There is no data yet.")
-			return err
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var exstat common.ExStatus
+			err := json.Unmarshal(v, &exstat)
+			if err != nil {
+				return err
+			}
+			result[string(k)] = exstat
 		}
-		err := json.Unmarshal(v, &result)
-		return err
+		return nil
 	})
 	return result, err
 }
@@ -1098,12 +1167,17 @@ func (self *BoltStorage) UpdateExchangeStatus(data common.ExchangesStatus) error
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_STATUS))
-		idByte := uint64ToBytes(common.GetTimepoint())
-		dataJson, err := json.Marshal(data)
-		if err != nil {
-			return err
+		for k, v := range data {
+			dataJson, err := json.Marshal(v)
+			if err != nil {
+				return err
+			}
+			err = b.Put([]byte(k), dataJson)
+			if err != nil {
+				return err
+			}
 		}
-		return b.Put(idByte, dataJson)
+		return nil
 	})
 	return err
 }

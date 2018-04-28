@@ -49,6 +49,7 @@ type Config struct {
 	//ExchangeStorage exchange.Storage
 
 	FetcherRunner        fetcher.FetcherRunner
+	DataControllerRunner storage.StorageControllerRunner
 	StatFetcherRunner    stat.FetcherRunner
 	StatControllerRunner stat.ControllerRunner
 	FetcherExchanges     []fetcher.Exchange
@@ -114,7 +115,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 	}
 
 	var statFetcherRunner stat.FetcherRunner
-	var ControllerRunner stat.ControllerRunner
+	var statControllerRunner stat.ControllerRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		statFetcherRunner = http_runner.NewHttpRunner(8002)
 	} else {
@@ -124,7 +125,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 			10*time.Second, // rate fetching interval
 			2*time.Second,  // tradelog processing interval
 			2*time.Second)  // catlog processing interval
-		ControllerRunner = stat.NewControllerTickerRunner(24 * time.Hour)
+		statControllerRunner = stat.NewControllerTickerRunner(24 * time.Hour)
 
 	}
 
@@ -133,7 +134,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 	self.UserStorage = userStorage
 	self.LogStorage = logStorage
 	self.RateStorage = rateStorage
-	self.StatControllerRunner = ControllerRunner
+	self.StatControllerRunner = statControllerRunner
 	self.StatFetcherRunner = statFetcherRunner
 	self.ThirdPartyReserves = thirdpartyReserves
 	self.FeeBurnerAddress = burnerAddr
@@ -157,7 +158,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 	}
 
 	var fetcherRunner fetcher.FetcherRunner
-
+	var dataControllerRunner storage.StorageControllerRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
 	} else {
@@ -167,6 +168,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 			3*time.Second,  // rate fetching interval
 			5*time.Second,  // block fetching interval
 			10*time.Minute) // tradeHistory fetching interval
+		dataControllerRunner = storage.NewStorageControllerTickerRunner(3*time.Second, 4*time.Second)
 	}
 
 	pricingSigner := PricingSignerFromConfigFile(settingPath.secretPath)
@@ -177,6 +179,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 	self.FetcherStorage = dataStorage
 	self.MetricStorage = dataStorage
 	self.FetcherRunner = fetcherRunner
+	self.DataControllerRunner = dataControllerRunner
 	self.BlockchainSigner = pricingSigner
 	//self.IntermediatorSigner = huoBiintermediatorSigner
 	self.DepositSigner = depositSigner

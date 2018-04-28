@@ -1,12 +1,28 @@
 package data
 
 import (
+	"fmt"
+	"log"
+	"os"
+	"time"
+
+	"github.com/KyberNetwork/reserve-data/common/archive"
+
 	"github.com/KyberNetwork/reserve-data/common"
+	dataStorage "github.com/KyberNetwork/reserve-data/data/storage"
 )
 
+type StorageController struct {
+	runner             dataStorage.StorageControllerRunner
+	authDataAwsPath    string
+	authDataBucketName string
+	arch               archive.Archive
+}
+
 type ReserveData struct {
-	storage Storage
-	fetcher Fetcher
+	storage           Storage
+	fetcher           Fetcher
+	storageController StorageController
 }
 
 func (self ReserveData) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
@@ -240,6 +256,50 @@ func (self ReserveData) Stop() error {
 	return self.fetcher.Stop()
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher) *ReserveData {
-	return &ReserveData{storage, fetcher}
+func (self ReserveData) ControlAuthDataSize() error {
+	for {
+		log.Printf("waiting for signal from runner AuthData controller channel")
+		t := <-self.storageController.GetAuthBucketTicker()
+		log.Printf("got signal in AuthData channel with timestamp %d", common.TimeToTimepoint(t))
+		fileName := fmt.Sprintf("ExpiredAuthData_%d", time.Unix(int64(timepoint/1000), 0).UTC())
+		nRecord, err := self.storage.ExportAuthData(common.TimeToTimepoint(t), fileName)
+		if err != nil {
+			log.Printf("ERROR: authData export and prune operation failed: %s, err")
+		} else {
+			if nRecord > 0 {
+				err := self.analyticStorage.BackupFile(fileName)
+				if err != nil {
+					log.Printf("AnalyticPriceData: Back up file failed: %s", err)
+				} else {
+					log.Printf("AnalyticPriceData: Back up file successfully.")
+				}
+
+			} else {
+				//remove the empty file
+				os.Remove(fileName)
+			}
+			log.Printf("AnalyticPriceData: exported and pruned %d expired records from storage controll block from blockchain", nRecord)
+		}
+	}
+}
+
+func (self ReserveData) RunStorageController() error {
+	self.storageController.storageControllerRunner.Start()
+	go self.ControlAuthDataSize()
+	return nil
+}
+
+func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner dataStorage.StorageControllerRunner) *ReserveData {
+	return &ReserveData{storage, fetcher, storageControllerRunner}
+}
+
+func NewStorageController(awsKeyPath string, storageControllerRunner dataStorage.StorageControllerRunner) *StorageController {
+	awsConf, err := archive.GetAWSconfigFromFile(awsKeyPath)
+	if err != nil {
+		return nil, err
+	}
+	s3archive := archive.NewS3Archive(awsConf)
+	storageController := StorageController{
+		storageControllerRunner, awsConf.ExpiredAuthDataFolderPath, awsConf.ExpiredAuthDataBucketName, s3archive,
+	}
 }
