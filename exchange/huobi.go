@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -395,7 +396,7 @@ func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchan
 		log.Printf("ERROR: Can not send transaction to exchange: %v", err)
 		return nil, err
 	}
-	log.Printf("Transaction submitted. Tx is: \n %v", tx)
+	log.Printf("Transaction submitted. Tx is: %v", tx)
 	return tx, nil
 
 }
@@ -408,7 +409,7 @@ func (self *Huobi) PendingIntermediateTxs() (map[common.ActivityID]common.TXEntr
 	return result, nil
 }
 
-func (self *Huobi) FindTx2Pending(id common.ActivityID) (common.TXEntry, bool) {
+func (self *Huobi) FindTx2InPending(id common.ActivityID) (common.TXEntry, bool) {
 	pendings, err := self.storage.GetPendingIntermediateTXs()
 	if err != nil {
 		log.Printf("can't get pendings tx2 records: %v", err)
@@ -422,23 +423,34 @@ func (self *Huobi) FindTx2Pending(id common.ActivityID) (common.TXEntry, bool) {
 	return common.TXEntry{}, false
 }
 
-func (self *Huobi) DepositStatus(id common.ActivityID, txHash, currency string, sentAmount float64, timepoint uint64) (string, error) {
-	tx2Entry, found := self.storage.GetIntermedatorTx(id)
-	var isPending bool
-	var data common.TXEntry
-	if found != nil {
-		tx2Entry, isPending = self.FindTx2Pending(id)
+//FindTx2 : find Tx2 Record associates with activity ID, return
+func (self *Huobi) FindTx2(id common.ActivityID) (Tx2 common.TXEntry, found bool) {
+	found = true
+	//first look it up in permanent bucket
+	Tx2, err := self.storage.GetIntermedatorTx(id)
+	if err != nil {
+		//couldn't look for it in permanent bucket, look for it in pending bucket
+		Tx2, found = self.FindTx2InPending(id)
 	}
-	if (found != nil) && (!isPending) {
-		//if the 2nd transaction is not in the current Deposit status, check the 1st tx first.
-		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(txHash))
+	return Tx2, found
+}
+
+func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string, sentAmount float64, timepoint uint64) (string, error) {
+
+	var data common.TXEntry
+	tx2Entry, found := self.FindTx2(id)
+	if !found {
+		//if not found, meaning there is no tx2 yet, check the 1st Tx to process.
+
+		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(tx1Hash))
 		if err != nil {
-			log.Println("Can not get TX status")
+			log.Println("Can not get TX status (%s)", err)
+			return "", err
 		}
-		log.Printf("Status was %s at block %d ", status, blockno)
+		log.Printf("Status for Tx1 was %s at block %d ", status, blockno)
 		if status == "mined" {
 			//if it is mined, send 2nd tx.
-			log.Printf("found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, currency)
+			log.Printf("Found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, currency)
 			//check if the token is supported
 			token, err := common.GetInternalToken(currency)
 			if err != nil {
@@ -452,24 +464,27 @@ func (self *Huobi) DepositStatus(id common.ActivityID, txHash, currency string, 
 			if err != nil {
 				return "failed", err
 			}
-			Txhash := tx2.Hash().Hex()
-			data = common.TXEntry{Txhash, self.Name(), currency, "submitted", "", sentAmount, common.GetTimestamp()}
+			//store tx2 to pendingIntermediateTx
+			data = common.TXEntry{tx2.Hash().Hex(), self.Name(), currency, "submitted", "", sentAmount, common.GetTimestamp()}
 			err = self.storage.StorePendingIntermediateTx(id, data)
-			//err = self.storage.StoreIntermediateTx(Txhash, self.Name(), currency, "submitted", "", sentAmount, common.GetTimestamp(), id)
+
 			if err != nil {
 				return "", err
+			} else {
+				return "", nil
 			}
 		} else {
+			//No need to handle other blockchain status of TX1 here, since Fetcher will handle it from blockchain Status.
 			return "", nil
 		}
 	} else {
-		//if the 2nd transaction is in the Deposit Status, check its status.
+		// if there is tx2Entry, check it blockchain status first:
 		status, _, err := self.blockchain.TxStatus(ethereum.HexToHash(tx2Entry.Hash))
 		if err != nil {
 			return "", err
 		}
 		if status == "mined" {
-			log.Println("2nd Transaction is mined. Processed to store it and check the Deposit history")
+			log.Println("2nd Transaction is mined. Processed to store it and check the Huobi Deposit history")
 			data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "mined", "", sentAmount, common.GetTimestamp()}
 			err = self.storage.StorePendingIntermediateTx(id, data)
 			if err != nil {
@@ -479,8 +494,9 @@ func (self *Huobi) DepositStatus(id common.ActivityID, txHash, currency string, 
 			if err != nil && deposits.Status != "ok" {
 				return "", err
 			}
+			//check tx2 deposit status from Huobi
 			for _, deposit := range deposits.Data {
-				log.Printf("deposit tx is %s, with token %s", deposit.TxHash, deposit.Currency)
+				// log.Printf("deposit tx is %s, with token %s", deposit.TxHash, deposit.Currency)
 				if deposit.TxHash == tx2Entry.Hash {
 					if deposit.State == "safe" {
 						data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "mined", "done", sentAmount, common.GetTimestamp()}
@@ -489,22 +505,35 @@ func (self *Huobi) DepositStatus(id common.ActivityID, txHash, currency string, 
 							return "", err
 						}
 						err = self.storage.RemovePendingIntermediateTx(id)
+						if err != nil {
+							return "", err
+						}
 						return "done", nil
+					} else {
+						//TODO : handle other states following https://github.com/huobiapi/API_Docs_en/wiki/REST_Reference#deposit-states
+						return "", errors.New(fmt.Sprintf("Deposit found on huobi, status was not done but %s", deposit.State))
 					}
 				}
 			}
 			return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.InternalTokens())*2))
-		} else if status == "failed" || status == "lost" {
+		} else if status == "failed" {
 			data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "failed", "failed", sentAmount, common.GetTimestamp()}
-			err = self.storage.StoreIntermediateTx(id, data)
-			if err != nil {
-				return "failed", err
-			}
-			err = self.storage.RemovePendingIntermediateTx(id)
-			if err != nil {
-				return "failed", err
-			}
+
 			return "failed", nil
+		} else if status == "lost" {
+			elapsed := common.GetTimepoint() - tx2Entry.Timestamp.ToUint64()
+			if elapsed > uint64(15*time.Minute/time.Millisecond) {
+				data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "lost", "lost", sentAmount, common.GetTimestamp()}
+				err = self.storage.StoreIntermediateTx(id, data)
+				if err != nil {
+					return "lost", err
+				}
+				err = self.storage.RemovePendingIntermediateTx(id)
+				if err != nil {
+					return "lost", err
+				}
+				return "lost", fmt.Errorf("2nd Transaction took more than 15 minutes to finish, marked as lost")
+			}
 		}
 	}
 	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.InternalTokens())*2))
