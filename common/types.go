@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"math/big"
 	"strconv"
@@ -150,6 +151,12 @@ func (self FundingFee) GetTokenFee(token string) float64 {
 	return withdrawFee[token]
 }
 
+type ExchangesMinDeposit map[string]float64
+
+type ExchangesMinDepositConfig struct {
+	Exchanges map[string]ExchangesMinDeposit `json:"exchanges"`
+}
+
 type ExchangeFees struct {
 	Trading TradingFee
 	Funding FundingFee
@@ -166,6 +173,18 @@ func GetFeeFromFile(path string) (ExchangeFeesConfig, error) {
 	} else {
 		result := ExchangeFeesConfig{}
 		err := json.Unmarshal(data, &result)
+		return result, err
+	}
+}
+
+func GetMinDepositFromFile(path string) (ExchangesMinDepositConfig, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return ExchangesMinDepositConfig{}, err
+	} else {
+		result := ExchangesMinDepositConfig{}
+		err := json.Unmarshal(data, &result)
+		log.Printf("min deposit: %+v", result)
 		return result, err
 	}
 }
@@ -645,6 +664,24 @@ type MetricStats struct {
 
 type MetricStatsTimeZone map[int64]map[uint64]MetricStats
 
+type UserInfo struct {
+	Addr      string  `json:"user_address"`
+	Email     string  `json:"email"`
+	ETHVolume float64 `json:"total_eth_volume"`
+	USDVolume float64 `json:"total_usd_volume"`
+}
+
+type UserListResponse []UserInfo
+
+func (h UserListResponse) Less(i, j int) bool {
+	return h[i].ETHVolume < h[j].ETHVolume
+}
+
+func (h UserListResponse) Len() int      { return len(h) }
+func (h UserListResponse) Swap(i, j int) { h[i], h[j] = h[j], h[i] }
+
+type UserInfoTimezone map[int64]map[uint64]UserInfo
+
 type TradeHistory struct {
 	ID        string
 	Price     float64
@@ -721,3 +758,21 @@ type ExchangeTokenNoti map[string]ExchangeNotiContent
 type ExchangeActionNoti map[string]ExchangeTokenNoti
 
 type ExchangeNotifications map[string]ExchangeActionNoti
+
+type CountryTokenHeatmap map[string]VolumeStats
+
+type TokenHeatmap struct {
+	Country   string  `json:"country"`
+	Volume    float64 `json:"volume"`
+	ETHVolume float64 `json:"eth_volume"`
+	USDVolume float64 `json:"usd_volume"`
+}
+
+type TokenHeatmapResponse []TokenHeatmap
+
+func (t TokenHeatmapResponse) Less(i, j int) bool {
+	return t[i].Volume < t[j].Volume
+}
+
+func (t TokenHeatmapResponse) Len() int      { return len(t) }
+func (t TokenHeatmapResponse) Swap(i, j int) { t[i], t[j] = t[j], t[i] }

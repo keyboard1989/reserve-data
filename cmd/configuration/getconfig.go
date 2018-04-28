@@ -5,6 +5,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
+	"github.com/KyberNetwork/reserve-data/http"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -28,7 +29,7 @@ func GetChainType(kyberENV string) string {
 		return "homestead"
 	case "staging":
 		return "byzantium"
-	case "simulation":
+	case "simulation", "analytic_dev":
 		return "homestead"
 	case "ropsten":
 		return "byzantium"
@@ -51,6 +52,8 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 		return (ConfigPaths["simulation"])
 	case "ropsten":
 		return (ConfigPaths["ropsten"])
+	case "analytic_dev":
+		return (ConfigPaths["analytic_dev"])
 	default:
 		log.Println("Environment setting paths is not found, using dev...")
 		return (ConfigPaths["dev"])
@@ -60,6 +63,7 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
 	addressConfig := GetAddressConfig(setPath.settingPath)
+	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
@@ -72,18 +76,18 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		endpoint = setPath.endPoint
 	}
 
-	common.SupportedTokens = map[string]common.Token{}
-	common.ExternalTokens = map[string]common.Token{}
-	tokens := []common.Token{}
 	for id, t := range addressConfig.Tokens {
 		tok := common.Token{
 			id, t.Address, t.Decimals,
 		}
-		if t.KNReserveSupport {
-			common.SupportedTokens[id] = tok
-			tokens = append(tokens, tok)
+		if t.Active {
+			if t.KNReserveSupport {
+				common.RegisterInternalActiveToken(tok)
+			} else {
+				common.RegisterExternalActiveToken(tok)
+			}
 		} else {
-			common.ExternalTokens[id] = tok
+			common.RegisterInactiveToken(tok)
 		}
 	}
 
@@ -116,15 +120,20 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		blockchain.NewContractCaller(callClients, setPath.bkendpoints),
 	)
 
+	if !authEnbl {
+		log.Printf("\nWARNING: No authentication mode\n")
+	}
 	config := &Config{
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
-		SupportedTokens:         tokens,
+		SupportedTokens:         common.InternalTokens(),
 		WrapperAddress:          wrapperAddr,
 		PricingAddress:          pricingAddr,
 		ReserveAddress:          reserveAddr,
 		ChainType:               chainType,
+		AuthEngine:              hmac512auth,
+		EnableAuthentication:    authEnbl,
 	}
 
 	if enableStat {
@@ -132,7 +141,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	}
 
 	if !noCore {
-		config.AddCoreConfig(setPath, authEnbl, addressConfig, kyberENV)
+		config.AddCoreConfig(setPath, addressConfig, kyberENV)
 	}
 	return config
 }

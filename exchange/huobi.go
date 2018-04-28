@@ -25,12 +25,14 @@ const (
 type Huobi struct {
 	interf            HuobiInterface
 	pairs             []common.TokenPair
+	tokens            []common.Token
 	addresses         *common.ExchangeAddresses
 	exchangeInfo      *common.ExchangeInfo
 	fees              common.ExchangeFees
 	blockchain        HuobiBlockchain
 	intermediatorAddr ethereum.Address
 	storage           HuobiStorage
+	minDeposit        common.ExchangesMinDeposit
 }
 
 func (self *Huobi) MarshalText() (text []byte, err error) {
@@ -71,6 +73,7 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExch
 			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
 			exchangePrecisionLimit.Precision.Amount = symbol.AmountPrecision
 			exchangePrecisionLimit.Precision.Price = symbol.PricePrecision
+			exchangePrecisionLimit.MinNotional = 0.02
 			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
 			break
 		}
@@ -99,6 +102,10 @@ func (self *Huobi) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrec
 
 func (self *Huobi) GetFee() common.ExchangeFees {
 	return self.fees
+}
+
+func (self *Huobi) GetMinDeposit() common.ExchangesMinDeposit {
+	return self.minDeposit
 }
 
 func (self *Huobi) ID() common.ExchangeID {
@@ -293,8 +300,8 @@ func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 			balances := resp_data.Data.List
 			for _, b := range balances {
 				tokenID := strings.ToUpper(b.Currency)
-				_, exist := common.SupportedTokens[tokenID]
-				if exist {
+				_, err := common.GetInternalToken(tokenID)
+				if err == nil {
 					balance, _ := strconv.ParseFloat(b.Balance, 64)
 					if b.Type == "trade" {
 						result.AvailableBalance[tokenID] = balance
@@ -445,7 +452,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			//if it is mined, send 2nd tx.
 			log.Printf("Found a new deposit status, which deposit %.5f %s. Procceed to send it to Huobi", sentAmount, currency)
 			//check if the token is supported
-			token, err := common.GetToken(currency)
+			token, err := common.GetInternalToken(currency)
 			if err != nil {
 				return "", err
 			}
@@ -529,7 +536,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			}
 		}
 	}
-	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.SupportedTokens)*2))
+	return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.InternalTokens())*2))
 }
 
 func (self *Huobi) WithdrawStatus(
@@ -572,29 +579,27 @@ func NewHuobi(
 	addressConfig map[string]string,
 	feeConfig common.ExchangeFees,
 	interf HuobiInterface, blockchain *blockchain.BaseBlockchain,
-	signer blockchain.Signer, nonce blockchain.NonceCorpus, storage HuobiStorage) *Huobi {
+	signer blockchain.Signer, nonce blockchain.NonceCorpus, storage HuobiStorage,
+	minDepositConfig common.ExchangesMinDeposit) *Huobi {
 
-	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "huobi")
+	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "huobi")
 	bc, err := huobiblockchain.NewBlockchain(blockchain, signer, nonce)
 	if err != nil {
 		log.Printf("Cant create Huobi's blockchain: %v", err)
 		panic(err)
 	}
 
-	// huobiStorage, err := huobistorage.NewBoltStorage(huobiConfig.StoragePath)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
 	huobiObj := Huobi{
 		interf,
 		pairs,
+		tokens,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,
 		bc,
 		signer.GetAddress(),
 		storage,
+		minDeposit,
 	}
 	huobiServer := huobihttp.NewHuobiHTTPServer(&huobiObj)
 	go huobiServer.Run()

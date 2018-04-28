@@ -343,7 +343,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	afpMid := postForm.Get("afp_mid")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenAddrs, "-") {
-		token, err := common.GetToken(tok)
+		token, err := common.GetInternalToken(tok)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -440,7 +440,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		)
 		return
 	}
-	base, err := common.GetToken(baseTokenParam)
+	base, err := common.GetInternalToken(baseTokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -448,7 +448,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		)
 		return
 	}
-	quote, err := common.GetToken(quoteTokenParam)
+	quote, err := common.GetInternalToken(quoteTokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -561,7 +561,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		)
 		return
 	}
-	token, err := common.GetToken(tokenParam)
+	token, err := common.GetInternalToken(tokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -613,7 +613,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 		)
 		return
 	}
-	token, err := common.GetToken(tokenParam)
+	token, err := common.GetInternalToken(tokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -787,7 +787,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 	toParam := postForm.Get("to")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenParam, "-") {
-		token, err := common.GetToken(tok)
+		token, err := common.GetInternalToken(tok)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -1018,6 +1018,19 @@ func (self *HTTPServer) GetFee(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetMinDeposit(c *gin.Context) {
+	data := map[string]common.ExchangesMinDeposit{}
+	for _, exchange := range common.SupportedExchanges {
+		minDeposit := exchange.GetMinDeposit()
+		data[string(exchange.ID())] = minDeposit
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": data},
+	)
+	return
+}
+
 func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 	log.Println("Getting target quantity")
 	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
@@ -1137,7 +1150,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 		reserve, _ := strconv.ParseFloat(dataParts[2], 64)
 		rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
 		transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
-		_, err = common.GetToken(token)
+		_, err = common.GetInternalToken(token)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -1459,7 +1472,7 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 			return
 		}
 		token := dataParts[0]
-		_, err = common.GetToken(token)
+		_, err = common.GetInternalToken(token)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -2178,7 +2191,7 @@ func (self *HTTPServer) GetPriceAnalyticData(c *gin.Context) {
 
 func (self *HTTPServer) ExchangeNotification(c *gin.Context) {
 	postForm, ok := self.Authenticated(c, []string{
-		"exchange", "action", "token", "fromTime", "toTime", "isWarning", "msg"}, []Permission{RebalancePermission})
+		"exchange", "action", "token", "fromTime", "toTime", "isWarning"}, []Permission{RebalancePermission})
 	if !ok {
 		return
 	}
@@ -2235,6 +2248,140 @@ func (self *HTTPServer) GetNotifications(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetUserList(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{"fromTime", "toTime", "timeZone"}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	timeZone, err := strconv.ParseInt(c.Query("timeZone"), 10, 64)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  fmt.Sprintf("timeZone is required: %s", err.Error()),
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetUserList(fromTime, toTime, timeZone)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetReserveVolume(c *gin.Context) {
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	reserveAddr := c.Query("reserveAddr")
+	if reserveAddr == "" {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "reserve address is required",
+			},
+		)
+		return
+	}
+	tokenName := c.Query("token")
+	if tokenName == "" {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "token is required",
+			},
+		)
+		return
+	}
+	token, err := common.GetNetworkToken(tokenName)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetReserveVolume(fromTime, toTime, freq, reserveAddr, token.Address)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetTokenHeatmap(c *gin.Context) {
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	freq := c.Query("freq")
+	token := c.Query("token")
+	if token == "" {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "token param is required",
+			},
+		)
+		return
+	}
+	data, err := self.stat.GetTokenHeatmap(fromTime, toTime, token, freq)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -2258,6 +2405,7 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/exchangeinfo", self.GetExchangeInfo)
 		self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
 		self.r.GET("/exchangefees", self.GetFee)
+		self.r.GET("/exchange-min-deposit", self.GetMinDeposit)
 		self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
 		self.r.GET("/core/addresses", self.GetAddress)
 		self.r.GET("/tradehistory", self.GetTradeHistory)
@@ -2312,6 +2460,9 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-countries", self.GetCountries)
 		self.r.POST("/update-price-analytic-data", self.UpdatePriceAnalyticData)
 		self.r.GET("/get-price-analytic-data", self.GetPriceAnalyticData)
+		self.r.GET("/get-reserve-volume", self.GetReserveVolume)
+		self.r.GET("/get-user-list", self.GetUserList)
+		self.r.GET("/get-token-heatmap", self.GetTokenHeatmap)
 	}
 
 	self.r.Run(self.host)

@@ -19,10 +19,12 @@ const BITTREX_EPSILON float64 = 0.000001
 type Bittrex struct {
 	interf       BittrexInterface
 	pairs        []common.TokenPair
+	tokens       []common.Token
 	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
+	minDeposit   common.ExchangesMinDeposit
 }
 
 func (self *Bittrex) TokenAddresses() map[string]ethereum.Address {
@@ -40,6 +42,10 @@ func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
 
 func (self *Bittrex) GetFee() common.ExchangeFees {
 	return self.fees
+}
+
+func (self *Bittrex) GetMinDeposit() common.ExchangesMinDeposit {
+	return self.minDeposit
 }
 
 func (self *Bittrex) UpdateAllDepositAddresses(address string) {
@@ -238,7 +244,8 @@ func (self *Bittrex) WithdrawStatus(id, currency string, amount float64, timepoi
 				}
 			}
 		}
-		return "", "", errors.New("Withdraw with uuid " + id + " of currency " + currency + " is not found on bittrex")
+		log.Printf("Withdraw with uuid " + id + " of currency " + currency + " is not found on bittrex")
+		return "", "", nil
 	}
 }
 
@@ -329,12 +336,19 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		if resp_data.Success {
 			for _, b := range resp_data.Result {
 				tokenID := b.Currency
-				_, exist := common.SupportedTokens[tokenID]
-				if exist {
+				_, err := common.GetInternalToken(tokenID)
+				if err == nil {
 					result.AvailableBalance[tokenID] = b.Available
 					result.DepositBalance[tokenID] = b.Pending
 					result.LockedBalance[tokenID] = 0
 				}
+			}
+			// check if bittrex returned balance for all of the
+			// supported token.
+			// If it didn't, it is considered invalid
+			if len(result.AvailableBalance) != len(self.tokens) {
+				result.Valid = false
+				result.Error = "Bittrex didn't return balance for all supported tokens"
 			}
 		} else {
 			result.Valid = false
@@ -392,14 +406,17 @@ func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID
 	return result, nil
 }
 
-func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BittrexInterface, storage BittrexStorage) *Bittrex {
-	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "bittrex")
+func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BittrexInterface, storage BittrexStorage,
+	minDepositConfig common.ExchangesMinDeposit) *Bittrex {
+	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex")
 	return &Bittrex{
 		interf,
 		pairs,
+		tokens,
 		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),
 		fees,
+		minDeposit,
 	}
 }

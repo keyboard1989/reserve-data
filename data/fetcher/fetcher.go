@@ -155,6 +155,23 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 			pendings, timepoint)
 	}
 	wait.Wait()
+	// if we got tx info of withdrawals from the cexs, we have to
+	// update them to pending activities in order to also check
+	// their mining status.
+	// otherwise, if the txs are already mined and the reserve
+	// balances are already changed, their mining statuses will
+	// still be "", which can lead analytic to intepret the balances
+	// wrongly.
+	for _, activity := range pendings {
+		status, found := estatuses.Load(activity.ID)
+		if found {
+			activityStatus := status.(common.ActivityStatus)
+			if activity.Result["tx"] != nil && activity.Result["tx"].(string) == "" {
+				activity.Result["tx"] = activityStatus.Tx
+			}
+		}
+	}
+
 	self.FetchAuthDataFromBlockchain(
 		bbalances, &bstatuses, pendings)
 	snapshot.Block = self.currentBlock
@@ -232,7 +249,7 @@ func (self *Fetcher) FetchAuthDataFromBlockchain(
 		preStatuses := self.FetchStatusFromBlockchain(pendings)
 		balances, err = self.FetchBalanceFromBlockchain()
 		if err != nil {
-			log.Printf("Fetching blockchain balances failed: %v\n", err)
+			log.Printf("Fetching blockchain balances failed: %v", err)
 			break
 		}
 		statuses = self.FetchStatusFromBlockchain(pendings)
@@ -408,7 +425,9 @@ func (self *Fetcher) PersistSnapshot(
 			if activityStatus.Error != nil {
 				snapshot.Valid = false
 				snapshot.Error = activityStatus.Error.Error()
-				activity.Result["error"] = activityStatus.Error.Error()
+				activity.Result["status_error"] = activityStatus.Error.Error()
+			} else {
+				activity.Result["status_error"] = ""
 			}
 		}
 		status, _ = bstatuses.Load(activity.ID)
@@ -422,7 +441,9 @@ func (self *Fetcher) PersistSnapshot(
 			if activityStatus.Error != nil {
 				snapshot.Valid = false
 				snapshot.Error = activityStatus.Error.Error()
-				activity.Result["error"] = activityStatus.Error.Error()
+				activity.Result["status_error"] = activityStatus.Error.Error()
+			} else {
+				activity.Result["status_error"] = ""
 			}
 		}
 		log.Printf("Aggregate statuses, final activity: %+v", activity)

@@ -76,12 +76,12 @@ func (self ReserveStats) GetAssetVolume(fromTime, toTime uint64, freq, asset str
 		return data, err
 	}
 
-	token, err := common.GetToken(asset)
+	token, err := common.GetNetworkToken(asset)
 	if err != nil {
 		return data, errors.New(fmt.Sprintf("assets %s is not supported", asset))
 	}
 
-	data, err = self.statStorage.GetAssetVolume(fromTime, toTime, freq, strings.ToLower(token.Address))
+	data, err = self.statStorage.GetAssetVolume(fromTime, toTime, freq, ethereum.HexToAddress(token.Address))
 	return data, err
 }
 
@@ -93,8 +93,8 @@ func (self ReserveStats) GetBurnFee(fromTime, toTime uint64, freq, reserveAddr s
 		return data, err
 	}
 
-	reserveAddr = strings.ToLower(reserveAddr)
-	data, err = self.statStorage.GetBurnFee(fromTime, toTime, freq, reserveAddr)
+	data, err = self.statStorage.GetBurnFee(fromTime, toTime, freq, ethereum.HexToAddress(reserveAddr))
+
 	return data, err
 }
 
@@ -106,9 +106,8 @@ func (self ReserveStats) GetWalletFee(fromTime, toTime uint64, freq, reserveAddr
 		return data, err
 	}
 
-	reserveAddr = strings.ToLower(reserveAddr)
-	walletAddr = strings.ToLower(walletAddr)
-	data, err = self.statStorage.GetWalletFee(fromTime, toTime, freq, reserveAddr, walletAddr)
+	data, err = self.statStorage.GetWalletFee(fromTime, toTime, freq, ethereum.HexToAddress(reserveAddr), ethereum.HexToAddress(walletAddr))
+
 	return data, err
 }
 
@@ -120,8 +119,22 @@ func (self ReserveStats) GetUserVolume(fromTime, toTime uint64, freq, userAddr s
 		return data, err
 	}
 
-	userAddr = strings.ToLower(userAddr)
-	data, err = self.statStorage.GetUserVolume(fromTime, toTime, freq, userAddr)
+	data, err = self.statStorage.GetUserVolume(fromTime, toTime, freq, ethereum.HexToAddress(userAddr))
+
+	return data, err
+}
+
+func (self ReserveStats) GetReserveVolume(fromTime, toTime uint64, freq, reserveAddr, tokenAddr string) (common.StatTicks, error) {
+	data := common.StatTicks{}
+
+	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, freq)
+	if err != nil {
+		return data, err
+	}
+
+	reserveAddr = strings.ToLower(reserveAddr)
+	tokenAddr = strings.ToLower(tokenAddr)
+	data, err = self.statStorage.GetReserveVolume(fromTime, toTime, freq, ethereum.HexToAddress(reserveAddr), ethereum.HexToAddress(tokenAddr))
 	return data, err
 }
 
@@ -208,6 +221,49 @@ func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (com
 	return arrResult, err
 }
 
+func (self ReserveStats) GetTokenHeatmap(fromTime, toTime uint64, tokenStr, freq string) (common.TokenHeatmapResponse, error) {
+	result := common.CountryTokenHeatmap{}
+	var arrResult common.TokenHeatmapResponse
+	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, "D")
+	if err != nil {
+		return arrResult, err
+	}
+	countries, err := self.statStorage.GetCountries()
+	if err != nil {
+		return arrResult, err
+	}
+	token, err := common.GetNetworkToken(tokenStr)
+	if err != nil {
+		return arrResult, err
+	}
+	for _, country := range countries {
+		key := fmt.Sprintf("%s_%s", country, strings.ToLower(token.Address))
+		stats, err := self.statStorage.GetTokenHeatmap(fromTime, toTime, key, freq)
+		if err != nil {
+			return arrResult, err
+		}
+		for _, stat := range stats {
+			s := stat.(common.VolumeStats)
+			current := result[country]
+			result[country] = common.VolumeStats{
+				Volume:    current.Volume + s.Volume,
+				ETHVolume: current.ETHVolume + s.ETHVolume,
+				USDAmount: current.USDAmount + s.USDAmount,
+			}
+		}
+	}
+	for k, v := range result {
+		arrResult = append(arrResult, common.TokenHeatmap{
+			Country:   k,
+			Volume:    v.Volume,
+			ETHVolume: v.ETHVolume,
+			USDVolume: v.USDAmount,
+		})
+	}
+	sort.Sort(sort.Reverse(arrResult))
+	return arrResult, err
+}
+
 func (self ReserveStats) GetCountries() ([]string, error) {
 	result, _ := self.statStorage.GetCountries()
 	return result, nil
@@ -218,7 +274,15 @@ func (self ReserveStats) GetCatLogs(fromTime uint64, toTime uint64) ([]common.Se
 }
 
 func (self ReserveStats) GetPendingAddresses() ([]string, error) {
-	return self.userStorage.GetPendingAddresses()
+	addresses, err := self.userStorage.GetPendingAddresses()
+	if err != nil {
+		return nil, err
+	}
+	result := []string{}
+	for _, addr := range addresses {
+		result = append(result, common.AddrToString(addr))
+	}
+	return result, nil
 }
 
 func (self ReserveStats) RunAnalyticStorageController() {
@@ -267,7 +331,7 @@ func (self ReserveStats) Stop() error {
 }
 
 func (self ReserveStats) GetCapByAddress(addr ethereum.Address) (*common.UserCap, error) {
-	category, err := self.userStorage.GetCategory(addr.Hex())
+	category, err := self.userStorage.GetCategory(addr)
 	if err != nil {
 		return nil, err
 	}
@@ -287,7 +351,7 @@ func (self ReserveStats) GetCapByUser(userID string) (*common.UserCap, error) {
 		log.Printf("Couldn't find any associated addresses. User %s is not kyced.", userID)
 		return common.NonKycedCap(), nil
 	} else {
-		return self.GetCapByAddress(ethereum.HexToAddress(addresses[0]))
+		return self.GetCapByAddress(addresses[0])
 	}
 }
 
@@ -310,7 +374,7 @@ func (self ReserveStats) GetWalletStats(fromTime uint64, toTime uint64, walletAd
 		return nil, err
 	}
 	walletAddr = strings.ToLower(walletAddr)
-	return self.statStorage.GetWalletStats(fromTime, toTime, walletAddr, timezone)
+	return self.statStorage.GetWalletStats(fromTime, toTime, ethereum.HexToAddress(walletAddr), timezone)
 }
 
 func (self ReserveStats) GetWalletAddress() ([]string, error) {
@@ -321,7 +385,7 @@ func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr et
 	var result []common.ReserveRates
 	var err error
 	var rates []common.ReserveRates
-	rates, err = self.rateStorage.GetReserveRates(fromTime, toTime, reserveAddr.Hex())
+	rates, err = self.rateStorage.GetReserveRates(fromTime, toTime, reserveAddr)
 	latest := common.ReserveRates{}
 	for _, rate := range rates {
 		if !isDuplicate(rate, latest) {
@@ -337,16 +401,30 @@ func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr et
 	return result, err
 }
 
+func (self ReserveStats) GetUserList(fromTime, toTime uint64, timezone int64) (common.UserListResponse, error) {
+	fromTime, toTime, err := validateTimeWindow(fromTime, toTime, "D")
+	if err != nil {
+		return []common.UserInfo{}, err
+	}
+	result := common.UserListResponse{}
+	data, err := self.statStorage.GetUserList(fromTime, toTime, timezone)
+	for _, v := range data {
+		result = append(result, v)
+	}
+	sort.Sort(sort.Reverse(result))
+	return result, err
+}
+
 func (self ReserveStats) UpdateUserAddresses(userID string, addrs []ethereum.Address, timestamps []uint64) error {
-	addresses := []string{}
+	addresses := []ethereum.Address{}
 	for _, addr := range addrs {
-		addresses = append(addresses, addr.Hex())
+		addresses = append(addresses, addr)
 	}
 	return self.userStorage.UpdateUserAddresses(userID, addresses, timestamps)
 }
 
 func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error) {
-	user, _, err := self.userStorage.GetUserOfAddress(address.Hex())
+	user, _, err := self.userStorage.GetUserOfAddress(address)
 	log.Printf("got user %s for address %s", user, strings.ToLower(address.Hex()))
 	if err != nil {
 		return false, err

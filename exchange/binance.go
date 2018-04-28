@@ -1,7 +1,6 @@
 package exchange
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -22,9 +21,11 @@ const (
 type Binance struct {
 	interf       BinanceInterface
 	pairs        []common.TokenPair
+	tokens       []common.Token
 	addresses    *common.ExchangeAddresses
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
+	minDeposit   common.ExchangesMinDeposit
 }
 
 func (self *Binance) TokenAddresses() map[string]ethereum.Address {
@@ -129,6 +130,10 @@ func (self *Binance) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePr
 
 func (self *Binance) GetFee() common.ExchangeFees {
 	return self.fees
+}
+
+func (self *Binance) GetMinDeposit() common.ExchangesMinDeposit {
+	return self.minDeposit
 }
 
 func (self *Binance) ID() common.ExchangeID {
@@ -352,8 +357,8 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		} else {
 			for _, b := range resp_data.Balances {
 				tokenID := b.Asset
-				_, exist := common.SupportedTokens[tokenID]
-				if exist {
+				_, err := common.GetInternalToken(tokenID)
+				if err == nil {
 					avai, _ := strconv.ParseFloat(b.Free, 64)
 					locked, _ := strconv.ParseFloat(b.Locked, 64)
 					result.AvailableBalance[tokenID] = avai
@@ -437,7 +442,8 @@ func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string
 				}
 			}
 		}
-		return "", errors.New("Deposit is not found in deposit list returned from Binance. This might cause by wrong start/end time, please check again.")
+		log.Printf("Deposit is not found in deposit list returned from Binance. This might cause by wrong start/end time, please check again.")
+		return "", nil
 	}
 }
 
@@ -457,7 +463,8 @@ func (self *Binance) WithdrawStatus(id, currency string, amount float64, timepoi
 				}
 			}
 		}
-		return "", "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
+		log.Printf("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
+		return "", "", nil
 	}
 }
 
@@ -478,13 +485,16 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 	}
 }
 
-func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface) *Binance {
-	pairs, fees := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, "binance")
+func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface,
+	minDepositConfig common.ExchangesMinDeposit) *Binance {
+	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance")
 	return &Binance{
 		interf,
 		pairs,
+		tokens,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		fees,
+		minDeposit,
 	}
 }
