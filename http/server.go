@@ -1226,6 +1226,26 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) GetGoldData(c *gin.Context) {
+	log.Printf("Getting gold data")
+
+	data, err := self.app.GetGoldData(getTimePoint(c, true))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
+}
+
 func (self *HTTPServer) GetTimeServer(c *gin.Context) {
 	c.JSON(
 		http.StatusOK,
@@ -2345,6 +2365,153 @@ func (self *HTTPServer) GetReserveVolume(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) SetStableTokenParams(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission})
+	if !ok {
+		return
+	}
+	value := []byte(postForm.Get("value"))
+	if len(value) > MAX_DATA_SIZE {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "the data size must be less than 1 MB",
+			},
+		)
+		return
+	}
+	err := self.metric.SetStableTokenParams(value)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) ConfirmStableTokenParams(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	value := []byte(postForm.Get("value"))
+	if len(value) > MAX_DATA_SIZE {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "the data size must be less than 1 MB",
+			},
+		)
+		return
+	}
+	err := self.metric.ConfirmStableTokenParams(value)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) RejectStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	err := self.metric.RemovePendingStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+
+}
+
+func (self *HTTPServer) GetPendingStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+
+	data, err := self.metric.GetPendingStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+
+	data, err := self.metric.GetStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) GetTokenHeatmap(c *gin.Context) {
 	fromTime, toTime, ok := self.ValidateTimeInput(c)
 	if !ok {
@@ -2362,6 +2529,7 @@ func (self *HTTPServer) GetTokenHeatmap(c *gin.Context) {
 		)
 		return
 	}
+
 	data, err := self.stat.GetTokenHeatmap(fromTime, toTime, token, freq)
 	if err != nil {
 		c.JSON(
@@ -2437,6 +2605,14 @@ func (self *HTTPServer) Run() {
 
 		self.r.POST("/exchange-notification", self.ExchangeNotification)
 		self.r.GET("/exchange-notifications", self.GetNotifications)
+
+		self.r.POST("/set-stable-token-params", self.SetStableTokenParams)
+		self.r.POST("/confirm-stable-token-params", self.ConfirmStableTokenParams)
+		self.r.POST("/reject-stable-token-params", self.RejectStableTokenParams)
+		self.r.GET("/pending-stable-token-params", self.GetPendingStableTokenParams)
+		self.r.GET("/stable-token-params", self.GetStableTokenParams)
+
+    self.r.GET("/gold-feed", self.GetGoldData)
 	}
 
 	if self.stat != nil {

@@ -116,6 +116,8 @@ func serverStart(cmd *cobra.Command, args []string) {
 		//get fetcher based on config and ENV == simulation.
 		dataFetcher = fetcher.NewFetcher(
 			config.FetcherStorage,
+			config.FetcherGlobalStorage,
+			config.World,
 			config.FetcherRunner,
 			config.ReserveAddress,
 			kyberENV == "simulation",
@@ -180,6 +182,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			dataFetcher.SetBlockchain(bc)
 			rData = data.NewReserveData(
 				config.DataStorage,
+				config.DataGlobalStorage,
 				dataFetcher,
 			)
 			rData.Run()
