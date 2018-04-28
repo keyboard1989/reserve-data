@@ -515,7 +515,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 					}
 				}
 			}
-			return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.SupportedTokens)*2))
+			return "", errors.New(fmt.Sprintf("Deposit doesn't exist. This should not happen unless you have more than %d deposits at the same time.", len(common.InternalTokens())*2))
 		} else if status == "failed" {
 			data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "failed", "failed", sentAmount, common.GetTimestamp()}
 
