@@ -487,11 +487,13 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "mined", "", sentAmount, common.GetTimestamp()}
 			err = self.storage.StorePendingIntermediateTx(id, data)
 			if err != nil {
-				return "", err
+				log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
+				return "", nil
 			}
 			deposits, err := self.interf.DepositHistory()
-			if err != nil && deposits.Status != "ok" {
-				return "", err
+			if err != nil || deposits.Status != "ok" {
+				log.Printf("Getting deposit history from huobi failed, error: %v, status: %s", err, deposits.Status)
+				return "", nil
 			}
 			//check tx2 deposit status from Huobi
 			for _, deposit := range deposits.Data {
@@ -501,11 +503,13 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 						data = common.TXEntry{tx2Entry.Hash, self.Name(), currency, "mined", "done", sentAmount, common.GetTimestamp()}
 						err = self.storage.StoreIntermediateTx(id, data)
 						if err != nil {
-							return "", err
+							log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
+							return "", nil
 						}
 						err = self.storage.RemovePendingIntermediateTx(id)
 						if err != nil {
-							return "", err
+							log.Printf("Trying to remove pending intermediate tx from huobi storage, error: %s. Ignore it and treat it like it is still pending", err.Error())
+							return "", nil
 						}
 						return "done", nil
 					} else {
