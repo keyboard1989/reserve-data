@@ -72,7 +72,7 @@ func (self *BoltStorage) GetPendingIntermediateTXs() (map[common.ActivityID]comm
 
 func (self *BoltStorage) StorePendingIntermediateTx(id common.ActivityID, data common.TXEntry) error {
 	var err error
-	self.db.Update(func(tx *bolt.Tx) error {
+	err = self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
 		dataJson, err = json.Marshal(data)
