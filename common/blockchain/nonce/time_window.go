@@ -11,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
+const WINDOW uint64 = 10000 // 10s
+
 type TimeWindow struct {
 	address     ethereum.Address
 	mu          sync.Mutex
@@ -49,7 +51,7 @@ func (self *TimeWindow) GetNextNonce(ethclient *ethclient.Client) (*big.Int, err
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	t := common.GetTimepoint()
-	if t-self.time < 2000 {
+	if t-self.time < WINDOW {
 		self.time = t
 		self.manualNonce.Add(self.manualNonce, ethereum.Big1)
 		return self.manualNonce, nil
