@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -1072,15 +1071,15 @@ func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
 	return
 }
 
-func targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold float64) error {
-	if total <= reserve {
-		return errors.New("Total quantity must bigger than reserver quantity")
-	}
-	if rebalanceThresold < 0 || rebalanceThresold > 1 || transferThresold < 0 || transferThresold > 1 {
-		return errors.New("Rebalance and transfer thresold must bigger than 0 and smaller than 1")
-	}
-	return nil
-}
+// func targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold float64) error {
+// 	if total <= reserve {
+// 		return errors.New("Total quantity must bigger than reserver quantity")
+// 	}
+// 	if rebalanceThresold < 0 || rebalanceThresold > 1 || transferThresold < 0 || transferThresold > 1 {
+// 		return errors.New("Rebalance and transfer thresold must bigger than 0 and smaller than 1")
+// 	}
+// 	return nil
+// }
 
 func (self *HTTPServer) ConfirmTargetQty(c *gin.Context) {
 	log.Println("Confirm target quantity")
@@ -1146,19 +1145,11 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 			return
 		}
 		token := dataParts[0]
-		total, _ := strconv.ParseFloat(dataParts[1], 64)
-		reserve, _ := strconv.ParseFloat(dataParts[2], 64)
-		rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
-		transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
+		// total, _ := strconv.ParseFloat(dataParts[1], 64)
+		// reserve, _ := strconv.ParseFloat(dataParts[2], 64)
+		// rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
+		// transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
 		_, err = common.GetInternalToken(token)
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": err.Error()},
-			)
-			return
-		}
-		err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -2612,7 +2603,7 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/pending-stable-token-params", self.GetPendingStableTokenParams)
 		self.r.GET("/stable-token-params", self.GetStableTokenParams)
 
-    self.r.GET("/gold-feed", self.GetGoldData)
+		self.r.GET("/gold-feed", self.GetGoldData)
 	}
 
 	if self.stat != nil {
