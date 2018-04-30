@@ -764,8 +764,8 @@ type CountryTokenHeatmap map[string]VolumeStats
 type TokenHeatmap struct {
 	Country   string  `json:"country"`
 	Volume    float64 `json:"volume"`
-	ETHVolume float64 `json:"eth_volume"`
-	USDVolume float64 `json:"usd_volume"`
+	ETHVolume float64 `json:"total_eth_value"`
+	USDVolume float64 `json:"total_fiat_value"`
 }
 
 type TokenHeatmapResponse []TokenHeatmap
