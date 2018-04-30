@@ -126,6 +126,10 @@ func (self *StableEx) OrderStatus(id string, base, quote string) (string, error)
 	return "", errors.New("not supported")
 }
 
+func (self *StableEx) GetMinDeposit() common.ExchangesMinDeposit {
+	return common.ExchangesMinDeposit{}
+}
+
 func NewStableEx(addressConfig map[string]string, feeConfig common.ExchangeFees) *StableEx {
 	_, pairs, fees, _ := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, common.ExchangesMinDeposit{}, "stable_exchange")
 	return &StableEx{
