@@ -1,3 +1,15 @@
+# 0.7.0 (2018-04-30)
+
+## Features:
+- Support global data monitoring (gold feeds...)
+- Support stable exchange (the virtual exchange to handle tokens that are not listed on big cexs)
+
+## Bug fixes:
+- TODO
+
+## Compatability:
+- This version only works with KyberNetwork smart contracts version 0.3.0 or later
+
 # 0.6.1 (2018-04-25)
 ## Features:
 - Getting aws info from config file
