@@ -61,7 +61,7 @@ func NewExchangePool(
 	for _, exparam := range exparams {
 		switch exparam {
 		case "stable_exchange":
-			stableEx := exchange.NewStableEx(addressConfig.Exchanges["dgx"], feeConfig.Exchanges["dgx"])
+			stableEx := exchange.NewStableEx(addressConfig.Exchanges["stable_exchange"], feeConfig.Exchanges["stable_exchange"])
 			exchanges[stableEx.ID()] = stableEx
 		case "bittrex":
 			bittrexSigner := bittrex.NewSignerFromFile(settingPaths.secretPath)
