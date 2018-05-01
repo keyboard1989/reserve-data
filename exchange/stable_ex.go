@@ -13,6 +13,7 @@ type StableEx struct {
 	pairs        []common.TokenPair
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
+	mindeposit   common.ExchangesMinDeposit
 }
 
 func (self *StableEx) TokenAddresses() map[string]ethereum.Address {
@@ -127,14 +128,15 @@ func (self *StableEx) OrderStatus(id string, base, quote string) (string, error)
 }
 
 func (self *StableEx) GetMinDeposit() common.ExchangesMinDeposit {
-	return common.ExchangesMinDeposit{}
+	return self.mindeposit
 }
 
 func NewStableEx(addressConfig map[string]string, feeConfig common.ExchangeFees, minDepositConfig common.ExchangesMinDeposit) *StableEx {
-	_, pairs, fees, _ := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "stable_exchange")
+	_, pairs, fees, mindeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "stable_exchange")
 	return &StableEx{
 		pairs,
 		common.NewExchangeInfo(),
 		fees,
+		mindeposit,
 	}
 }
