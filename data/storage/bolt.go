@@ -56,6 +56,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("PATH ISSS %s", path)
 	// init buckets
 	db.Update(func(tx *bolt.Tx) error {
 		_, err = tx.CreateBucketIfNotExists([]byte(PRICE_BUCKET))
@@ -209,46 +210,48 @@ func StoreIntoFile(bucket string, timestamp uint64, data []byte) error {
 	return nil
 }
 
-// func (self *BoltStorage) ExportOutdateAuthData(bucket string, currentTime uint64, expired uint64) error {
-// 	expiredTimestampByte := uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
-// 	outFile, err := os.Create(fileName)
-// 	defer outFile.Close()
-// 	if err != nil {
-// 		return 0, err
-// 	}
-// 	err = self.db.Update(func(tx *bolt.Tx) error {
-// 		b := tx.Bucket([]byte(PRICE_ANALYTIC_BUCKET))
-// 		c := b.Cursor()
-// 		for k, v := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, v = c.Next() {
-// 			timestamp := bytesToUint64(k)
-// 			temp := make(map[string]interface{})
-// 			err = json.Unmarshal(v, &temp)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			record := common.AnalyticPriceResponse{
-// 				timestamp,
-// 				temp,
-// 			}
-// 			var output []byte
-// 			output, err = json.Marshal(record)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			_, err = outFile.WriteString(string(output) + "\n")
-// 			if err != nil {
-// 				return err
-// 			}
-// 			nRecord++
-// 			err = b.Delete(k)
-// 			if err != nil {
-// 				return err
-// 			}
-// 		}
-// 		return nil
-// 	})
-// 	return
-// }
+func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName string) (nRecord uint64, err error) {
+
+	expiredTimestampByte := uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
+	outFile, err := os.Create(fileName)
+	defer outFile.Close()
+	if err != nil {
+		return 0, err
+	}
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(AUTH_DATA_BUCKET))
+		c := b.Cursor()
+		for k, v := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, v = c.Next() {
+			timestamp := bytesToUint64(k)
+
+			temp := common.AuthDataSnapshot{}
+			err = json.Unmarshal(v, &temp)
+			if err != nil {
+				return err
+			}
+			record := common.AuthDataRecord{
+				common.Timestamp(strconv.FormatUint(timestamp, 10)),
+				temp,
+			}
+			var output []byte
+			output, err = json.Marshal(record)
+			if err != nil {
+				return err
+			}
+			_, err = outFile.WriteString(string(output) + "\n")
+			if err != nil {
+				return err
+			}
+			nRecord++
+			err = b.Delete(k)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	return nRecord, err
+}
 
 // PruneOutdatedData Remove first version out of database
 func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
@@ -272,6 +275,7 @@ func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	return err
 }
 
+//GetAllPrices returns the corresponding AllPriceEntry to a particular Version
 func (self *BoltStorage) GetAllPrices(version common.Version) (common.AllPriceEntry, error) {
 	result := common.AllPriceEntry{}
 	var err error
