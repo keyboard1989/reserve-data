@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -64,7 +65,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	setPath := GetConfigPaths(kyberENV)
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
-
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
@@ -123,6 +123,11 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if !authEnbl {
 		log.Printf("\nWARNING: No authentication mode\n")
 	}
+	awsConf, err := archive.GetAWSconfigFromFile(setPath.secretPath)
+	if err != nil {
+		panic(err)
+	}
+	s3archive := archive.NewS3Archive(awsConf)
 	config := &Config{
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
@@ -134,6 +139,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		ChainType:               chainType,
 		AuthEngine:              hmac512auth,
 		EnableAuthentication:    authEnbl,
+		Archive:                 s3archive,
 	}
 
 	if enableStat {

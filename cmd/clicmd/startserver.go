@@ -89,15 +89,22 @@ func InitInterface(kyberENV string) {
 }
 
 func serverStart(cmd *cobra.Command, args []string) {
+	log.Printf("you're here, you cunt2")
+
 	numCPU := runtime.NumCPU()
+
 	runtime.GOMAXPROCS(numCPU)
+	log.Printf("you're here, you cunt3")
+
 	configLog(stdoutLog)
+	log.Printf("you're here, you cunt4")
 
 	//get configuration from ENV variable
 	kyberENV := os.Getenv("KYBER_ENV")
 	if kyberENV == "" {
 		kyberENV = "dev"
 	}
+	log.Printf("you're here, you cunt4")
 	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
 
@@ -182,6 +189,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 				config.DataStorage,
 				dataFetcher,
 				config.DataControllerRunner,
+				config.Archive,
 			)
 			if kyberENV != "simulation" {
 				rData.RunStorageController()
@@ -230,6 +238,8 @@ Allow overwriting some parameter`,
 }
 
 func init() {
+	log.Printf("you're here, you cunt")
+
 	// start server flags.
 	startServer.Flags().BoolVarP(&noAuthEnable, "noauth", "", false, "disable authentication")
 	startServer.Flags().IntVarP(&servPort, "port", "p", 8000, "server port")

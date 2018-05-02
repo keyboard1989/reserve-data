@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	"github.com/KyberNetwork/reserve-data/data/storagecontroller"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
@@ -46,10 +48,11 @@ type Config struct {
 	RateStorage     stat.RateStorage
 	FetcherStorage  fetcher.Storage
 	MetricStorage   metric.MetricStorage
+	Archive         archive.Archive
 	//ExchangeStorage exchange.Storage
 
 	FetcherRunner        fetcher.FetcherRunner
-	DataControllerRunner storage.StorageControllerRunner
+	DataControllerRunner storagecontroller.StorageControllerRunner
 	StatFetcherRunner    stat.FetcherRunner
 	StatControllerRunner stat.ControllerRunner
 	FetcherExchanges     []fetcher.Exchange
@@ -158,7 +161,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 	}
 
 	var fetcherRunner fetcher.FetcherRunner
-	var dataControllerRunner storage.StorageControllerRunner
+	var dataControllerRunner storagecontroller.StorageControllerRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		fetcherRunner = http_runner.NewHttpRunner(8001)
 	} else {
@@ -168,7 +171,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 			3*time.Second,  // rate fetching interval
 			5*time.Second,  // block fetching interval
 			10*time.Minute) // tradeHistory fetching interval
-		dataControllerRunner = storage.NewStorageControllerTickerRunner(3*time.Second, 4*time.Second)
+		dataControllerRunner = storagecontroller.NewStorageControllerTickerRunner(3*time.Second, 4*time.Second)
 	}
 
 	pricingSigner := PricingSignerFromConfigFile(settingPath.secretPath)

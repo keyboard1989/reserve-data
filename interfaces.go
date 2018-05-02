@@ -66,6 +66,7 @@ type ReserveData interface {
 	GetNotifications() (common.ExchangeNotifications, error)
 
 	Run() error
+	RunStorageController() error
 	Stop() error
 }
 
