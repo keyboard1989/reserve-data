@@ -56,7 +56,6 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("PATH ISSS %s", path)
 	// init buckets
 	db.Update(func(tx *bolt.Tx) error {
 		_, err = tx.CreateBucketIfNotExists([]byte(PRICE_BUCKET))
@@ -192,24 +191,6 @@ func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, bucket string) int {
 	return result
 }
 
-// StoreIntoFile store the outdate record into a file named after the bucketname and
-// the start of the day timestamp regard to the timestamp of the record
-func StoreIntoFile(bucket string, timestamp uint64, data []byte) error {
-	timestamp = timestamp / UI64DAY * UI64DAY
-	filename := fmt.Sprintf("%s_%d", bucket, timestamp)
-	f, err := os.OpenFile(filename, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		return err
-	}
-	if _, err := f.Write(data); err != nil {
-		return err
-	}
-	if err := f.Close(); err != nil {
-		log.Fatal(err)
-	}
-	return nil
-}
-
 func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName string) (nRecord uint64, err error) {
 
 	expiredTimestampByte := uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
@@ -260,12 +241,11 @@ func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	c := b.Cursor()
 	nExcess := self.GetNumberOfVersion(tx, bucket) - MAX_NUMBER_VERSION
 	for i := 0; i < nExcess; i++ {
-		k, v := c.First()
+		k, _ := c.First()
 		if k == nil {
 			err = fmt.Errorf("There is no previous version in %s", bucket)
 			return err
 		}
-		StoreIntoFile(bucket, bytesToUint64(k), v)
 		err = b.Delete([]byte(k))
 		if err != nil {
 			panic(err)
