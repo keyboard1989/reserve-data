@@ -1,6 +1,8 @@
 package exchange
 
 import (
+	"log"
+
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
@@ -36,6 +38,7 @@ func getExchangePairsAndFeesFromConfig(
 		} else {
 			panic(tokenID + " is not found in " + exchange + " binance deposit fee config file")
 		}
+		log.Printf("minDepositConfig: %v", minDepositConfig)
 		if _, exist := minDepositConfig[tokenID]; exist {
 			minDeposit[tokenID] = minDepositConfig[tokenID] * 2
 		} else {

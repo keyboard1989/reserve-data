@@ -170,6 +170,10 @@
             "ZIL": 100,
             "AST": 5,
             "LINK": 1
+        },
+        "stable_exchange": {
+          "ETH": 0,
+          "DGX": 0
         }
     }
 }
