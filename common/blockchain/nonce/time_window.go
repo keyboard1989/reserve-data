@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-const WINDOW uint64 = 2000 // 2s
+const WINDOW uint64 = 2000 // 2s, be very very careful when change this constant, if we set it to high value, it can lead to nonce lost making the whole pricing operation stuck
 
 type TimeWindow struct {
 	address     ethereum.Address
