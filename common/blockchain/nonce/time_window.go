@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-const WINDOW uint64 = 10000 // 10s
+const WINDOW uint64 = 2000 // 2s
 
 type TimeWindow struct {
 	address     ethereum.Address
