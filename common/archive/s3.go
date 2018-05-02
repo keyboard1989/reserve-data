@@ -1,6 +1,8 @@
 package archive
 
 import (
+	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -15,24 +17,47 @@ import (
 type s3Archive struct {
 	uploader *s3manager.Uploader
 	svc      *s3.S3
+	awsConf  AWSConfig
 }
 
-func (archive *s3Archive) UploadFile(awsfolderPath string, filename string, bucketName string) error {
+func (archive *s3Archive) BackupFile(bucketName string, destinationFolder string, fileName string) error {
+	err := archive.UploadFile(bucketName, destinationFolder, fileName)
+	if err != nil {
+		return err
+	}
+	intergrity, err := archive.CheckFileIntergrity(bucketName, destinationFolder, fileName)
+	if err != nil {
+		return err
+	}
+	if !intergrity {
+		return fmt.Errorf("Archive: Upload File  %s: corrupted", fileName)
+	}
+	return nil
+}
+
+func enforceFolderPath(fp string) string {
+	if string(fp[len(fp)-1]) != "/" {
+		fp = fp + "/"
+	}
+	return fp
+}
+func (archive *s3Archive) UploadFile(bucketName string, awsfolderPath string, filename string) error {
 	file, err := os.Open(filename)
 	defer file.Close()
+	log.Printf("StorageController: bucket name is %s", bucketName)
 	if err != nil {
 		return err
 	}
 	_, err = archive.uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(bucketName),
-		Key:    aws.String(awsfolderPath + filename),
+		Key:    aws.String(enforceFolderPath(awsfolderPath) + filename),
 		Body:   file,
 	})
 
 	return err
 }
 
-func (archive *s3Archive) CheckFileIntergrity(awsfolderPath string, filename string, bucketName string) (bool, error) {
+func (archive *s3Archive) CheckFileIntergrity(bucketName string, awsfolderPath string, filename string) (bool, error) {
 	//get File info
 	file, err := os.Open(filename)
 	defer file.Close()
@@ -44,9 +69,10 @@ func (archive *s3Archive) CheckFileIntergrity(awsfolderPath string, filename str
 		return false, err
 	}
 	//get AWS's file info
+
 	x := s3.ListObjectsInput{
 		Bucket: aws.String(bucketName),
-		Prefix: aws.String(awsfolderPath + filename),
+		Prefix: aws.String(enforceFolderPath(awsfolderPath) + filename),
 	}
 	resp, err := archive.svc.ListObjects(&x)
 	if err != nil {
@@ -68,7 +94,16 @@ func (archive *s3Archive) RemoveFile(filePath string, bucketName string) error {
 	return err
 }
 
-func NewS3Archive(conf AWSConfig) Archive {
+func (archive *s3Archive) GetAuthDataPath() string {
+	return archive.awsConf.ExpiredAuthDataFolderPath
+
+}
+
+func (archive *s3Archive) GetReserveDataBucketName() string {
+	return archive.awsConf.ExpiredReserveDataBucketName
+}
+
+func NewS3Archive(conf AWSConfig) *s3Archive {
 
 	crdtl := credentials.NewStaticCredentials(conf.AccessKeyID, conf.SecretKey, conf.Token)
 	sess := session.Must(session.NewSession(&aws.Config{
@@ -79,7 +114,8 @@ func NewS3Archive(conf AWSConfig) Archive {
 	svc := s3.New(sess)
 	archive := s3Archive{uploader,
 		svc,
+		conf,
 	}
 
-	return Archive(&archive)
+	return &archive
 }
