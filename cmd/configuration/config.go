@@ -20,6 +20,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/KyberNetwork/reserve-data/stat"
+	"github.com/KyberNetwork/reserve-data/stat/statstoragecontroller"
 	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -54,7 +55,7 @@ type Config struct {
 	FetcherRunner        fetcher.FetcherRunner
 	DataControllerRunner storagecontroller.StorageControllerRunner
 	StatFetcherRunner    stat.FetcherRunner
-	StatControllerRunner stat.ControllerRunner
+	StatControllerRunner statstoragecontroller.ControllerRunner
 	FetcherExchanges     []fetcher.Exchange
 	Exchanges            []common.Exchange
 	BlockchainSigner     blockchain.Signer
@@ -118,7 +119,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 	}
 
 	var statFetcherRunner stat.FetcherRunner
-	var statControllerRunner stat.ControllerRunner
+	var statControllerRunner statstoragecontroller.ControllerRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		statFetcherRunner = http_runner.NewHttpRunner(8002)
 	} else {
@@ -128,7 +129,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 			10*time.Second, // rate fetching interval
 			2*time.Second,  // tradelog processing interval
 			2*time.Second)  // catlog processing interval
-		statControllerRunner = stat.NewControllerTickerRunner(24 * time.Hour)
+		statControllerRunner = statstoragecontroller.NewControllerTickerRunner(24 * time.Hour)
 
 	}
 

@@ -7,4 +7,6 @@ type Archive interface {
 	CheckFileIntergrity(bucketName string, destinationFolder string, fileName string) (bool, error)
 	GetAuthDataPath() string
 	GetReserveDataBucketName() string
+	GetStatDataBucketName() string
+	GetPriceAnalyticPath() string
 }

@@ -103,6 +103,18 @@ func (archive *s3Archive) GetReserveDataBucketName() string {
 	return archive.awsConf.ExpiredReserveDataBucketName
 }
 
+//GetStatDataBucketName returns the bucket in which the backup Data is stored.
+//This should be passed in from JSON configure file
+func (archive *s3Archive) GetStatDataBucketName() string {
+	return archive.awsConf.ExpiredStatDataBucketName
+}
+
+//GetPriceAnalyticPath returns the folder path to store Expired Price Analytic Data.
+//Ths should be passed in from JSON configure file
+func (archive *s3Archive) GetPriceAnalyticPath() string {
+	return archive.awsConf.ExpiredPriceAnalyticFolderPath
+}
+
 func NewS3Archive(conf AWSConfig) *s3Archive {
 
 	crdtl := credentials.NewStaticCredentials(conf.AccessKeyID, conf.SecretKey, conf.Token)
