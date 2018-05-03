@@ -229,28 +229,6 @@ func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
 	return err
 }
 
-func (self *BoltStorage) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
-	var result uint64
-	var err error
-	err = self.db.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte(PRICE_BUCKET)).Cursor()
-		result, err = reverseSeek(timepoint, c)
-		return nil
-	})
-	return common.Version(result), err
-}
-
-// GetNumberOfVersion return number of version storing in a bucket
-func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, bucket string) int {
-	result := 0
-	b := tx.Bucket([]byte(bucket))
-	c := b.Cursor()
-	for k, _ := c.First(); k != nil; k, _ = c.Next() {
-		result++
-	}
-	return result
-}
-
 func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName string) (nRecord uint64, err error) {
 
 	expiredTimestampByte := uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
@@ -315,6 +293,29 @@ func (self *BoltStorage) PruneOutdatedData(tx *bolt.Tx, bucket string) error {
 	return err
 }
 
+func (self *BoltStorage) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
+	var result uint64
+	var err error
+	err = self.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(PRICE_BUCKET)).Cursor()
+		result, err = reverseSeek(timepoint, c)
+		return nil
+	})
+	log.Printf("\n\n\n\n\n\n\nversion is %d", result)
+	return common.Version(result), err
+}
+
+// GetNumberOfVersion return number of version storing in a bucket
+func (self *BoltStorage) GetNumberOfVersion(tx *bolt.Tx, bucket string) int {
+	result := 0
+	b := tx.Bucket([]byte(bucket))
+	c := b.Cursor()
+	for k, _ := c.First(); k != nil; k, _ = c.Next() {
+		result++
+	}
+	return result
+}
+
 //GetAllPrices returns the corresponding AllPriceEntry to a particular Version
 func (self *BoltStorage) GetAllPrices(version common.Version) (common.AllPriceEntry, error) {
 	result := common.AllPriceEntry{}
@@ -355,6 +356,26 @@ func (self *BoltStorage) GetOnePrice(pair common.TokenPairID, version common.Ver
 			return common.OnePrice{}, errors.New("Pair of token is not supported")
 		}
 	}
+}
+
+func (self *BoltStorage) StorePrice(data common.AllPriceEntry, timepoint uint64) error {
+	var err error
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(PRICE_BUCKET))
+
+		// remove outdated data from bucket
+		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
+		self.PruneOutdatedData(tx, PRICE_BUCKET)
+		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
+
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		return b.Put(uint64ToBytes(timepoint), dataJson)
+	})
+	return err
 }
 
 func (self *BoltStorage) CurrentAuthDataVersion(timepoint uint64) (common.Version, error) {
@@ -434,26 +455,6 @@ func (self *BoltStorage) GetRate(version common.Version) (common.AllRateEntry, e
 		return nil
 	})
 	return result, err
-}
-
-func (self *BoltStorage) StorePrice(data common.AllPriceEntry, timepoint uint64) error {
-	var err error
-	err = self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
-		b := tx.Bucket([]byte(PRICE_BUCKET))
-
-		// remove outdated data from bucket
-		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
-		self.PruneOutdatedData(tx, PRICE_BUCKET)
-		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
-
-		dataJson, err = json.Marshal(data)
-		if err != nil {
-			return err
-		}
-		return b.Put(uint64ToBytes(timepoint), dataJson)
-	})
-	return err
 }
 
 func (self *BoltStorage) StoreAuthSnapshot(

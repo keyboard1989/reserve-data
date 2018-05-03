@@ -184,7 +184,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 			10*time.Minute, // tradeHistory fetching interval
 			10*time.Second, // global data fetching interval
 		)
-		dataControllerRunner = storagecontroller.NewStorageControllerTickerRunner(3*time.Second, 4*time.Second)
+		dataControllerRunner = storagecontroller.NewStorageControllerTickerRunner(24 * time.Hour)
 	}
 
 	pricingSigner := PricingSignerFromConfigFile(settingPath.secretPath)
