@@ -1,17 +1,15 @@
-package stat
+package statstoragecontroller
 
 import (
 	"fmt"
 	"time"
-
-	"github.com/KyberNetwork/reserve-data/stat/statstoragecontroller"
 )
 
 type ControllerRunnerTest struct {
-	cr statstoragecontroller.ControllerRunner
+	cr ControllerRunner
 }
 
-func NewControllerRunnerTest(controllerRunner statstoragecontroller.ControllerRunner) *ControllerRunnerTest {
+func NewControllerRunnerTest(controllerRunner ControllerRunner) *ControllerRunnerTest {
 	return &ControllerRunnerTest{controllerRunner}
 }
 
