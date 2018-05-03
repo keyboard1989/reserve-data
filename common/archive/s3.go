@@ -2,7 +2,6 @@ package archive
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -44,7 +43,6 @@ func enforceFolderPath(fp string) string {
 func (archive *s3Archive) UploadFile(bucketName string, awsfolderPath string, filename string) error {
 	file, err := os.Open(filename)
 	defer file.Close()
-	log.Printf("StorageController: bucket name is %s", bucketName)
 	if err != nil {
 		return err
 	}
