@@ -22,6 +22,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/stat"
 	"github.com/KyberNetwork/reserve-data/stat/statstoragecontroller"
 	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
+	"github.com/KyberNetwork/reserve-data/world"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -40,18 +41,21 @@ type SettingPaths struct {
 }
 
 type Config struct {
-	ActivityStorage core.ActivityStorage
-	DataStorage     data.Storage
-	StatStorage     stat.StatStorage
-	AnalyticStorage stat.AnalyticStorage
-	UserStorage     stat.UserStorage
-	LogStorage      stat.LogStorage
-	RateStorage     stat.RateStorage
-	FetcherStorage  fetcher.Storage
-	MetricStorage   metric.MetricStorage
-	Archive         archive.Archive
+	ActivityStorage      core.ActivityStorage
+	DataStorage          data.Storage
+	DataGlobalStorage    data.GlobalStorage
+	StatStorage          stat.StatStorage
+	AnalyticStorage      stat.AnalyticStorage
+	UserStorage          stat.UserStorage
+	LogStorage           stat.LogStorage
+	RateStorage          stat.RateStorage
+	FetcherStorage       fetcher.Storage
+	FetcherGlobalStorage fetcher.GlobalStorage
+	MetricStorage        metric.MetricStorage
+	Archive              archive.Archive
 	//ExchangeStorage exchange.Storage
 
+	World                *world.TheWorld
 	FetcherRunner        fetcher.FetcherRunner
 	DataControllerRunner storagecontroller.StorageControllerRunner
 	StatFetcherRunner    stat.FetcherRunner
@@ -156,6 +160,12 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		log.Fatalf("Fees file %s cannot found at: %s", settingPath.feePath, err)
 	}
 
+	minDepositPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/min_deposit.json"
+	minDeposit, err := common.GetMinDepositFromFile(minDepositPath)
+	if err != nil {
+		log.Fatalf("Fees file %s cannot found at: %s", minDepositPath, err.Error())
+	}
+
 	dataStorage, err := storage.NewBoltStorage(settingPath.dataStoragePath)
 	if err != nil {
 		panic(err)
@@ -171,7 +181,9 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 			5*time.Second,  // authdata fetching interval
 			3*time.Second,  // rate fetching interval
 			5*time.Second,  // block fetching interval
-			10*time.Minute) // tradeHistory fetching interval
+			10*time.Minute, // tradeHistory fetching interval
+			10*time.Second, // global data fetching interval
+		)
 		dataControllerRunner = storagecontroller.NewStorageControllerTickerRunner(3*time.Second, 4*time.Second)
 	}
 
@@ -180,7 +192,9 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 
 	self.ActivityStorage = dataStorage
 	self.DataStorage = dataStorage
+	self.DataGlobalStorage = dataStorage
 	self.FetcherStorage = dataStorage
+	self.FetcherGlobalStorage = dataStorage
 	self.MetricStorage = dataStorage
 	self.FetcherRunner = fetcherRunner
 	self.DataControllerRunner = dataControllerRunner
@@ -203,6 +217,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		addressConfig,
 		settingPath,
 		self.Blockchain,
+		minDeposit,
 		kyberENV)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()

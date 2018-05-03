@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -1018,6 +1017,19 @@ func (self *HTTPServer) GetFee(c *gin.Context) {
 	return
 }
 
+func (self *HTTPServer) GetMinDeposit(c *gin.Context) {
+	data := map[string]common.ExchangesMinDeposit{}
+	for _, exchange := range common.SupportedExchanges {
+		minDeposit := exchange.GetMinDeposit()
+		data[string(exchange.ID())] = minDeposit
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{"success": true, "data": data},
+	)
+	return
+}
+
 func (self *HTTPServer) GetTargetQty(c *gin.Context) {
 	log.Println("Getting target quantity")
 	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
@@ -1059,15 +1071,15 @@ func (self *HTTPServer) GetPendingTargetQty(c *gin.Context) {
 	return
 }
 
-func targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold float64) error {
-	if total <= reserve {
-		return errors.New("Total quantity must bigger than reserver quantity")
-	}
-	if rebalanceThresold < 0 || rebalanceThresold > 1 || transferThresold < 0 || transferThresold > 1 {
-		return errors.New("Rebalance and transfer thresold must bigger than 0 and smaller than 1")
-	}
-	return nil
-}
+// func targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold float64) error {
+// 	if total <= reserve {
+// 		return errors.New("Total quantity must bigger than reserver quantity")
+// 	}
+// 	if rebalanceThresold < 0 || rebalanceThresold > 1 || transferThresold < 0 || transferThresold > 1 {
+// 		return errors.New("Rebalance and transfer thresold must bigger than 0 and smaller than 1")
+// 	}
+// 	return nil
+// }
 
 func (self *HTTPServer) ConfirmTargetQty(c *gin.Context) {
 	log.Println("Confirm target quantity")
@@ -1133,19 +1145,11 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 			return
 		}
 		token := dataParts[0]
-		total, _ := strconv.ParseFloat(dataParts[1], 64)
-		reserve, _ := strconv.ParseFloat(dataParts[2], 64)
-		rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
-		transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
+		// total, _ := strconv.ParseFloat(dataParts[1], 64)
+		// reserve, _ := strconv.ParseFloat(dataParts[2], 64)
+		// rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
+		// transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
 		_, err = common.GetInternalToken(token)
-		if err != nil {
-			c.JSON(
-				http.StatusOK,
-				gin.H{"success": false, "reason": err.Error()},
-			)
-			return
-		}
-		err = targetQtySanityCheck(total, reserve, rebalanceThresold, transferThresold)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -1211,6 +1215,26 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 			"data":    data,
 		},
 	)
+}
+
+func (self *HTTPServer) GetGoldData(c *gin.Context) {
+	log.Printf("Getting gold data")
+
+	data, err := self.app.GetGoldData(getTimePoint(c, true))
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{"success": false, "reason": err.Error()},
+		)
+	} else {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+				"data":    data,
+			},
+		)
+	}
 }
 
 func (self *HTTPServer) GetTimeServer(c *gin.Context) {
@@ -1588,6 +1612,42 @@ func (self *HTTPServer) GetUserVolume(c *gin.Context) {
 		return
 	}
 	data, err := self.stat.GetUserVolume(fromTime, toTime, freq, userAddr)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetUsersVolume(c *gin.Context) {
+	fromTime, _ := strconv.ParseUint(c.Query("fromTime"), 10, 64)
+	toTime, _ := strconv.ParseUint(c.Query("toTime"), 10, 64)
+	freq := c.Query("freq")
+	userAddr := c.Query("userAddr")
+	if userAddr == "" {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "User address is required",
+			},
+		)
+		return
+	}
+	userAddrs := strings.Split(userAddr, ",")
+	data, err := self.stat.GetUsersVolume(fromTime, toTime, freq, userAddrs)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2332,6 +2392,153 @@ func (self *HTTPServer) GetReserveVolume(c *gin.Context) {
 	)
 }
 
+func (self *HTTPServer) SetStableTokenParams(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission})
+	if !ok {
+		return
+	}
+	value := []byte(postForm.Get("value"))
+	if len(value) > MAX_DATA_SIZE {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "the data size must be less than 1 MB",
+			},
+		)
+		return
+	}
+	err := self.metric.SetStableTokenParams(value)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) ConfirmStableTokenParams(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	value := []byte(postForm.Get("value"))
+	if len(value) > MAX_DATA_SIZE {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  "the data size must be less than 1 MB",
+			},
+		)
+		return
+	}
+	err := self.metric.ConfirmStableTokenParams(value)
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
+func (self *HTTPServer) RejectStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	err := self.metric.RemovePendingStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+
+}
+
+func (self *HTTPServer) GetPendingStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+
+	data, err := self.metric.GetPendingStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
+func (self *HTTPServer) GetStableTokenParams(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, ConfigurePermission, ConfirmConfPermission, RebalancePermission})
+	if !ok {
+		return
+	}
+
+	data, err := self.metric.GetStableTokenParams()
+	if err != nil {
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": false,
+				"reason":  err.Error(),
+			},
+		)
+		return
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+			"data":    data,
+		},
+	)
+}
+
 func (self *HTTPServer) GetTokenHeatmap(c *gin.Context) {
 	fromTime, toTime, ok := self.ValidateTimeInput(c)
 	if !ok {
@@ -2349,6 +2556,7 @@ func (self *HTTPServer) GetTokenHeatmap(c *gin.Context) {
 		)
 		return
 	}
+
 	data, err := self.stat.GetTokenHeatmap(fromTime, toTime, token, freq)
 	if err != nil {
 		c.JSON(
@@ -2392,6 +2600,7 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/exchangeinfo", self.GetExchangeInfo)
 		self.r.GET("/exchangeinfo/:exchangeid/:base/:quote", self.GetPairInfo)
 		self.r.GET("/exchangefees", self.GetFee)
+		self.r.GET("/exchange-min-deposit", self.GetMinDeposit)
 		self.r.GET("/exchangefees/:exchangeid", self.GetExchangeFee)
 		self.r.GET("/core/addresses", self.GetAddress)
 		self.r.GET("/tradehistory", self.GetTradeHistory)
@@ -2423,6 +2632,14 @@ func (self *HTTPServer) Run() {
 
 		self.r.POST("/exchange-notification", self.ExchangeNotification)
 		self.r.GET("/exchange-notifications", self.GetNotifications)
+
+		self.r.POST("/set-stable-token-params", self.SetStableTokenParams)
+		self.r.POST("/confirm-stable-token-params", self.ConfirmStableTokenParams)
+		self.r.POST("/reject-stable-token-params", self.RejectStableTokenParams)
+		self.r.GET("/pending-stable-token-params", self.GetPendingStableTokenParams)
+		self.r.GET("/stable-token-params", self.GetStableTokenParams)
+
+		self.r.GET("/gold-feed", self.GetGoldData)
 	}
 
 	if self.stat != nil {
@@ -2435,6 +2652,7 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-burn-fee", self.GetBurnFee)
 		self.r.GET("/get-wallet-fee", self.GetWalletFee)
 		self.r.GET("/get-user-volume", self.GetUserVolume)
+		self.r.GET("/get-users-volume", self.GetUsersVolume)
 		self.r.GET("/get-trade-summary", self.GetTradeSummary)
 		self.r.POST("/update-user-addresses", self.UpdateUserAddresses)
 		self.r.GET("/get-pending-addresses", self.GetPendingAddresses)

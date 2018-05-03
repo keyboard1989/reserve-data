@@ -7,6 +7,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
+	"github.com/KyberNetwork/reserve-data/world"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -63,6 +64,12 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
+
+	world, err := world.NewTheWorld(kyberENV, setPath.secretPath)
+	if err != nil {
+		panic("Can't init the world (which is used to get global data), err " + err.Error())
+	}
+
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
@@ -140,6 +147,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		AuthEngine:              hmac512auth,
 		EnableAuthentication:    authEnbl,
 		Archive:                 s3archive,
+		World:                   world,
 	}
 
 	if enableStat {

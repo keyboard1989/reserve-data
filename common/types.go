@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"math"
 	"math/big"
 	"strconv"
@@ -150,6 +151,12 @@ func (self FundingFee) GetTokenFee(token string) float64 {
 	return withdrawFee[token]
 }
 
+type ExchangesMinDeposit map[string]float64
+
+type ExchangesMinDepositConfig struct {
+	Exchanges map[string]ExchangesMinDeposit `json:"exchanges"`
+}
+
 type ExchangeFees struct {
 	Trading TradingFee
 	Funding FundingFee
@@ -166,6 +173,18 @@ func GetFeeFromFile(path string) (ExchangeFeesConfig, error) {
 	} else {
 		result := ExchangeFeesConfig{}
 		err := json.Unmarshal(data, &result)
+		return result, err
+	}
+}
+
+func GetMinDepositFromFile(path string) (ExchangesMinDepositConfig, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return ExchangesMinDepositConfig{}, err
+	} else {
+		result := ExchangesMinDepositConfig{}
+		err := json.Unmarshal(data, &result)
+		log.Printf("min deposit: %+v", result)
 		return result, err
 	}
 }
@@ -749,8 +768,8 @@ type CountryTokenHeatmap map[string]VolumeStats
 type TokenHeatmap struct {
 	Country   string  `json:"country"`
 	Volume    float64 `json:"volume"`
-	ETHVolume float64 `json:"eth_volume"`
-	USDVolume float64 `json:"usd_volume"`
+	ETHVolume float64 `json:"total_eth_value"`
+	USDVolume float64 `json:"total_fiat_value"`
 }
 
 type TokenHeatmapResponse []TokenHeatmap
@@ -761,3 +780,5 @@ func (t TokenHeatmapResponse) Less(i, j int) bool {
 
 func (t TokenHeatmapResponse) Len() int      { return len(t) }
 func (t TokenHeatmapResponse) Swap(i, j int) { t[i], t[j] = t[j], t[i] }
+
+type UsersVolume map[string]StatTicks

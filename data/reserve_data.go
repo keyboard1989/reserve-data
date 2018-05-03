@@ -15,6 +15,19 @@ type ReserveData struct {
 	storage           Storage
 	fetcher           Fetcher
 	storageController storagecontroller.StorageController
+	globalStorage     GlobalStorage
+}
+
+func (self ReserveData) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
+	return self.globalStorage.CurrentGoldInfoVersion(timepoint)
+}
+
+func (self ReserveData) GetGoldData(timestamp uint64) (common.GoldData, error) {
+	version, err := self.CurrentGoldInfoVersion(timestamp)
+	if err != nil {
+		return common.GoldData{}, nil
+	}
+	return self.globalStorage.GetGoldInfo(version)
 }
 
 func (self ReserveData) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
@@ -279,10 +292,10 @@ func (self ReserveData) RunStorageController() error {
 	return nil
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner storagecontroller.StorageControllerRunner, arch archive.Archive) *ReserveData {
+func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner storagecontroller.StorageControllerRunner, arch archive.Archive, globalStorage GlobalStorage) *ReserveData {
 	storageController, err := storagecontroller.NewStorageController(storageControllerRunner, arch)
 	if err != nil {
 		panic(err)
 	}
-	return &ReserveData{storage, fetcher, storageController}
+	return &ReserveData{storage, fetcher, storageController, globalStorage}
 }

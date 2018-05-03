@@ -195,17 +195,6 @@
       "listed": true
     },
 
-    "LINK": {
-      "name": "Chain Link",
-      "decimals": 18,
-      "address": "0x514910771af9ca656af840dff83e8264ecf986ca",
-      "minimalRecordResolution" : "10",
-      "maxPerBlockImbalance" : "1925452883",
-      "maxTotalImbalance" : "1925452883",
-      "internal use": true,
-      "listed": true
-    },
-
     "DAI": {
       "name" : "DAI",
       "decimals": 18,
@@ -217,6 +206,37 @@
       "listed": true
     },
 
+    "LINK": {
+      "name": "Chain Link",
+      "decimals": 18,
+      "address": "0x514910771af9ca656af840dff83e8264ecf986ca",
+      "minimalRecordResolution" : "10",
+      "maxPerBlockImbalance" : "1925452883",
+      "maxTotalImbalance" : "1925452883",
+      "internal use": true,
+      "listed": true
+    },
+    "IOST": {
+      "name": "IOStoken",
+      "decimals": 18,
+      "address": "0xfa1a856cfa3409cfa145fa4e20eb270df3eb21ab",
+      "internal use": false,
+      "listed": true
+    },
+    "STORM": {
+      "name": "Storm",
+      "decimals": 18,
+      "address": "0xd0a4b8946cb52f0661273bfbc6fd0e0c75fc6433",
+      "internal use": false,
+      "listed": true
+    },
+    "MOT": {
+      "name": "Olympus Labs",
+      "decimals": 18,
+      "address": "0x263c618480dbe35c300d8d5ecda19bbb986acaed",
+      "internal use": false,
+      "listed": true
+    },
     "ETH": {
       "name": "Ethereum",
       "decimals": 18,
@@ -405,6 +425,6 @@
   "feeburner": "0x07f6e905f2a1559cd9fd43cb92f8a1062a3ca706",
   "whitelist" : "0x6e106a75d369d09a9ea1dcc16da844792aa669a3",
   "third_party_reserves": [
-    "0x2aab2b157a03915c8a73adae735d0cf51c872f31"
+    "0x2aab2b157a03915c8a73adae735d0cf51c872f31","0x6f50e41885fdc44dbdf7797df0393779a9c0a3a6"
   ]
 }
