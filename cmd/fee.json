@@ -373,6 +373,22 @@
                 }
             }
         },
+        "stable_exchange": {
+          "Trading": {
+                "taker": 0,
+                "maker": 0
+          },
+          "Funding":{
+            "Deposit": {
+              "ETH": 0,
+              "DGX": 0
+            },
+            "Withdraw":{
+              "ETH": 0,
+              "DGX": 0
+            }
+          }
+        },
         "huobi": {
             "Trading": {
                 "taker": 0.002,

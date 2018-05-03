@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"reflect"
 	"strconv"
 	"strings"
 	"sync"
@@ -17,25 +18,29 @@ import (
 )
 
 const (
-	PRICE_BUCKET            string = "prices"
-	RATE_BUCKET             string = "rates"
-	ORDER_BUCKET            string = "orders"
-	ACTIVITY_BUCKET         string = "activities"
-	AUTH_DATA_BUCKET        string = "auth_data"
-	PENDING_ACTIVITY_BUCKET string = "pending_activities"
-	METRIC_BUCKET           string = "metrics"
-	METRIC_TARGET_QUANTITY  string = "target_quantity"
-	PENDING_TARGET_QUANTITY string = "pending_target_quantity"
-	TRADE_HISTORY           string = "trade_history"
-	ENABLE_REBALANCE        string = "enable_rebalance"
-	SETRATE_CONTROL         string = "setrate_control"
-	PENDING_PWI_EQUATION    string = "pending_pwi_equation"
-	PWI_EQUATION            string = "pwi_equation"
-	INTERMEDIATE_TX         string = "intermediate_tx"
-	EXCHANGE_STATUS         string = "exchange_status"
-	EXCHANGE_NOTIFICATIONS  string = "exchange_notifications"
-	MAX_NUMBER_VERSION      int    = 1000
-	MAX_GET_RATES_PERIOD    uint64 = 86400000 //1 days in milisec
+	GOLD_BUCKET string = "gold_feeds"
+
+	PRICE_BUCKET                       string = "prices"
+	RATE_BUCKET                        string = "rates"
+	ORDER_BUCKET                       string = "orders"
+	ACTIVITY_BUCKET                    string = "activities"
+	AUTH_DATA_BUCKET                   string = "auth_data"
+	PENDING_ACTIVITY_BUCKET            string = "pending_activities"
+	METRIC_BUCKET                      string = "metrics"
+	METRIC_TARGET_QUANTITY             string = "target_quantity"
+	PENDING_TARGET_QUANTITY            string = "pending_target_quantity"
+	TRADE_HISTORY                      string = "trade_history"
+	ENABLE_REBALANCE                   string = "enable_rebalance"
+	SETRATE_CONTROL                    string = "setrate_control"
+	PENDING_PWI_EQUATION               string = "pending_pwi_equation"
+	PWI_EQUATION                       string = "pwi_equation"
+	INTERMEDIATE_TX                    string = "intermediate_tx"
+	EXCHANGE_STATUS                    string = "exchange_status"
+	EXCHANGE_NOTIFICATIONS             string = "exchange_notifications"
+	MAX_NUMBER_VERSION                 int    = 1000
+	MAX_GET_RATES_PERIOD               uint64 = 86400000 //1 days in milisec
+	STABLE_TOKEN_PARAMS_BUCKET         string = "stable-token-params"
+	PENDING_STABLE_TOKEN_PARAMS_BUCKET string = "pending-stable-token-params"
 )
 
 type BoltStorage struct {
@@ -53,6 +58,11 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	}
 	// init buckets
 	db.Update(func(tx *bolt.Tx) error {
+		_, err = tx.CreateBucketIfNotExists([]byte(GOLD_BUCKET))
+		if err != nil {
+			return err
+		}
+
 		_, err = tx.CreateBucketIfNotExists([]byte(PRICE_BUCKET))
 		if err != nil {
 			return err
@@ -121,6 +131,14 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		if err != nil {
 			return err
 		}
+		_, err = tx.CreateBucketIfNotExists([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET))
+		if err != nil {
+			return err
+		}
+		_, err = tx.CreateBucketIfNotExists([]byte(STABLE_TOKEN_PARAMS_BUCKET))
+		if err != nil {
+			return err
+		}
 		return nil
 	})
 	if err != nil {
@@ -162,6 +180,49 @@ func reverseSeek(timepoint uint64, c *bolt.Cursor) (uint64, error) {
 			}
 		}
 	}
+}
+
+func (self *BoltStorage) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
+	var result uint64
+	var err error
+	err = self.db.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(GOLD_BUCKET)).Cursor()
+		result, err = reverseSeek(timepoint, c)
+		return nil
+	})
+	return common.Version(result), err
+}
+
+func (self *BoltStorage) GetGoldInfo(version common.Version) (common.GoldData, error) {
+	result := common.GoldData{}
+	var err error
+	err = self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(GOLD_BUCKET))
+		data := b.Get(uint64ToBytes(uint64(version)))
+		if data == nil {
+			err = errors.New(fmt.Sprintf("version %s doesn't exist", string(version)))
+		} else {
+			err = json.Unmarshal(data, &result)
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
+	var err error
+	timepoint := data.Timestamp
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		var dataJson []byte
+		b := tx.Bucket([]byte(GOLD_BUCKET))
+		dataJson, err = json.Marshal(data)
+		if err != nil {
+			return err
+		}
+		err = b.Put(uint64ToBytes(timepoint), dataJson)
+		return err
+	})
+	return err
 }
 
 func (self *BoltStorage) CurrentPriceVersion(timepoint uint64) (common.Version, error) {
@@ -1183,4 +1244,110 @@ func (self *BoltStorage) GetExchangeNotifications() (common.ExchangeNotification
 		return err
 	})
 	return result, err
+}
+
+func (self *BoltStorage) SetStableTokenParams(value []byte) error {
+	var err error
+	k := uint64ToBytes(1)
+	temp := make(map[string]interface{})
+	vErr := json.Unmarshal(value, &temp)
+	if vErr != nil {
+		return fmt.Errorf("Rejected: Data could not be unmarshalled to defined format: %s", vErr)
+	}
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		b, uErr := tx.CreateBucketIfNotExists([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET))
+		if uErr != nil {
+			return uErr
+		}
+		if b.Get(k) != nil {
+			return fmt.Errorf("Currently there is a pending record")
+		}
+		return b.Put(k, value)
+	})
+	return err
+}
+
+func (self *BoltStorage) ConfirmStableTokenParams(value []byte) error {
+	var err error
+	k := uint64ToBytes(1)
+	temp := make(map[string]interface{})
+	vErr := json.Unmarshal(value, &temp)
+	if vErr != nil {
+		return fmt.Errorf("Rejected: Data could not be unmarshalled to defined format: %s", vErr)
+	}
+	pending, err := self.GetPendingStableTokenParams()
+	if eq := reflect.DeepEqual(pending, temp); !eq {
+		return fmt.Errorf("Rejected: confiming data isn't consistent")
+	}
+
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		b, uErr := tx.CreateBucketIfNotExists([]byte(STABLE_TOKEN_PARAMS_BUCKET))
+		if uErr != nil {
+			return uErr
+		}
+		return b.Put(k, value)
+	})
+	if err != nil {
+		return err
+	}
+	err = self.RemovePendingStableTokenParams()
+	return err
+}
+
+func (self *BoltStorage) GetStableTokenParams() (map[string]interface{}, error) {
+	k := uint64ToBytes(1)
+	result := make(map[string]interface{})
+	err := self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(STABLE_TOKEN_PARAMS_BUCKET))
+		if b == nil {
+			return fmt.Errorf("Bucket hasn't exist yet")
+		}
+		record := b.Get(k)
+		if record == nil {
+			return nil
+		}
+		vErr := json.Unmarshal(record, &result)
+		if vErr != nil {
+			return vErr
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) GetPendingStableTokenParams() (map[string]interface{}, error) {
+	k := uint64ToBytes(1)
+	result := make(map[string]interface{})
+	err := self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET))
+		if b == nil {
+			return fmt.Errorf("Bucket hasn't exist yet")
+		}
+		record := b.Get(k)
+		if record == nil {
+			return nil
+		}
+		vErr := json.Unmarshal(record, &result)
+		if vErr != nil {
+			return vErr
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) RemovePendingStableTokenParams() error {
+	k := uint64ToBytes(1)
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET))
+		if b == nil {
+			return fmt.Errorf("Bucket hasn't existed yet")
+		}
+		record := b.Get(k)
+		if record == nil {
+			return fmt.Errorf("Bucket is empty")
+		}
+		return b.Delete(k)
+	})
+	return err
 }

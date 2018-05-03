@@ -19,6 +19,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/KyberNetwork/reserve-data/stat"
 	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
+	"github.com/KyberNetwork/reserve-data/world"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -37,17 +38,20 @@ type SettingPaths struct {
 }
 
 type Config struct {
-	ActivityStorage core.ActivityStorage
-	DataStorage     data.Storage
-	StatStorage     stat.StatStorage
-	AnalyticStorage stat.AnalyticStorage
-	UserStorage     stat.UserStorage
-	LogStorage      stat.LogStorage
-	RateStorage     stat.RateStorage
-	FetcherStorage  fetcher.Storage
-	MetricStorage   metric.MetricStorage
+	ActivityStorage      core.ActivityStorage
+	DataStorage          data.Storage
+	DataGlobalStorage    data.GlobalStorage
+	StatStorage          stat.StatStorage
+	AnalyticStorage      stat.AnalyticStorage
+	UserStorage          stat.UserStorage
+	LogStorage           stat.LogStorage
+	RateStorage          stat.RateStorage
+	FetcherStorage       fetcher.Storage
+	FetcherGlobalStorage fetcher.GlobalStorage
+	MetricStorage        metric.MetricStorage
 	//ExchangeStorage exchange.Storage
 
+	World                *world.TheWorld
 	FetcherRunner        fetcher.FetcherRunner
 	StatFetcherRunner    stat.FetcherRunner
 	StatControllerRunner stat.ControllerRunner
@@ -118,18 +122,13 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 	if os.Getenv("KYBER_ENV") == "simulation" {
 		statFetcherRunner = http_runner.NewHttpRunner(8002)
 	} else {
-		statFetcherRunner = fetcher.NewTickerRunner(
-			7*time.Second,  // orderbook fetching interval
-			5*time.Second,  // authdata fetching interval
-			3*time.Second,  // rate fetching interval
+		statFetcherRunner = stat.NewTickerRunner(
 			5*time.Second,  // block fetching interval
-			10*time.Minute, // tradeHistory fetching interval
-			10*time.Second, // reserve rates fetching interval
 			7*time.Second,  // log fetching interval
-			2*time.Second,  // trade log processing interval
-			2*time.Second,  // cat log processing interval
-		)
-		ControllerRunner = stat.NewTickerRunner(24 * time.Hour)
+			10*time.Second, // rate fetching interval
+			2*time.Second,  // tradelog processing interval
+			2*time.Second)  // catlog processing interval
+		ControllerRunner = stat.NewControllerTickerRunner(24 * time.Hour)
 	}
 
 	self.StatStorage = statStorage
@@ -155,6 +154,12 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		log.Fatalf("Fees file %s cannot found at: %s", settingPath.feePath, err)
 	}
 
+	minDepositPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/min_deposit.json"
+	minDeposit, err := common.GetMinDepositFromFile(minDepositPath)
+	if err != nil {
+		log.Fatalf("Fees file %s cannot found at: %s", minDepositPath, err.Error())
+	}
+
 	dataStorage, err := storage.NewBoltStorage(settingPath.dataStoragePath)
 	if err != nil {
 		panic(err)
@@ -171,10 +176,8 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 			3*time.Second,  // rate fetching interval
 			5*time.Second,  // block fetching interval
 			10*time.Minute, // tradeHistory fetching interval
-			10*time.Second, // reserve rates fetching interval
-			7*time.Second,  // log fetching interval
-			2*time.Second,  // trade log processing interval
-			2*time.Second)  // cat log processing interval
+			10*time.Second, // global data fetching interval
+		)
 	}
 
 	pricingSigner := PricingSignerFromConfigFile(settingPath.secretPath)
@@ -182,7 +185,9 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 
 	self.ActivityStorage = dataStorage
 	self.DataStorage = dataStorage
+	self.DataGlobalStorage = dataStorage
 	self.FetcherStorage = dataStorage
+	self.FetcherGlobalStorage = dataStorage
 	self.MetricStorage = dataStorage
 	self.FetcherRunner = fetcherRunner
 	self.BlockchainSigner = pricingSigner
@@ -204,6 +209,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		addressConfig,
 		settingPath,
 		self.Blockchain,
+		minDeposit,
 		kyberENV)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()

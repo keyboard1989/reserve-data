@@ -216,7 +216,28 @@
       "decimals": 9,
       "address": "0x4f3afec4e5a3f2a6a1a411def7d7dfe50ee057bf",
       "internal use": true,
-      "listed": false
+      "listed": true
+    },
+    "MOT": {
+      "name": "Olympus Labs",
+      "decimals": 18,
+      "address": "0x263c618480dbe35c300d8d5ecda19bbb986acaed",
+      "internal use": false,
+      "listed": true
+    },
+    "IOST": {
+      "name": "IOStoken",
+      "decimals": 18,
+      "address": "0xfa1a856cfa3409cfa145fa4e20eb270df3eb21ab",
+      "internal use": false,
+      "listed": true
+    },
+    "STORM": {
+      "name": "Storm",
+      "decimals": 18,
+      "address": "0xd0a4b8946cb52f0661273bfbc6fd0e0c75fc6433",
+      "internal use": false,
+      "listed": true
     },
     "ETH": {
       "name": "Ethereum",
@@ -248,7 +269,24 @@
       "AST": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547",
       "LINK": "0x1ae659f93ba2fc0a1f379545cf9335adb75fa547"
     },
-
+    "huobi": {
+      "ETH": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "OMG": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "KNC": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "EOS": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "ELF": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "POWR": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "MANA": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "BAT": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "REQ": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "ENG": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "SALT": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "APPC": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "RDN": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "ZIL": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "AST": "0xb48ee85467bf613a22244084c1a46c2deac18dd0",
+      "LINK": "0xb48ee85467bf613a22244084c1a46c2deac18dd0"
+    },
     "bittrex": {
       "ETH": "0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23",
       "OMG": "0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23",
@@ -258,6 +296,10 @@
       "BAT": "0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23",
       "ENG": "0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23",
       "SALT": "0xe0355aa3cc0a4e0e4b2a70acd90c2fa961f61b23"
+    },
+    "stable_exchange": {
+      "ETH": "0xFDF28Bf25779ED4cA74e958d54653260af604C20",
+      "DGX": "0xFDF28Bf25779ED4cA74e958d54653260af604C20"
     }
   },
   "permission": {

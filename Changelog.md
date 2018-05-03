@@ -1,3 +1,15 @@
+# 0.7.0 (2018-04-30)
+
+## Features:
+- Support global data monitoring (gold feeds...)
+- Support stable exchange (the virtual exchange to handle tokens that are not listed on big cexs)
+
+## Bug fixes:
+- TODO
+
+## Compatability:
+- This version only works with KyberNetwork smart contracts version 0.3.0 or later
+
 # 0.6.1 (2018-04-25)
 ## Features:
 - Getting aws info from config file
@@ -20,7 +32,6 @@
 - API to support status server, dashboard notifications
 - Analytic dev mode to support dev environment for analytic team
 - API for analytic to submit pricing data
-
 
 ## Bug fixes:
 - fix bunch of errors in order to ensure stat server will not miss any tradelogs (including making log aggregation and last log id persistence atomic)
