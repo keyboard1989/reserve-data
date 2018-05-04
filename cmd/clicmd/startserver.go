@@ -105,12 +105,17 @@ func backupLog(arch archive.Archive) {
 			matched, err := regexp.MatchString("core.*.log", file.Name())
 			if (!file.IsDir()) && (matched) && (err == nil) {
 				log.Printf("File name is %s", file.Name())
-				err := arch.BackupFile(arch.GetLogBucketName(), arch.GetLogFolderPath(), LOG_PATH+file.Name())
+				err := arch.UploadFile(arch.GetLogBucketName(), arch.GetLogFolderPath(), LOG_PATH+file.Name())
 				if err != nil {
-					log.Printf("ERROR: Log backup: Can not backup Log file %s. If the file is core.log, filesize different between local and remote might account to this error", err)
+					log.Printf("ERROR: Log backup: Can not upload Log file %s", err)
 				} else {
 					var err error
+					var ok bool
 					if file.Name() != "core.log" {
+						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), arch.GetLogFolderPath(), LOG_PATH+file.Name())
+						if !ok || (err != nil) {
+							log.Printf("ERROR: Log backup: File intergrity is corrupted")
+						}
 						err = os.Remove(LOG_PATH + file.Name())
 					}
 					if err != nil {
