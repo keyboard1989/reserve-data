@@ -95,7 +95,9 @@ func backupLog(arch archive.Archive) {
 		log.Printf("ERROR: Can not view log folder")
 	}
 	for _, file := range files {
-		log.Printf("File name is %s", file.Name())
+		if !file.IsDir() {
+			log.Printf("File name is %s", file.Name())
+		}
 	}
 }
 
