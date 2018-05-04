@@ -82,21 +82,21 @@ func configLog(stdoutLog bool) {
 	c.Start()
 }
 
+func InitInterface(kyberENV string) {
+	if base_url != configuration.Baseurl {
+		log.Printf("Overwriting base URL with %s \n", base_url)
+	}
+	configuration.SetInterface(base_url)
+}
+
 func backupLog(arch archive.Archive) {
 	files, err := ioutil.ReadDir("/go/src/github.com/KyberNetwork/reserve-data/log/")
 	if err != nil {
 		log.Printf("ERROR: Can not view log folder")
 	}
 	for _, file := range files {
-		log.Printf(file.Name())
+		log.Printf("File name is %s", file.Name())
 	}
-}
-
-func InitInterface(kyberENV string) {
-	if base_url != configuration.Baseurl {
-		log.Printf("Overwriting base URL with %s \n", base_url)
-	}
-	configuration.SetInterface(base_url)
 }
 
 func serverStart(cmd *cobra.Command, args []string) {
@@ -110,7 +110,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	}
 	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
-
+	backupLog(config.Archive)
 	var dataFetcher *fetcher.Fetcher
 	var statFetcher *stat.Fetcher
 	var rData reserve.ReserveData
