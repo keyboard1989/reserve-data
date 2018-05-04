@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"regexp"
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data"
@@ -24,6 +25,10 @@ import (
 	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
 	lumberjack "gopkg.in/natefinch/lumberjack.v2"
+)
+
+const (
+	LOG_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/log/"
 )
 
 var noAuthEnable bool
@@ -62,7 +67,7 @@ func GetConfigFromENV(kyberENV string) *configuration.Config {
 //set config log
 func configLog(stdoutLog bool) {
 	logger := &lumberjack.Logger{
-		Filename: "/go/src/github.com/KyberNetwork/reserve-data/log/core.log",
+		Filename: LOG_PATH + "core.log",
 		// MaxSize:  1, // megabytes
 		MaxBackups: 0,
 		MaxAge:     0, //days
@@ -90,15 +95,32 @@ func InitInterface(kyberENV string) {
 }
 
 func backupLog(arch archive.Archive) {
-	files, err := ioutil.ReadDir("/go/src/github.com/KyberNetwork/reserve-data/log/")
-	if err != nil {
-		log.Printf("ERROR: Can not view log folder")
-	}
-	for _, file := range files {
-		if !file.IsDir() {
-			log.Printf("File name is %s", file.Name())
+	c := cron.New()
+	c.AddFunc("@daily", func() {
+		files, err := ioutil.ReadDir(LOG_PATH)
+		if err != nil {
+			log.Printf("ERROR: Log backup: Can not view log folder")
 		}
-	}
+		for _, file := range files {
+			matched, err := regexp.MatchString("core-.*.log", file.Name())
+			if (!file.IsDir()) && (matched) && (err == nil) {
+				log.Printf("File name is %s", file.Name())
+				err := arch.BackupFile(arch.GetLogBucketName(), arch.GetLogFolderPath(), LOG_PATH+file.Name())
+				if err != nil {
+					log.Printf("ERROR: Log backup: Can not backup Log file %s", err)
+				} else {
+					err := os.Remove(LOG_PATH + file.Name())
+					if err != nil {
+						log.Printf("ERROR: Log backup: Cannot remove local log file %s", err)
+					} else {
+						log.Printf("Log backup: backup file %s succesfully", file.Name())
+					}
+				}
+			}
+		}
+		return
+	})
+	c.Start()
 }
 
 func serverStart(cmd *cobra.Command, args []string) {

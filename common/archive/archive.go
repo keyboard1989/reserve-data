@@ -9,4 +9,6 @@ type Archive interface {
 	GetReserveDataBucketName() string
 	GetStatDataBucketName() string
 	GetPriceAnalyticPath() string
+	GetLogFolderPath() string
+	GetLogBucketName() string
 }

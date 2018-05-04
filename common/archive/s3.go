@@ -119,6 +119,14 @@ func (archive *s3Archive) GetPriceAnalyticPath() string {
 	return archive.awsConf.ExpiredPriceAnalyticFolderPath
 }
 
+func (archive *s3Archive) GetLogFolderPath() string {
+	return archive.awsConf.LogFolderPath
+}
+
+func (archive *s3Archive) GetLogBucketName() string {
+	return archive.awsConf.LogBucketName
+}
+
 func NewS3Archive(conf AWSConfig) *s3Archive {
 
 	crdtl := credentials.NewStaticCredentials(conf.AccessKeyID, conf.SecretKey, conf.Token)

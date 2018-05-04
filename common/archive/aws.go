@@ -14,6 +14,8 @@ type AWSConfig struct {
 	ExpiredPriceAnalyticFolderPath string `json:"aws_expired_analytic_folder_path"`
 	ExpiredReserveDataBucketName   string `json:"aws_expired_reserve_data_bucket_name"`
 	ExpiredAuthDataFolderPath      string `json:"aws_expired_auth_data_folder_path"`
+	LogBucketName                  string `json:"aws_log_bucket_name"`
+	LogFolderPath                  string `json:"aws_log_folder_path"`
 }
 
 func GetAWSconfigFromFile(path string) (AWSConfig, error) {
