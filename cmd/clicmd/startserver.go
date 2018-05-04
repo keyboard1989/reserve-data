@@ -13,6 +13,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
@@ -81,6 +82,16 @@ func configLog(stdoutLog bool) {
 	c.Start()
 }
 
+func backupLog(arch archive.Archive) {
+	files, err := ioutil.ReadDir("/go/src/github.com/KyberNetwork/reserve-data/log/")
+	if err != nil {
+		log.Printf("ERROR: Can not view log folder")
+	}
+	for _, file := range files {
+		log.Printf(file.Name())
+	}
+}
+
 func InitInterface(kyberENV string) {
 	if base_url != configuration.Baseurl {
 		log.Printf("Overwriting base URL with %s \n", base_url)
@@ -92,7 +103,6 @@ func serverStart(cmd *cobra.Command, args []string) {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 	configLog(stdoutLog)
-
 	//get configuration from ENV variable
 	kyberENV := os.Getenv("KYBER_ENV")
 	if kyberENV == "" {
