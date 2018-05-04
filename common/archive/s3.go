@@ -19,17 +19,17 @@ type s3Archive struct {
 	awsConf  AWSConfig
 }
 
-func (archive *s3Archive) BackupFile(bucketName string, destinationFolder string, fileName string) error {
-	err := archive.UploadFile(bucketName, destinationFolder, fileName)
+func (archive *s3Archive) BackupFile(bucketName string, destinationFolder string, filePath string) error {
+	err := archive.UploadFile(bucketName, destinationFolder, filePath)
 	if err != nil {
 		return err
 	}
-	intergrity, err := archive.CheckFileIntergrity(bucketName, destinationFolder, fileName)
+	intergrity, err := archive.CheckFileIntergrity(bucketName, destinationFolder, filePath)
 	if err != nil {
 		return err
 	}
 	if !intergrity {
-		return fmt.Errorf("Archive: Upload File  %s: corrupted", fileName)
+		return fmt.Errorf("Archive: Upload File  %s: corrupted", filePath)
 	}
 	return nil
 }
@@ -40,24 +40,30 @@ func enforceFolderPath(fp string) string {
 	}
 	return fp
 }
-func (archive *s3Archive) UploadFile(bucketName string, awsfolderPath string, filename string) error {
-	file, err := os.Open(filename)
+func (archive *s3Archive) UploadFile(bucketName string, awsfolderPath string, filePath string) error {
+	file, err := os.Open(filePath)
 	defer file.Close()
 	if err != nil {
 		return err
 	}
 	_, err = archive.uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(bucketName),
-		Key:    aws.String(enforceFolderPath(awsfolderPath) + filename),
+		Key:    aws.String(enforceFolderPath(awsfolderPath) + getFileNameFromFilePath(filePath)),
 		Body:   file,
 	})
 
 	return err
 }
 
-func (archive *s3Archive) CheckFileIntergrity(bucketName string, awsfolderPath string, filename string) (bool, error) {
+func getFileNameFromFilePath(filePath string) string {
+	elems := strings.Split(filePath, "/")
+	fileName := elems[len(elems)-1]
+	return fileName
+}
+
+func (archive *s3Archive) CheckFileIntergrity(bucketName string, awsfolderPath string, filePath string) (bool, error) {
 	//get File info
-	file, err := os.Open(filename)
+	file, err := os.Open(filePath)
 	defer file.Close()
 	if err != nil {
 		return false, err
@@ -70,7 +76,7 @@ func (archive *s3Archive) CheckFileIntergrity(bucketName string, awsfolderPath s
 
 	x := s3.ListObjectsInput{
 		Bucket: aws.String(bucketName),
-		Prefix: aws.String(enforceFolderPath(awsfolderPath) + filename),
+		Prefix: aws.String(enforceFolderPath(awsfolderPath) + getFileNameFromFilePath(filePath)),
 	}
 	resp, err := archive.svc.ListObjects(&x)
 	if err != nil {
@@ -78,9 +84,9 @@ func (archive *s3Archive) CheckFileIntergrity(bucketName string, awsfolderPath s
 	}
 
 	for _, item := range resp.Contents {
-		elems := strings.Split(*item.Key, "/")
-		remoteFileName := elems[len(elems)-1]
-		if (remoteFileName == filename) && (*item.Size == fi.Size()) {
+		remoteFileName := getFileNameFromFilePath(*item.Key)
+		localFileName := getFileNameFromFilePath(filePath)
+		if (remoteFileName == localFileName) && (*item.Size == fi.Size()) {
 			return true, nil
 		}
 	}
