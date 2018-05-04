@@ -1,4 +1,4 @@
-package statstoragecontroller
+package statpruner
 
 import (
 	"time"

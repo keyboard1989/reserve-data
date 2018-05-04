@@ -1,4 +1,4 @@
-package statstoragecontroller
+package statpruner
 
 import (
 	"github.com/KyberNetwork/reserve-data/common/archive"
