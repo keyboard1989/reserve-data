@@ -102,14 +102,17 @@ func backupLog(arch archive.Archive) {
 			log.Printf("ERROR: Log backup: Can not view log folder")
 		}
 		for _, file := range files {
-			matched, err := regexp.MatchString("core-.*.log", file.Name())
+			matched, err := regexp.MatchString("core.*.log", file.Name())
 			if (!file.IsDir()) && (matched) && (err == nil) {
 				log.Printf("File name is %s", file.Name())
 				err := arch.BackupFile(arch.GetLogBucketName(), arch.GetLogFolderPath(), LOG_PATH+file.Name())
 				if err != nil {
-					log.Printf("ERROR: Log backup: Can not backup Log file %s", err)
+					log.Printf("ERROR: Log backup: Can not backup Log file %s. If the file is core.log, filesize different between local and remote might account to this error", err)
 				} else {
-					err := os.Remove(LOG_PATH + file.Name())
+					var err error
+					if file.Name() != "core.log" {
+						err = os.Remove(LOG_PATH + file.Name())
+					}
 					if err != nil {
 						log.Printf("ERROR: Log backup: Cannot remove local log file %s", err)
 					} else {
