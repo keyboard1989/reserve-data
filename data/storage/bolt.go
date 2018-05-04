@@ -1206,7 +1206,7 @@ func (self *BoltStorage) RemovePendingPWIEquation() error {
 }
 
 func (self *BoltStorage) GetExchangeStatus() (common.ExchangesStatus, error) {
-	var result common.ExchangesStatus
+	result := make(common.ExchangesStatus)
 	var err error
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_STATUS))
