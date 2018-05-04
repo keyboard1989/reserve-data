@@ -11,7 +11,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
-	"github.com/KyberNetwork/reserve-data/stat/statstoragecontroller"
+	"github.com/KyberNetwork/reserve-data/stat/statpruner"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -26,7 +26,7 @@ type ReserveStats struct {
 	userStorage       UserStorage
 	rateStorage       RateStorage
 	fetcher           *Fetcher
-	storageController statstoragecontroller.StorageController
+	storageController statpruner.StorageController
 }
 
 func NewReserveStats(
@@ -35,10 +35,10 @@ func NewReserveStats(
 	logStorage LogStorage,
 	rateStorage RateStorage,
 	userStorage UserStorage,
-	controllerRunner statstoragecontroller.ControllerRunner,
+	controllerRunner statpruner.ControllerRunner,
 	fetcher *Fetcher,
 	arch archive.Archive) *ReserveStats {
-	storageController, err := statstoragecontroller.NewStorageController(controllerRunner, arch)
+	storageController, err := statpruner.NewStorageController(controllerRunner, arch)
 	if err != nil {
 		panic(err)
 	}
@@ -310,25 +310,25 @@ func (self ReserveStats) GetPendingAddresses() ([]string, error) {
 
 func (self ReserveStats) ControllPriceAnalyticSize() error {
 	for {
-		log.Printf("StatStorageController: waiting for signal from analytic storage control channel")
+		log.Printf("statpruner: waiting for signal from analytic storage control channel")
 		t := <-self.storageController.Runner.GetAnalyticStorageControlTicker()
 		timepoint := common.TimeToTimepoint(t)
-		log.Printf("StatStorageController: got signal in analytic storage control channel with timestamp %d", timepoint)
+		log.Printf("statpruner: got signal in analytic storage control channel with timestamp %d", timepoint)
 		fileName := fmt.Sprintf("ExpiredPriceAnalyticData_%s", time.Unix(int64(timepoint/1000), 0).UTC())
 		nRecord, err := self.analyticStorage.ExportPruneExpiredPriceAnalyticData(common.GetTimepoint(), fileName)
 		if err != nil {
-			log.Printf("ERROR: StatStorageController export and prune Price Analytic operation failed: %s", err)
+			log.Printf("ERROR: statpruner export and prune Price Analytic operation failed: %s", err)
 		} else {
 			if nRecord > 0 {
 				err := self.storageController.Arch.BackupFile(self.storageController.Arch.GetStatDataBucketName(), self.storageController.Arch.GetPriceAnalyticPath(), fileName)
 				if err != nil {
-					log.Printf("StatStorageController: Back up file failed: %s", err)
+					log.Printf("statpruner: Back up file failed: %s", err)
 				}
 			}
 			if err == nil {
 				//remove the empty file
 				os.Remove(fileName)
-				log.Printf("StatStorageController: exported and pruned %d expired records from storage controll block from blockchain", nRecord)
+				log.Printf("statpruner: exported and pruned %d expired records from storage controll block from blockchain", nRecord)
 			}
 		}
 	}

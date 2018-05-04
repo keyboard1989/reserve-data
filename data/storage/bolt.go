@@ -301,7 +301,6 @@ func (self *BoltStorage) CurrentPriceVersion(timepoint uint64) (common.Version, 
 		result, err = reverseSeek(timepoint, c)
 		return nil
 	})
-	log.Printf("\n\n\n\n\n\n\nversion is %d", result)
 	return common.Version(result), err
 }
 
