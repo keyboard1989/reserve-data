@@ -39,6 +39,7 @@ const (
 	EXCHANGE_NOTIFICATIONS             string = "exchange_notifications"
 	MAX_NUMBER_VERSION                 int    = 1000
 	MAX_GET_RATES_PERIOD               uint64 = 86400000 //1 days in milisec
+	MAX_GET_TRADE_HISTORY              uint64 = 3 * 86400000
 	STABLE_TOKEN_PARAMS_BUCKET         string = "stable-token-params"
 	PENDING_STABLE_TOKEN_PARAMS_BUCKET string = "pending-stable-token-params"
 )
@@ -894,7 +895,7 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.AllTra
 		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
 	}
 	var err error
-	if toTime-fromTime > 3*MAX_GET_RATES_PERIOD {
+	if toTime-fromTime > MAX_GET_TRADE_HISTORY {
 		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to 3 days (miliseconds)"))
 	}
 	min := uint64ToBytes(fromTime)
