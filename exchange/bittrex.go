@@ -389,7 +389,7 @@ func (self *Bittrex) FetchOnePairTradeHistory(
 	data.Store(pairString, result)
 }
 
-func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+func (self *Bittrex) FetchTradeHistory(timepoint uint64, fromIDs map[string]string) (map[common.TokenPairID][]common.TradeHistory, error) {
 	result := map[common.TokenPairID][]common.TradeHistory{}
 	data := sync.Map{}
 	pairs := self.pairs

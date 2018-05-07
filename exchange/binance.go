@@ -375,11 +375,11 @@ func (self *Binance) FetchOnePairTradeHistory(
 	wait *sync.WaitGroup,
 	data *sync.Map,
 	pair common.TokenPair,
-	timepoint uint64) {
+	fromID string) {
 
 	defer wait.Done()
 	result := []common.TradeHistory{}
-	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, 0)
+	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, fromID)
 	if err != nil {
 		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
 	}
@@ -403,7 +403,7 @@ func (self *Binance) FetchOnePairTradeHistory(
 	data.Store(pairString, result)
 }
 
-func (self *Binance) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+func (self *Binance) FetchTradeHistory(timepoint uint64, fromIDs map[string]string) (map[common.TokenPairID][]common.TradeHistory, error) {
 	result := map[common.TokenPairID][]common.TradeHistory{}
 	data := sync.Map{}
 	pairs := self.pairs
@@ -414,7 +414,8 @@ func (self *Binance) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID
 		for x = i; x < len(pairs) && x < i+BATCH_SIZE; x++ {
 			wait.Add(1)
 			pair := pairs[x]
-			go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
+			fromID := fromIDs[pair.Base.ID+pair.Quote.ID]
+			go self.FetchOnePairTradeHistory(&wait, &data, pair, fromID)
 		}
 		i = x
 		wait.Wait()

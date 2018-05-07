@@ -347,7 +347,7 @@ func (self *Huobi) FetchOnePairTradeHistory(
 	data.Store(pairString, result)
 }
 
-func (self *Huobi) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID][]common.TradeHistory, error) {
+func (self *Huobi) FetchTradeHistory(timepoint uint64, fromIDs map[string]string) (map[common.TokenPairID][]common.TradeHistory, error) {
 	result := map[common.TokenPairID][]common.TradeHistory{}
 	data := sync.Map{}
 	pairs := self.pairs

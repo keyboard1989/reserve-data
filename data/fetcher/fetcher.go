@@ -1,6 +1,7 @@
 package fetcher
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"sync"
@@ -219,7 +220,13 @@ func (self *Fetcher) FetchTradeHistoryFromExchange(
 	timepoint uint64) {
 
 	defer wait.Done()
-	tradeHistory, err := exchange.FetchTradeHistory(timepoint)
+	tokenPairs := exchange.TokenPairs()
+	fromIDs := map[string]string{}
+	for _, pair := range tokenPairs {
+		id, _ := self.storage.GetLastIDTradeHistory(string(exchange.ID()), fmt.Sprintf("%s-%s", pair.Base.ID, pair.Quote.ID))
+		fromIDs[pair.Base.ID+pair.Quote.ID] = id
+	}
+	tradeHistory, err := exchange.FetchTradeHistory(timepoint, fromIDs)
 	if err != nil {
 		log.Printf("Fetch trade history from exchange failed: %s", err.Error())
 	}

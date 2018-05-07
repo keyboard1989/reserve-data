@@ -13,6 +13,8 @@ type Storage interface {
 	GetPendingActivities() ([]common.ActivityRecord, error)
 	UpdateActivity(id common.ActivityID, act common.ActivityRecord) error
 
+	GetLastIDTradeHistory(exchange, pair string) (string, error)
+
 	GetExchangeStatus() (common.ExchangesStatus, error)
 	UpdateExchangeStatus(data common.ExchangesStatus) error
 

@@ -889,56 +889,86 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 }
 
 func (self *BoltStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
-	result := common.AllTradeHistory{}
+	result := common.AllTradeHistory{
+		Timestamp: common.GetTimestamp(),
+		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
+	}
 	var err error
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
-		_, data := b.Cursor().First()
-		if data == nil {
-			err = errors.New(fmt.Sprintf("There no data before timepoint %d", timepoint))
-		} else {
-			err = json.Unmarshal(data, &result)
+		c := b.Cursor()
+		for k, v := c.First(); k != nil && v == nil; k, v = c.Next() {
+			exchangeBk := b.Bucket(k)
+			cursor := exchangeBk.Cursor()
+			exchangeHistory := common.ExchangeTradeHistory{}
+			for key, value := cursor.First(); key != nil && value == nil; key, value = cursor.Next() {
+				pairBk := exchangeBk.Bucket(key)
+				pairsHistory := []common.TradeHistory{}
+				for _, history := pairBk.Cursor().First(); history != nil; _, history = pairBk.Cursor().Next() {
+					pairHistory := common.TradeHistory{}
+					json.Unmarshal(history, &pairHistory)
+					pairsHistory = append(pairsHistory, pairHistory)
+				}
+				exchangeHistory[common.TokenPairID(key)] = pairsHistory
+			}
+			result.Data[common.ExchangeID(k)] = exchangeHistory
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (self *BoltStorage) GetLastIDTradeHistory(exchange, pair string) (string, error) {
+	history := common.TradeHistory{}
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(TRADE_HISTORY))
+		exchangeBk, err := b.CreateBucketIfNotExists([]byte(exchange))
+		if err != nil {
+			log.Printf("Cannot get exchange bucket: %s", err.Error())
+			return err
+		}
+		pairBk, err := exchangeBk.CreateBucketIfNotExists([]byte(pair))
+		if err != nil {
+			log.Printf("Cannot get pair bucket: %s", err.Error())
+			return err
+		}
+		k, v := pairBk.Cursor().Last()
+		if k != nil {
+			json.Unmarshal(v, &history)
 		}
 		return err
 	})
-	return result, err
+	return history.ID, err
 }
 
 func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
 		b := tx.Bucket([]byte(TRADE_HISTORY))
-		c := b.Cursor()
-		k, v := c.First()
-		currentData := common.AllTradeHistory{
-			Timestamp: common.GetTimestamp(),
-			Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
-		}
-		if k != nil {
-			json.Unmarshal(v, &currentData)
-		}
-
-		// override old data
 		for exchange, dataHistory := range data.Data {
-			currentDataHistory, exist := currentData.Data[exchange]
-			if !exist {
-				currentData.Data[exchange] = dataHistory
-			} else {
-				for pair, pairHistory := range dataHistory {
-					currentDataHistory[pair] = pairHistory
+			exchangeBk, err := b.CreateBucketIfNotExists([]byte(exchange))
+			if err != nil {
+				log.Printf("Cannot create exchange history bucket: %s", err.Error())
+			}
+			for pair, pairHistory := range dataHistory {
+				pairBk, err := exchangeBk.CreateBucketIfNotExists([]byte(pair))
+				if err != nil {
+					log.Printf("Cannot create pair history bucket: %s", err.Error())
+				}
+				for _, history := range pairHistory {
+					idBytes := uint64ToBytes(history.Timestamp)
+					dataJSON, err := json.Marshal(history)
+					if err != nil {
+						log.Printf("Cannot marshal history: %s", err.Error())
+					}
+					log.Printf("History pair: %s", pair)
+					log.Printf("History timestamp: %d", history.Timestamp)
+					log.Printf("History id: %s", history.ID)
+					pairBk.Put(idBytes, dataJSON)
 				}
 			}
 		}
-		log.Printf("History: %+v", data)
-
-		// add new data
-		dataJson, err = json.Marshal(currentData)
-		if err != nil {
-			return err
-		}
-		idByte := uint64ToBytes(timepoint)
-		return b.Put(idByte, dataJson)
+		return err
 	})
 	return err
 }
