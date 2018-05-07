@@ -57,7 +57,7 @@ type ReserveData interface {
 	GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error)
 	GetPendingActivities() ([]common.ActivityRecord, error)
 
-	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
+	GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error)
 
 	GetGoldData(timepoint uint64) (common.GoldData, error)
 

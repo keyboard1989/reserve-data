@@ -19,7 +19,7 @@ type Storage interface {
 	GetAllRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error)
 	GetPendingActivities() ([]common.ActivityRecord, error)
 
-	GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error)
+	GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error)
 	GetExchangeStatus() (common.ExchangesStatus, error)
 	UpdateExchangeStatus(data common.ExchangesStatus) error
 

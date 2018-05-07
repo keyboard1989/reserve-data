@@ -888,12 +888,17 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 	return err
 }
 
-func (self *BoltStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
+func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
 	result := common.AllTradeHistory{
 		Timestamp: common.GetTimestamp(),
 		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
 	}
 	var err error
+	if toTime-fromTime > 3*MAX_GET_RATES_PERIOD {
+		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to 3 days (miliseconds)"))
+	}
+	min := uint64ToBytes(fromTime)
+	max := uint64ToBytes(toTime)
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
 		c := b.Cursor()
@@ -904,7 +909,8 @@ func (self *BoltStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHisto
 			for key, value := cursor.First(); key != nil && value == nil; key, value = cursor.Next() {
 				pairBk := exchangeBk.Bucket(key)
 				pairsHistory := []common.TradeHistory{}
-				for _, history := pairBk.Cursor().First(); history != nil; _, history = pairBk.Cursor().Next() {
+				pairCursor := pairBk.Cursor()
+				for pairKey, history := pairCursor.Seek(min); pairKey != nil && bytes.Compare(pairKey, max) <= 0; pairKey, history = pairCursor.Next() {
 					pairHistory := common.TradeHistory{}
 					json.Unmarshal(history, &pairHistory)
 					pairsHistory = append(pairsHistory, pairHistory)
@@ -961,9 +967,6 @@ func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory, timepoin
 					if err != nil {
 						log.Printf("Cannot marshal history: %s", err.Error())
 					}
-					log.Printf("History pair: %s", pair)
-					log.Printf("History timestamp: %d", history.Timestamp)
-					log.Printf("History id: %s", history.ID)
 					pairBk.Put(idBytes, dataJSON)
 				}
 			}

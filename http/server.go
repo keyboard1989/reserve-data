@@ -1191,13 +1191,16 @@ func (self *HTTPServer) GetAddress(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
-	timepoint := common.GetTimepoint()
 	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
 
-	data, err := self.app.GetTradeHistory(timepoint)
+	data, err := self.app.GetTradeHistory(fromTime, toTime)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
