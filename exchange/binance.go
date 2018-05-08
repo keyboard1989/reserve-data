@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -403,28 +404,33 @@ func (self *Binance) FetchOnePairTradeHistory(
 	data.Store(pairString, result)
 }
 
-func (self *Binance) FetchTradeHistory(timepoint uint64, fromIDs map[string]string) (map[common.TokenPairID][]common.TradeHistory, error) {
-	result := map[common.TokenPairID][]common.TradeHistory{}
-	data := sync.Map{}
-	pairs := self.pairs
-	wait := sync.WaitGroup{}
-	var i int = 0
-	var x int = 0
-	for i < len(pairs) {
-		for x = i; x < len(pairs) && x < i+BATCH_SIZE; x++ {
-			wait.Add(1)
-			pair := pairs[x]
-			fromID := fromIDs[pair.Base.ID+pair.Quote.ID]
-			go self.FetchOnePairTradeHistory(&wait, &data, pair, fromID)
+func (self *Binance) FetchTradeHistory(timepoint uint64, fromIDs map[string]string) {
+	t := time.NewTicker(10 * time.Second)
+	go func() {
+		for {
+			result := map[common.TokenPairID][]common.TradeHistory{}
+			data := sync.Map{}
+			pairs := self.pairs
+			wait := sync.WaitGroup{}
+			var i int = 0
+			var x int = 0
+			for i < len(pairs) {
+				for x = i; x < len(pairs) && x < i+BATCH_SIZE; x++ {
+					wait.Add(1)
+					pair := pairs[x]
+					fromID := fromIDs[pair.Base.ID+pair.Quote.ID]
+					go self.FetchOnePairTradeHistory(&wait, &data, pair, fromID)
+				}
+				i = x
+				wait.Wait()
+			}
+			data.Range(func(key, value interface{}) bool {
+				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+				return true
+			})
+			<-t.C
 		}
-		i = x
-		wait.Wait()
-	}
-	data.Range(func(key, value interface{}) bool {
-		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
-		return true
-	})
-	return result, nil
+	}()
 }
 
 func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, error) {

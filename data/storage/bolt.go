@@ -39,7 +39,6 @@ const (
 	EXCHANGE_NOTIFICATIONS             string = "exchange_notifications"
 	MAX_NUMBER_VERSION                 int    = 1000
 	MAX_GET_RATES_PERIOD               uint64 = 86400000 //1 days in milisec
-	MAX_GET_TRADE_HISTORY              uint64 = 3 * 86400000
 	STABLE_TOKEN_PARAMS_BUCKET         string = "stable-token-params"
 	PENDING_STABLE_TOKEN_PARAMS_BUCKET string = "pending-stable-token-params"
 )
@@ -886,94 +885,6 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 		// remove pending target qty
 		return self.RemovePendingTargetQty()
 	}
-	return err
-}
-
-func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
-	result := common.AllTradeHistory{
-		Timestamp: common.GetTimestamp(),
-		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
-	}
-	var err error
-	if toTime-fromTime > MAX_GET_TRADE_HISTORY {
-		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to 3 days (miliseconds)"))
-	}
-	min := uint64ToBytes(fromTime)
-	max := uint64ToBytes(toTime)
-	err = self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(TRADE_HISTORY))
-		c := b.Cursor()
-		for k, v := c.First(); k != nil && v == nil; k, v = c.Next() {
-			exchangeBk := b.Bucket(k)
-			cursor := exchangeBk.Cursor()
-			exchangeHistory := common.ExchangeTradeHistory{}
-			for key, value := cursor.First(); key != nil && value == nil; key, value = cursor.Next() {
-				pairBk := exchangeBk.Bucket(key)
-				pairsHistory := []common.TradeHistory{}
-				pairCursor := pairBk.Cursor()
-				for pairKey, history := pairCursor.Seek(min); pairKey != nil && bytes.Compare(pairKey, max) <= 0; pairKey, history = pairCursor.Next() {
-					pairHistory := common.TradeHistory{}
-					json.Unmarshal(history, &pairHistory)
-					pairsHistory = append(pairsHistory, pairHistory)
-				}
-				exchangeHistory[common.TokenPairID(key)] = pairsHistory
-			}
-			result.Data[common.ExchangeID(k)] = exchangeHistory
-		}
-		return nil
-	})
-	return result, err
-}
-
-func (self *BoltStorage) GetLastIDTradeHistory(exchange, pair string) (string, error) {
-	history := common.TradeHistory{}
-	err := self.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(TRADE_HISTORY))
-		exchangeBk, err := b.CreateBucketIfNotExists([]byte(exchange))
-		if err != nil {
-			log.Printf("Cannot get exchange bucket: %s", err.Error())
-			return err
-		}
-		pairBk, err := exchangeBk.CreateBucketIfNotExists([]byte(pair))
-		if err != nil {
-			log.Printf("Cannot get pair bucket: %s", err.Error())
-			return err
-		}
-		k, v := pairBk.Cursor().Last()
-		if k != nil {
-			json.Unmarshal(v, &history)
-		}
-		return err
-	})
-	return history.ID, err
-}
-
-func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error {
-	var err error
-	err = self.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(TRADE_HISTORY))
-		for exchange, dataHistory := range data.Data {
-			exchangeBk, err := b.CreateBucketIfNotExists([]byte(exchange))
-			if err != nil {
-				log.Printf("Cannot create exchange history bucket: %s", err.Error())
-			}
-			for pair, pairHistory := range dataHistory {
-				pairBk, err := exchangeBk.CreateBucketIfNotExists([]byte(pair))
-				if err != nil {
-					log.Printf("Cannot create pair history bucket: %s", err.Error())
-				}
-				for _, history := range pairHistory {
-					idBytes := uint64ToBytes(history.Timestamp)
-					dataJSON, err := json.Marshal(history)
-					if err != nil {
-						log.Printf("Cannot marshal history: %s", err.Error())
-					}
-					pairBk.Put(idBytes, dataJSON)
-				}
-			}
-		}
-		return err
-	})
 	return err
 }
 

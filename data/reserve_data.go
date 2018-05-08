@@ -237,7 +237,9 @@ func (self ReserveData) GetPendingActivities() ([]common.ActivityRecord, error) 
 }
 
 func (self ReserveData) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
-	data, err := self.storage.GetTradeHistory(fromTime, toTime)
+	// data, err := self.storage.GetTradeHistory(fromTime, toTime)
+	data := common.AllTradeHistory{}
+	var err error
 	return data, err
 }
 
