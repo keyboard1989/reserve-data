@@ -71,11 +71,12 @@ func NewExchangePool(
 		case "bittrex":
 			bittrexSigner := bittrex.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := bittrex.NewBittrexEndpoint(bittrexSigner, getBittrexInterface(kyberENV))
-			bittrexStorage, err := bittrex.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/bittrex.db")
-			if err != nil {
-				panic(err)
-			}
-			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], feeConfig.Exchanges["bittrex"], endpoint, bittrexStorage, minDeposit.Exchanges["bittrex"])
+			bit := exchange.NewBittrex(
+				addressConfig.Exchanges["bittrex"],
+				feeConfig.Exchanges["bittrex"],
+				endpoint,
+				exchangeStorage,
+				minDeposit.Exchanges["bittrex"])
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
@@ -87,7 +88,12 @@ func NewExchangePool(
 		case "binance":
 			binanceSigner := binance.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := binance.NewBinanceEndpoint(binanceSigner, getBinanceInterface(kyberENV))
-			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint, minDeposit.Exchanges["binance"], exchangeStorage)
+			bin := exchange.NewBinance(
+				addressConfig.Exchanges["binance"],
+				feeConfig.Exchanges["binance"],
+				endpoint,
+				minDeposit.Exchanges["binance"],
+				exchangeStorage)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -99,12 +105,12 @@ func NewExchangePool(
 		case "huobi":
 			huobiSigner := huobi.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := huobi.NewHuobiEndpoint(huobiSigner, getHuobiInterface(kyberENV))
-			storage, err := huobi.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/huobi.db")
+			// storage, err := huobi.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/huobi.db")
 			intermediatorSigner := HuobiIntermediatorSignerFromFile(settingPaths.secretPath)
 			intermediatorNonce := nonce.NewTimeWindow(intermediatorSigner.GetAddress())
-			if err != nil {
-				panic(err)
-			}
+			// if err != nil {
+			// 	panic(err)
+			// }
 			huobi := exchange.NewHuobi(
 				addressConfig.Exchanges["huobi"],
 				feeConfig.Exchanges["huobi"],
@@ -112,7 +118,7 @@ func NewExchangePool(
 				blockchain,
 				intermediatorSigner,
 				intermediatorNonce,
-				storage,
+				exchangeStorage,
 				minDeposit.Exchanges["huobi"],
 			)
 			wait := sync.WaitGroup{}

@@ -348,19 +348,32 @@ func (self *Huobi) FetchOnePairTradeHistory(
 }
 
 func (self *Huobi) FetchTradeHistory() {
-	result := map[common.TokenPairID][]common.TradeHistory{}
-	data := sync.Map{}
-	pairs := self.pairs
-	wait := sync.WaitGroup{}
-	for _, pair := range pairs {
-		wait.Add(1)
-		go self.FetchOnePairTradeHistory(&wait, &data, pair)
-	}
-	wait.Wait()
-	data.Range(func(key, value interface{}) bool {
-		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
-		return true
-	})
+	t := time.NewTicker(10 * time.Minute)
+	go func() {
+		for {
+			result := map[common.TokenPairID][]common.TradeHistory{}
+			data := sync.Map{}
+			pairs := self.pairs
+			wait := sync.WaitGroup{}
+			for _, pair := range pairs {
+				wait.Add(1)
+				go self.FetchOnePairTradeHistory(&wait, &data, pair)
+			}
+			wait.Wait()
+			data.Range(func(key, value interface{}) bool {
+				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+				return true
+			})
+			history := common.AllTradeHistory{
+				Timestamp: common.GetTimestamp(),
+				Data: map[common.ExchangeID]common.ExchangeTradeHistory{
+					common.ExchangeID("binance"): result,
+				},
+			}
+			self.storage.StoreTradeHistory(history)
+			<-t.C
+		}
+	}()
 }
 
 func getDepositInfo(id common.ActivityID) (string, float64, string) {

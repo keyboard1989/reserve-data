@@ -390,23 +390,39 @@ func (self *Bittrex) FetchOnePairTradeHistory(
 }
 
 func (self *Bittrex) FetchTradeHistory() {
-	result := map[common.TokenPairID][]common.TradeHistory{}
-	timepoint := common.GetTimepoint()
-	data := sync.Map{}
-	pairs := self.pairs
-	wait := sync.WaitGroup{}
-	for _, pair := range pairs {
-		wait.Add(1)
-		go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
-	}
-	wait.Wait()
-	data.Range(func(key, value interface{}) bool {
-		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
-		return true
-	})
+	t := time.NewTicker(10 * time.Minute)
+	go func() {
+		for {
+			result := map[common.TokenPairID][]common.TradeHistory{}
+			timepoint := common.GetTimepoint()
+			data := sync.Map{}
+			pairs := self.pairs
+			wait := sync.WaitGroup{}
+			for _, pair := range pairs {
+				wait.Add(1)
+				go self.FetchOnePairTradeHistory(&wait, &data, pair, timepoint)
+			}
+			wait.Wait()
+			data.Range(func(key, value interface{}) bool {
+				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+				return true
+			})
+			history := common.AllTradeHistory{
+				Timestamp: common.GetTimestamp(),
+				Data: map[common.ExchangeID]common.ExchangeTradeHistory{
+					common.ExchangeID("binance"): result,
+				},
+			}
+			self.storage.StoreTradeHistory(history)
+			<-t.C
+		}
+	}()
 }
 
-func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BittrexInterface, storage BittrexStorage,
+func NewBittrex(addressConfig map[string]string,
+	feeConfig common.ExchangeFees,
+	interf BittrexInterface,
+	storage BittrexStorage,
 	minDepositConfig common.ExchangesMinDeposit) *Bittrex {
 	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex")
 	return &Bittrex{
