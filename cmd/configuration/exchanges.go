@@ -53,6 +53,7 @@ func NewExchangePool(
 	settingPaths SettingPaths,
 	blockchain *blockchain.BaseBlockchain,
 	minDeposit common.ExchangesMinDepositConfig,
+	exchangeStorage exchange.ExchangeStorage,
 	kyberENV string) *ExchangePool {
 
 	exchanges := map[common.ExchangeID]interface{}{}
@@ -86,7 +87,7 @@ func NewExchangePool(
 		case "binance":
 			binanceSigner := binance.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := binance.NewBinanceEndpoint(binanceSigner, getBinanceInterface(kyberENV))
-			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint, minDeposit.Exchanges["binance"])
+			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint, minDeposit.Exchanges["binance"], exchangeStorage)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)

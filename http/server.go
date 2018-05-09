@@ -12,6 +12,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/metric"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -22,14 +23,15 @@ import (
 )
 
 type HTTPServer struct {
-	app         reserve.ReserveData
-	core        reserve.ReserveCore
-	stat        reserve.ReserveStats
-	metric      metric.MetricStorage
-	host        string
-	authEnabled bool
-	auth        Authentication
-	r           *gin.Engine
+	app             reserve.ReserveData
+	core            reserve.ReserveCore
+	stat            reserve.ReserveStats
+	metric          metric.MetricStorage
+	exchangeStorage exchange.ExchangeStorage
+	host            string
+	authEnabled     bool
+	auth            Authentication
+	r               *gin.Engine
 }
 
 const (
@@ -1200,7 +1202,7 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 		return
 	}
 
-	data, err := self.app.GetTradeHistory(fromTime, toTime)
+	data, err := self.exchangeStorage.GetTradeHistory(fromTime, toTime)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2643,6 +2645,7 @@ func NewHTTPServer(
 	core reserve.ReserveCore,
 	stat reserve.ReserveStats,
 	metric metric.MetricStorage,
+	exchangeStorage exchange.ExchangeStorage,
 	host string,
 	enableAuth bool,
 	authEngine Authentication,
@@ -2669,6 +2672,6 @@ func NewHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, core, stat, metric, host, enableAuth, authEngine, r,
+		app, core, stat, metric, exchangeStorage, host, enableAuth, authEngine, r,
 	}
 }

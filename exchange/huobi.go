@@ -347,7 +347,7 @@ func (self *Huobi) FetchOnePairTradeHistory(
 	data.Store(pairString, result)
 }
 
-func (self *Huobi) FetchTradeHistory(timepoint uint64, fromIDs map[string]string) (map[common.TokenPairID][]common.TradeHistory, error) {
+func (self *Huobi) FetchTradeHistory() {
 	result := map[common.TokenPairID][]common.TradeHistory{}
 	data := sync.Map{}
 	pairs := self.pairs
@@ -361,7 +361,6 @@ func (self *Huobi) FetchTradeHistory(timepoint uint64, fromIDs map[string]string
 		result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 		return true
 	})
-	return result, nil
 }
 
 func getDepositInfo(id common.ActivityID) (string, float64, string) {

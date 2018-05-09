@@ -1,4 +1,4 @@
-package exstorage
+package storage
 
 import (
 	"bytes"
@@ -23,7 +23,7 @@ type ExchangeStorage struct {
 	db *bolt.DB
 }
 
-func NewExchangeStorage(path string) (*ExchangeStorage, error) {
+func NewBoltExchangeStorage(path string) (*ExchangeStorage, error) {
 	// init instance
 	var err error
 	var db *bolt.DB
@@ -56,7 +56,7 @@ func bytesToUint64(b []byte) uint64 {
 	return binary.BigEndian.Uint64(b)
 }
 
-func (self *ExchangeStorage) StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error {
+func (self *ExchangeStorage) StoreTradeHistory(data common.AllTradeHistory) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))

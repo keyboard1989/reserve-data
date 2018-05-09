@@ -27,6 +27,7 @@ type Binance struct {
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 	minDeposit   common.ExchangesMinDeposit
+	storage      ExchangeStorage
 }
 
 func (self *Binance) TokenAddresses() map[string]ethereum.Address {
@@ -304,37 +305,6 @@ func (self *Binance) OpenOrdersForOnePair(
 	}
 }
 
-// func (self *Binance) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
-// 	result := common.OrderEntry{}
-// 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
-// 	result.Valid = true
-// 	result.Data = []common.Order{}
-//
-// 	wait := sync.WaitGroup{}
-// 	data := sync.Map{}
-// 	pairs := self.pairs
-// 	var i int = 0
-// 	var x int = 0
-// 	for i < len(pairs) {
-// 		for x = i; x < len(pairs) && x < i+BATCH_SIZE; x++ {
-// 			wait.Add(1)
-// 			pair := pairs[x]
-// 			go self.OpenOrdersForOnePair(&wait, pair, &data, timepoint)
-// 		}
-// 		i = x
-// 		wait.Wait()
-// 	}
-//
-// 	result.ReturnTime = common.GetTimestamp()
-//
-// 	data.Range(func(key, value interface{}) bool {
-// 		orders := value.([]common.Order)
-// 		result.Data = append(result.Data, orders...)
-// 		return true
-// 	})
-// 	return result, nil
-// }
-
 func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
 	result := common.EBalanceEntry{}
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
@@ -375,11 +345,12 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 func (self *Binance) FetchOnePairTradeHistory(
 	wait *sync.WaitGroup,
 	data *sync.Map,
-	pair common.TokenPair,
-	fromID string) {
+	pair common.TokenPair) {
 
 	defer wait.Done()
 	result := []common.TradeHistory{}
+	tokenPair := fmt.Sprintf("%s-%s", pair.Base.ID, pair.Quote.ID)
+	fromID, _ := self.storage.GetLastIDTradeHistory("binance", tokenPair)
 	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, fromID)
 	if err != nil {
 		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
@@ -404,11 +375,11 @@ func (self *Binance) FetchOnePairTradeHistory(
 	data.Store(pairString, result)
 }
 
-func (self *Binance) FetchTradeHistory(timepoint uint64, fromIDs map[string]string) {
+func (self *Binance) FetchTradeHistory() {
 	t := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
-			result := map[common.TokenPairID][]common.TradeHistory{}
+			result := common.ExchangeTradeHistory{}
 			data := sync.Map{}
 			pairs := self.pairs
 			wait := sync.WaitGroup{}
@@ -418,8 +389,7 @@ func (self *Binance) FetchTradeHistory(timepoint uint64, fromIDs map[string]stri
 				for x = i; x < len(pairs) && x < i+BATCH_SIZE; x++ {
 					wait.Add(1)
 					pair := pairs[x]
-					fromID := fromIDs[pair.Base.ID+pair.Quote.ID]
-					go self.FetchOnePairTradeHistory(&wait, &data, pair, fromID)
+					go self.FetchOnePairTradeHistory(&wait, &data, pair)
 				}
 				i = x
 				wait.Wait()
@@ -428,6 +398,13 @@ func (self *Binance) FetchTradeHistory(timepoint uint64, fromIDs map[string]stri
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
+			history := common.AllTradeHistory{
+				Timestamp: common.GetTimestamp(),
+				Data: map[common.ExchangeID]common.ExchangeTradeHistory{
+					common.ExchangeID("binance"): result,
+				},
+			}
+			self.storage.StoreTradeHistory(history)
 			<-t.C
 		}
 	}()
@@ -493,7 +470,7 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 }
 
 func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface,
-	minDepositConfig common.ExchangesMinDeposit) *Binance {
+	minDepositConfig common.ExchangesMinDeposit, storage ExchangeStorage) *Binance {
 	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance")
 	return &Binance{
 		interf,
@@ -503,5 +480,6 @@ func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, 
 		common.NewExchangeInfo(),
 		fees,
 		minDeposit,
+		storage,
 	}
 }
