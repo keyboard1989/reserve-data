@@ -348,7 +348,7 @@ func (self *Huobi) FetchOnePairTradeHistory(
 }
 
 func (self *Huobi) FetchTradeHistory() {
-	t := time.NewTicker(10 * time.Minute)
+	t := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
 			result := map[common.TokenPairID][]common.TradeHistory{}
@@ -374,6 +374,10 @@ func (self *Huobi) FetchTradeHistory() {
 			<-t.C
 		}
 	}()
+}
+
+func (self *Huobi) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
+	return self.storage.GetTradeHistory(fromTime, toTime)
 }
 
 func getDepositInfo(id common.ActivityID) (string, float64, string) {
@@ -624,6 +628,7 @@ func NewHuobi(
 		storage,
 		minDeposit,
 	}
+	huobiObj.FetchTradeHistory()
 	huobiServer := huobihttp.NewHuobiHTTPServer(&huobiObj)
 	go huobiServer.Run()
 	return &huobiObj

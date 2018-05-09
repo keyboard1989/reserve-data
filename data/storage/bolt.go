@@ -29,7 +29,6 @@ const (
 	METRIC_BUCKET                      string = "metrics"
 	METRIC_TARGET_QUANTITY             string = "target_quantity"
 	PENDING_TARGET_QUANTITY            string = "pending_target_quantity"
-	TRADE_HISTORY                      string = "trade_history"
 	ENABLE_REBALANCE                   string = "enable_rebalance"
 	SETRATE_CONTROL                    string = "setrate_control"
 	PENDING_PWI_EQUATION               string = "pending_pwi_equation"
@@ -96,10 +95,6 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 			return err
 		}
 		_, err = tx.CreateBucketIfNotExists([]byte(PENDING_TARGET_QUANTITY))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucketIfNotExists([]byte(TRADE_HISTORY))
 		if err != nil {
 			return err
 		}

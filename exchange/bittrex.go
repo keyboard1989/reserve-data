@@ -390,7 +390,7 @@ func (self *Bittrex) FetchOnePairTradeHistory(
 }
 
 func (self *Bittrex) FetchTradeHistory() {
-	t := time.NewTicker(10 * time.Minute)
+	t := time.NewTicker(10 * time.Second)
 	go func() {
 		for {
 			result := map[common.TokenPairID][]common.TradeHistory{}
@@ -419,13 +419,17 @@ func (self *Bittrex) FetchTradeHistory() {
 	}()
 }
 
+func (self *Bittrex) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
+	return self.storage.GetTradeHistory(fromTime, toTime)
+}
+
 func NewBittrex(addressConfig map[string]string,
 	feeConfig common.ExchangeFees,
 	interf BittrexInterface,
 	storage BittrexStorage,
 	minDepositConfig common.ExchangesMinDeposit) *Bittrex {
 	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex")
-	return &Bittrex{
+	bittrex := &Bittrex{
 		interf,
 		pairs,
 		tokens,
@@ -435,4 +439,6 @@ func NewBittrex(addressConfig map[string]string,
 		fees,
 		minDeposit,
 	}
+	bittrex.FetchTradeHistory()
+	return bittrex
 }

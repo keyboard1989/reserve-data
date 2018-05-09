@@ -12,11 +12,9 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
-	"github.com/KyberNetwork/reserve-data/exchange"
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
-	exchangestorage "github.com/KyberNetwork/reserve-data/exchange/storage"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/KyberNetwork/reserve-data/stat"
@@ -51,7 +49,6 @@ type Config struct {
 	FetcherStorage       fetcher.Storage
 	FetcherGlobalStorage fetcher.GlobalStorage
 	MetricStorage        metric.MetricStorage
-	ExchangeStorage      exchange.ExchangeStorage
 
 	World                *world.TheWorld
 	FetcherRunner        fetcher.FetcherRunner
@@ -167,12 +164,6 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		panic(err)
 	}
 
-	path := "/go/src/github.com/KyberNetwork/reserve-data/cmd/exchange.db"
-	exchangeStorage, err := exchangestorage.NewBoltExchangeStorage(path)
-	if err != nil {
-		log.Panic(err)
-	}
-
 	var fetcherRunner fetcher.FetcherRunner
 
 	if os.Getenv("KYBER_ENV") == "simulation" {
@@ -197,7 +188,6 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 	self.FetcherStorage = dataStorage
 	self.FetcherGlobalStorage = dataStorage
 	self.MetricStorage = dataStorage
-	self.ExchangeStorage = exchangeStorage
 	self.FetcherRunner = fetcherRunner
 	self.BlockchainSigner = pricingSigner
 	//self.IntermediatorSigner = huoBiintermediatorSigner
@@ -219,7 +209,6 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		settingPath,
 		self.Blockchain,
 		minDeposit,
-		self.ExchangeStorage,
 		kyberENV)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()

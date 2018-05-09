@@ -21,6 +21,7 @@ type Exchange interface {
 	GetFee() ExchangeFees
 	GetMinDeposit() ExchangesMinDeposit
 	TokenAddresses() map[string]ethereum.Address
+	GetTradeHistory(fromTime, toTime uint64) (AllTradeHistory, error)
 }
 
 var SupportedExchanges = map[ExchangeID]Exchange{}

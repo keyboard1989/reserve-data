@@ -410,6 +410,10 @@ func (self *Binance) FetchTradeHistory() {
 	}()
 }
 
+func (self *Binance) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
+	return self.storage.GetTradeHistory(fromTime, toTime)
+}
+
 func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string, amount float64, timepoint uint64) (string, error) {
 	startTime := timepoint - 86400000
 	endTime := timepoint
@@ -472,7 +476,7 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface,
 	minDepositConfig common.ExchangesMinDeposit, storage ExchangeStorage) *Binance {
 	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance")
-	return &Binance{
+	binance := &Binance{
 		interf,
 		pairs,
 		tokens,
@@ -482,4 +486,6 @@ func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, 
 		minDeposit,
 		storage,
 	}
+	binance.FetchTradeHistory()
+	return binance
 }

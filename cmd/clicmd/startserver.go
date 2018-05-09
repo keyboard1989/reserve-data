@@ -124,7 +124,6 @@ func serverStart(cmd *cobra.Command, args []string) {
 		)
 		for _, ex := range config.FetcherExchanges {
 			dataFetcher.AddExchange(ex)
-			ex.FetchTradeHistory()
 		}
 	}
 
@@ -209,7 +208,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		server := http.NewHTTPServer(
 			rData, rCore, rStat,
 			config.MetricStorage,
-			config.ExchangeStorage,
+			config.Exchanges,
 			servPortStr,
 			config.EnableAuthentication,
 			config.AuthEngine,
