@@ -137,7 +137,11 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.AllTra
 				pairCursor := pairBk.Cursor()
 				for pairKey, history := pairCursor.Seek(min); pairKey != nil && bytes.Compare(pairKey, max) <= 0; pairKey, history = pairCursor.Next() {
 					pairHistory := common.TradeHistory{}
-					json.Unmarshal(history, &pairHistory)
+					err = json.Unmarshal(history, &pairHistory)
+					if err != nil {
+						log.Printf("Cannot unmarshal history: %s", err.Error())
+						return err
+					}
 					pairsHistory = append(pairsHistory, pairHistory)
 				}
 				exchangeHistory[common.TokenPairID(key)] = pairsHistory

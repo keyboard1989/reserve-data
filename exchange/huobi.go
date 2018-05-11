@@ -367,7 +367,7 @@ func (self *Huobi) FetchTradeHistory() {
 			history := common.AllTradeHistory{
 				Timestamp: common.GetTimestamp(),
 				Data: map[common.ExchangeID]common.ExchangeTradeHistory{
-					common.ExchangeID("binance"): result,
+					common.ExchangeID("huobi"): result,
 				},
 			}
 			self.storage.StoreTradeHistory(history)
