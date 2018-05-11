@@ -64,11 +64,13 @@ func (self *BinanceStorage) StoreTradeHistory(data common.AllTradeHistory) error
 			exchangeBk, err := b.CreateBucketIfNotExists([]byte(exchange))
 			if err != nil {
 				log.Printf("Cannot create exchange history bucket: %s", err.Error())
+				return err
 			}
 			for pair, pairHistory := range dataHistory {
 				pairBk, err := exchangeBk.CreateBucketIfNotExists([]byte(pair))
 				if err != nil {
 					log.Printf("Cannot create pair history bucket: %s", err.Error())
+					return err
 				}
 				for _, history := range pairHistory {
 					idBytes := uint64ToBytes(history.Timestamp)
@@ -76,7 +78,11 @@ func (self *BinanceStorage) StoreTradeHistory(data common.AllTradeHistory) error
 					if err != nil {
 						log.Printf("Cannot marshal history: %s", err.Error())
 					}
-					pairBk.Put(idBytes, dataJSON)
+					err = pairBk.Put(idBytes, dataJSON)
+					if err != nil {
+						log.Printf("Cannot put new data: %s", err.Error())
+						return err
+					}
 				}
 			}
 		}
@@ -137,7 +143,11 @@ func (self *BinanceStorage) GetLastIDTradeHistory(exchange, pair string) (string
 		}
 		k, v := pairBk.Cursor().Last()
 		if k != nil {
-			json.Unmarshal(v, &history)
+			err = json.Unmarshal(v, &history)
+			if err != nil {
+				log.Printf("Cannot unmarshal history: %s", err.Error())
+				return err
+			}
 		}
 		return err
 	})

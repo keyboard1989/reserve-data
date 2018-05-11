@@ -114,11 +114,11 @@ func NewExchangePool(
 			huobiSigner := huobi.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := huobi.NewHuobiEndpoint(huobiSigner, getHuobiInterface(kyberENV))
 			storage, err := huobi.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/huobi.db")
+			intermediatorSigner := HuobiIntermediatorSignerFromFile(settingPaths.secretPath)
+			intermediatorNonce := nonce.NewTimeWindow(intermediatorSigner.GetAddress(), 10000)
 			if err != nil {
 				log.Panic(err)
 			}
-			intermediatorSigner := HuobiIntermediatorSignerFromFile(settingPaths.secretPath)
-			intermediatorNonce := nonce.NewTimeWindow(intermediatorSigner.GetAddress())
 			huobi := exchange.NewHuobi(
 				addressConfig.Exchanges["huobi"],
 				feeConfig.Exchanges["huobi"],
