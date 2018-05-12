@@ -22,14 +22,23 @@ type BoltAnalyticStorage struct {
 	db *bolt.DB
 }
 
-func NewBoltAnalyticStorage(dbPath, awsKeyPath string) (*BoltAnalyticStorage, error) {
+func NewBoltAnalyticStorage(dbPath string) (*BoltAnalyticStorage, error) {
 	var err error
 	var db *bolt.DB
 	db, err = bolt.Open(dbPath, 0600, nil)
 	if err != nil {
 		panic(err)
 	}
-
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err = tx.CreateBucketIfNotExists([]byte(PRICE_ANALYTIC_BUCKET))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
 	storage := BoltAnalyticStorage{db}
 	return &storage, nil
 }
@@ -49,7 +58,7 @@ func (self *BoltAnalyticStorage) UpdatePriceAnalyticData(timestamp uint64, value
 	return err
 }
 
-func (self *BoltAnalyticStorage) ExportPruneExpiredPriceAnalyticData(currentTime uint64, fileName string) (nRecord uint64, err error) {
+func (self *BoltAnalyticStorage) ExportExpiredPriceAnalyticData(currentTime uint64, fileName string) (nRecord uint64, err error) {
 	expiredTimestampByte := uint64ToBytes(currentTime - PRICE_ANALYTIC_EXPIRED)
 	outFile, err := os.Create(fileName)
 	defer outFile.Close()
@@ -80,14 +89,27 @@ func (self *BoltAnalyticStorage) ExportPruneExpiredPriceAnalyticData(currentTime
 				return err
 			}
 			nRecord++
+		}
+		return nil
+	})
+	return nRecord, err
+}
+
+func (self *BoltAnalyticStorage) PruneExpiredPriceAnalyticData(currentTime uint64) (nRecord uint64, err error) {
+	expiredTimestampByte := uint64ToBytes(currentTime - PRICE_ANALYTIC_EXPIRED)
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PRICE_ANALYTIC_BUCKET))
+		c := b.Cursor()
+		for k, _ := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, _ = c.Next() {
 			err = b.Delete(k)
 			if err != nil {
 				return err
 			}
+			nRecord++
 		}
 		return nil
 	})
-	return
+	return nRecord, err
 }
 
 func (self *BoltAnalyticStorage) GetPriceAnalyticData(fromTime uint64, toTime uint64) ([]common.AnalyticPriceResponse, error) {

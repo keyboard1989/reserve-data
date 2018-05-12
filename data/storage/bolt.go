@@ -230,16 +230,17 @@ func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
 }
 
 func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName string) (nRecord uint64, err error) {
-
 	expiredTimestampByte := uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
 	outFile, err := os.Create(fileName)
 	defer outFile.Close()
 	if err != nil {
 		return 0, err
 	}
+
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(AUTH_DATA_BUCKET))
 		c := b.Cursor()
+
 		for k, v := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, v = c.Next() {
 			timestamp := bytesToUint64(k)
 
@@ -262,13 +263,32 @@ func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName stri
 				return err
 			}
 			nRecord++
-			err = b.Delete(k)
 			if err != nil {
 				return err
 			}
 		}
 		return nil
 	})
+
+	return nRecord, err
+}
+
+func (self *BoltStorage) PruneExpiredAuthData(currentTime uint64) (nRecord uint64, err error) {
+	expiredTimestampByte := uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
+
+	err = self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(AUTH_DATA_BUCKET))
+		c := b.Cursor()
+		for k, _ := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, _ = c.Next() {
+			err = b.Delete(k)
+			if err != nil {
+				return err
+			}
+			nRecord++
+		}
+		return err
+	})
+
 	return nRecord, err
 }
 

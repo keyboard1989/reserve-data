@@ -1,7 +1,6 @@
 package archive
 
 import (
-	"fmt"
 	"os"
 	"strings"
 
@@ -19,22 +18,10 @@ type s3Archive struct {
 	awsConf  AWSConfig
 }
 
-func (archive *s3Archive) BackupFile(bucketName string, destinationFolder string, filePath string) error {
-	err := archive.UploadFile(bucketName, destinationFolder, filePath)
-	if err != nil {
-		return err
-	}
-	intergrity, err := archive.CheckFileIntergrity(bucketName, destinationFolder, filePath)
-	if err != nil {
-		return err
-	}
-	if !intergrity {
-		return fmt.Errorf("Archive: Upload File  %s: corrupted", filePath)
-	}
-	return nil
-}
-
 func enforceFolderPath(fp string) string {
+	if len(fp) < 1 {
+		return fp
+	}
 	if string(fp[len(fp)-1]) != "/" {
 		fp = fp + "/"
 	}
@@ -51,12 +38,23 @@ func (archive *s3Archive) UploadFile(bucketName string, awsfolderPath string, fi
 		Key:    aws.String(enforceFolderPath(awsfolderPath) + getFileNameFromFilePath(filePath)),
 		Body:   file,
 	})
+	return err
+}
 
+func (archive *s3Archive) RemoveFile(bucketName string, awsfolderPath string, filePath string) error {
+	input := &s3.DeleteObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(enforceFolderPath(awsfolderPath) + getFileNameFromFilePath(filePath)),
+	}
+	_, err := archive.svc.DeleteObject(input)
 	return err
 }
 
 func getFileNameFromFilePath(filePath string) string {
 	elems := strings.Split(filePath, "/")
+	if len(elems) < 1 {
+		return filePath
+	}
 	fileName := elems[len(elems)-1]
 	return fileName
 }
@@ -93,16 +91,6 @@ func (archive *s3Archive) CheckFileIntergrity(bucketName string, awsfolderPath s
 	return false, nil
 }
 
-func (archive *s3Archive) RemoveFile(filePath string, bucketName string) error {
-	var err error
-	return err
-}
-
-func (archive *s3Archive) GetAuthDataPath() string {
-	return archive.awsConf.ExpiredAuthDataFolderPath
-
-}
-
 func (archive *s3Archive) GetReserveDataBucketName() string {
 	return archive.awsConf.ExpiredReserveDataBucketName
 }
@@ -111,12 +99,6 @@ func (archive *s3Archive) GetReserveDataBucketName() string {
 //This should be passed in from JSON configure file
 func (archive *s3Archive) GetStatDataBucketName() string {
 	return archive.awsConf.ExpiredStatDataBucketName
-}
-
-//GetPriceAnalyticPath returns the folder path to store Expired Price Analytic Data.
-//Ths should be passed in from JSON configure file
-func (archive *s3Archive) GetPriceAnalyticPath() string {
-	return archive.awsConf.ExpiredPriceAnalyticFolderPath
 }
 
 func (archive *s3Archive) GetLogFolderPath() string {

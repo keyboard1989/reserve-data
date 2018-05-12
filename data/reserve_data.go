@@ -8,13 +8,13 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
-	"github.com/KyberNetwork/reserve-data/data/storagecontroller"
+	"github.com/KyberNetwork/reserve-data/data/datapruner"
 )
 
 type ReserveData struct {
 	storage           Storage
 	fetcher           Fetcher
-	storageController storagecontroller.StorageController
+	storageController datapruner.StorageController
 	globalStorage     GlobalStorage
 }
 
@@ -263,26 +263,49 @@ func (self ReserveData) Stop() error {
 
 func (self ReserveData) ControlAuthDataSize() error {
 	for {
-		log.Printf("StorageController: waiting for signal from runner AuthData controller channel")
+		log.Printf("DataPruner: waiting for signal from runner AuthData controller channel")
 		t := <-self.storageController.Runner.GetAuthBucketTicker()
 		timepoint := common.TimeToTimepoint(t)
-		log.Printf("StorageController: got signal in AuthData controller channel with timestamp %d", common.TimeToTimepoint(t))
-		fileName := fmt.Sprintf("ExpiredAuthData_at_%s", time.Unix(int64(timepoint/1000), 0).UTC())
+		log.Printf("DataPruner: got signal in AuthData controller channel with timestamp %d", common.TimeToTimepoint(t))
+		fileName := fmt.Sprintf("./exported/ExpiredAuthData_at_%s", time.Unix(int64(timepoint/1000), 0).UTC())
 		nRecord, err := self.storage.ExportExpiredAuthData(common.TimeToTimepoint(t), fileName)
 		if err != nil {
-			log.Printf("ERROR: StorageController export and prune AuthData operation failed: %s, err")
+			log.Printf("ERROR: DataPruner export AuthData operation failed: %s", err)
 		} else {
+			var integrity bool
 			if nRecord > 0 {
-				err = self.storageController.Arch.BackupFile(self.storageController.Arch.GetReserveDataBucketName(), self.storageController.Arch.GetAuthDataPath(), fileName)
+				err = self.storageController.Arch.UploadFile(self.storageController.Arch.GetReserveDataBucketName(), self.storageController.ExpiredAuthDataPath, fileName)
 				if err != nil {
-					log.Printf("StorageController: Back up file failed: %s", err)
+					log.Printf("DataPruner: Upload file failed: %s", err)
+				} else {
+					integrity, err = self.storageController.Arch.CheckFileIntergrity(self.storageController.Arch.GetReserveDataBucketName(), self.storageController.ExpiredAuthDataPath, fileName)
+					if err != nil {
+						log.Printf("ERROR: DataPruner: error in file integrity check (%s):", err)
+					} else if !integrity {
+						log.Printf("ERROR: DataPruner: file upload corrupted")
+
+					}
+					if err != nil || !integrity {
+						//if the intergrity check failed, remove the remote file.
+						removalErr := self.storageController.Arch.RemoveFile(self.storageController.Arch.GetReserveDataBucketName(), self.storageController.ExpiredAuthDataPath, fileName)
+						if removalErr != nil {
+							log.Printf("ERROR: DataPruner: cannot remove remote file :(%s)", removalErr)
+						}
+					}
 				}
 			}
-			if err == nil {
-				os.Remove(fileName)
-				log.Printf("StorageController: exported and pruned %d expired records from AuthData", nRecord)
+			if integrity && err == nil {
+				nPrunedRecords, err := self.storage.PruneExpiredAuthData(common.TimeToTimepoint(t))
+				if err != nil {
+					log.Printf("DataPruner: Can not prune Auth Data (%s)", err)
+				} else if nPrunedRecords != nRecord {
+					log.Printf("DataPruner: Number of Exported Data is %d, which is different from number of pruned data %d", nRecord, nPrunedRecords)
+				} else {
+					log.Printf("DataPruner: exported and pruned %d expired records from AuthData", nRecord)
+				}
 			}
 		}
+		os.Remove(fileName)
 	}
 }
 
@@ -292,8 +315,8 @@ func (self ReserveData) RunStorageController() error {
 	return nil
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner storagecontroller.StorageControllerRunner, arch archive.Archive, globalStorage GlobalStorage) *ReserveData {
-	storageController, err := storagecontroller.NewStorageController(storageControllerRunner, arch)
+func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner, arch archive.Archive, globalStorage GlobalStorage) *ReserveData {
+	storageController, err := datapruner.NewStorageController(storageControllerRunner, arch)
 	if err != nil {
 		panic(err)
 	}

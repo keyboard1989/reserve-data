@@ -105,14 +105,14 @@ func backupLog(arch archive.Archive) {
 			matched, err := regexp.MatchString("core.*.log", file.Name())
 			if (!file.IsDir()) && (matched) && (err == nil) {
 				log.Printf("File name is %s", file.Name())
-				err := arch.UploadFile(arch.GetLogBucketName(), arch.GetLogFolderPath(), LOG_PATH+file.Name())
+				err := arch.UploadFile(arch.GetLogBucketName(), LOG_PATH, LOG_PATH+file.Name())
 				if err != nil {
 					log.Printf("ERROR: Log backup: Can not upload Log file %s", err)
 				} else {
 					var err error
 					var ok bool
 					if file.Name() != "core.log" {
-						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), arch.GetLogFolderPath(), LOG_PATH+file.Name())
+						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), LOG_PATH, LOG_PATH+file.Name())
 						if !ok || (err != nil) {
 							log.Printf("ERROR: Log backup: File intergrity is corrupted")
 						}
@@ -135,6 +135,11 @@ func serverStart(cmd *cobra.Command, args []string) {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 	configLog(stdoutLog)
+	//create temp folder for exported file
+	err := os.MkdirAll("./exported", 0730)
+	if err != nil {
+		panic(err)
+	}
 	//get configuration from ENV variable
 	kyberENV := os.Getenv("KYBER_ENV")
 	if kyberENV == "" {
@@ -201,8 +206,8 @@ func serverStart(cmd *cobra.Command, args []string) {
 	}
 
 	if !noCore {
-		nonceCorpus := nonce.NewTimeWindow(config.BlockchainSigner.GetAddress())
-		nonceDeposit := nonce.NewTimeWindow(config.DepositSigner.GetAddress())
+		nonceCorpus := nonce.NewTimeWindow(config.BlockchainSigner.GetAddress(), 2000)
+		nonceDeposit := nonce.NewTimeWindow(config.DepositSigner.GetAddress(), 10000)
 		bc.RegisterPricingOperator(config.BlockchainSigner, nonceCorpus)
 		bc.RegisterDepositOperator(config.DepositSigner, nonceDeposit)
 	}
