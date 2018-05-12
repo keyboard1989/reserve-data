@@ -1216,9 +1216,7 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 			)
 			return
 		}
-		for exchangeID, dataHistory := range history.Data {
-			data.Data[exchangeID] = dataHistory
-		}
+		data.Data[ex.ID()] = history
 	}
 	c.JSON(
 		http.StatusOK,

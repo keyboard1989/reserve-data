@@ -364,19 +364,13 @@ func (self *Huobi) FetchTradeHistory() {
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
-			history := common.AllTradeHistory{
-				Timestamp: common.GetTimestamp(),
-				Data: map[common.ExchangeID]common.ExchangeTradeHistory{
-					common.ExchangeID("huobi"): result,
-				},
-			}
-			self.storage.StoreTradeHistory(history)
+			self.storage.StoreTradeHistory(result)
 			<-t.C
 		}
 	}()
 }
 
-func (self *Huobi) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
+func (self *Huobi) GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTradeHistory, error) {
 	return self.storage.GetTradeHistory(fromTime, toTime)
 }
 

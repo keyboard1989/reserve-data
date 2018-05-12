@@ -79,32 +79,25 @@ func (self *BoltStorage) RegisterBittrexDeposit(id uint64, actID common.Activity
 	return err
 }
 
-func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory) error {
+func (self *BoltStorage) StoreTradeHistory(data common.ExchangeTradeHistory) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
-		for exchange, dataHistory := range data.Data {
-			exchangeBk, err := b.CreateBucketIfNotExists([]byte(exchange))
+		for pair, pairHistory := range data {
+			pairBk, err := b.CreateBucketIfNotExists([]byte(pair))
 			if err != nil {
-				log.Printf("Cannot create exchange history bucket: %s", err.Error())
+				log.Printf("Cannot create pair history bucket: %s", err.Error())
 				return err
 			}
-			for pair, pairHistory := range dataHistory {
-				pairBk, err := exchangeBk.CreateBucketIfNotExists([]byte(pair))
+			for _, history := range pairHistory {
+				idBytes := uint64ToBytes(history.Timestamp)
+				dataJSON, err := json.Marshal(history)
 				if err != nil {
-					log.Printf("Cannot create pair history bucket: %s", err.Error())
-					return err
+					log.Printf("Cannot marshal history: %s", err.Error())
 				}
-				for _, history := range pairHistory {
-					idBytes := uint64ToBytes(history.Timestamp)
-					dataJSON, err := json.Marshal(history)
-					if err != nil {
-						log.Printf("Cannot marshal history: %s", err.Error())
-					}
-					err = pairBk.Put(idBytes, dataJSON)
-					if err != nil {
-						log.Printf("Cannot put new data: %s", err.Error())
-					}
+				err = pairBk.Put(idBytes, dataJSON)
+				if err != nil {
+					log.Printf("Cannot put new data: %s", err.Error())
 				}
 			}
 		}
@@ -113,11 +106,8 @@ func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory) error {
 	return err
 }
 
-func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
-	result := common.AllTradeHistory{
-		Timestamp: common.GetTimestamp(),
-		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
-	}
+func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTradeHistory, error) {
+	result := common.ExchangeTradeHistory{}
 	var err error
 	if toTime-fromTime > MAX_GET_TRADE_HISTORY {
 		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to 3 days (miliseconds)"))
@@ -127,27 +117,23 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.AllTra
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
 		c := b.Cursor()
-		for k, v := c.First(); k != nil && v == nil; k, v = c.Next() {
-			exchangeBk := b.Bucket(k)
-			cursor := exchangeBk.Cursor()
-			exchangeHistory := common.ExchangeTradeHistory{}
-			for key, value := cursor.First(); key != nil && value == nil; key, value = cursor.Next() {
-				pairBk := exchangeBk.Bucket(key)
-				pairsHistory := []common.TradeHistory{}
-				pairCursor := pairBk.Cursor()
-				for pairKey, history := pairCursor.Seek(min); pairKey != nil && bytes.Compare(pairKey, max) <= 0; pairKey, history = pairCursor.Next() {
-					pairHistory := common.TradeHistory{}
-					err = json.Unmarshal(history, &pairHistory)
-					if err != nil {
-						log.Printf("Cannot unmarshal history: %s", err.Error())
-						return err
-					}
-					pairsHistory = append(pairsHistory, pairHistory)
+		exchangeHistory := common.ExchangeTradeHistory{}
+		for key, value := c.First(); key != nil && value == nil; key, value = c.Next() {
+			pairBk := b.Bucket(key)
+			pairsHistory := []common.TradeHistory{}
+			pairCursor := pairBk.Cursor()
+			for pairKey, history := pairCursor.Seek(min); pairKey != nil && bytes.Compare(pairKey, max) <= 0; pairKey, history = pairCursor.Next() {
+				pairHistory := common.TradeHistory{}
+				err = json.Unmarshal(history, &pairHistory)
+				if err != nil {
+					log.Printf("Cannot unmarshal history: %s", err.Error())
+					return err
 				}
-				exchangeHistory[common.TokenPairID(key)] = pairsHistory
+				pairsHistory = append(pairsHistory, pairHistory)
 			}
-			result.Data[common.ExchangeID(k)] = exchangeHistory
+			exchangeHistory[common.TokenPairID(key)] = pairsHistory
 		}
+		result = exchangeHistory
 		return nil
 	})
 	return result, err

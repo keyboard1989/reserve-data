@@ -13,8 +13,8 @@ type HuobiStorage interface {
 	GetPendingIntermediateTXs() (map[common.ActivityID]common.TXEntry, error)
 	RemovePendingIntermediateTx(id common.ActivityID) error
 
-	StoreTradeHistory(data common.AllTradeHistory) error
+	StoreTradeHistory(data common.ExchangeTradeHistory) error
 
-	GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error)
+	GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTradeHistory, error)
 	GetLastIDTradeHistory(exchange, pair string) (string, error)
 }

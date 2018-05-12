@@ -27,7 +27,7 @@ type Binance struct {
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 	minDeposit   common.ExchangesMinDeposit
-	storage      ExchangeStorage
+	storage      BinanceStorage
 }
 
 func (self *Binance) TokenAddresses() map[string]ethereum.Address {
@@ -398,19 +398,13 @@ func (self *Binance) FetchTradeHistory() {
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
-			history := common.AllTradeHistory{
-				Timestamp: common.GetTimestamp(),
-				Data: map[common.ExchangeID]common.ExchangeTradeHistory{
-					common.ExchangeID("binance"): result,
-				},
-			}
-			self.storage.StoreTradeHistory(history)
+			self.storage.StoreTradeHistory(result)
 			<-t.C
 		}
 	}()
 }
 
-func (self *Binance) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
+func (self *Binance) GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTradeHistory, error) {
 	return self.storage.GetTradeHistory(fromTime, toTime)
 }
 
@@ -474,7 +468,7 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 }
 
 func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface,
-	minDepositConfig common.ExchangesMinDeposit, storage ExchangeStorage) *Binance {
+	minDepositConfig common.ExchangesMinDeposit, storage BinanceStorage) *Binance {
 	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance")
 	binance := &Binance{
 		interf,
