@@ -102,7 +102,7 @@ func backupLog(arch archive.Archive) {
 			log.Printf("ERROR: Log backup: Can not view log folder")
 		}
 		for _, file := range files {
-			matched, err := regexp.MatchString("core.*.log", file.Name())
+			matched, err := regexp.MatchString("core.*\\.log", file.Name())
 			if (!file.IsDir()) && (matched) && (err == nil) {
 				log.Printf("File name is %s", file.Name())
 				err := arch.UploadFile(arch.GetLogBucketName(), LOG_PATH, LOG_PATH+file.Name())
