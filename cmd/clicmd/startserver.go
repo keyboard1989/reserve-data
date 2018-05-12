@@ -28,7 +28,8 @@ import (
 )
 
 const (
-	LOG_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/log/"
+	LOG_PATH        string = "/go/src/github.com/KyberNetwork/reserve-data/log/"
+	REMOTE_LOG_PATH string = "core-log/"
 )
 
 var noAuthEnable bool
@@ -105,14 +106,14 @@ func backupLog(arch archive.Archive) {
 			matched, err := regexp.MatchString("core.*\\.log", file.Name())
 			if (!file.IsDir()) && (matched) && (err == nil) {
 				log.Printf("File name is %s", file.Name())
-				err := arch.UploadFile(arch.GetLogBucketName(), LOG_PATH, LOG_PATH+file.Name())
+				err := arch.UploadFile(arch.GetLogBucketName(), REMOTE_LOG_PATH, LOG_PATH+file.Name())
 				if err != nil {
 					log.Printf("ERROR: Log backup: Can not upload Log file %s", err)
 				} else {
 					var err error
 					var ok bool
 					if file.Name() != "core.log" {
-						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), LOG_PATH, LOG_PATH+file.Name())
+						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), REMOTE_LOG_PATH, LOG_PATH+file.Name())
 						if !ok || (err != nil) {
 							log.Printf("ERROR: Log backup: File intergrity is corrupted")
 						}
