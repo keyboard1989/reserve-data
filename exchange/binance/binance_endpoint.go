@@ -185,7 +185,7 @@ func (self *BinanceEndpoint) GetTradeHistory(symbol string) (exchange.BinanceTra
 
 func (self *BinanceEndpoint) GetAccountTradeHistory(
 	base, quote common.Token,
-	fromID uint64) (exchange.BinaAccountTradeHistory, error) {
+	fromID string) (exchange.BinaAccountTradeHistory, error) {
 
 	symbol := strings.ToUpper(fmt.Sprintf("%s%s", base.ID, quote.ID))
 	result := exchange.BinaAccountTradeHistory{}
@@ -193,8 +193,8 @@ func (self *BinanceEndpoint) GetAccountTradeHistory(
 		"symbol": symbol,
 		"limit":  "500",
 	}
-	if fromID != 0 {
-		params["fromId"] = strconv.FormatUint(fromID, 10)
+	if fromID != "" {
+		params["fromId"] = fromID
 	}
 	resp_body, err := self.GetResponse(
 		"GET",

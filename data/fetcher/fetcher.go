@@ -76,7 +76,7 @@ func (self *Fetcher) Run() error {
 	go self.RunAuthDataFetcher()
 	go self.RunRateFetcher()
 	go self.RunBlockFetcher()
-	go self.RunTradeHistoryFetcher()
+	// go self.RunTradeHistoryFetcher()
 	go self.RunGlobalDataFetcher()
 	log.Printf("Fetcher runner is running...")
 	return nil
@@ -212,53 +212,59 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 	}
 }
 
-func (self *Fetcher) FetchTradeHistoryFromExchange(
-	wait *sync.WaitGroup,
-	exchange Exchange,
-	data *sync.Map,
-	timepoint uint64) {
+// func (self *Fetcher) FetchTradeHistoryFromExchange(
+// 	wait *sync.WaitGroup,
+// 	exchange Exchange,
+// 	data *sync.Map,
+// 	timepoint uint64) {
 
-	defer wait.Done()
-	tradeHistory, err := exchange.FetchTradeHistory(timepoint)
-	if err != nil {
-		log.Printf("Fetch trade history from exchange failed: %s", err.Error())
-	}
-	data.Store(exchange.ID(), tradeHistory)
-}
+// 	defer wait.Done()
+// 	tokenPairs := exchange.TokenPairs()
+// 	fromIDs := map[string]string{}
+// 	for _, pair := range tokenPairs {
+// 		id, _ := self.storage.GetLastIDTradeHistory(string(exchange.ID()), fmt.Sprintf("%s-%s", pair.Base.ID, pair.Quote.ID))
+// 		fromIDs[pair.Base.ID+pair.Quote.ID] = id
+// 	}
+// 	tradeHistory, err := exchange.FetchTradeHistory(timepoint, fromIDs)
+// 	if err != nil {
+// 		log.Printf("Fetch trade history from exchange failed: %s", err.Error())
+// 	}
+// 	data.Store(exchange.ID(), tradeHistory)
+// }
 
-func (self *Fetcher) FetchAllTradeHistory(timepoint uint64) {
-	tradeHistory := common.AllTradeHistory{
-		common.GetTimestamp(),
-		map[common.ExchangeID]common.ExchangeTradeHistory{},
-	}
-	wait := sync.WaitGroup{}
-	data := sync.Map{}
-	for _, exchange := range self.exchanges {
-		wait.Add(1)
-		go self.FetchTradeHistoryFromExchange(&wait, exchange, &data, timepoint)
-	}
+// func (self *Fetcher) FetchAllTradeHistory(timepoint uint64) {
+// 	tradeHistory := common.AllTradeHistory{
+// 		common.GetTimestamp(),
+// 		map[common.ExchangeID]common.ExchangeTradeHistory{},
+// 	}
+// 	wait := sync.WaitGroup{}
+// 	data := sync.Map{}
+// 	for _, exchange := range self.exchanges {
+// 		wait.Add(1)
+// 		go self.FetchTradeHistoryFromExchange(&wait, exchange, &data, timepoint)
+// 	}
 
-	wait.Wait()
-	data.Range(func(key, value interface{}) bool {
-		tradeHistory.Data[key.(common.ExchangeID)] = value.(map[common.TokenPairID][]common.TradeHistory)
-		return true
-	})
+// 	wait.Wait()
+// 	data.Range(func(key, value interface{}) bool {
+// 		tradeHistory.Data[key.(common.ExchangeID)] = value.(map[common.TokenPairID][]common.TradeHistory)
+// 		return true
+// 	})
 
-	err := self.storage.StoreTradeHistory(tradeHistory, timepoint)
-	if err != nil {
-		log.Printf("Store trade history failed: %s", err.Error())
-	}
-}
+// 	err := self.storage.StoreTradeHistory(tradeHistory, timepoint)
+// 	if err != nil {
+// 		log.Printf("Store trade history failed: %s", err.Error())
+// 	}
+// }
 
-func (self *Fetcher) RunTradeHistoryFetcher() {
-	for {
-		log.Printf("waiting for signal from runner trade history channel")
-		t := <-self.runner.GetTradeHistoryTicker()
-		log.Printf("got signal in trade history channel with timestamp %d", common.TimeToTimepoint(t))
-		self.FetchAllTradeHistory(common.TimeToTimepoint(t))
-		log.Printf("fetched trade history from exchanges")
-	}
-}
+// func (self *Fetcher) RunTradeHistoryFetcher() {
+// 	for {
+// 		log.Printf("waiting for signal from runner trade history channel")
+// 		t := <-self.runner.GetTradeHistoryTicker()
+// 		log.Printf("got signal in trade history channel with timestamp %d", common.TimeToTimepoint(t))
+// 		self.FetchAllTradeHistory(common.TimeToTimepoint(t))
+// 		log.Printf("fetched trade history from exchanges")
+// 	}
+// }
 
 func (self *Fetcher) FetchAuthDataFromBlockchain(
 	allBalances map[string]common.BalanceEntry,

@@ -29,7 +29,6 @@ const (
 	METRIC_BUCKET                      string = "metrics"
 	METRIC_TARGET_QUANTITY             string = "target_quantity"
 	PENDING_TARGET_QUANTITY            string = "pending_target_quantity"
-	TRADE_HISTORY                      string = "trade_history"
 	ENABLE_REBALANCE                   string = "enable_rebalance"
 	SETRATE_CONTROL                    string = "setrate_control"
 	PENDING_PWI_EQUATION               string = "pending_pwi_equation"
@@ -96,10 +95,6 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 			return err
 		}
 		_, err = tx.CreateBucketIfNotExists([]byte(PENDING_TARGET_QUANTITY))
-		if err != nil {
-			return err
-		}
-		_, err = tx.CreateBucketIfNotExists([]byte(TRADE_HISTORY))
 		if err != nil {
 			return err
 		}
@@ -885,61 +880,6 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 		// remove pending target qty
 		return self.RemovePendingTargetQty()
 	}
-	return err
-}
-
-func (self *BoltStorage) GetTradeHistory(timepoint uint64) (common.AllTradeHistory, error) {
-	result := common.AllTradeHistory{}
-	var err error
-	err = self.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(TRADE_HISTORY))
-		_, data := b.Cursor().First()
-		if data == nil {
-			err = errors.New(fmt.Sprintf("There no data before timepoint %d", timepoint))
-		} else {
-			err = json.Unmarshal(data, &result)
-		}
-		return err
-	})
-	return result, err
-}
-
-func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory, timepoint uint64) error {
-	var err error
-	err = self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
-		b := tx.Bucket([]byte(TRADE_HISTORY))
-		c := b.Cursor()
-		k, v := c.First()
-		currentData := common.AllTradeHistory{
-			Timestamp: common.GetTimestamp(),
-			Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
-		}
-		if k != nil {
-			json.Unmarshal(v, &currentData)
-		}
-
-		// override old data
-		for exchange, dataHistory := range data.Data {
-			currentDataHistory, exist := currentData.Data[exchange]
-			if !exist {
-				currentData.Data[exchange] = dataHistory
-			} else {
-				for pair, pairHistory := range dataHistory {
-					currentDataHistory[pair] = pairHistory
-				}
-			}
-		}
-		log.Printf("History: %+v", data)
-
-		// add new data
-		dataJson, err = json.Marshal(currentData)
-		if err != nil {
-			return err
-		}
-		idByte := uint64ToBytes(timepoint)
-		return b.Put(idByte, dataJson)
-	})
 	return err
 }
 

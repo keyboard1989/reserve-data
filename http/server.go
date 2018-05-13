@@ -26,6 +26,7 @@ type HTTPServer struct {
 	core        reserve.ReserveCore
 	stat        reserve.ReserveStats
 	metric      metric.MetricStorage
+	exchanges   []common.Exchange
 	host        string
 	authEnabled bool
 	auth        Authentication
@@ -1191,22 +1192,31 @@ func (self *HTTPServer) GetAddress(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
-	timepoint := common.GetTimepoint()
 	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
 	if !ok {
 		return
 	}
-
-	data, err := self.app.GetTradeHistory(timepoint)
-	if err != nil {
-		c.JSON(
-			http.StatusOK,
-			gin.H{
-				"success": false,
-				"data":    err.Error(),
-			},
-		)
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
 		return
+	}
+	data := common.AllTradeHistory{
+		Timestamp: common.GetTimestamp(),
+		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
+	}
+	for _, ex := range self.exchanges {
+		history, err := ex.GetTradeHistory(fromTime, toTime)
+		if err != nil {
+			c.JSON(
+				http.StatusOK,
+				gin.H{
+					"success": false,
+					"data":    err.Error(),
+				},
+			)
+			return
+		}
+		data.Data[ex.ID()] = history
 	}
 	c.JSON(
 		http.StatusOK,
@@ -2677,6 +2687,7 @@ func NewHTTPServer(
 	core reserve.ReserveCore,
 	stat reserve.ReserveStats,
 	metric metric.MetricStorage,
+	exchanges []common.Exchange,
 	host string,
 	enableAuth bool,
 	authEngine Authentication,
@@ -2703,6 +2714,6 @@ func NewHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, core, stat, metric, host, enableAuth, authEngine, r,
+		app, core, stat, metric, exchanges, host, enableAuth, authEngine, r,
 	}
 }
