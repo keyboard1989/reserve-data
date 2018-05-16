@@ -62,6 +62,10 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 	}
 }
 
+func InitToken(kyberENV string) {
+
+}
+
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
 

@@ -1,4 +1,4 @@
-package configuration
+package settings
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"
@@ -34,6 +34,4 @@ type TokenStorage interface {
 	GetExternalTokens() ([]common.Token, error)
 	GetExternalTokenbyID(id string) (common.Token, error)
 	GetExternalTokenByAddress(ethereum.Address) (common.Token, error)
-
-	LoadTokensFromFile(filePath string) error
 }
