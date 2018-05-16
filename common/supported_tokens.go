@@ -209,10 +209,12 @@ func RegisterInactiveToken(t Token) {
 	supportedTokens.AddInactiveToken(t)
 }
 
+//Internal active token
 func InternalTokens() []Token {
 	return supportedTokens.GetInternalTokens()
 }
 
+//Active Tokens
 func NetworkTokens() []Token {
 	return supportedTokens.GetTokens()
 }
