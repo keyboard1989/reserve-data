@@ -88,7 +88,8 @@ func InitToken() *settings.TokenSetting {
 
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
-
+	tokensSetting := InitToken()
+	overalSetting := settings.Settings{tokensSetting}
 	world, err := world.NewTheWorld(kyberENV, setPath.secretPath)
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
@@ -171,6 +172,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		EnableAuthentication:    authEnbl,
 		Archive:                 s3archive,
 		World:                   world,
+		Settings:                overalSetting,
 	}
 
 	if enableStat {

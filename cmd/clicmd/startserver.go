@@ -222,6 +222,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 			config.EnableAuthentication,
 			config.AuthEngine,
 			kyberENV,
+			config.Settings
 		)
 
 		server.Run()

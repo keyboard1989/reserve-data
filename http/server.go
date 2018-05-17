@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/metric"
@@ -30,6 +32,7 @@ type HTTPServer struct {
 	authEnabled bool
 	auth        Authentication
 	r           *gin.Engine
+	setting     *settings.Settings
 }
 
 const (
@@ -208,7 +211,7 @@ func (self *HTTPServer) Price(c *gin.Context) {
 	base := c.Param("base")
 	quote := c.Param("quote")
 	log.Printf("Getting price for %s - %s \n", base, quote)
-	pair, err := common.NewTokenPair(base, quote)
+	pair, err := self.setting.Tokens.NewTokenPair(base, quote)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -342,7 +345,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	afpMid := postForm.Get("afp_mid")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenAddrs, "-") {
-		token, err := common.GetInternalToken(tok)
+		token, err := self.setting.Tokens.GetInternalTokenByID(tok)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -439,7 +442,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		)
 		return
 	}
-	base, err := common.GetInternalToken(baseTokenParam)
+	base, err := self.setting.Tokens.GetInternalTokenByID(baseTokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -447,7 +450,7 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		)
 		return
 	}
-	quote, err := common.GetInternalToken(quoteTokenParam)
+	quote, err := self.setting.Tokens.GetInternalTokenByID(quoteTokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -560,7 +563,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		)
 		return
 	}
-	token, err := common.GetInternalToken(tokenParam)
+	token, err := self.setting.Tokens.GetInternalTokenByID(tokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -612,7 +615,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 		)
 		return
 	}
-	token, err := common.GetInternalToken(tokenParam)
+	token, err := self.setting.Tokens.GetInternalTokenByID(tokenParam)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -786,7 +789,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 	toParam := postForm.Get("to")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenParam, "-") {
-		token, err := common.GetInternalToken(tok)
+		token, err := self.setting.Tokens.GetInternalTokenByID(tok)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -963,7 +966,7 @@ func (self *HTTPServer) GetPairInfo(c *gin.Context) {
 		)
 		return
 	}
-	pair, err := common.NewTokenPair(base, quote)
+	pair, err := self.setting.Tokens.NewTokenPair(base, quote)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -1149,7 +1152,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 		// reserve, _ := strconv.ParseFloat(dataParts[2], 64)
 		// rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
 		// transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
-		_, err = common.GetInternalToken(token)
+		_, err = self.setting.Tokens.GetInternalTokenByID(token)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -1483,7 +1486,7 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 			return
 		}
 		token := dataParts[0]
-		_, err = common.GetInternalToken(token)
+		_, err = self.setting.Tokens.GetInternalTokenByID(token)
 		if err != nil {
 			c.JSON(
 				http.StatusOK,
@@ -2361,7 +2364,7 @@ func (self *HTTPServer) GetReserveVolume(c *gin.Context) {
 		)
 		return
 	}
-	token, err := common.GetNetworkToken(tokenName)
+	token, err := self.setting.Tokens.GetInternalTokenByID(tokenName)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,
@@ -2680,6 +2683,7 @@ func NewHTTPServer(
 	host string,
 	enableAuth bool,
 	authEngine Authentication,
+	setting *settings.Settings,
 	env string) *HTTPServer {
 
 	r := gin.Default()
@@ -2703,6 +2707,6 @@ func NewHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, core, stat, metric, host, enableAuth, authEngine, r,
+		app, core, stat, metric, host, enableAuth, authEngine, r, setting,
 	}
 }
