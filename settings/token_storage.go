@@ -8,13 +8,13 @@ import (
 type TokenStorage interface {
 	//Add Tokens by ID
 	AddTokenByID(common.Token) error
-	AddInternalActiveTokenByID(common.Token) error
-	AddExternalActiveTokenByID(common.Token) error
+	AddInternalTokenByID(common.Token) error
+	AddExternalTokenByID(common.Token) error
 	AddActiveTokenByID(common.Token) error
 	//Add Tokens by Address
 	AddTokenByAddress(common.Token) error
-	AddInternalActiveTokenByAddress(common.Token) error
-	AddExternalActiveTokenByAddress(common.Token) error
+	AddInternalTokenByAddress(common.Token) error
+	AddExternalTokenByAddress(common.Token) error
 	AddActiveTokenByAddress(common.Token) error
 
 	//Active Tokens (Network Tokens)
@@ -32,6 +32,6 @@ type TokenStorage interface {
 	GetInternalTokenByAddress(ethereum.Address) (common.Token, error)
 	//External Active Tokens
 	GetExternalTokens() ([]common.Token, error)
-	GetExternalTokenbyID(id string) (common.Token, error)
+	GetExternalTokenByID(id string) (common.Token, error)
 	GetExternalTokenByAddress(ethereum.Address) (common.Token, error)
 }

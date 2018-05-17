@@ -7,10 +7,17 @@ import (
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
+	"github.com/KyberNetwork/reserve-data/settings"
+	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/KyberNetwork/reserve-data/world"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+)
+
+const (
+	TOKEN_DB_FILE_PATH      string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
+	TOKEN_DEFAULT_JSON_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.json"
 )
 
 func GetAddressConfig(filePath string) common.AddressConfig {
@@ -62,8 +69,21 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 	}
 }
 
-func InitToken(kyberENV string) {
-
+func InitToken() *settings.TokenSetting {
+	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(TOKEN_DB_FILE_PATH)
+	if err != nil {
+		log.Panicf("Init: Can not create bolt token storage", err)
+	}
+	tokenSetting := settings.TokenSetting{BoltTokenStorage}
+	allToks, err := tokenSetting.GetAllTokens()
+	if err != nil || len(allToks) < 1 {
+		log.Printf("Init: Token DB is empty, attempt to load token from file")
+		err = tokenSetting.LoadTokenFromFile(TOKEN_DEFAULT_JSON_PATH)
+		if err != nil {
+			log.Printf("Init: Can not load Token from file, Token DB is needed to be updated manually")
+		}
+	}
+	return &tokenSetting
 }
 
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
@@ -73,7 +93,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)

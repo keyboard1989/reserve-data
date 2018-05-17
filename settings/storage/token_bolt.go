@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	ethereum "github.com/ethereum/go-ethereum/common"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/boltdb/bolt"
 )
@@ -85,11 +87,11 @@ func (self *BoltTokenStorage) AddTokenByID(t common.Token) error {
 	return self.setTokenToBucketByID(t, ALL_TOKEN_BUCKET_BY_ID)
 }
 
-func (self *BoltTokenStorage) AddInternalActiveTokenByID(t common.Token) error {
+func (self *BoltTokenStorage) AddInternalTokenByID(t common.Token) error {
 	return self.setTokenToBucketByID(t, INTERNAL_ACTIVE_BUCKET_BY_ID)
 }
 
-func (self *BoltTokenStorage) AddExternalActiveTokenByID(t common.Token) error {
+func (self *BoltTokenStorage) AddExternalTokenByID(t common.Token) error {
 	return self.setTokenToBucketByID(t, EXTERNAL_ACTIVE_BUCKET_BY_ID)
 }
 
@@ -105,19 +107,19 @@ func (self *BoltTokenStorage) setTokenToBucketByID(t common.Token, bucketName st
 	return err
 }
 
-func (self *BoltTokenStorage) AddActiveTokenByAddr(t common.Token) error {
+func (self *BoltTokenStorage) AddActiveTokenByAddress(t common.Token) error {
 	return self.setTokenToBucketByAddr(t, ACTIVE_TOKEN_BUCKET_BY_ADDR)
 }
 
-func (self *BoltTokenStorage) AddTokenByAddr(t common.Token) error {
+func (self *BoltTokenStorage) AddTokenByAddress(t common.Token) error {
 	return self.setTokenToBucketByAddr(t, ALL_TOKEN_BUCKET_BY_ADDR)
 }
 
-func (self *BoltTokenStorage) AddInternalTokenByAddr(t common.Token) error {
+func (self *BoltTokenStorage) AddInternalTokenByAddress(t common.Token) error {
 	return self.setTokenToBucketByAddr(t, INTERNAL_ACTIVE_BUCKET_BY_ADDR)
 }
 
-func (self *BoltTokenStorage) AddExternalActiveTokenByAddr(t common.Token) error {
+func (self *BoltTokenStorage) AddExternalTokenByAddress(t common.Token) error {
 	return self.setTokenToBucketByAddr(t, EXTERNAL_ACTIVE_BUCKET_BY_ADDR)
 }
 
@@ -169,54 +171,54 @@ func (self *BoltTokenStorage) getAllTokenFromBucket(bucketName string) (result [
 	return result, err
 }
 
-func (self *BoltTokenStorage) GetActiveTokenbyID(ID string) (common.Token, error) {
-	return self.getATokenFromBucketByID(ID, ACTIVE_TOKEN_BUCKET_BY_ID)
+func (self *BoltTokenStorage) GetActiveTokenByID(id string) (common.Token, error) {
+	return self.getATokenFromBucketByID(id, ACTIVE_TOKEN_BUCKET_BY_ID)
 }
 
-func (self *BoltTokenStorage) GetTokenByID(ID string) (common.Token, error) {
-	return self.getATokenFromBucketByID(ID, ALL_TOKEN_BUCKET_BY_ID)
+func (self *BoltTokenStorage) GetTokenByID(id string) (common.Token, error) {
+	return self.getATokenFromBucketByID(id, ALL_TOKEN_BUCKET_BY_ID)
 }
 
-func (self *BoltTokenStorage) GetInternalTokenByID(ID string) (common.Token, error) {
-	return self.getATokenFromBucketByID(ID, INTERNAL_ACTIVE_BUCKET_BY_ID)
+func (self *BoltTokenStorage) GetInternalTokenByID(id string) (common.Token, error) {
+	return self.getATokenFromBucketByID(id, INTERNAL_ACTIVE_BUCKET_BY_ID)
 }
 
-func (self *BoltTokenStorage) GetExternalTokenByID(ID string) (common.Token, error) {
-	return self.getATokenFromBucketByID(ID, EXTERNAL_ACTIVE_BUCKET_BY_ID)
+func (self *BoltTokenStorage) GetExternalTokenByID(id string) (common.Token, error) {
+	return self.getATokenFromBucketByID(id, EXTERNAL_ACTIVE_BUCKET_BY_ID)
 }
 
-func (self *BoltTokenStorage) getATokenFromBucketByID(ID, bucketName string) (common.Token, error) {
+func (self *BoltTokenStorage) getATokenFromBucketByID(id, bucketName string) (common.Token, error) {
 	var t common.Token
-	ID = strings.ToLower(ID)
+	id = strings.ToLower(id)
 	err := self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(bucketName))
 		if b == nil {
 			return fmt.Errorf("Bucket doesn't exist yet")
 		}
 		c := b.Cursor()
-		k, v := c.Seek([]byte(ID))
-		if bytes.Compare(k, []byte(ID)) != 0 {
-			return fmt.Errorf("Token %d is not found in current setting", ID)
+		k, v := c.Seek([]byte(id))
+		if bytes.Compare(k, []byte(id)) != 0 {
+			return fmt.Errorf("Token %s is not found in current setting", id)
 		}
 		return json.Unmarshal(v, &t)
 	})
 	return t, err
 }
 
-func (self *BoltTokenStorage) GetActiveTokenbyAddress(Addr string) (common.Token, error) {
-	return self.getATokenFromBucketByAddress(Addr, ACTIVE_TOKEN_BUCKET_BY_ADDR)
+func (self *BoltTokenStorage) GetActiveTokenByAddress(Addr ethereum.Address) (common.Token, error) {
+	return self.getATokenFromBucketByAddress(Addr.Hex(), ACTIVE_TOKEN_BUCKET_BY_ADDR)
 }
 
-func (self *BoltTokenStorage) GetTokenByAddress(Addr string) (common.Token, error) {
-	return self.getATokenFromBucketByAddress(Addr, ALL_TOKEN_BUCKET_BY_ADDR)
+func (self *BoltTokenStorage) GetTokenByAddress(Addr ethereum.Address) (common.Token, error) {
+	return self.getATokenFromBucketByAddress(Addr.Hex(), ALL_TOKEN_BUCKET_BY_ADDR)
 }
 
-func (self *BoltTokenStorage) GetInternalTokenByAddress(Addr string) (common.Token, error) {
-	return self.getATokenFromBucketByAddress(Addr, INTERNAL_ACTIVE_BUCKET_BY_ADDR)
+func (self *BoltTokenStorage) GetInternalTokenByAddress(Addr ethereum.Address) (common.Token, error) {
+	return self.getATokenFromBucketByAddress(Addr.Hex(), INTERNAL_ACTIVE_BUCKET_BY_ADDR)
 }
 
-func (self *BoltTokenStorage) GetExternalTokenByAddress(Addr string) (common.Token, error) {
-	return self.getATokenFromBucketByAddress(Addr, EXTERNAL_ACTIVE_BUCKET_BY_ADDR)
+func (self *BoltTokenStorage) GetExternalTokenByAddress(Addr ethereum.Address) (common.Token, error) {
+	return self.getATokenFromBucketByAddress(Addr.Hex(), EXTERNAL_ACTIVE_BUCKET_BY_ADDR)
 }
 
 func (self *BoltTokenStorage) getATokenFromBucketByAddress(Addr, bucketName string) (common.Token, error) {

@@ -2,6 +2,8 @@ package settings
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -20,7 +22,7 @@ type TokenConfig struct {
 }
 
 type TokenSetting struct {
-	storage TokenStorage
+	Storage TokenStorage
 }
 
 func NewTokenSetting(storage TokenStorage) *TokenSetting {
@@ -28,31 +30,31 @@ func NewTokenSetting(storage TokenStorage) *TokenSetting {
 }
 
 func (self *TokenSetting) AddToken(t common.Token, active bool, knSupported bool) error {
-	if err := self.storage.AddTokenByID(t); err != nil {
+	if err := self.Storage.AddTokenByID(t); err != nil {
 		return err
 	}
-	if err := self.storage.AddTokenByAddress(t); err != nil {
+	if err := self.Storage.AddTokenByAddress(t); err != nil {
 		return err
 	}
 	if active {
-		if err := self.storage.AddActiveTokenByID(t); err != nil {
+		if err := self.Storage.AddActiveTokenByID(t); err != nil {
 			return err
 		}
-		if err := self.storage.AddActiveTokenByAddress(t); err != nil {
+		if err := self.Storage.AddActiveTokenByAddress(t); err != nil {
 			return err
 		}
 		if knSupported {
-			if err := self.storage.AddInternalActiveTokenByID(t); err != nil {
+			if err := self.Storage.AddInternalTokenByID(t); err != nil {
 				return err
 			}
-			if err := self.storage.AddInternalActiveTokenByAddress(t); err != nil {
+			if err := self.Storage.AddInternalTokenByAddress(t); err != nil {
 				return err
 			}
 		} else {
-			if err := self.storage.AddExternalActiveTokenByID(t); err != nil {
+			if err := self.Storage.AddExternalTokenByID(t); err != nil {
 				return err
 			}
-			if err := self.storage.AddExternalActiveTokenByAddress(t); err != nil {
+			if err := self.Storage.AddExternalTokenByAddress(t); err != nil {
 				return err
 			}
 		}
@@ -78,4 +80,31 @@ func (self *TokenSetting) LoadTokenFromFile(filePath string) error {
 		}
 	}
 	return nil
+}
+
+func (self *TokenSetting) GetAllTokens() ([]common.Token, error) {
+	return self.Storage.GetAllTokens()
+}
+
+func (self *TokenSetting) GetInternalTokenByID(id string) (common.Token, error) {
+	return self.Storage.GetInternalTokenByID(id string) 
+}
+
+func (self *TokenSetting) NewTokenPair(base, quote string) (common.TokenPair, error) {
+	bToken, err1 := self.GetInternalTokenByID(base)
+	qToken, err2 := self.GetInternalTokenByID(quote)
+	if err1 != nil || err2 != nil {
+		return TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
+	} else {
+		return TokenPair{bToken, qToken}, nil
+	}
+}
+
+func (self *TokenSetting) MustCreateTokenPair(base, quote string) TokenPair {
+	pair, err := NewTokenPair(base, quote)
+	if err != nil {
+		panic(err)
+	} else {
+		return pair
+	}
 }
