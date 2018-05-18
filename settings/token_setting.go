@@ -29,32 +29,32 @@ func NewTokenSetting(storage TokenStorage) *TokenSetting {
 	return &TokenSetting{storage}
 }
 
-func (self *TokenSetting) AddToken(t common.Token, active bool, knSupported bool) error {
-	if err := self.Storage.AddTokenByID(t); err != nil {
+func AddToken(t common.Token, active bool, knSupported bool) error {
+	if err := setting.Tokens.Storage.AddTokenByID(t); err != nil {
 		return err
 	}
-	if err := self.Storage.AddTokenByAddress(t); err != nil {
+	if err := setting.Tokens.Storage.AddTokenByAddress(t); err != nil {
 		return err
 	}
 	if active {
-		if err := self.Storage.AddActiveTokenByID(t); err != nil {
+		if err := setting.Tokens.Storage.AddActiveTokenByID(t); err != nil {
 			return err
 		}
-		if err := self.Storage.AddActiveTokenByAddress(t); err != nil {
+		if err := setting.Tokens.Storage.AddActiveTokenByAddress(t); err != nil {
 			return err
 		}
 		if knSupported {
-			if err := self.Storage.AddInternalTokenByID(t); err != nil {
+			if err := setting.Tokens.Storage.AddInternalTokenByID(t); err != nil {
 				return err
 			}
-			if err := self.Storage.AddInternalTokenByAddress(t); err != nil {
+			if err := setting.Tokens.Storage.AddInternalTokenByAddress(t); err != nil {
 				return err
 			}
 		} else {
-			if err := self.Storage.AddExternalTokenByID(t); err != nil {
+			if err := setting.Tokens.Storage.AddExternalTokenByID(t); err != nil {
 				return err
 			}
-			if err := self.Storage.AddExternalTokenByAddress(t); err != nil {
+			if err := setting.Tokens.Storage.AddExternalTokenByAddress(t); err != nil {
 				return err
 			}
 		}
@@ -62,7 +62,7 @@ func (self *TokenSetting) AddToken(t common.Token, active bool, knSupported bool
 	return nil
 }
 
-func (self *TokenSetting) LoadTokenFromFile(filePath string) error {
+func LoadTokenFromFile(filePath string) error {
 	data, err := ioutil.ReadFile(filePath)
 	tokens := TokenConfig{}
 	if err != nil {
@@ -74,7 +74,7 @@ func (self *TokenSetting) LoadTokenFromFile(filePath string) error {
 	}
 	for id, t := range tokens.Tokens {
 		tok := common.Token{id, t.Address, t.Decimals}
-		err = self.AddToken(tok, t.Active, t.KNReserveSupport)
+		err = AddToken(tok, t.Active, t.KNReserveSupport)
 		if err != nil {
 			return err
 		}
@@ -82,9 +82,9 @@ func (self *TokenSetting) LoadTokenFromFile(filePath string) error {
 	return nil
 }
 
-func (self *TokenSetting) NewTokenPair(base, quote string) (common.TokenPair, error) {
-	bToken, err1 := self.GetInternalTokenByID(base)
-	qToken, err2 := self.GetInternalTokenByID(quote)
+func NewTokenPair(base, quote string) (common.TokenPair, error) {
+	bToken, err1 := GetInternalTokenByID(base)
+	qToken, err2 := GetInternalTokenByID(quote)
 	if err1 != nil || err2 != nil {
 		return common.TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
 	} else {
@@ -92,8 +92,8 @@ func (self *TokenSetting) NewTokenPair(base, quote string) (common.TokenPair, er
 	}
 }
 
-func (self *TokenSetting) MustCreateTokenPair(base, quote string) common.TokenPair {
-	pair, err := self.NewTokenPair(base, quote)
+func MustCreateTokenPair(base, quote string) common.TokenPair {
+	pair, err := NewTokenPair(base, quote)
 	if err != nil {
 		panic(err)
 	} else {

@@ -7,56 +7,56 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func (self *TokenSetting) GetAllTokens() ([]common.Token, error) {
-	return self.Storage.GetAllTokens()
+func GetAllTokens() ([]common.Token, error) {
+	return setting.Tokens.Storage.GetAllTokens()
 }
 
-func (self *TokenSetting) GetActiveTokens() ([]common.Token, error) {
-	return self.Storage.GetActiveTokens()
+func GetActiveTokens() ([]common.Token, error) {
+	return setting.Tokens.Storage.GetActiveTokens()
 }
 
-func (self *TokenSetting) GetInternalTokens() ([]common.Token, error) {
-	return self.Storage.GetInternalTokens()
+func GetInternalTokens() ([]common.Token, error) {
+	return setting.Tokens.Storage.GetInternalTokens()
 }
 
-func (self *TokenSetting) GetExternalTokens() ([]common.Token, error) {
-	return self.Storage.GetExternalTokens()
+func GetExternalTokens() ([]common.Token, error) {
+	return setting.Tokens.Storage.GetExternalTokens()
 }
 
-func (self *TokenSetting) GetTokenByID(id string) (common.Token, error) {
-	return self.Storage.GetTokenByID(id)
+func GetTokenByID(id string) (common.Token, error) {
+	return setting.Tokens.Storage.GetTokenByID(id)
 }
 
-func (self *TokenSetting) GetActiveTokenByID(id string) (common.Token, error) {
-	return self.Storage.GetActiveTokenByID(id)
+func GetActiveTokenByID(id string) (common.Token, error) {
+	return setting.Tokens.Storage.GetActiveTokenByID(id)
 }
 
-func (self *TokenSetting) GetInternalTokenByID(id string) (common.Token, error) {
-	return self.Storage.GetInternalTokenByID(id)
+func GetInternalTokenByID(id string) (common.Token, error) {
+	return setting.Tokens.Storage.GetInternalTokenByID(id)
 }
 
-func (self *TokenSetting) GetExternalTokenByID(id string) (common.Token, error) {
-	return self.Storage.GetExternalTokenByID(id)
+func GetExternalTokenByID(id string) (common.Token, error) {
+	return setting.Tokens.Storage.GetExternalTokenByID(id)
 }
 
-func (self *TokenSetting) GetTokenByAddress(addr ethereum.Address) (common.Token, error) {
-	return self.Storage.GetTokenByAddress(addr)
+func GetTokenByAddress(addr ethereum.Address) (common.Token, error) {
+	return setting.Tokens.Storage.GetTokenByAddress(addr)
 }
 
-func (self *TokenSetting) GetActiveTokenByAddress(addr ethereum.Address) (common.Token, error) {
-	return self.Storage.GetActiveTokenByAddress(addr)
+func GetActiveTokenByAddress(addr ethereum.Address) (common.Token, error) {
+	return setting.Tokens.Storage.GetActiveTokenByAddress(addr)
 }
 
-func (self *TokenSetting) GetInternalTokenByAddress(addr ethereum.Address) (common.Token, error) {
-	return self.Storage.GetInternalTokenByAddress(addr)
+func GetInternalTokenByAddress(addr ethereum.Address) (common.Token, error) {
+	return setting.Tokens.Storage.GetInternalTokenByAddress(addr)
 }
 
-func (self *TokenSetting) GetExternalTokenByAddress(addr ethereum.Address) (common.Token, error) {
-	return self.Storage.GetExternalTokenByAddress(addr)
+func GetExternalTokenByAddress(addr ethereum.Address) (common.Token, error) {
+	return setting.Tokens.Storage.GetExternalTokenByAddress(addr)
 }
 
-func (self *TokenSetting) ETHToken() common.Token {
-	eth, err := self.Storage.GetInternalTokenByID("ETH")
+func ETHToken() common.Token {
+	eth, err := setting.Tokens.Storage.GetInternalTokenByID("ETH")
 	if err != nil {
 		log.Panicf("There is no ETH token in token DB, this should not happen (%s)", err)
 	}

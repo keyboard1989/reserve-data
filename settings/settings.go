@@ -12,9 +12,7 @@ const (
 )
 
 type Settings struct {
-	Tokens    *TokenSetting
-	Exchanges *ExchangesSetting
-	Addresses *AddressSetting
+	Tokens *TokenSetting
 }
 
 var setting = InitSetting()
@@ -25,15 +23,19 @@ func InitToken() *TokenSetting {
 		log.Panicf("Setting Init: Can not create bolt token storage", err)
 	}
 	tokenSetting := TokenSetting{BoltTokenStorage}
-	allToks, err := tokenSetting.GetAllTokens()
+
+	return &tokenSetting
+}
+
+func Init() {
+	allToks, err := GetAllTokens()
 	if err != nil || len(allToks) < 1 {
 		log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
-		err = tokenSetting.LoadTokenFromFile(TOKEN_DEFAULT_JSON_PATH)
+		err := LoadTokenFromFile(TOKEN_DEFAULT_JSON_PATH)
 		if err != nil {
 			log.Printf("Setting Init: Can not load Token from file, Token DB is needed to be updated manually")
 		}
 	}
-	return &tokenSetting
 }
 
 func InitSetting() *Settings {

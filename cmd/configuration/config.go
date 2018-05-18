@@ -5,8 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -84,8 +82,6 @@ type Config struct {
 	NetworkAddress     ethereum.Address
 	WhitelistAddress   ethereum.Address
 	ThirdPartyReserves []ethereum.Address
-
-	Settings *settings.Settings
 
 	ChainType string
 }
