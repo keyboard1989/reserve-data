@@ -1,6 +1,8 @@
 package settings
 
 import (
+	"log"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -51,4 +53,12 @@ func (self *TokenSetting) GetInternalTokenByAddress(addr ethereum.Address) (comm
 
 func (self *TokenSetting) GetExternalTokenByAddress(addr ethereum.Address) (common.Token, error) {
 	return self.Storage.GetExternalTokenByAddress(addr)
+}
+
+func (self *TokenSetting) ETHToken() common.Token {
+	eth, err := self.Storage.GetInternalTokenByID("ETH")
+	if err != nil {
+		log.Panicf("There is no ETH token in token DB, this should not happen (%s)", err)
+	}
+	return eth
 }

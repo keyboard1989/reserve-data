@@ -7,6 +7,8 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	ether "github.com/ethereum/go-ethereum"
@@ -51,6 +53,7 @@ type Blockchain struct {
 	oldBurners    []ethereum.Address
 	tokens        []common.Token
 	tokenIndices  map[string]tbindex
+	setting       *settings.Settings
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
@@ -298,12 +301,17 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint6
 	returnTime := common.GetTimestamp()
 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
 	if err != nil {
-		for _, token := range common.InternalTokens() {
-			result[token.ID] = common.BalanceEntry{
-				Valid:      false,
-				Error:      err.Error(),
-				Timestamp:  timestamp,
-				ReturnTime: returnTime,
+		tokens, err := self.setting.Tokens.GetInternalTokens()
+		if err != nil {
+			log.Printf("Fetcher ------> Can't get the list of internal Tokens ", err)
+		} else {
+			for _, token := range tokens {
+				result[token.ID] = common.BalanceEntry{
+					Valid:      false,
+					Error:      err.Error(),
+					Timestamp:  timestamp,
+					ReturnTime: returnTime,
+				}
 			}
 		}
 	} else {
@@ -376,7 +384,7 @@ func (self *Blockchain) GetReserveRates(
 	rates := common.ReserveRates{}
 	rates.Timestamp = common.GetTimepoint()
 
-	ETH := common.ETHToken()
+	ETH := self.setting.Tokens.ETHToken()
 	srcAddresses := []ethereum.Address{}
 	destAddresses := []ethereum.Address{}
 	for _, token := range tokens {
@@ -531,7 +539,8 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 
 					if ethRate := self.GetEthRate(tradeLog.Timestamp / 1000000); ethRate != 0 {
 						// fiatAmount = amount * ethRate
-						eth := common.ETHToken()
+						eth := self.setting.Tokens.ETHToken()
+
 						f := new(big.Float)
 						if strings.ToLower(eth.Address) == strings.ToLower(srcAddr.String()) {
 							f.SetInt(tradeLog.SrcAmount)
@@ -565,7 +574,7 @@ func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
 func NewBlockchain(
 	base *blockchain.BaseBlockchain,
 	wrapperAddr, pricingAddr, burnerAddr,
-	networkAddr, reserveAddr, whitelistAddr ethereum.Address) (*Blockchain, error) {
+	networkAddr, reserveAddr, whitelistAddr ethereum.Address, sett *settings.Settings) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper := blockchain.NewContract(
 		wrapperAddr,
@@ -604,5 +613,6 @@ func NewBlockchain(
 		oldNetworks:   []ethereum.Address{},
 		oldBurners:    []ethereum.Address{},
 		tokens:        []common.Token{},
+		setting:       sett,
 	}, nil
 }

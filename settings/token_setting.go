@@ -82,26 +82,18 @@ func (self *TokenSetting) LoadTokenFromFile(filePath string) error {
 	return nil
 }
 
-func (self *TokenSetting) GetAllTokens() ([]common.Token, error) {
-	return self.Storage.GetAllTokens()
-}
-
-func (self *TokenSetting) GetInternalTokenByID(id string) (common.Token, error) {
-	return self.Storage.GetInternalTokenByID(id string) 
-}
-
 func (self *TokenSetting) NewTokenPair(base, quote string) (common.TokenPair, error) {
 	bToken, err1 := self.GetInternalTokenByID(base)
 	qToken, err2 := self.GetInternalTokenByID(quote)
 	if err1 != nil || err2 != nil {
-		return TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
+		return common.TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
 	} else {
-		return TokenPair{bToken, qToken}, nil
+		return common.TokenPair{bToken, qToken}, nil
 	}
 }
 
-func (self *TokenSetting) MustCreateTokenPair(base, quote string) TokenPair {
-	pair, err := NewTokenPair(base, quote)
+func (self *TokenSetting) MustCreateTokenPair(base, quote string) common.TokenPair {
+	pair, err := self.NewTokenPair(base, quote)
 	if err != nil {
 		panic(err)
 	} else {
