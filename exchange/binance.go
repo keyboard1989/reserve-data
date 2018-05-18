@@ -220,10 +220,10 @@ func (self *Binance) FetchOnePairData(
 				rate, _ := strconv.ParseFloat(buy.Rate, 64)
 				result.Bids = append(
 					result.Bids,
-					common.PriceEntry{
-						Quantity: quantity,
-						Rate:     rate,
-					},
+					common.NewPriceEntry(
+						quantity,
+						rate,
+					),
 				)
 			}
 			for _, sell := range resp_data.Asks {
@@ -231,10 +231,10 @@ func (self *Binance) FetchOnePairData(
 				rate, _ := strconv.ParseFloat(sell.Rate, 64)
 				result.Asks = append(
 					result.Asks,
-					common.PriceEntry{
-						Quantity: quantity,
-						Rate:     rate,
-					},
+					common.NewPriceEntry(
+						quantity,
+						rate,
+					),
 				)
 			}
 		}
@@ -391,13 +391,13 @@ func (self *Binance) FetchOnePairTradeHistory(
 		if trade.IsBuyer {
 			historyType = "buy"
 		}
-		tradeHistory := common.TradeHistory{
-			ID:        strconv.FormatUint(trade.ID, 10),
-			Price:     price,
-			Qty:       quantity,
-			Type:      historyType,
-			Timestamp: trade.Time,
-		}
+		tradeHistory := common.NewTradeHistory(
+			strconv.FormatUint(trade.ID, 10),
+			price,
+			quantity,
+			historyType,
+			trade.Time,
+		)
 		result = append(result, tradeHistory)
 	}
 	data.Store(pairString, result)

@@ -9,7 +9,6 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
-	ether "github.com/ethereum/go-ethereum"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -357,13 +356,13 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 		result.Valid = true
 		result.Data = map[string]common.RateEntry{}
 		for i, token := range validTokens {
-			result.Data[token.ID] = common.RateEntry{
-				BaseBuy:     baseBuys[i],
-				CompactBuy:  int8(compactBuys[i]),
-				BaseSell:    baseSells[i],
-				CompactSell: int8(compactSells[i]),
-				Block:       blocks[i].Uint64(),
-			}
+			result.Data[token.ID] = common.NewRateEntry(
+				baseBuys[i],
+				int8(compactBuys[i]),
+				baseSells[i],
+				int8(compactSells[i]),
+				blocks[i].Uint64(),
+			)
 		}
 		return result, nil
 	}
@@ -426,11 +425,11 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 	addresses = append(addresses, self.networkAddr, self.burnerAddr, self.whitelistAddr)
 	addresses = append(addresses, self.oldNetworks...)
 	addresses = append(addresses, self.oldBurners...)
-	param := ether.FilterQuery{
-		FromBlock: big.NewInt(int64(fromBlock)),
-		ToBlock:   to,
-		Addresses: addresses,
-		Topics: [][]ethereum.Hash{
+	param := common.NewFilterQuery(
+		big.NewInt(int64(fromBlock)),
+		to,
+		addresses,
+		[][]ethereum.Hash{
 			{
 				ethereum.HexToHash(TradeEvent),
 				ethereum.HexToHash(BurnFeeEvent),
@@ -438,7 +437,7 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 				ethereum.HexToHash(UserCatEvent),
 			},
 		},
-	}
+	)
 	log.Printf("LogFetcher - fetching logs data from block %d, to block %d", fromBlock, to.Uint64())
 	return self.BaseBlockchain.GetLogs(param)
 }

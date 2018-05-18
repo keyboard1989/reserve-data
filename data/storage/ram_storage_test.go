@@ -8,7 +8,7 @@ import (
 
 func TestHasPendingDepositRamStorage(t *testing.T) {
 	storage := NewRamStorage()
-	token := common.Token{ID: "OMG", Address: "0x1111111111111111111111111111111111111111", Decimal: 18}
+	token := common.NewToken("OMG", "0x1111111111111111111111111111111111111111", 18)
 	exchange := common.TestExchange{}
 	timepoint := common.GetTimepoint()
 	out := storage.HasPendingDeposit(token, exchange)
@@ -17,7 +17,7 @@ func TestHasPendingDepositRamStorage(t *testing.T) {
 	}
 	storage.Record(
 		"deposit",
-		common.ActivityID{Timepoint: 1, EID: "1"},
+		common.NewActivityID(1, "1"),
 		string(exchange.ID()),
 		map[string]interface{}{
 			"exchange":  exchange,

@@ -16,10 +16,10 @@ func getExchangePairsAndFeesFromConfig(
 	pairs := []common.TokenPair{}
 	fees := common.ExchangeFees{
 		Trading: feeConfig.Trading,
-		Funding: common.FundingFee{
-			Withdraw: map[string]float64{},
-			Deposit:  map[string]float64{},
-		},
+		Funding: common.NewFundingFee(
+			map[string]float64{},
+			map[string]float64{},
+		),
 	}
 	minDeposit := common.ExchangesMinDeposit{}
 	for tokenID := range addressConfig {

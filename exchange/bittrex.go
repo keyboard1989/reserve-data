@@ -281,19 +281,19 @@ func (self *Bittrex) FetchOnePairData(wq *sync.WaitGroup, pair common.TokenPair,
 			for _, buy := range onePairData.Result["buy"] {
 				result.Bids = append(
 					result.Bids,
-					common.PriceEntry{
-						Quantity: buy["Quantity"],
-						Rate:     buy["Rate"],
-					},
+					common.NewPriceEntry(
+						buy["Quantity"],
+						buy["Rate"],
+					),
 				)
 			}
 			for _, sell := range onePairData.Result["sell"] {
 				result.Asks = append(
 					result.Asks,
-					common.PriceEntry{
-						Quantity: sell["Quantity"],
-						Rate:     sell["Rate"],
-					},
+					common.NewPriceEntry(
+						sell["Quantity"],
+						sell["Rate"],
+					),
 				)
 			}
 		}
@@ -376,13 +376,13 @@ func (self *Bittrex) FetchOnePairTradeHistory(
 		if trade.OrderType == "LIMIT_BUY" {
 			historyType = "buy"
 		}
-		tradeHistory := common.TradeHistory{
-			ID:        trade.OrderUuid,
-			Price:     trade.Price,
-			Qty:       trade.Quantity,
-			Type:      historyType,
-			Timestamp: common.TimeToTimepoint(t),
-		}
+		tradeHistory := common.NewTradeHistory(
+			trade.OrderUuid,
+			trade.Price,
+			trade.Quantity,
+			historyType,
+			common.TimeToTimepoint(t),
+		)
 		result = append(result, tradeHistory)
 	}
 	pairString := pair.PairID()
