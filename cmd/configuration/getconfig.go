@@ -15,11 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
-const (
-	TOKEN_DB_FILE_PATH      string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
-	TOKEN_DEFAULT_JSON_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.json"
-)
-
 func GetAddressConfig(filePath string) common.AddressConfig {
 	addressConfig, err := common.GetAddressConfigFromFile(filePath)
 	if err != nil {
