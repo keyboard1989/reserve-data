@@ -95,7 +95,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	//Create blockchain object
 	bc, err := CreateBlockchain(config, kyberENV)
 	if err != nil {
-		log.Panic("Can not create blockchain: (%s)", err)
+		log.Panicf("Can not create blockchain: (%s)", err)
 	}
 
 	//Create Data and Core, run if not in dry mode
