@@ -88,6 +88,7 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 		config.NetworkAddress,
 		config.ReserveAddress,
 		config.WhitelistAddress,
+		config.Settings,
 	)
 	if err != nil {
 		panic(err)
@@ -98,9 +99,6 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
 
-	for _, token := range config.SupportedTokens {
-		bc.AddToken(token)
-	}
 	err = bc.LoadAndSetTokenIndices()
 	if err != nil {
 		log.Panicf("Can't load and set token indices: %s", err)

@@ -51,7 +51,6 @@ type Blockchain struct {
 	whitelistAddr ethereum.Address
 	oldNetworks   []ethereum.Address
 	oldBurners    []ethereum.Address
-	tokens        []common.Token
 	tokenIndices  map[string]tbindex
 	setting       *settings.Settings
 }
@@ -64,17 +63,17 @@ func (self *Blockchain) AddOldBurners(addr ethereum.Address) {
 	self.oldBurners = append(self.oldBurners, addr)
 }
 
-func (self *Blockchain) AddToken(t common.Token) {
-	self.tokens = append(self.tokens, t)
-}
-
 func (self *Blockchain) GetAddresses() *common.Addresses {
 	exs := map[common.ExchangeID]common.TokenAddresses{}
 	for _, ex := range common.SupportedExchanges {
 		exs[ex.ID()] = ex.TokenAddresses()
 	}
 	tokens := map[string]common.TokenInfo{}
-	for _, t := range self.tokens {
+	tokenSettings, err := self.setting.Tokens.GetInternalTokens()
+	if err != nil {
+		log.Printf("ERROR: can't read Token Settings")
+	}
+	for _, t := range tokenSettings {
 		tokens[t.ID] = common.TokenInfo{
 			Address:  ethereum.HexToAddress(t.Address),
 			Decimals: t.Decimal,
@@ -95,29 +94,32 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 }
 
 func (self *Blockchain) LoadAndSetTokenIndices() error {
-	tokens := []ethereum.Address{}
+	tokenAddrs := []ethereum.Address{}
 	self.tokenIndices = map[string]tbindex{}
-
-	log.Printf("tokens: %v", self.tokens)
-	for _, tok := range self.tokens {
+	tokens, err := self.setting.Tokens.GetInternalTokens()
+	if err != nil {
+		return err
+	}
+	log.Printf("tokens: %v", tokens)
+	for _, tok := range tokens {
 		if tok.ID != "ETH" {
-			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
+			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(tok.Address))
 		} else {
 			// this is not really needed. Just a safe guard
 			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
 		}
 	}
 	opts := self.GetCallOpts(0)
-	log.Printf("tokens: %v", tokens)
+	log.Printf("tokens Address: %v", tokenAddrs)
 	bulkIndices, indicesInBulk, err := self.GeneratedGetTokenIndicies(
 		opts,
 		self.pricingAddr,
-		tokens,
+		tokenAddrs,
 	)
 	if err != nil {
 		return err
 	}
-	for i, tok := range tokens {
+	for i, tok := range tokenAddrs {
 		self.tokenIndices[tok.Hex()] = tbindex{
 			bulkIndices[i].Uint64(),
 			indicesInBulk[i].Uint64(),
@@ -292,7 +294,11 @@ func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.I
 func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint64) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
-	for _, tok := range self.tokens {
+	tokensSetting, err := self.setting.Tokens.GetInternalTokens()
+	if err != nil {
+		return result, err
+	}
+	for _, tok := range tokensSetting {
 		tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 	}
 	timestamp := common.GetTimestamp()
@@ -315,7 +321,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint6
 			}
 		}
 	} else {
-		for i, tok := range self.tokens {
+		for i, tok := range tokensSetting {
 			if balances[i].Cmp(Big0) == 0 || balances[i].Cmp(BigMax) > 0 {
 				log.Printf("Fetcher ------> balances of token %s is invalid", tok.ID)
 				result[tok.ID] = common.BalanceEntry{
@@ -342,7 +348,11 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	result := common.AllRateEntry{}
 	tokenAddrs := []ethereum.Address{}
 	validTokens := []common.Token{}
-	for _, s := range self.tokens {
+	tokenSettings, err := self.setting.Tokens.GetInternalTokens()
+	if err != nil {
+		return result, err
+	}
+	for _, s := range tokenSettings {
 		if s.ID != "ETH" {
 			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(s.Address))
 			validTokens = append(validTokens, s)
@@ -612,7 +622,6 @@ func NewBlockchain(
 		whitelistAddr: whitelistAddr,
 		oldNetworks:   []ethereum.Address{},
 		oldBurners:    []ethereum.Address{},
-		tokens:        []common.Token{},
 		setting:       sett,
 	}, nil
 }
