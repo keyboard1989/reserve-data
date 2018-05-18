@@ -91,8 +91,8 @@ func (self *Huobi) UpdatePairsPrecision() {
 	}
 }
 
-func (self *Huobi) GetInfo() (common.ExchangeInfo, error) {
-	return *self.exchangeInfo, nil
+func (self *Huobi) GetInfo() (*common.ExchangeInfo, error) {
+	return self.exchangeInfo, nil
 }
 
 func (self *Huobi) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {

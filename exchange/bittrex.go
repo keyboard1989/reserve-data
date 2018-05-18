@@ -87,8 +87,8 @@ func (self *Bittrex) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePr
 	return pairInfo, err
 }
 
-func (self *Bittrex) GetInfo() (common.ExchangeInfo, error) {
-	return *self.exchangeInfo, nil
+func (self *Bittrex) GetInfo() (*common.ExchangeInfo, error) {
+	return self.exchangeInfo, nil
 }
 
 func (self *Bittrex) UpdatePairsPrecision() {
