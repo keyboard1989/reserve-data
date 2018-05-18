@@ -103,23 +103,6 @@ func (self *StatStorageTest) TestWalletStats() error {
 		return fmt.Errorf("Wrong usd volume value returned: %v expected 4567.8 (UPPER CASE ADDR)", usdVol)
 	}
 	return nil
-
-	walletStat, err = self.storage.GetWalletStats(0, 86400000, testWallet, 0)
-	if walletStat == nil || len(walletStat) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
-	}
-	result, ok = (walletStat[0]).(common.MetricStats)
-	if !ok {
-		return errors.New("Type mismatched: get wallet stat return wrong type (LOWER CASE ADDR)")
-	}
-	usdVol = (result.USDVolume)
-	if !ok {
-		return errors.New("Type mismatched: get wallet stat return missing field (LOWER CASE ADDR)")
-	}
-	if usdVol != 4567.8 {
-		return fmt.Errorf("Wrong usd volume value returned: %v expected 4567.8 (LOWER CASE ADDR)", usdVol)
-	}
-	return nil
 }
 
 func (self *StatStorageTest) TestCountryStats() error {
