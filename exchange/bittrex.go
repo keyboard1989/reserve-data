@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -25,6 +27,7 @@ type Bittrex struct {
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 	minDeposit   common.ExchangesMinDeposit
+	setting      *settings.Settings
 }
 
 func (self *Bittrex) TokenAddresses() map[string]ethereum.Address {
@@ -336,7 +339,7 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		if resp_data.Success {
 			for _, b := range resp_data.Result {
 				tokenID := b.Currency
-				_, err := common.GetInternalToken(tokenID)
+				_, err := self.setting.Tokens.GetInternalTokenByID(tokenID)
 				if err == nil {
 					result.AvailableBalance[tokenID] = b.Available
 					result.DepositBalance[tokenID] = b.Pending
@@ -407,8 +410,8 @@ func (self *Bittrex) FetchTradeHistory(timepoint uint64) (map[common.TokenPairID
 }
 
 func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BittrexInterface, storage BittrexStorage,
-	minDepositConfig common.ExchangesMinDeposit) *Bittrex {
-	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex")
+	minDepositConfig common.ExchangesMinDeposit, sett *settings.Settings) *Bittrex {
+	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex", sett)
 	return &Bittrex{
 		interf,
 		pairs,
@@ -418,5 +421,6 @@ func NewBittrex(addressConfig map[string]string, feeConfig common.ExchangeFees, 
 		common.NewExchangeInfo(),
 		fees,
 		minDeposit,
+		sett,
 	}
 }

@@ -85,7 +85,7 @@ type Config struct {
 	WhitelistAddress   ethereum.Address
 	ThirdPartyReserves []ethereum.Address
 
-	Settings settings.Settings
+	Settings *settings.Settings
 
 	ChainType string
 }

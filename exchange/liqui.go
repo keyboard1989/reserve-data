@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/satori/go.uuid"
@@ -22,6 +24,7 @@ type Liqui struct {
 	interf    LiquiInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
+	setting   *settings.Settings
 }
 
 func (self *Liqui) MarshalText() (text []byte, err error) {
@@ -126,7 +129,11 @@ func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 			result.AvailableBalance = map[string]float64{}
 			result.LockedBalance = map[string]float64{}
 			result.DepositBalance = map[string]float64{}
-			for _, token := range common.InternalTokens() {
+			tokens, err := self.setting.Tokens.GetInternalTokens()
+			if err != nil {
+				return result, err
+			}
+			for _, token := range tokens {
 				result.AvailableBalance[token.ID] = balances[strings.ToLower(token.ID)]
 				// TODO: need to take open order into account
 				result.LockedBalance[token.ID] = 0
@@ -241,21 +248,23 @@ func (self *Liqui) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	}
 }
 
-func NewLiqui(interf LiquiInterface) *Liqui {
+func NewLiqui(interf LiquiInterface, sett *settings.Settings) *Liqui {
+
 	return &Liqui{
 		interf,
 		[]common.TokenPair{
-			common.MustCreateTokenPair("OMG", "ETH"),
-			common.MustCreateTokenPair("DGD", "ETH"),
-			common.MustCreateTokenPair("CVC", "ETH"),
-			common.MustCreateTokenPair("MCO", "ETH"),
-			common.MustCreateTokenPair("GNT", "ETH"),
-			common.MustCreateTokenPair("ADX", "ETH"),
-			common.MustCreateTokenPair("EOS", "ETH"),
-			common.MustCreateTokenPair("PAY", "ETH"),
-			common.MustCreateTokenPair("BAT", "ETH"),
-			common.MustCreateTokenPair("KNC", "ETH"),
+			sett.Tokens.MustCreateTokenPair("OMG", "ETH"),
+			sett.Tokens.MustCreateTokenPair("DGD", "ETH"),
+			sett.Tokens.MustCreateTokenPair("CVC", "ETH"),
+			sett.Tokens.MustCreateTokenPair("MCO", "ETH"),
+			sett.Tokens.MustCreateTokenPair("GNT", "ETH"),
+			sett.Tokens.MustCreateTokenPair("ADX", "ETH"),
+			sett.Tokens.MustCreateTokenPair("EOS", "ETH"),
+			sett.Tokens.MustCreateTokenPair("PAY", "ETH"),
+			sett.Tokens.MustCreateTokenPair("BAT", "ETH"),
+			sett.Tokens.MustCreateTokenPair("KNC", "ETH"),
 		},
 		map[string]ethereum.Address{},
+		sett,
 	}
 }

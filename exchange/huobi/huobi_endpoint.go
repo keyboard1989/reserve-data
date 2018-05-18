@@ -14,14 +14,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type HuobiEndpoint struct {
-	signer Signer
-	interf Interface
+	signer  Signer
+	interf  Interface
+	setting *settings.Settings
 }
 
 func (self *HuobiEndpoint) fillRequest(req *http.Request, signNeeded bool) {
@@ -161,7 +164,11 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 
 func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 	result := exchange.HuobiWithdraws{}
-	size := len(common.InternalTokens()) * 2
+	tokens, err := settings.GetInternalTokens()
+	if err != nil {
+		return result, err
+	}
+	size := len(tokens) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
@@ -183,7 +190,11 @@ func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 
 func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
 	result := exchange.HuobiDeposits{}
-	size := len(common.InternalTokens()) * 2
+	tokens, err := settings.GetInternalTokens()
+	if err != nil {
+		return result, err
+	}
+	size := len(tokens) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
@@ -357,6 +368,6 @@ func (self *HuobiEndpoint) GetExchangeInfo() (exchange.HuobiExchangeInfo, error)
 	return result, err
 }
 
-func NewHuobiEndpoint(signer Signer, interf Interface) *HuobiEndpoint {
-	return &HuobiEndpoint{signer, interf}
+func NewHuobiEndpoint(signer Signer, interf Interface, sett *settings.Settings) *HuobiEndpoint {
+	return &HuobiEndpoint{signer, interf, sett}
 }
