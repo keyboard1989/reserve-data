@@ -27,7 +27,7 @@ func NewStatStorageTest(storage StatStorage) *StatStorageTest {
 
 func (self *StatStorageTest) TestTradeStatsSummary() error {
 	var err error
-	mtStat := common.MetricStats{
+	mtStat := common.NewMetricStats(
 		10.0,
 		4567.8,
 		11.1,
@@ -37,7 +37,7 @@ func (self *StatStorageTest) TestTradeStatsSummary() error {
 		5,
 		0,
 		0,
-	}
+	)
 	tzmtStat := common.MetricStatsTimeZone{0: {0: mtStat}}
 	updates := map[string]common.MetricStatsTimeZone{"trade_summary": tzmtStat}
 	if err := self.storage.SetTradeSummary(updates, 0); err != nil {
@@ -68,7 +68,7 @@ func (self *StatStorageTest) TestTradeStatsSummary() error {
 func (self *StatStorageTest) TestWalletStats() error {
 	var err error
 
-	mtStat := common.MetricStats{
+	mtStat := common.NewMetricStats(
 		10.0,
 		4567.8,
 		11.1,
@@ -78,7 +78,7 @@ func (self *StatStorageTest) TestWalletStats() error {
 		5,
 		0,
 		0,
-	}
+	)
 	testWallet := ethereum.HexToAddress(TESTASSETADDR)
 
 	tzmtStat := common.MetricStatsTimeZone{0: {0: mtStat}}
@@ -107,7 +107,7 @@ func (self *StatStorageTest) TestWalletStats() error {
 
 func (self *StatStorageTest) TestCountryStats() error {
 	var err error
-	mtStat := common.MetricStats{
+	mtStat := common.NewMetricStats(
 		10.0,
 		4567.8,
 		11.1,
@@ -117,7 +117,7 @@ func (self *StatStorageTest) TestCountryStats() error {
 		5,
 		0,
 		0,
-	}
+	)
 	tzmtStat := common.MetricStatsTimeZone{0: {0: mtStat}}
 	updates := map[string]common.MetricStatsTimeZone{TESTCOUNTRY: tzmtStat}
 	err = self.storage.SetCountryStat(updates, 0)
@@ -161,11 +161,11 @@ func (self *StatStorageTest) TestCountryStats() error {
 
 func (self *StatStorageTest) TestVolumeStats() error {
 	var err error
-	vlStat := common.VolumeStats{
+	vlStat := common.NewVolumeStats(
 		10.0,
 		4567.8,
 		11.1,
-	}
+	)
 	testAsset := ethereum.HexToAddress(TESTASSETADDR)
 
 	tzvlStat := common.VolumeStatsTimeZone{"D": {0: vlStat}}
@@ -255,9 +255,7 @@ func (self *StatStorageTest) TestVolumeStats() error {
 
 func (self *StatStorageTest) TestBurnFee() error {
 	var err error
-	bfStat := common.BurnFeeStats{
-		4567.8,
-	}
+	bfStat := common.NewBurnFeeStats(4567.8)
 
 	tzbfStat := common.BurnFeeStatsTimeZone{"D": {0: bfStat}}
 	updates := map[string]common.BurnFeeStatsTimeZone{TESTASSETADDR: tzbfStat}
