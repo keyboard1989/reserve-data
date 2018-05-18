@@ -6,6 +6,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/data/datapruner"
@@ -16,6 +18,7 @@ type ReserveData struct {
 	fetcher           Fetcher
 	storageController datapruner.StorageController
 	globalStorage     GlobalStorage
+	setting           *settings.Settings
 }
 
 func (self ReserveData) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
@@ -94,8 +97,12 @@ func (self ReserveData) GetAuthData(timepoint uint64) (common.AuthDataResponse, 
 		result.Data.Block = data.Block
 		result.Data.ReserveBalances = map[string]common.BalanceResponse{}
 		for tokenID, balance := range data.ReserveBalances {
+			token, err := self.setting.Tokens.GetInternalTokenByID(tokenID)
+			if err != nil {
+				log.Panicf("Must get Internal token failed: %s", err)
+			}
 			result.Data.ReserveBalances[tokenID] = balance.ToBalanceResponse(
-				common.MustGetInternalToken(tokenID).Decimal,
+				token.Decimal,
 			)
 		}
 		return result, err
@@ -315,10 +322,10 @@ func (self ReserveData) RunStorageController() error {
 	return nil
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner, arch archive.Archive, globalStorage GlobalStorage) *ReserveData {
+func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner, arch archive.Archive, globalStorage GlobalStorage, sett *settings.Settings) *ReserveData {
 	storageController, err := datapruner.NewStorageController(storageControllerRunner, arch)
 	if err != nil {
 		panic(err)
 	}
-	return &ReserveData{storage, fetcher, storageController, globalStorage}
+	return &ReserveData{storage, fetcher, storageController, globalStorage, sett}
 }
