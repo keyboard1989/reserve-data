@@ -24,11 +24,6 @@ func InitToken() *TokenSetting {
 	}
 	tokenSetting := TokenSetting{BoltTokenStorage}
 
-	//This will raise Err
-	tokens, _ := GetAllTokens()
-	if len(tokens) == 0 {
-		LoadTokenFromFile(TOKEN_DEFAULT_JSON_PATH)
-	}
 	return &tokenSetting
 }
 
