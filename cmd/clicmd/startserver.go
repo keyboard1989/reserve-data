@@ -108,7 +108,6 @@ func serverStart(cmd *cobra.Command, args []string) {
 		kyberENV = "dev"
 	}
 	InitInterface(kyberENV)
-	InitSetting()
 	config := GetConfigFromENV(kyberENV)
 	var rData reserve.ReserveData
 	var rCore reserve.ReserveCore

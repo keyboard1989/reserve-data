@@ -15,19 +15,19 @@ type Settings struct {
 	Tokens *TokenSetting
 }
 
-var setting = InitSetting()
+var setting Settings
 
-func InitToken() *TokenSetting {
+func NewToken() *TokenSetting {
 	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(TOKEN_DB_FILE_PATH)
 	if err != nil {
 		log.Panicf("Setting Init: Can not create bolt token storage", err)
 	}
 	tokenSetting := TokenSetting{BoltTokenStorage}
-
 	return &tokenSetting
 }
 
-func Init() {
+func NewSetting() *Settings {
+	tokensSetting := NewToken()
 	allToks, err := GetAllTokens()
 	if err != nil || len(allToks) < 1 {
 		log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
@@ -36,10 +36,6 @@ func Init() {
 			log.Printf("Setting Init: Can not load Token from file, Token DB is needed to be updated manually")
 		}
 	}
-}
-
-func InitSetting() *Settings {
-	tokensSetting := InitToken()
 	overalSetting := Settings{tokensSetting}
 	return &overalSetting
 }
