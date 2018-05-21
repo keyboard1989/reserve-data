@@ -3,6 +3,8 @@ package configuration
 import (
 	"log"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -81,21 +83,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		endpoint = setPath.endPoint
 	}
 
-	for id, t := range addressConfig.Tokens {
-		tok := common.Token{
-			id, t.Address, t.Decimals,
-		}
-		if t.Active {
-			if t.KNReserveSupport {
-				common.RegisterInternalActiveToken(tok)
-			} else {
-				common.RegisterExternalActiveToken(tok)
-			}
-		} else {
-			common.RegisterInactiveToken(tok)
-		}
-	}
-
 	bkendpoints := setPath.bkendpoints
 	chainType := GetChainType(kyberENV)
 
@@ -133,11 +120,15 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		panic(err)
 	}
 	s3archive := archive.NewS3Archive(awsConf)
+	supportedToken, err := settings.GetInternalTokens()
+	if err != nil {
+		log.Panicf("Can't get internal tokens (%s)", err)
+	}
 	config := &Config{
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
-		SupportedTokens:         common.InternalTokens(),
+		SupportedTokens:         supportedToken,
 		WrapperAddress:          wrapperAddr,
 		PricingAddress:          pricingAddr,
 		ReserveAddress:          reserveAddr,

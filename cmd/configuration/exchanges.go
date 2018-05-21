@@ -1,9 +1,12 @@
 package configuration
 
 import (
+	"log"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/KyberNetwork/reserve-data/settings"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -21,7 +24,11 @@ type ExchangePool struct {
 
 func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *sync.WaitGroup) {
 	defer wait.Done()
-	ex.UpdateDepositAddress(common.MustGetInternalToken(tokenID), addr)
+	token, err := settings.GetInternalTokenByID(tokenID)
+	if err != nil {
+		log.Panicf("ERROR: Can't get internal token %s. Error: %s", err)
+	}
+	ex.UpdateDepositAddress(token, addr)
 }
 func getBittrexInterface(kyberENV string) bittrex.Interface {
 	envInterface, err := BittrexInterfaces[kyberENV]

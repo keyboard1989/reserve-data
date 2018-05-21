@@ -5,17 +5,14 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+//TokenStorage defines a set of function abstracting the storage interface for Token
+//All key for update and lookup inside the storage must be in lower key
 type TokenStorage interface {
 	//Add Tokens by ID
 	AddTokenByID(common.Token) error
-	AddInternalTokenByID(common.Token) error
-	AddExternalTokenByID(common.Token) error
-	AddActiveTokenByID(common.Token) error
+
 	//Add Tokens by Address
 	AddTokenByAddress(common.Token) error
-	AddInternalTokenByAddress(common.Token) error
-	AddExternalTokenByAddress(common.Token) error
-	AddActiveTokenByAddress(common.Token) error
 
 	//Active Tokens (Network Tokens)
 	GetActiveTokens() ([]common.Token, error)

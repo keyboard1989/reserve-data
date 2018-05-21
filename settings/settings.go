@@ -8,7 +8,7 @@ import (
 
 const (
 	TOKEN_DB_FILE_PATH      string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
-	TOKEN_DEFAULT_JSON_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.json"
+	TOKEN_DEFAULT_JSON_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
 )
 
 type Settings struct {
@@ -28,6 +28,7 @@ func NewToken() *TokenSetting {
 
 func NewSetting() *Settings {
 	tokensSetting := NewToken()
+	setting = Settings{tokensSetting}
 	allToks, err := GetAllTokens()
 	if err != nil || len(allToks) < 1 {
 		log.Printf("Setting Init: Token DB is empty, attempt to load token from file")

@@ -29,35 +29,12 @@ func NewTokenSetting(storage TokenStorage) *TokenSetting {
 	return &TokenSetting{storage}
 }
 
-func AddToken(t common.Token, active bool, knSupported bool) error {
+func UpdateToken(t common.Token) error {
 	if err := setting.Tokens.Storage.AddTokenByID(t); err != nil {
 		return err
 	}
 	if err := setting.Tokens.Storage.AddTokenByAddress(t); err != nil {
 		return err
-	}
-	if active {
-		if err := setting.Tokens.Storage.AddActiveTokenByID(t); err != nil {
-			return err
-		}
-		if err := setting.Tokens.Storage.AddActiveTokenByAddress(t); err != nil {
-			return err
-		}
-		if knSupported {
-			if err := setting.Tokens.Storage.AddInternalTokenByID(t); err != nil {
-				return err
-			}
-			if err := setting.Tokens.Storage.AddInternalTokenByAddress(t); err != nil {
-				return err
-			}
-		} else {
-			if err := setting.Tokens.Storage.AddExternalTokenByID(t); err != nil {
-				return err
-			}
-			if err := setting.Tokens.Storage.AddExternalTokenByAddress(t); err != nil {
-				return err
-			}
-		}
 	}
 	return nil
 }
@@ -73,8 +50,8 @@ func LoadTokenFromFile(filePath string) error {
 		return err
 	}
 	for id, t := range tokens.Tokens {
-		tok := common.Token{id, t.Address, t.Decimals}
-		err = AddToken(tok, t.Active, t.KNReserveSupport)
+		tok := common.Token{id, t.Address, t.Decimals, t.Active, t.KNReserveSupport}
+		err = UpdateToken(tok)
 		if err != nil {
 			return err
 		}

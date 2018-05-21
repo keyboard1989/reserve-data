@@ -1,14 +1,11 @@
 package common
 
-import (
-	"errors"
-	"fmt"
-)
-
 type Token struct {
-	ID      string
-	Address string
-	Decimal int64
+	ID       string
+	Address  string
+	Decimal  int64
+	Active   bool
+	Internal bool
 }
 
 func (self Token) MarshalText() (text []byte, err error) {
@@ -31,21 +28,21 @@ func (self *TokenPair) PairID() TokenPairID {
 	return NewTokenPairID(self.Base.ID, self.Quote.ID)
 }
 
-func NewTokenPair(base, quote string) (TokenPair, error) {
-	bToken, err1 := GetInternalToken(base)
-	qToken, err2 := GetInternalToken(quote)
-	if err1 != nil || err2 != nil {
-		return TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
-	} else {
-		return TokenPair{bToken, qToken}, nil
-	}
-}
+// func NewTokenPair(base, quote string) (TokenPair, error) {
+// 	bToken, err1 := GetInternalToken(base)
+// 	qToken, err2 := GetInternalToken(quote)
+// 	if err1 != nil || err2 != nil {
+// 		return TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
+// 	} else {
+// 		return TokenPair{bToken, qToken}, nil
+// 	}
+// }
 
-func MustCreateTokenPair(base, quote string) TokenPair {
-	pair, err := NewTokenPair(base, quote)
-	if err != nil {
-		panic(err)
-	} else {
-		return pair
-	}
-}
+// func MustCreateTokenPair(base, quote string) TokenPair {
+// 	pair, err := NewTokenPair(base, quote)
+// 	if err != nil {
+// 		panic(err)
+// 	} else {
+// 		return pair
+// 	}
+// }
