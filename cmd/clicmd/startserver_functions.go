@@ -56,7 +56,14 @@ func configLog(stdoutLog bool) {
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
 
 	c := cron.New()
-	c.AddFunc("@daily", func() { logger.Rotate() })
+	err := c.AddFunc("@daily", func() {
+		if err := logger.Rotate(); err != nil {
+			log.Printf("Error rotate log: %s", err.Error())
+		}
+	})
+	if err != nil {
+		log.Printf("Error add log cron daily: %s", err.Error())
+	}
 	c.Start()
 }
 

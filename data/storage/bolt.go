@@ -61,7 +61,7 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		return nil, err
 	}
 	// init buckets
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		_, err = tx.CreateBucketIfNotExists([]byte(GOLD_BUCKET))
 		if err != nil {
 			return err
@@ -385,7 +385,9 @@ func (self *BoltStorage) StorePrice(data common.AllPriceEntry, timepoint uint64)
 
 		// remove outdated data from bucket
 		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
-		self.PruneOutdatedData(tx, PRICE_BUCKET)
+		if err := self.PruneOutdatedData(tx, PRICE_BUCKET); err != nil {
+			log.Printf("Prune out data: %s", err.Error())
+		}
 		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
 
 		dataJson, err = json.Marshal(data)
@@ -502,7 +504,9 @@ func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) e
 		b := tx.Bucket([]byte(RATE_BUCKET))
 		c := b.Cursor()
 		_, lastEntry := c.Last()
-		json.Unmarshal(lastEntry, &lastEntryjson)
+		if err := json.Unmarshal(lastEntry, &lastEntryjson); err != nil {
+			log.Printf("Unmarshal last entry error: %s", err.Error())
+		}
 		if lastEntryjson.BlockNumber < data.BlockNumber {
 			dataJson, err = json.Marshal(data)
 			if err != nil {
@@ -754,7 +758,9 @@ func (self *BoltStorage) HasPendingDeposit(token common.Token, exchange common.E
 		c := pb.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			record := common.ActivityRecord{}
-			json.Unmarshal(v, &record)
+			if err := json.Unmarshal(v, &record); err != nil {
+				log.Printf("Unmarshal record error: %s", err.Error())
+			}
 			if record.Action == "deposit" && record.Params["token"].(string) == token.ID && record.Destination == string(exchange.ID()) {
 				result = true
 			}
@@ -876,8 +882,7 @@ func (self *BoltStorage) RemovePendingTargetQty() error {
 			return errors.New("There is no pending target quantity.")
 		}
 
-		b.Delete([]byte(k))
-		return nil
+		return b.Delete([]byte(k))
 	})
 	return err
 }
@@ -928,7 +933,9 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 			return err
 		} else {
 			// verify confirm data
-			json.Unmarshal(pendingTargetQty, &tokenTargetQty)
+			if err := json.Unmarshal(pendingTargetQty, &tokenTargetQty); err != nil {
+				log.Printf("Unmarshal pending target error: %s")
+			}
 			pendingData := tokenTargetQty.Data
 			idInt, _ := strconv.ParseUint(id, 10, 64)
 			if tokenTargetQty.ID != idInt {
@@ -986,7 +993,9 @@ func (self *BoltStorage) StoreTradeHistory(data common.AllTradeHistory, timepoin
 			Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
 		}
 		if k != nil {
-			json.Unmarshal(v, &currentData)
+			if err := json.Unmarshal(v, &currentData); err != nil {
+				log.Printf("Unmarshal trade history error: %s", err.Error())
+			}
 		}
 
 		// override old data
@@ -1025,7 +1034,9 @@ func (self *BoltStorage) GetRebalanceControl() (metric.RebalanceControl, error) 
 			}
 			self.StoreRebalanceControl(false)
 		} else {
-			json.Unmarshal(data, &result)
+			if err := json.Unmarshal(data, &result); err != nil {
+				log.Printf("Unmarshal rebalance control: %s", err.Error())
+			}
 		}
 		return nil
 	})
@@ -1073,7 +1084,9 @@ func (self *BoltStorage) GetSetrateControl() (metric.SetrateControl, error) {
 			}
 			self.StoreSetrateControl(false)
 		} else {
-			json.Unmarshal(data, &result)
+			if err := json.Unmarshal(data, &result); err != nil {
+				log.Printf("Unmarshal setrate control: %s", err.Error())
+			}
 		}
 		return nil
 	})
@@ -1148,7 +1161,9 @@ func (self *BoltStorage) GetPendingPWIEquation() (metric.PWIEquation, error) {
 		if v == nil {
 			return errors.New("There no pending equation")
 		} else {
-			json.Unmarshal(v, &result)
+			if err := json.Unmarshal(v, &result); err != nil {
+				log.Printf("Unmarshal pwi equation error: %s", err.Error())
+			}
 		}
 		return nil
 	})
@@ -1168,7 +1183,9 @@ func (self *BoltStorage) StorePWIEquation(data string) error {
 			p := tx.Bucket([]byte(PWI_EQUATION))
 			idByte := uint64ToBytes(common.GetTimepoint())
 			pending := metric.PWIEquation{}
-			json.Unmarshal(v, &pending)
+			if err := json.Unmarshal(v, &pending); err != nil {
+				log.Printf("Unmarshal pending error: %s", err.Error())
+			}
 			if pending.Data != data {
 				err = errors.New("Confirm data does not match pending data")
 				return err
@@ -1197,10 +1214,8 @@ func (self *BoltStorage) GetPWIEquation() (metric.PWIEquation, error) {
 		if v == nil {
 			err = errors.New("There is no equation")
 			return err
-		} else {
-			json.Unmarshal(v, &result)
 		}
-		return err
+		return json.Unmarshal(v, &result)
 	})
 	return result, err
 }

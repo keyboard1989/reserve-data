@@ -62,7 +62,9 @@ func (self *Fetcher) AddExchange(exchange Exchange) {
 			Status:    true,
 		}
 	}
-	self.storage.UpdateExchangeStatus(exchangeStatus)
+	if err := self.storage.UpdateExchangeStatus(exchangeStatus); err != nil {
+		log.Printf("Update exchange status error: %s", err.Error())
+	}
 }
 
 func (self *Fetcher) Stop() error {
@@ -71,7 +73,9 @@ func (self *Fetcher) Stop() error {
 
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
-	self.runner.Start()
+	if err := self.runner.Start(); err != nil {
+		log.Printf("Start runner error: %s", err.Error())
+	}
 	go self.RunOrderbookFetcher()
 	go self.RunAuthDataFetcher()
 	go self.RunRateFetcher()

@@ -111,6 +111,8 @@ func NewHttpRunner(port int) *HttpRunner {
 		globalDataChan,
 		nil,
 	}
-	runner.Start()
+	if err := runner.Start(); err != nil {
+		log.Printf("Start runner error: %s", err.Error())
+	}
 	return &runner
 }

@@ -32,7 +32,7 @@ var dryrun bool
 
 func backupLog(arch archive.Archive) {
 	c := cron.New()
-	c.AddFunc("@daily", func() {
+	err := c.AddFunc("@daily", func() {
 		files, err := ioutil.ReadDir(LOG_PATH)
 		if err != nil {
 			log.Printf("ERROR: Log backup: Can not view log folder")
@@ -64,6 +64,9 @@ func backupLog(arch archive.Archive) {
 		}
 		return
 	})
+	if err != nil {
+		log.Printf("Cannot set cron rolling log: %s", err.Error())
+	}
 	c.Start()
 }
 
@@ -103,9 +106,13 @@ func serverStart(cmd *cobra.Command, args []string) {
 		rData, rCore = CreateDataCore(config, kyberENV, bc)
 		if !dryrun {
 			if kyberENV != "simulation" {
-				rData.RunStorageController()
+				if err := rData.RunStorageController(); err != nil {
+					log.Printf("Run storage controller error: %s", err.Error())
+				}
 			}
-			rData.Run()
+			if err := rData.Run(); err != nil {
+				log.Printf("rData run error: %s", err.Error())
+			}
 		}
 	}
 
@@ -114,9 +121,13 @@ func serverStart(cmd *cobra.Command, args []string) {
 		rStat = CreateStat(config, kyberENV, bc)
 		if !dryrun {
 			if kyberENV != "simulation" {
-				rStat.RunStorageController()
+				if err := rStat.RunStorageController(); err != nil {
+					log.Printf("Run storage controller error: %s", err.Error())
+				}
 			}
-			rStat.Run()
+			if err := rStat.Run(); err != nil {
+				log.Printf("Stat run error: %s", err.Error())
+			}
 		}
 	}
 

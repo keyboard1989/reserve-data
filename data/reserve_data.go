@@ -305,12 +305,16 @@ func (self ReserveData) ControlAuthDataSize() error {
 				}
 			}
 		}
-		os.Remove(fileName)
+		if err := os.Remove(fileName); err != nil {
+			log.Printf("Remove file error: %s", err.Error())
+		}
 	}
 }
 
 func (self ReserveData) RunStorageController() error {
-	self.storageController.Runner.Start()
+	if err := self.storageController.Runner.Start(); err != nil {
+		log.Printf("Storage controller runner error: %s", err.Error())
+	}
 	go self.ControlAuthDataSize()
 	return nil
 }

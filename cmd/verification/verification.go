@@ -168,7 +168,9 @@ func (self *Verification) Deposit(
 	if err != nil {
 		return result.ID, err
 	}
-	json.Unmarshal(resp_body, &result)
+	if err := json.Unmarshal(resp_body, &result); err != nil {
+		log.Printf("Cannot unmarshal resp_body: %s", err.Error())
+	}
 	if result.Success != true {
 		err = errors.New(fmt.Sprintf("Cannot deposit: %s", result.Reason))
 	}
@@ -297,8 +299,12 @@ func (self *Verification) VerifyWithdraw() error {
 
 func (self *Verification) RunVerification() {
 	Info.Println("Start verification")
-	self.VerifyDeposit()
-	self.VerifyWithdraw()
+	if err := self.VerifyDeposit(); err != nil {
+		log.Printf("Verify deposit error: %s", err.Error())
+	}
+	if err := self.VerifyWithdraw(); err != nil {
+		log.Printf("Verify withdraw error: %s", err.Error())
+	}
 }
 
 func NewVerification(
