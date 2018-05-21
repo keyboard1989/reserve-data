@@ -584,7 +584,7 @@ func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
 func NewBlockchain(
 	base *blockchain.BaseBlockchain,
 	wrapperAddr, pricingAddr, burnerAddr,
-	networkAddr, reserveAddr, whitelistAddr ethereum.Address, sett *settings.Settings) (*Blockchain, error) {
+	networkAddr, reserveAddr, whitelistAddr ethereum.Address) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper := blockchain.NewContract(
 		wrapperAddr,
@@ -622,6 +622,5 @@ func NewBlockchain(
 		whitelistAddr: whitelistAddr,
 		oldNetworks:   []ethereum.Address{},
 		oldBurners:    []ethereum.Address{},
-		setting:       sett,
 	}, nil
 }

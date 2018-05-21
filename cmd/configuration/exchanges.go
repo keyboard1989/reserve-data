@@ -53,8 +53,7 @@ func NewExchangePool(
 	settingPaths SettingPaths,
 	blockchain *blockchain.BaseBlockchain,
 	minDeposit common.ExchangesMinDepositConfig,
-	kyberENV string,
-	sett *setting.Setting) *ExchangePool {
+	kyberENV string) *ExchangePool {
 
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
@@ -66,7 +65,6 @@ func NewExchangePool(
 				addressConfig.Exchanges["stable_exchange"],
 				feeConfig.Exchanges["stable_exchange"],
 				minDeposit.Exchanges["stable_exchange"],
-				sett,
 			)
 			exchanges[stableEx.ID()] = stableEx
 		case "bittrex":
@@ -76,7 +74,7 @@ func NewExchangePool(
 			if err != nil {
 				panic(err)
 			}
-			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], feeConfig.Exchanges["bittrex"], endpoint, bittrexStorage, minDeposit.Exchanges["bittrex"], sett)
+			bit := exchange.NewBittrex(addressConfig.Exchanges["bittrex"], feeConfig.Exchanges["bittrex"], endpoint, bittrexStorage, minDeposit.Exchanges["bittrex"])
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
@@ -88,7 +86,7 @@ func NewExchangePool(
 		case "binance":
 			binanceSigner := binance.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := binance.NewBinanceEndpoint(binanceSigner, getBinanceInterface(kyberENV))
-			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint, minDeposit.Exchanges["binance"], sett)
+			bin := exchange.NewBinance(addressConfig.Exchanges["binance"], feeConfig.Exchanges["binance"], endpoint, minDeposit.Exchanges["binance"])
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -115,7 +113,6 @@ func NewExchangePool(
 				intermediatorNonce,
 				storage,
 				minDeposit.Exchanges["huobi"],
-				sett,
 			)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["huobi"] {

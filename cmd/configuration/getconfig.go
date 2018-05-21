@@ -146,7 +146,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		EnableAuthentication:    authEnbl,
 		Archive:                 s3archive,
 		World:                   world,
-		Settings:                &overalSetting,
 	}
 
 	if enableStat {

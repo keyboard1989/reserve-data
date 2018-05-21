@@ -19,9 +19,6 @@ import (
 const (
 	LOG_PATH        string = "/go/src/github.com/KyberNetwork/reserve-data/log/"
 	REMOTE_LOG_PATH string = "core-log/"
-
-	TOKEN_DB_FILE_PATH      string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
-	TOKEN_DEFAULT_JSON_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.json"
 )
 
 var noAuthEnable bool
@@ -32,29 +29,6 @@ var enableStat bool
 var noCore bool
 var stdoutLog bool
 var dryrun bool
-
-func InitToken() *TokenSetting {
-	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(TOKEN_DB_FILE_PATH)
-	if err != nil {
-		log.Panicf("Setting Init: Can not create bolt token storage", err)
-	}
-	tokenSetting := TokenSetting{BoltTokenStorage}
-	allToks, err := tokkenSetting.GetAllTokens()
-	if err != nil || len(allToks) < 1 {
-		log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
-		err := tokkenSetting.LoadTokenFromFile(TOKEN_DEFAULT_JSON_PATH)
-		if err != nil {
-			log.Printf("Setting Init: Can not load Token from file, Token DB is needed to be updated manually")
-		}
-	}
-	return &tokenSetting
-}
-
-func InitSetting() *Settings {
-	tokensSetting := InitToken()
-	overalSetting := Settings{tokensSetting}
-	return &overalSetting
-}
 
 func backupLog(arch archive.Archive) {
 	c := cron.New()
@@ -155,7 +129,6 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.EnableAuthentication,
 		config.AuthEngine,
 		kyberENV,
-		config.Settings,
 	)
 
 	if !dryrun {

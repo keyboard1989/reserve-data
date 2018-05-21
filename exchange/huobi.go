@@ -594,8 +594,7 @@ func NewHuobi(
 	feeConfig common.ExchangeFees,
 	interf HuobiInterface, blockchain *blockchain.BaseBlockchain,
 	signer blockchain.Signer, nonce blockchain.NonceCorpus, storage HuobiStorage,
-	minDepositConfig common.ExchangesMinDeposit,
-	sett *settings.Settings) *Huobi {
+	minDepositConfig common.ExchangesMinDeposit) *Huobi {
 
 	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "huobi")
 	bc, err := huobiblockchain.NewBlockchain(blockchain, signer, nonce)

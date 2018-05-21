@@ -88,7 +88,6 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 		config.NetworkAddress,
 		config.ReserveAddress,
 		config.WhitelistAddress,
-		config.Settings,
 	)
 	if err != nil {
 		panic(err)
@@ -130,7 +129,6 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.DataControllerRunner,
 		config.Archive,
 		config.DataGlobalStorage,
-		&config.Settings,
 	)
 
 	rCore := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)

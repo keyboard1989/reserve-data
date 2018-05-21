@@ -22,9 +22,8 @@ import (
 )
 
 type HuobiEndpoint struct {
-	signer  Signer
-	interf  Interface
-	setting *settings.Settings
+	signer Signer
+	interf Interface
 }
 
 func (self *HuobiEndpoint) fillRequest(req *http.Request, signNeeded bool) {
@@ -368,6 +367,6 @@ func (self *HuobiEndpoint) GetExchangeInfo() (exchange.HuobiExchangeInfo, error)
 	return result, err
 }
 
-func NewHuobiEndpoint(signer Signer, interf Interface, sett *settings.Settings) *HuobiEndpoint {
-	return &HuobiEndpoint{signer, interf, sett}
+func NewHuobiEndpoint(signer Signer, interf Interface) *HuobiEndpoint {
+	return &HuobiEndpoint{signer, interf}
 }
