@@ -6,14 +6,19 @@ import (
 	"net/http"
 	"strconv"
 
+	"math"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	raven "github.com/getsentry/raven-go"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
 )
 
-const MAX_TIMESPOT uint64 = 18446744073709551615
+// MAX_TIMESPOT is the default time point to return in case the
+// timestamp parameter in request is omit or malformed.
+const MAX_TIMESPOT uint64 = math.MaxUint64
 
+// HttpRunnerServer is the HTTP ticker server.
 type HttpRunnerServer struct {
 	runner *HttpRunner
 	host   string
@@ -21,6 +26,8 @@ type HttpRunnerServer struct {
 	http   *http.Server
 }
 
+// getTimePoint returns the timepoint from query parameter.
+// If no timestamp parameter is supplied, or it is invalid, returns the default one.
 func getTimePoint(c *gin.Context) uint64 {
 	timestamp := c.DefaultQuery("timestamp", "")
 	if timestamp == "" {
@@ -135,6 +142,7 @@ func (self *HttpRunnerServer) Stop() error {
 	}
 }
 
+// NewHttpRunnerServer creates a new instance of HttpRunnerServer.
 func NewHttpRunnerServer(runner *HttpRunner, host string) *HttpRunnerServer {
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
