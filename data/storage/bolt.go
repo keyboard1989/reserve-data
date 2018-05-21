@@ -249,10 +249,10 @@ func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName stri
 			if err != nil {
 				return err
 			}
-			record := common.AuthDataRecord{
+			record := common.NewAuthDataRecord(
 				common.Timestamp(strconv.FormatUint(timestamp, 10)),
 				temp,
-			}
+			)
 			var output []byte
 			output, err = json.Marshal(record)
 			if err != nil {

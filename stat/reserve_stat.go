@@ -404,7 +404,7 @@ func (self ReserveStats) GetCapByUser(userID string) (*common.UserCap, error) {
 func isDuplicate(currentRate, latestRate common.ReserveRates) bool {
 	currentData := currentRate.Data
 	latestData := latestRate.Data
-	for key, _ := range currentData {
+	for key := range currentData {
 		if currentData[key].BuyReserveRate != latestData[key].BuyReserveRate ||
 			currentData[key].BuySanityRate != latestData[key].BuySanityRate ||
 			currentData[key].SellReserveRate != latestData[key].SellReserveRate ||

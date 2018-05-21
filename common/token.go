@@ -8,6 +8,15 @@ type Token struct {
 	Internal bool
 }
 
+// NewToken creates a new Token.
+func NewToken(id, address string, decimal int64) Token {
+	return Token{
+		ID:      id,
+		Address: address,
+		Decimal: decimal,
+	}
+}
+
 func (self Token) MarshalText() (text []byte, err error) {
 	// return []byte(fmt.Sprintf(
 	// 	"%s-%s", self.ID, self.Address,
