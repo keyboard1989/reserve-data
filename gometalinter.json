@@ -1,5 +1,12 @@
 {
     "Vendor": true,
-    "Errors": true,
+    "DisableAll": true,
+    "Enable": [
+	"errcheck"
+	"gofmt",
+	"gotype",
+	"gotypex",
+	"vet",
+    ],
     "Deadline": "5m"
 }
