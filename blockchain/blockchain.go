@@ -69,7 +69,7 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 		exs[ex.ID()] = ex.TokenAddresses()
 	}
 	tokens := map[string]common.TokenInfo{}
-	tokenSettings, err := self.setting.Tokens.GetInternalTokens()
+	tokenSettings, err := settings.GetInternalTokens()
 	if err != nil {
 		log.Printf("ERROR: can't read Token Settings")
 	}
@@ -96,7 +96,7 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 func (self *Blockchain) LoadAndSetTokenIndices() error {
 	tokenAddrs := []ethereum.Address{}
 	self.tokenIndices = map[string]tbindex{}
-	tokens, err := self.setting.Tokens.GetInternalTokens()
+	tokens, err := settings.GetInternalTokens()
 	if err != nil {
 		return err
 	}
@@ -294,7 +294,7 @@ func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.I
 func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint64) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
-	tokensSetting, err := self.setting.Tokens.GetInternalTokens()
+	tokensSetting, err := settings.GetInternalTokens()
 	if err != nil {
 		return result, err
 	}
@@ -307,7 +307,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint6
 	returnTime := common.GetTimestamp()
 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
 	if err != nil {
-		tokens, err := self.setting.Tokens.GetInternalTokens()
+		tokens, err := settings.GetInternalTokens()
 		if err != nil {
 			log.Printf("Fetcher ------> Can't get the list of internal Tokens ", err)
 		} else {
@@ -348,7 +348,7 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	result := common.AllRateEntry{}
 	tokenAddrs := []ethereum.Address{}
 	validTokens := []common.Token{}
-	tokenSettings, err := self.setting.Tokens.GetInternalTokens()
+	tokenSettings, err := settings.GetInternalTokens()
 	if err != nil {
 		return result, err
 	}
@@ -394,7 +394,7 @@ func (self *Blockchain) GetReserveRates(
 	rates := common.ReserveRates{}
 	rates.Timestamp = common.GetTimepoint()
 
-	ETH := self.setting.Tokens.ETHToken()
+	ETH := settings.ETHToken()
 	srcAddresses := []ethereum.Address{}
 	destAddresses := []ethereum.Address{}
 	for _, token := range tokens {
@@ -549,7 +549,7 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 
 					if ethRate := self.GetEthRate(tradeLog.Timestamp / 1000000); ethRate != 0 {
 						// fiatAmount = amount * ethRate
-						eth := self.setting.Tokens.ETHToken()
+						eth := settings.ETHToken()
 
 						f := new(big.Float)
 						if strings.ToLower(eth.Address) == strings.ToLower(srcAddr.String()) {
