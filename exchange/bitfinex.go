@@ -13,7 +13,6 @@ type Bitfinex struct {
 	interf    BitfinexInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
-	setting   *settings.Settings
 }
 
 func (self *Bitfinex) MarshalText() (text []byte, err error) {
@@ -77,10 +76,10 @@ func (self *Bitfinex) FetchEBalanceData() (common.EBalanceEntry, error) {
 	return result, nil
 }
 
-func NewBitfinex(interf BitfinexInterface, sett *settings.Settings) *Bitfinex {
+func NewBitfinex(interf BitfinexInterface) *Bitfinex {
 	tokenPair := []common.TokenPair{
-		sett.Tokens.MustCreateTokenPair("OMG", "ETH"),
-		sett.Tokens.MustCreateTokenPair("EOS", "ETH"),
+		settings.MustCreateTokenPair("OMG", "ETH"),
+		settings.MustCreateTokenPair("EOS", "ETH"),
 	}
 	return &Bitfinex{
 		interf,
@@ -98,6 +97,5 @@ func NewBitfinex(interf BitfinexInterface, sett *settings.Settings) *Bitfinex {
 			"BAT": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
 			"KNC": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
 		},
-		sett,
 	}
 }

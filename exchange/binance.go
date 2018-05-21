@@ -28,7 +28,6 @@ type Binance struct {
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 	minDeposit   common.ExchangesMinDeposit
-	setting      *settings.Settings
 }
 
 func (self *Binance) TokenAddresses() map[string]ethereum.Address {
@@ -360,7 +359,7 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		} else {
 			for _, b := range resp_data.Balances {
 				tokenID := b.Asset
-				_, err := self.setting.Tokens.GetInternalTokenByID(tokenID)
+				_, err := settings.GetInternalTokenByID(tokenID)
 				if err == nil {
 					avai, _ := strconv.ParseFloat(b.Free, 64)
 					locked, _ := strconv.ParseFloat(b.Locked, 64)
@@ -489,8 +488,8 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 }
 
 func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface,
-	minDepositConfig common.ExchangesMinDeposit, sett *settings.Settings) *Binance {
-	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance", sett)
+	minDepositConfig common.ExchangesMinDeposit) *Binance {
+	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance")
 	return &Binance{
 		interf,
 		pairs,
@@ -499,6 +498,5 @@ func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, 
 		common.NewExchangeInfo(),
 		fees,
 		minDeposit,
-		sett,
 	}
 }

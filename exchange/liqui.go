@@ -24,7 +24,6 @@ type Liqui struct {
 	interf    LiquiInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
-	setting   *settings.Settings
 }
 
 func (self *Liqui) MarshalText() (text []byte, err error) {
@@ -129,7 +128,7 @@ func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 			result.AvailableBalance = map[string]float64{}
 			result.LockedBalance = map[string]float64{}
 			result.DepositBalance = map[string]float64{}
-			tokens, err := self.setting.Tokens.GetInternalTokens()
+			tokens, err := settings.GetInternalTokens()
 			if err != nil {
 				return result, err
 			}
@@ -248,23 +247,22 @@ func (self *Liqui) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	}
 }
 
-func NewLiqui(interf LiquiInterface, sett *settings.Settings) *Liqui {
+func NewLiqui(interf LiquiInterface) *Liqui {
 
 	return &Liqui{
 		interf,
 		[]common.TokenPair{
-			sett.Tokens.MustCreateTokenPair("OMG", "ETH"),
-			sett.Tokens.MustCreateTokenPair("DGD", "ETH"),
-			sett.Tokens.MustCreateTokenPair("CVC", "ETH"),
-			sett.Tokens.MustCreateTokenPair("MCO", "ETH"),
-			sett.Tokens.MustCreateTokenPair("GNT", "ETH"),
-			sett.Tokens.MustCreateTokenPair("ADX", "ETH"),
-			sett.Tokens.MustCreateTokenPair("EOS", "ETH"),
-			sett.Tokens.MustCreateTokenPair("PAY", "ETH"),
-			sett.Tokens.MustCreateTokenPair("BAT", "ETH"),
-			sett.Tokens.MustCreateTokenPair("KNC", "ETH"),
+			settings.MustCreateTokenPair("OMG", "ETH"),
+			settings.MustCreateTokenPair("DGD", "ETH"),
+			settings.MustCreateTokenPair("CVC", "ETH"),
+			settings.MustCreateTokenPair("MCO", "ETH"),
+			settings.MustCreateTokenPair("GNT", "ETH"),
+			settings.MustCreateTokenPair("ADX", "ETH"),
+			settings.MustCreateTokenPair("EOS", "ETH"),
+			settings.MustCreateTokenPair("PAY", "ETH"),
+			settings.MustCreateTokenPair("BAT", "ETH"),
+			settings.MustCreateTokenPair("KNC", "ETH"),
 		},
 		map[string]ethereum.Address{},
-		sett,
 	}
 }

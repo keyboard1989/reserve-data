@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -134,8 +132,8 @@ func (self *StableEx) GetMinDeposit() common.ExchangesMinDeposit {
 	return self.mindeposit
 }
 
-func NewStableEx(addressConfig map[string]string, feeConfig common.ExchangeFees, minDepositConfig common.ExchangesMinDeposit, sett *settings.Settings) *StableEx {
-	_, pairs, fees, mindeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "stable_exchange", sett)
+func NewStableEx(addressConfig map[string]string, feeConfig common.ExchangeFees, minDepositConfig common.ExchangesMinDeposit) *StableEx {
+	_, pairs, fees, mindeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "stable_exchange")
 	return &StableEx{
 		pairs,
 		common.NewExchangeInfo(),
