@@ -51,8 +51,11 @@ type ReserveData interface {
 	CurrentAuthDataVersion(timestamp uint64) (common.Version, error)
 	GetAuthData(timestamp uint64) (common.AuthDataResponse, error)
 
+	// CurrentRateVersio returns the latest version of valid rate data.
 	CurrentRateVersion(timestamp uint64) (common.Version, error)
+	// GetRate returns latest valid rates for all tokens that is before timestamp.
 	GetRate(timestamp uint64) (common.AllRateResponse, error)
+	// GetRates returns list of valid rates for all tokens that is collected between [fromTime, toTime).
 	GetRates(fromTime, toTime uint64) ([]common.AllRateResponse, error)
 
 	GetRecords(fromTime, toTime uint64) ([]common.ActivityRecord, error)
@@ -96,7 +99,7 @@ type ReserveCore interface {
 	CancelOrder(id common.ActivityID, exchange common.Exchange) error
 
 	// blockchain related action
-	SetRates(tokens []common.Token, buys, sells []*big.Int, block *big.Int, afpMid []*big.Int) (common.ActivityID, error)
+	SetRates(tokens []common.Token, buys, sells []*big.Int, block *big.Int, afpMid []*big.Int, msgs []string) (common.ActivityID, error)
 
 	GetAddresses() *common.Addresses
 }

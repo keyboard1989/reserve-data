@@ -87,7 +87,7 @@ func (self *BinanceEndpoint) GetResponse(
 			resp_body, err = ioutil.ReadAll(resp.Body)
 			break
 		default:
-			err = errors.New(fmt.Sprintf("Binance return with code: %d", resp.StatusCode))
+			err = fmt.Errorf("Binance return with code: %d", resp.StatusCode)
 		}
 		if err != nil || len(resp_body) == 0 || rand.Int()%10 == 0 {
 			log.Printf("request to %s, got response from binance (error or throttled to 10%%): %s, err: %v", req.URL, common.TruncStr(resp_body), err)
@@ -118,7 +118,7 @@ func (self *BinanceEndpoint) GetDepthOnePair(pair common.TokenPair) (exchange.Bi
 			return resp_data, err
 		} else {
 			if resp_data.Code != 0 {
-				return resp_data, errors.New(fmt.Sprintf("Getting depth from Binance failed: %s", resp_data.Msg))
+				return resp_data, fmt.Errorf("Getting depth from Binance failed: %s", resp_data.Msg)
 			}
 		}
 		return resp_data, nil
@@ -316,7 +316,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 		}
 		return result.ID, nil
 	} else {
-		return "", errors.New(fmt.Sprintf("withdraw rejected by Binnace: %v", err))
+		return "", fmt.Errorf("withdraw rejected by Binnace: %v", err)
 	}
 }
 
@@ -333,7 +333,7 @@ func (self *BinanceEndpoint) GetInfo() (exchange.Binainfo, error) {
 		json.Unmarshal(resp_body, &result)
 	}
 	if result.Code != 0 {
-		return result, errors.New(fmt.Sprintf("Getting account info from Binance failed: %s", result.Msg))
+		return result, fmt.Errorf("Getting account info from Binance failed: %s", result.Msg)
 	}
 	return result, err
 }

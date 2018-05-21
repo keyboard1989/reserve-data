@@ -48,7 +48,7 @@ func (self *StatStorageTest) TestTradeStatsSummary() error {
 		return err
 	}
 	if tradeSum == nil || len(tradeSum) == 0 {
-		return fmt.Errorf("Can't find such record")
+		return errors.New("Can't find such record")
 	}
 	result, ok := (tradeSum[0]).(common.MetricStats)
 	if !ok {
@@ -89,7 +89,7 @@ func (self *StatStorageTest) TestWalletStats() error {
 	}
 	walletStat, err := self.storage.GetWalletStats(0, 86400000, testWallet, 0)
 	if walletStat == nil || len(walletStat) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+		return errors.New("Can't find such record, addressess might not be in the correct case")
 	}
 	result, ok := (walletStat[0]).(common.MetricStats)
 	if !ok {
@@ -106,7 +106,7 @@ func (self *StatStorageTest) TestWalletStats() error {
 
 	walletStat, err = self.storage.GetWalletStats(0, 86400000, testWallet, 0)
 	if walletStat == nil || len(walletStat) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+		return errors.New("Can't find such record, addressess might not be in the correct case")
 	}
 	result, ok = (walletStat[0]).(common.MetricStats)
 	if !ok {
@@ -144,7 +144,7 @@ func (self *StatStorageTest) TestCountryStats() error {
 
 	countryStat, err := self.storage.GetCountryStats(0, 86400000, TESTCOUNTRY, 0)
 	if countryStat == nil || len(countryStat) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+		return errors.New("Can't find such record, addressess might not be in the correct case")
 	}
 	result, ok := (countryStat[0]).(common.MetricStats)
 	if !ok {
@@ -160,7 +160,7 @@ func (self *StatStorageTest) TestCountryStats() error {
 	}
 	countryStat, err = self.storage.GetCountryStats(0, 86400000, strings.ToUpper(TESTCOUNTRY), 0)
 	if countryStat == nil || len(countryStat) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+		return errors.New("Can't find such record, addressess might not be in the correct case")
 	}
 	result, ok = (countryStat[0]).(common.MetricStats)
 	if !ok {
@@ -193,7 +193,7 @@ func (self *StatStorageTest) TestVolumeStats() error {
 	}
 	assetVol, err := self.storage.GetAssetVolume(0, 86400000, "D", testAsset)
 	if assetVol == nil || len(assetVol) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+		return errors.New("Can't find such record, addressess might not be in the correct case")
 	}
 	result, ok := (assetVol[0]).(common.VolumeStats)
 	if !ok {
@@ -209,7 +209,7 @@ func (self *StatStorageTest) TestVolumeStats() error {
 
 	assetVol, err = self.storage.GetAssetVolume(0, 86400000, "D", testAsset)
 	if assetVol == nil || len(assetVol) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+		return errors.New("Can't find such record, addressess might not be in the correct case")
 	}
 	result, ok = (assetVol[0]).(common.VolumeStats)
 	if !ok {
@@ -232,7 +232,7 @@ func (self *StatStorageTest) TestVolumeStats() error {
 	}
 	userVol, err := self.storage.GetUserVolume(0, 86400000, "D", testUser)
 	if (userVol == nil) || len(userVol) == 0 {
-		return fmt.Errorf("Test uservolume failed. Can't find such record, addressess might not be in the correct case")
+		return errors.New("Test uservolume failed. Can't find such record, addressess might not be in the correct case")
 	}
 	result, ok = (userVol[0]).(common.VolumeStats)
 	if !ok {
@@ -253,7 +253,7 @@ func (self *StatStorageTest) TestVolumeStats() error {
 	}
 	reserveVol, err := self.storage.GetReserveVolume(0, 86400000, "D", testAsset, testUser)
 	if (reserveVol == nil) || len(reserveVol) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+		return errors.New("Can't find such record, addressess might not be in the correct case")
 	}
 	result, ok = (reserveVol[0]).(common.VolumeStats)
 	if !ok {
@@ -288,7 +288,7 @@ func (self *StatStorageTest) TestBurnFee() error {
 		return err
 	}
 	if (burnFee == nil) || len(burnFee) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case")
+		return errors.New("Can't find such record, addressess might not be in the correct case")
 	}
 	//Note : This is only temporary, burn fee return needs to be casted to common.BurnFeeStats for consistent in design
 	result, ok := (burnFee[0]).(float64)
@@ -311,7 +311,7 @@ func (self *StatStorageTest) TestBurnFee() error {
 	}
 	burnFee, err = self.storage.GetWalletFee(0, 86400000, "D", testAsset, testWallet)
 	if burnFee == nil || len(burnFee) == 0 {
-		return fmt.Errorf("Can't find such record, addressess might not be in the correct case ")
+		return errors.New("Can't find such record, addressess might not be in the correct case ")
 	}
 	result, ok = (burnFee[0]).(float64)
 	if !ok {
