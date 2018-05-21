@@ -50,7 +50,7 @@ func (self *Bittrex) GetMinDeposit() common.ExchangesMinDeposit {
 
 func (self *Bittrex) UpdateAllDepositAddresses(address string) {
 	data := self.addresses.GetData()
-	for k, _ := range data {
+	for k := range data {
 		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }

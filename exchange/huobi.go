@@ -52,7 +52,7 @@ func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
 
 func (self *Huobi) UpdateAllDepositAddresses(address string, timepoint uint64) {
 	data := self.addresses.GetData()
-	for k, _ := range data {
+	for k := range data {
 		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }

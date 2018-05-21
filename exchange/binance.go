@@ -43,7 +43,7 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 
 func (self *Binance) UpdateAllDepositAddresses(address string) {
 	data := self.addresses.GetData()
-	for k, _ := range data {
+	for k := range data {
 		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }
