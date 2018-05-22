@@ -8,8 +8,10 @@ import (
 
 	"math"
 
+	"net"
+
 	"github.com/KyberNetwork/reserve-data/common"
-	raven "github.com/getsentry/raven-go"
+	"github.com/getsentry/raven-go"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
 )
@@ -111,7 +113,8 @@ func (self *HttpRunnerServer) gtick(c *gin.Context) {
 	)
 }
 
-func (self *HttpRunnerServer) init() {
+// register setups the gin.Engine instance by registers HTTP handlers.
+func (self *HttpRunnerServer) register() {
 	self.r.GET("/otick", self.otick)
 	self.r.GET("/atick", self.atick)
 	self.r.GET("/rtick", self.rtick)
@@ -120,18 +123,41 @@ func (self *HttpRunnerServer) init() {
 	self.r.GET("/gtick", self.gtick)
 }
 
+// Start creates the HTTP server if needed and starts it.
+// The HTTP server is running in foreground.
+// This function always return a non-nil error.
 func (self *HttpRunnerServer) Start() error {
 	if self.http == nil {
 		self.http = &http.Server{
-			Addr:    self.host,
 			Handler: self.r,
 		}
-		return self.http.ListenAndServe()
+
+		lis, err := net.Listen("tcp", self.host)
+		if err != nil {
+			return err
+		}
+
+		// if port is not provided, use a random one and set it back to runner.
+		if self.runner.port == 0 {
+			_, listenedPort, sErr := net.SplitHostPort(lis.Addr().String())
+			if sErr != nil {
+				return sErr
+			}
+			port, sErr := strconv.Atoi(listenedPort)
+			if sErr != nil {
+				return sErr
+			}
+			self.runner.port = port
+		}
+
+		return self.http.Serve(lis)
 	} else {
 		return errors.New("server start already")
 	}
 }
 
+// Stop shutdowns the HTTP server and free the resources.
+// It returns an error if the server is shutdown already.
 func (self *HttpRunnerServer) Stop() error {
 	if self.http != nil {
 		err := self.http.Shutdown(nil)
@@ -146,12 +172,12 @@ func (self *HttpRunnerServer) Stop() error {
 func NewHttpRunnerServer(runner *HttpRunner, host string) *HttpRunnerServer {
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
-	server := HttpRunnerServer{
-		runner,
-		host,
-		r,
-		nil,
+	server := &HttpRunnerServer{
+		runner: runner,
+		host:   host,
+		r:      r,
+		http:   nil,
 	}
-	server.init()
-	return &server
+	server.register()
+	return server
 }

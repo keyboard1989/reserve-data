@@ -10,7 +10,8 @@ import (
 // HttpRunner is an implementation of FetcherRunner
 // that run a HTTP server and tick when it receives request to a certain endpoints.
 type HttpRunner struct {
-	port                    int
+	port int
+
 	oticker                 chan time.Time
 	aticker                 chan time.Time
 	rticker                 chan time.Time
@@ -21,7 +22,8 @@ type HttpRunner struct {
 	tradeLogProcessorTicker chan time.Time
 	catLogProcessorTicker   chan time.Time
 	globalDataTicker        chan time.Time
-	server                  *HttpRunnerServer
+
+	server *HttpRunnerServer
 }
 
 // GetGlobalDataTicker returns the global data ticker.
@@ -78,14 +80,18 @@ func (self *HttpRunner) GetReserveRatesTicker() <-chan time.Time {
 // It returns an error if the server is started already.
 // It is guaranteed that the HTTP server is ready to serve request after
 // this method is returned.
+// The HTTP server is listened on all network interfaces.
 func (self *HttpRunner) Start() error {
 	if self.server != nil {
 		return errors.New("runner start already")
 	} else {
-		self.server = NewHttpRunnerServer(self, fmt.Sprintf(":%d", self.port))
+		var addr string
+		if self.port != 0 {
+			addr = fmt.Sprintf(":%d", self.port)
+		}
+		self.server = NewHttpRunnerServer(self, addr)
 		go func() {
-			err := self.server.Start()
-			if err != nil {
+			if err := self.server.Start(); err != nil {
 				log.Printf("Http server for runner couldn't start or get stopped. Error: %s", err)
 			}
 		}()
@@ -104,9 +110,20 @@ func (self *HttpRunner) Stop() error {
 	}
 }
 
+// HttpRunnerOption is the option to setup the HttpRunner on creation.
+type HttpRunnerOption func(hr *HttpRunner)
+
+// WithHttpRunnerPort setups the HttpRunner instance with the given port.
+// Without this option, NewHttpRunner will use a random port.
+func WithHttpRunnerPort(port int) HttpRunnerOption {
+	return func(hr *HttpRunner) {
+		hr.port = port
+	}
+}
+
 // NewHttpRunner creates a new instance of HttpRunner.
 // The HTTP server is also started after creation.
-func NewHttpRunner(port int) (*HttpRunner, error) {
+func NewHttpRunner(options ...HttpRunnerOption) (*HttpRunner, error) {
 	ochan := make(chan time.Time)
 	achan := make(chan time.Time)
 	rchan := make(chan time.Time)
@@ -117,20 +134,25 @@ func NewHttpRunner(port int) (*HttpRunner, error) {
 	tradeLogProcessorChan := make(chan time.Time)
 	catLogProcessorChan := make(chan time.Time)
 	globalDataChan := make(chan time.Time)
+
 	runner := &HttpRunner{
-		port,
-		ochan,
-		achan,
-		rchan,
-		bchan,
-		tchan,
-		rschan,
-		lchan,
-		tradeLogProcessorChan,
-		catLogProcessorChan,
-		globalDataChan,
-		nil,
+		oticker:                 ochan,
+		aticker:                 achan,
+		rticker:                 rchan,
+		bticker:                 bchan,
+		tticker:                 tchan,
+		rsticker:                rschan,
+		lticker:                 lchan,
+		tradeLogProcessorTicker: tradeLogProcessorChan,
+		catLogProcessorTicker:   catLogProcessorChan,
+		globalDataTicker:        globalDataChan,
+		server:                  nil,
 	}
+
+	for _, option := range options {
+		option(runner)
+	}
+
 	if err := runner.Start(); err != nil {
 		return nil, err
 	}

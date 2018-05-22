@@ -125,7 +125,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 	var statFetcherRunner stat.FetcherRunner
 	var statControllerRunner statpruner.ControllerRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
-		if statFetcherRunner, err = http_runner.NewHttpRunner(8002); err != nil {
+		if statFetcherRunner, err = http_runner.NewHttpRunner(http_runner.WithHttpRunnerPort(8002)); err != nil {
 			panic(err)
 		}
 	} else {
@@ -176,7 +176,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 	var fetcherRunner fetcher.FetcherRunner
 	var dataControllerRunner datapruner.StorageControllerRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
-		if fetcherRunner, err = http_runner.NewHttpRunner(8001); err != nil {
+		if fetcherRunner, err = http_runner.NewHttpRunner(http_runner.WithHttpRunnerPort(8001)); err != nil {
 			log.Fatalf("failed to create HTTP runner: %s", err.Error())
 		}
 	} else {
