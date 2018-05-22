@@ -25,6 +25,9 @@ type HttpRunnerServer struct {
 	host   string
 	r      *gin.Engine
 	http   *http.Server
+
+	// notifyCh is notified when the HTTP server is ready.
+	notifyCh chan struct{}
 }
 
 // getTimePoint returns the timepoint from query parameter.
@@ -60,8 +63,20 @@ func newTickerHandler(ch chan time.Time) gin.HandlerFunc {
 	}
 }
 
+// pingHandler always returns to client a success status.
+func pingHandler(c *gin.Context) {
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success": true,
+		},
+	)
+}
+
 // register setups the gin.Engine instance by registers HTTP handlers.
 func (self *HttpRunnerServer) register() {
+	self.r.GET("/ping", pingHandler)
+
 	self.r.GET("/otick", newTickerHandler(self.runner.oticker))
 	self.r.GET("/atick", newTickerHandler(self.runner.aticker))
 	self.r.GET("/rtick", newTickerHandler(self.runner.rticker))
@@ -97,6 +112,8 @@ func (self *HttpRunnerServer) Start() error {
 			self.runner.port = port
 		}
 
+		self.notifyCh <- struct{}{}
+
 		return self.http.Serve(lis)
 	} else {
 		return errors.New("server start already")
@@ -120,10 +137,11 @@ func NewHttpRunnerServer(runner *HttpRunner, host string) *HttpRunnerServer {
 	r := gin.Default()
 	r.Use(sentry.Recovery(raven.DefaultClient, false))
 	server := &HttpRunnerServer{
-		runner: runner,
-		host:   host,
-		r:      r,
-		http:   nil,
+		runner:   runner,
+		host:     host,
+		r:        r,
+		http:     nil,
+		notifyCh: make(chan struct{}, 1),
 	}
 	server.register()
 	return server

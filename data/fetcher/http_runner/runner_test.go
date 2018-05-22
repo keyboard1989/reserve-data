@@ -50,9 +50,6 @@ func TestHttpRunner(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// TODO: removed this sleep after adding the /ping endpoint
-	time.Sleep(time.Second)
-
 	var tests = []struct {
 		ch   <-chan time.Time
 		path string

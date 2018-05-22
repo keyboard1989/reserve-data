@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"time"
 )
 
@@ -78,6 +79,37 @@ func (self *HttpRunner) GetReserveRatesTicker() <-chan time.Time {
 	return self.rsticker
 }
 
+// waitPingResponse waits until HTTP ticker server responses to request.
+func (self *HttpRunner) waitPingResponse() error {
+	var (
+		tickCh   = time.NewTicker(time.Second / 2).C
+		expireCh = time.NewTicker(time.Second * 5).C
+		client   = http.Client{Timeout: time.Second}
+	)
+
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%d/%s", self.port, "ping"), nil)
+	if err != nil {
+		return err
+	}
+
+	for {
+		select {
+		case <-expireCh:
+			return errors.New("HTTP ticker does not response to ping request")
+		case <-tickCh:
+			rsp, dErr := client.Do(req)
+			if dErr != nil {
+				log.Printf("HTTP server is returning an error: %s, retrying", dErr.Error())
+				break
+			}
+			if rsp.StatusCode == http.StatusOK {
+				log.Print("HTTP ticker server is ready")
+				return nil
+			}
+		}
+	}
+}
+
 // Start initializes and starts the ticker HTTP server.
 // It returns an error if the server is started already.
 // It is guaranteed that the HTTP server is ready to serve request after
@@ -97,7 +129,10 @@ func (self *HttpRunner) Start() error {
 				log.Printf("Http server for runner couldn't start or get stopped. Error: %s", err)
 			}
 		}()
-		return nil
+
+		// wait until the HTTP server is ready
+		<-self.server.notifyCh
+		return self.waitPingResponse()
 	}
 }
 
