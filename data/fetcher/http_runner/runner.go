@@ -87,7 +87,7 @@ func (self *HttpRunner) waitPingResponse() error {
 		client   = http.Client{Timeout: time.Second}
 	)
 
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%d/%s", self.port, "ping"), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://127.0.0.1:%d/%s", self.port, "ping"), nil)
 	if err != nil {
 		return err
 	}

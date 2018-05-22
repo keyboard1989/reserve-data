@@ -25,7 +25,7 @@ func testTicker(t *testing.T, ch <-chan time.Time, path string, port int) {
 	}(ch)
 
 	client := &http.Client{Timeout: time.Second}
-	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://localhost:%d/%s", port, path), nil)
+	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("http://127.0.0.1:%d/%s", port, path), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
