@@ -53,7 +53,6 @@ type Config struct {
 	FetcherGlobalStorage fetcher.GlobalStorage
 	MetricStorage        metric.MetricStorage
 	Archive              archive.Archive
-	//ExchangeStorage exchange.Storage
 
 	World                *world.TheWorld
 	FetcherRunner        fetcher.FetcherRunner

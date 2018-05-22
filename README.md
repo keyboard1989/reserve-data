@@ -200,11 +200,15 @@ curl -X GET "http://13.229.54.28:8000/get-all-rates"
 ### Get trade history for an account (signing required)
 ```
   <host>:8000/tradehistory  
+  params:
+  - fromTime: millisecond (required)
+  - toTime: millisecond (required)
+  Restriction: toTime - fromTime <= 3 days (in millisecond)
 ```
 
 eg:
 ```
-curl -X GET "http://localhost:8000/tradehistory"
+curl -X GET "http://localhost:8000/tradehistoryfromTime=1516116380102&toTime=18446737278344972745"
 ```
 response:
 ```
