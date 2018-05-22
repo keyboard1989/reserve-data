@@ -158,10 +158,12 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	)
 	if err != nil {
 		return result, err
-	} else {
-		json.Unmarshal(resp_body, &result)
-		return result, nil
 	}
+	if err = json.Unmarshal(resp_body, &result); err != nil {
+		log.Printf("Unmarshal response error: %s", err.Error())
+	}
+	return result, nil
+
 }
 
 func (self *BinanceEndpoint) GetTradeHistory(symbol string) (exchange.BinanceTradeHistory, error) {
@@ -204,7 +206,9 @@ func (self *BinanceEndpoint) GetAccountTradeHistory(
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
 	}
 	return result, err
 }
@@ -222,7 +226,9 @@ func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchang
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
 		if !result.Success {
 			err = errors.New("Getting withdraw history from Binance failed: " + result.Msg)
 		}
@@ -243,7 +249,9 @@ func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		err = json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal reponse error: %s", err.Error())
+		}
 		if !result.Success {
 			err = errors.New("Getting deposit history from Binance failed: " + result.Msg)
 		}
@@ -264,7 +272,9 @@ func (self *BinanceEndpoint) CancelOrder(symbol string, id uint64) (exchange.Bin
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
 		if result.Code != 0 {
 			err = errors.New("Canceling order from Binance failed: " + result.Msg)
 		}
@@ -285,7 +295,9 @@ func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64) (exchange.Bin
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
 		if result.Code != 0 {
 			err = errors.New(result.Msg)
 		}
@@ -308,14 +320,15 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal reponse error: %s", err.Error())
+		}
 		if !result.Success {
 			return "", errors.New(result.Msg)
 		}
 		return result.ID, nil
-	} else {
-		return "", errors.New(fmt.Sprintf("withdraw rejected by Binnace: %v", err))
 	}
+	return "", errors.New(fmt.Sprintf("withdraw rejected by Binnace: %v", err))
 }
 
 func (self *BinanceEndpoint) GetInfo() (exchange.Binainfo, error) {
@@ -328,7 +341,9 @@ func (self *BinanceEndpoint) GetInfo() (exchange.Binainfo, error) {
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
 	}
 	if result.Code != 0 {
 		return result, errors.New(fmt.Sprintf("Getting account info from Binance failed: %s", result.Msg))
@@ -350,10 +365,11 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(pair common.TokenPair) (exchan
 	)
 	if err != nil {
 		return result, err
-	} else {
-		json.Unmarshal(resp_body, &result)
-		return result, nil
 	}
+	if err = json.Unmarshal(resp_body, &result); err != nil {
+		log.Printf("Unmarshal response error: %s", err.Error())
+	}
+	return result, nil
 }
 
 func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepositaddress, error) {
@@ -368,7 +384,9 @@ func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepos
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		err = json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
 		if !result.Success {
 			err = errors.New(result.Msg)
 		}
@@ -386,7 +404,9 @@ func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, er
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		err = json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
 	}
 	return result, err
 }
@@ -401,7 +421,9 @@ func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
 		common.GetTimepoint(),
 	)
 	if err == nil {
-		err = json.Unmarshal(resp_body, &result)
+		if err = json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
 	}
 	return result.ServerTime, err
 }

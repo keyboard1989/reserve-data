@@ -193,7 +193,9 @@ func (self *Verification) Withdraw(
 	if err != nil {
 		return result.ID, err
 	}
-	json.Unmarshal(resp_body, &result)
+	if err = json.Unmarshal(resp_body, &result); err != nil {
+		log.Printf("Unmarshal response error: %s", err.Error())
+	}
 	if result.Success != true {
 		err = errors.New(fmt.Sprintf("Cannot withdraw: %s", result.Reason))
 	}

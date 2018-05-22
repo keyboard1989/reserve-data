@@ -1032,11 +1032,10 @@ func (self *BoltStorage) GetRebalanceControl() (metric.RebalanceControl, error) 
 			result = metric.RebalanceControl{
 				Status: false,
 			}
-			self.StoreRebalanceControl(false)
-		} else {
-			if err := json.Unmarshal(data, &result); err != nil {
-				log.Printf("Unmarshal rebalance control: %s", err.Error())
-			}
+			return self.StoreRebalanceControl(false)
+		}
+		if err := json.Unmarshal(data, &result); err != nil {
+			log.Printf("Unmarshal rebalance control: %s", err.Error())
 		}
 		return nil
 	})
@@ -1082,11 +1081,10 @@ func (self *BoltStorage) GetSetrateControl() (metric.SetrateControl, error) {
 			result = metric.SetrateControl{
 				Status: false,
 			}
-			self.StoreSetrateControl(false)
-		} else {
-			if err := json.Unmarshal(data, &result); err != nil {
-				log.Printf("Unmarshal setrate control: %s", err.Error())
-			}
+			return self.StoreSetrateControl(false)
+		}
+		if err := json.Unmarshal(data, &result); err != nil {
+			log.Printf("Unmarshal setrate control: %s", err.Error())
 		}
 		return nil
 	})
@@ -1199,7 +1197,7 @@ func (self *BoltStorage) StorePWIEquation(data string) error {
 		return err
 	})
 	if err == nil {
-		self.RemovePendingPWIEquation()
+		return self.RemovePendingPWIEquation()
 	}
 	return err
 }
@@ -1322,7 +1320,9 @@ func (self *BoltStorage) GetExchangeNotifications() (common.ExchangeNotification
 					action := actionToken[0]
 					token := actionToken[1]
 					notiContent := common.ExchangeNotiContent{}
-					json.Unmarshal(v, &notiContent)
+					if err := json.Unmarshal(v, &notiContent); err != nil {
+						log.Printf("Unmarshal noti content error: %s", err.Error())
+					}
 					tokenContent, exist := actionContent[action]
 					if !exist {
 						tokenContent = common.ExchangeTokenNoti{}
