@@ -2,11 +2,11 @@
     "Vendor": true,
     "DisableAll": true,
     "Enable": [
-	"errcheck"
+	"errcheck",
 	"gofmt",
 	"gotype",
 	"gotypex",
-	"vet",
+	"vet"
     ],
     "Deadline": "5m"
 }

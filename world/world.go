@@ -79,7 +79,11 @@ func (self *TheWorld) getOneForgeGoldETHInfo() common.OneForgeGoldData {
 			Message: err.Error(),
 		}
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		if resp.StatusCode != 200 {
 			err = fmt.Errorf("Gold feed returned with code: %d", resp.StatusCode)
 			return common.OneForgeGoldData{
@@ -171,7 +175,11 @@ func (self *TheWorld) getGDAXGoldInfo() common.GDAXGoldData {
 			Error: err.Error(),
 		}
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		if resp.StatusCode != 200 {
 			err = fmt.Errorf("Gold feed returned with code: %d", resp.StatusCode)
 			return common.GDAXGoldData{
@@ -216,7 +224,11 @@ func (self *TheWorld) getKrakenGoldInfo() common.KrakenGoldData {
 			Error: err.Error(),
 		}
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		if resp.StatusCode != 200 {
 			err = fmt.Errorf("Gold feed returned with code: %d", resp.StatusCode)
 			return common.KrakenGoldData{
@@ -261,7 +273,11 @@ func (self *TheWorld) getGeminiGoldInfo() common.GeminiGoldData {
 			Error: err.Error(),
 		}
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		if resp.StatusCode != 200 {
 			err = fmt.Errorf("Gold feed returned with code: %d", resp.StatusCode)
 			return common.GeminiGoldData{

@@ -335,10 +335,8 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 			return "", errors.New(result.Msg)
 		}
 		return result.ID, nil
-	} else {
-		return "", fmt.Errorf("withdraw rejected by Binnace: %v", err)
 	}
-	return "", errors.New(fmt.Sprintf("withdraw rejected by Binnace: %v", err))
+	return "", fmt.Errorf("withdraw rejected by Binnace: %v", err)
 }
 
 func (self *BinanceEndpoint) GetInfo() (exchange.Binainfo, error) {

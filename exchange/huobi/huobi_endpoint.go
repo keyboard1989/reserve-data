@@ -156,18 +156,12 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	)
 	if err != nil {
 		return result, err
-	} else {
-		json.Unmarshal(resp_body, &result)
-		if result.Status != "ok" {
-			return result, fmt.Errorf("Create order failed: %s\n", result.Reason)
-		}
-		return result, nil
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
+	if err := json.Unmarshal(resp_body, &result); err != nil {
+		log.Printf("Unmarshal trade error: %s", err.Error())
 	}
 	if result.Status != "ok" {
-		return result, errors.New(fmt.Sprintf("Create order failed: %s\n", result.Reason))
+		return result, fmt.Errorf("Create order failed: %s\n", result.Reason)
 	}
 	return result, nil
 }

@@ -409,7 +409,9 @@ func (self *Bittrex) FetchTradeHistory() {
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
-			self.storage.StoreTradeHistory(result)
+			if err := self.storage.StoreTradeHistory(result); err != nil {
+				log.Printf("Bittrex store trade history error: %s", err.Error())
+			}
 			<-t.C
 		}
 	}()

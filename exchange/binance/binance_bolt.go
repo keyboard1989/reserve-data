@@ -33,7 +33,7 @@ func NewBoltExchangeStorage(path string) (*BinanceStorage, error) {
 		return nil, err
 	}
 	// init buckets
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		_, err = tx.CreateBucketIfNotExists([]byte(TRADE_HISTORY))
 		if err != nil {
 			return err
