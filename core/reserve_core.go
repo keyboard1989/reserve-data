@@ -164,7 +164,7 @@ func (self ReserveCore) Deposit(
 	}
 	amountFloat := common.BigToFloat(amount, token.Decimal)
 	uid := timebasedID(txhex + "|" + token.ID + "|" + strconv.FormatFloat(amountFloat, 'f', -1, 64))
-	err = self.activityStorage.Record(
+	serr := self.activityStorage.Record(
 		"deposit",
 		uid,
 		string(exchange.ID()),
@@ -183,7 +183,9 @@ func (self ReserveCore) Deposit(
 		status,
 		timepoint,
 	)
-	log.Printf("Cannot save activity: %s", err.Error())
+	if serr != nil {
+		log.Printf("Cannot save activity: %s", err.Error())
+	}
 	log.Printf(
 		"Core ----------> Deposit to %s: token: %s, amount: %s, timestamp: %d ==> Result: tx: %s, error: %s",
 		exchange.ID(), token.ID, amount.Text(10), timepoint, txhex, err,

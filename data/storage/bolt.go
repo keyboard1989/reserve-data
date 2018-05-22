@@ -939,7 +939,7 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 		} else {
 			// verify confirm data
 			if err := json.Unmarshal(pendingTargetQty, &tokenTargetQty); err != nil {
-				log.Printf("Unmarshal pending target error: %s")
+				log.Printf("Unmarshal pending target error: %s", err.Error())
 			}
 			pendingData := tokenTargetQty.Data
 			idInt, _ := strconv.ParseUint(id, 10, 64)
