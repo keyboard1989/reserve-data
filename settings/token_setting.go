@@ -9,16 +9,8 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
-type token struct {
-	Address          string `json:"address"`
-	Name             string `json:"name"`
-	Decimals         int64  `json:"decimals"`
-	KNReserveSupport bool   `json:"internal use"`
-	Active           bool   `json:"listed"`
-}
-
 type TokenConfig struct {
-	Tokens map[string]token `json:"tokens"`
+	Tokens map[string]common.Token `json:"tokens"`
 }
 
 type TokenSetting struct {
@@ -49,9 +41,8 @@ func LoadTokenFromFile(filePath string) error {
 	if err != nil {
 		return err
 	}
-	for id, t := range tokens.Tokens {
-		tok := common.NewToken(id, t.Address, t.Decimals, t.Active, t.KNReserveSupport)
-		err = UpdateToken(tok)
+	for _, t := range tokens.Tokens {
+		err = UpdateToken(t)
 		if err != nil {
 			return err
 		}

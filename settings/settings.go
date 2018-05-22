@@ -17,7 +17,7 @@ type Settings struct {
 
 var setting Settings
 
-func NewToken() *TokenSetting {
+func NewTokenSetting() *TokenSetting {
 	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(TOKEN_DB_FILE_PATH)
 	if err != nil {
 		log.Panicf("Setting Init: Can not create bolt token storage (%s)", err)
@@ -27,7 +27,7 @@ func NewToken() *TokenSetting {
 }
 
 func NewSetting() *Settings {
-	tokensSetting := NewToken()
+	tokensSetting := NewTokenSetting()
 	setting = Settings{tokensSetting}
 	allToks, err := GetAllTokens()
 	if err != nil || len(allToks) < 1 {

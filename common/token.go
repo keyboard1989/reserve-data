@@ -1,21 +1,27 @@
 package common
 
 type Token struct {
-	ID       string
-	Address  string
-	Decimal  int64
-	Active   bool
-	Internal bool
+	ID                      string `json:"address"`
+	Address                 string `json:"name"`
+	Decimal                 int64  `json:"decimals"`
+	Active                  bool   `json:"internal use"`
+	Internal                bool   `json:"listed"`
+	MinimalRecordResolution uint64 `json:"minimalRecordResolution"`
+	MaxTotalImbalance       uint64 `json:"maxPerBlockImbalance"`
+	MaxPerBlockImbalance    uint64 `json:"maxTotalImbalance"`
 }
 
 // NewToken creates a new Token.
-func NewToken(id, address string, decimal int64, active bool, internal bool) Token {
+func NewToken(id, address string, decimal int64, active bool, internal bool, miminalrr, maxti, maxpbi uint64) Token {
 	return Token{
-		ID:       id,
-		Address:  address,
-		Decimal:  decimal,
-		Active:   active,
-		Internal: internal,
+		ID:                      id,
+		Address:                 address,
+		Decimal:                 decimal,
+		Active:                  active,
+		Internal:                internal,
+		MinimalRecordResolution: miminalrr,
+		MaxTotalImbalance:       maxti,
+		MaxPerBlockImbalance:    maxpbi,
 	}
 }
 
@@ -38,22 +44,3 @@ type TokenPair struct {
 func (self *TokenPair) PairID() TokenPairID {
 	return NewTokenPairID(self.Base.ID, self.Quote.ID)
 }
-
-// func NewTokenPair(base, quote string) (TokenPair, error) {
-// 	bToken, err1 := GetInternalToken(base)
-// 	qToken, err2 := GetInternalToken(quote)
-// 	if err1 != nil || err2 != nil {
-// 		return TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
-// 	} else {
-// 		return TokenPair{bToken, qToken}, nil
-// 	}
-// }
-
-// func MustCreateTokenPair(base, quote string) TokenPair {
-// 	pair, err := NewTokenPair(base, quote)
-// 	if err != nil {
-// 		panic(err)
-// 	} else {
-// 		return pair
-// 	}
-// }

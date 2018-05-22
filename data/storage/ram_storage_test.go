@@ -8,7 +8,7 @@ import (
 
 func TestHasPendingDepositRamStorage(t *testing.T) {
 	storage := NewRamStorage()
-	token := common.NewToken("OMG", "0x1111111111111111111111111111111111111111", 18, true, true)
+	token := common.NewToken("OMG", "0x1111111111111111111111111111111111111111", 18, true, true, 1000, 2000, 3000)
 	exchange := common.TestExchange{}
 	timepoint := common.GetTimepoint()
 	out := storage.HasPendingDeposit(token, exchange)
