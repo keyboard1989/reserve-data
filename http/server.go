@@ -2581,6 +2581,7 @@ func (self *HTTPServer) GetTokenHeatmap(c *gin.Context) {
 
 func (self *HTTPServer) Run() {
 	self.r.POST("/update-token", self.UpdateToken)
+	self.r.GET("/token-settings", self.TokenSettings)
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
 		self.r.GET("/prices", self.AllPrices)

@@ -20,7 +20,6 @@ func returnError(c *gin.Context, err error) {
 		},
 	)
 	return
-
 }
 
 func (self *HTTPServer) UpdateToken(c *gin.Context) {
@@ -76,4 +75,24 @@ func (self *HTTPServer) UpdateToken(c *gin.Context) {
 			"success": true,
 		},
 	)
+}
+
+func (self *HTTPServer) TokenSettings(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{RebalancePermission, ConfigurePermission, ReadOnlyPermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := settings.GetAllTokens()
+	if err != nil {
+		returnError(c, err)
+	}
+	c.JSON(
+		http.StatusOK,
+		gin.H{
+			"success":   true,
+			"timestamp": common.GetTimepoint(),
+			"data":      data,
+		},
+	)
+	return
 }
