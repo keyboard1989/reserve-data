@@ -176,14 +176,14 @@ func (self *BoltTokenStorage) getTokenByAddressWithFiltering(addr string, filter
 		c := b.Cursor()
 		k, v := c.Seek([]byte(addr))
 		if bytes.Compare(k, []byte(addr)) != 0 {
-			return fmt.Errorf("Token %d is not found in current setting", addr)
+			return fmt.Errorf("Token %s is not found in current setting", addr)
 		}
 		uErr := json.Unmarshal(v, &t)
 		if uErr != nil {
 			return uErr
 		}
 		if !filter(t) {
-			return fmt.Errorf("Token %s status is not as querried")
+			return fmt.Errorf("Token %s status is not as querried", t.ID)
 		}
 		return nil
 	})

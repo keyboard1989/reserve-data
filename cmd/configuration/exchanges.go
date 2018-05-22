@@ -26,7 +26,7 @@ func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *s
 	defer wait.Done()
 	token, err := settings.GetInternalTokenByID(tokenID)
 	if err != nil {
-		log.Panicf("ERROR: Can't get internal token %s. Error: %s", err)
+		log.Panicf("ERROR: Can't get internal token %s. Error: %s", tokenID, err)
 	}
 	ex.UpdateDepositAddress(token, addr)
 }

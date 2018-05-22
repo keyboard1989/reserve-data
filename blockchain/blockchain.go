@@ -308,7 +308,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint6
 	if err != nil {
 		tokens, err := settings.GetInternalTokens()
 		if err != nil {
-			log.Printf("Fetcher ------> Can't get the list of internal Tokens ", err)
+			log.Printf("Fetcher ------> Can't get the list of internal Tokens (%s)", err)
 		} else {
 			for _, token := range tokens {
 				result[token.ID] = common.BalanceEntry{

@@ -65,7 +65,7 @@ func NewTokenPair(base, quote string) (common.TokenPair, error) {
 	if err1 != nil || err2 != nil {
 		return common.TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
 	} else {
-		return common.TokenPair{bToken, qToken}, nil
+		return common.TokenPair{Base: bToken, Quote: qToken}, nil
 	}
 }
 

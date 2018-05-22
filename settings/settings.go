@@ -20,7 +20,7 @@ var setting Settings
 func NewToken() *TokenSetting {
 	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(TOKEN_DB_FILE_PATH)
 	if err != nil {
-		log.Panicf("Setting Init: Can not create bolt token storage", err)
+		log.Panicf("Setting Init: Can not create bolt token storage (%s)", err)
 	}
 	tokenSetting := TokenSetting{BoltTokenStorage}
 	return &tokenSetting
