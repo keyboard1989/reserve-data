@@ -50,7 +50,7 @@ func LoadTokenFromFile(filePath string) error {
 		return err
 	}
 	for id, t := range tokens.Tokens {
-		tok := common.Token{id, t.Address, t.Decimals, t.Active, t.KNReserveSupport}
+		tok := common.NewToken(id, t.Address, t.Decimals, t.Active, t.KNReserveSupport)
 		err = UpdateToken(tok)
 		if err != nil {
 			return err

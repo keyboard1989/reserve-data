@@ -50,13 +50,7 @@ func (self *HTTPServer) UpdateToken(c *gin.Context) {
 		return
 	}
 
-	token := common.Token{
-		ID:       ID,
-		Address:  addrs,
-		Decimal:  decimalint64,
-		Active:   activeBool,
-		Internal: internalBool,
-	}
+	token := common.NewToken(ID, addrs, decimalint64, activeBool, internalBool)
 
 	err = settings.UpdateToken(token)
 	if err != nil {
