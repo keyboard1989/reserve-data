@@ -12,16 +12,18 @@ import (
 type HttpRunner struct {
 	port int
 
-	oticker                 chan time.Time
-	aticker                 chan time.Time
-	rticker                 chan time.Time
-	bticker                 chan time.Time
-	tticker                 chan time.Time
+	oticker          chan time.Time
+	aticker          chan time.Time
+	rticker          chan time.Time
+	bticker          chan time.Time
+	tticker          chan time.Time
+	globalDataTicker chan time.Time
+
+	// TODO: following channels have no HTTP endpoint, find out why
 	rsticker                chan time.Time
 	lticker                 chan time.Time
 	tradeLogProcessorTicker chan time.Time
 	catLogProcessorTicker   chan time.Time
-	globalDataTicker        chan time.Time
 
 	server *HttpRunnerServer
 }

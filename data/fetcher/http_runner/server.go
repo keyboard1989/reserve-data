@@ -3,12 +3,11 @@ package http_runner
 import (
 	"errors"
 	"log"
+	"math"
+	"net"
 	"net/http"
 	"strconv"
-
-	"math"
-
-	"net"
+	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/getsentry/raven-go"
@@ -47,80 +46,28 @@ func getTimePoint(c *gin.Context) uint64 {
 	}
 }
 
-func (self *HttpRunnerServer) otick(c *gin.Context) {
-	timepoint := getTimePoint(c)
-	self.runner.oticker <- common.TimepointToTime(timepoint)
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-		},
-	)
-}
-
-func (self *HttpRunnerServer) atick(c *gin.Context) {
-	timepoint := getTimePoint(c)
-	self.runner.aticker <- common.TimepointToTime(timepoint)
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-		},
-	)
-}
-
-func (self *HttpRunnerServer) rtick(c *gin.Context) {
-	timepoint := getTimePoint(c)
-	self.runner.rticker <- common.TimepointToTime(timepoint)
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-		},
-	)
-}
-
-func (self *HttpRunnerServer) btick(c *gin.Context) {
-	timepoint := getTimePoint(c)
-	self.runner.bticker <- common.TimepointToTime(timepoint)
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-		},
-	)
-}
-
-func (self *HttpRunnerServer) ttick(c *gin.Context) {
-	timepoint := getTimePoint(c)
-	self.runner.tticker <- common.TimepointToTime(timepoint)
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-		},
-	)
-}
-
-func (self *HttpRunnerServer) gtick(c *gin.Context) {
-	timepoint := getTimePoint(c)
-	self.runner.globalDataTicker <- common.TimepointToTime(timepoint)
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-		},
-	)
+// newTickerHandler creates a new HTTP handler for given channel.
+func newTickerHandler(ch chan time.Time) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		timepoint := getTimePoint(c)
+		ch <- common.TimepointToTime(timepoint)
+		c.JSON(
+			http.StatusOK,
+			gin.H{
+				"success": true,
+			},
+		)
+	}
 }
 
 // register setups the gin.Engine instance by registers HTTP handlers.
 func (self *HttpRunnerServer) register() {
-	self.r.GET("/otick", self.otick)
-	self.r.GET("/atick", self.atick)
-	self.r.GET("/rtick", self.rtick)
-	self.r.GET("/btick", self.btick)
-	self.r.GET("/ttick", self.ttick)
-	self.r.GET("/gtick", self.gtick)
+	self.r.GET("/otick", newTickerHandler(self.runner.oticker))
+	self.r.GET("/atick", newTickerHandler(self.runner.aticker))
+	self.r.GET("/rtick", newTickerHandler(self.runner.rticker))
+	self.r.GET("/btick", newTickerHandler(self.runner.bticker))
+	self.r.GET("/ttick", newTickerHandler(self.runner.tticker))
+	self.r.GET("/gtick", newTickerHandler(self.runner.globalDataTicker))
 }
 
 // Start creates the HTTP server if needed and starts it.
