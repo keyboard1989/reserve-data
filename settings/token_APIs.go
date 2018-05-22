@@ -1,6 +1,8 @@
 package settings
 
 import (
+	"errors"
+	"fmt"
 	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -61,4 +63,23 @@ func ETHToken() common.Token {
 		log.Panicf("There is no ETH token in token DB, this should not happen (%s)", err)
 	}
 	return eth
+}
+
+func NewTokenPair(base, quote string) (common.TokenPair, error) {
+	bToken, err1 := GetInternalTokenByID(base)
+	qToken, err2 := GetInternalTokenByID(quote)
+	if err1 != nil || err2 != nil {
+		return common.TokenPair{}, errors.New(fmt.Sprintf("%s or %s is not supported", base, quote))
+	} else {
+		return common.TokenPair{Base: bToken, Quote: qToken}, nil
+	}
+}
+
+func MustCreateTokenPair(base, quote string) common.TokenPair {
+	pair, err := NewTokenPair(base, quote)
+	if err != nil {
+		panic(err)
+	} else {
+		return pair
+	}
 }

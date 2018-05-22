@@ -17,17 +17,17 @@ type Settings struct {
 
 var setting Settings
 
-func NewTokenSetting() *TokenSetting {
+func CreateTokenSetting() *TokenSetting {
 	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(TOKEN_DB_FILE_PATH)
 	if err != nil {
 		log.Panicf("Setting Init: Can not create bolt token storage (%s)", err)
 	}
-	tokenSetting := TokenSetting{BoltTokenStorage}
-	return &tokenSetting
+	tokenSetting := NewTokenSetting(BoltTokenStorage)
+	return tokenSetting
 }
 
 func NewSetting() *Settings {
-	tokensSetting := NewTokenSetting()
+	tokensSetting := CreateTokenSetting()
 	setting = Settings{tokensSetting}
 	allToks, err := GetAllTokens()
 	if err != nil || len(allToks) < 1 {
