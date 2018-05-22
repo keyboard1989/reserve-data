@@ -70,8 +70,11 @@ func (self *BoltTokenStorage) AddTokenByID(t common.Token) error {
 		if uErr != nil {
 			return uErr
 		}
-		dataJson, uErr := json.Marshal(t)
-		return b.Put([]byte(strings.ToLower(t.ID)), dataJson)
+		dataJSON, uErr := json.Marshal(t)
+		if uErr != nil {
+			return uErr
+		}
+		return b.Put([]byte(strings.ToLower(t.ID)), dataJSON)
 	})
 	return err
 }
@@ -83,6 +86,9 @@ func (self *BoltTokenStorage) AddTokenByAddress(t common.Token) error {
 			return uErr
 		}
 		dataJson, uErr := json.Marshal(t)
+		if uErr != nil {
+			return uErr
+		}
 		return b.Put([]byte(strings.ToLower(t.Address)), dataJson)
 	})
 	return err

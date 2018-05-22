@@ -3,12 +3,24 @@ package settings
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
+type token struct {
+	Address                 string `json:"address"`
+	Name                    string `json:"name"`
+	Decimal                 int64  `json:"decimals"`
+	Active                  bool   `json:"internal use"`
+	Internal                bool   `json:"listed"`
+	MinimalRecordResolution string `json:"minimalRecordResolution"`
+	MaxTotalImbalance       string `json:"maxPerBlockImbalance"`
+	MaxPerBlockImbalance    string `json:"maxTotalImbalance"`
+}
+
 type TokenConfig struct {
-	Tokens map[string]common.Token `json:"tokens"`
+	Tokens map[string]token `json:"tokens"`
 }
 
 type TokenSetting struct {
@@ -39,8 +51,10 @@ func LoadTokenFromFile(filePath string) error {
 	if err != nil {
 		return err
 	}
-	for _, t := range tokens.Tokens {
-		err = UpdateToken(t)
+	for id, t := range tokens.Tokens {
+		token := common.NewToken(id, t.Name, t.Address, t.Decimal, t.Active, t.Internal, t.MinimalRecordResolution, t.MaxPerBlockImbalance, t.MaxTotalImbalance)
+		log.Printf("damn token is %v", token)
+		err = UpdateToken(token)
 		if err != nil {
 			return err
 		}

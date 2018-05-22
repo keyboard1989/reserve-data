@@ -31,10 +31,14 @@ func NewSetting() *Settings {
 	setting = Settings{tokensSetting}
 	allToks, err := GetAllTokens()
 	if err != nil || len(allToks) < 1 {
-		log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
+		if err != nil {
+			log.Printf("Setting Init: Token DB is faulty (%s), attempt to load token from file", err)
+		} else {
+			log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
+		}
 		err := LoadTokenFromFile(TOKEN_DEFAULT_JSON_PATH)
 		if err != nil {
-			log.Printf("Setting Init: Can not load Token from file, Token DB is needed to be updated manually")
+			log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err)
 		}
 	}
 	overalSetting := Settings{tokensSetting}

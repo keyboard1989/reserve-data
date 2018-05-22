@@ -23,12 +23,13 @@ func returnError(c *gin.Context, err error) {
 }
 
 func (self *HTTPServer) UpdateToken(c *gin.Context) {
-	postForm, ok := self.Authenticated(c, []string{"address", "ID", "decimals", "internal", "active", "minimalRecordResolution", "maxPerBlockImbalance", "maxTotalImbalance"}, []Permission{RebalancePermission, ConfigurePermission})
+	postForm, ok := self.Authenticated(c, []string{"name", "address", "id", "decimals", "internal", "active", "minimalRecordResolution", "maxPerBlockImbalance", "maxTotalImbalance"}, []Permission{RebalancePermission, ConfigurePermission})
 	if !ok {
 		return
 	}
 	addrs := postForm.Get("address")
-	ID := postForm.Get("ID")
+	name := postForm.Get("name")
+	ID := postForm.Get("id")
 	decimal := postForm.Get("decimals")
 	internal := postForm.Get("internal")
 	active := postForm.Get("active")
@@ -50,19 +51,7 @@ func (self *HTTPServer) UpdateToken(c *gin.Context) {
 		returnError(c, err)
 		return
 	}
-	minrrUint64, err := strconv.ParseUint(minrr, 10, 64)
-	if err != nil {
-		returnError(c, err)
-	}
-	maxpbiUint64, err := strconv.ParseUint(maxpbi, 10, 64)
-	if err != nil {
-		returnError(c, err)
-	}
-	maxtiUint64, err := strconv.ParseUint(maxti, 10, 64)
-	if err != nil {
-		returnError(c, err)
-	}
-	token := common.NewToken(ID, addrs, decimalint64, activeBool, internalBool, minrrUint64, maxpbiUint64, maxtiUint64)
+	token := common.NewToken(ID, name, addrs, decimalint64, activeBool, internalBool, minrr, maxpbi, maxti)
 
 	err = settings.UpdateToken(token)
 	if err != nil {
