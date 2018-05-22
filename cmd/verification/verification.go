@@ -15,6 +15,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	ihttp "github.com/KyberNetwork/reserve-data/http"
+	"github.com/KyberNetwork/reserve-data/settings"
 )
 
 type Verification struct {
@@ -259,7 +260,7 @@ func (self *Verification) CheckActivities(activityID common.ActivityID, timepoin
 func (self *Verification) VerifyDeposit() error {
 	var err error
 	timepoint := common.GetTimepoint()
-	token, err := common.GetInternalToken("ETH")
+	token, err := settings.GetInternalTokenByID("ETH")
 	amount := getTokenAmount(0.5, token)
 	Info.Println("Start deposit to exchanges")
 	for _, exchange := range self.exchanges {
@@ -279,7 +280,7 @@ func (self *Verification) VerifyDeposit() error {
 func (self *Verification) VerifyWithdraw() error {
 	var err error
 	timepoint := common.GetTimepoint()
-	token, err := common.GetInternalToken("ETH")
+	token, err := settings.GetInternalTokenByID("ETH")
 	amount := getTokenAmount(0.5, token)
 	for _, exchange := range self.exchanges {
 		activityID, err := self.Withdraw(exchange, token.ID, amount, timepoint)

@@ -10,6 +10,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 )
 
 var noAuthEnable bool
@@ -93,7 +94,7 @@ func run(verify *Verification) {
 			verify.UpdateBaseUrl(*depositBaseUrl)
 		}
 		if *depositToken != "" {
-			token, err = common.GetInternalToken(*depositToken)
+			token, err = settings.GetInternalTokenByID(*depositToken)
 			if err != nil {
 				log.Println(err.Error())
 				os.Exit(1)
