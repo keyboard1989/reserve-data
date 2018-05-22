@@ -20,7 +20,7 @@ func testTicker(t *testing.T, ch <-chan time.Time, path string, port int) {
 		ts := <-ch
 		t.Logf("got timestamp: %s for path: %s", ts, path)
 		if !ts.Equal(common.TimepointToTime(now)) {
-			t.Errorf("wrong timestamp received, expected: %s, got: %s", now, ts)
+			t.Errorf("wrong timestamp received, expected: %s, got: %s", common.TimepointToTime(now), ts)
 		}
 	}(ch)
 
