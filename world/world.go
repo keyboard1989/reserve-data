@@ -33,7 +33,11 @@ func (self *TheWorld) getOneForgeGoldInfo() common.OneForgeGoldData {
 			Message: err.Error(),
 		}
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Close http body error: %s", err.Error())
+			}
+		}()
 		if resp.StatusCode != 200 {
 			err = errors.New(fmt.Sprintf("Gold feed returned with code: %d", resp.StatusCode))
 			return common.OneForgeGoldData{
@@ -76,7 +80,11 @@ func (self *TheWorld) getDGXGoldInfo() common.DGXGoldData {
 			Error: err.Error(),
 		}
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Close reponse body error: %s", err.Error())
+			}
+		}()
 		if resp.StatusCode != 200 {
 			err = errors.New(fmt.Sprintf("Gold feed returned with code: %d", resp.StatusCode))
 			return common.DGXGoldData{

@@ -224,14 +224,14 @@ func (self *BoltUserStorage) GetAddressesOfUser(user string) ([]ethereum.Address
 		timeBucket := tx.Bucket([]byte(ADDRESS_TIME))
 		userBucket := b.Bucket([]byte(user))
 		if userBucket != nil {
-			userBucket.ForEach(func(k, v []byte) error {
+			err = userBucket.ForEach(func(k, v []byte) error {
 				addr := ethereum.HexToAddress(string(k))
 				result = append(result, addr)
 				timestamps = append(timestamps, bytesToUint64(timeBucket.Get(k)))
 				return nil
 			})
 		}
-		return nil
+		return err
 	})
 	return result, timestamps, err
 }
@@ -279,11 +279,11 @@ func (self *BoltUserStorage) GetPendingAddresses() ([]ethereum.Address, error) {
 	result := []ethereum.Address{}
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_ADDRESSES))
-		b.ForEach(func(k, v []byte) error {
+		err = b.ForEach(func(k, v []byte) error {
 			result = append(result, ethereum.HexToAddress(string(k)))
 			return nil
 		})
-		return nil
+		return err
 	})
 	return result, err
 }

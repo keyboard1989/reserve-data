@@ -80,7 +80,11 @@ func (self *BitfinexEndpoint) FetchOnePairData(
 		result.Valid = false
 		result.Error = err.Error()
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		resp_body, err := ioutil.ReadAll(resp.Body)
 		returnTime := common.GetTimestamp()
 		result.ReturnTime = returnTime
@@ -89,7 +93,9 @@ func (self *BitfinexEndpoint) FetchOnePairData(
 			result.Error = err.Error()
 		} else {
 			resp_data := exchange.Bitfresp{}
-			json.Unmarshal(resp_body, &resp_data)
+			if err := json.Unmarshal(resp_body, &resp_data); err != nil {
+				log.Printf("Unmarshal response error: %s", err.Error())
+			}
 			if len(resp_data.Asks) == 0 && len(resp_data.Bids) == 0 {
 				result.Valid = false
 			} else {
@@ -144,7 +150,11 @@ func (self *BitfinexEndpoint) Trade(tradeType string, base, quote common.Token, 
 	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		resp_body, err := ioutil.ReadAll(resp.Body)
 		log.Printf("response: %s\n", resp_body)
 		if err == nil {
@@ -180,7 +190,11 @@ func (self *BitfinexEndpoint) Withdraw(token common.Token, amount *big.Int, addr
 	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		resp_body, err := ioutil.ReadAll(resp.Body)
 		log.Printf("response: %s\n", resp_body)
 		if err == nil {
@@ -221,10 +235,16 @@ func (self *BitfinexEndpoint) GetInfo() (exchange.Bitfinfo, error) {
 	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		resp_body, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
-			json.Unmarshal(resp_body, &result)
+			if err := json.Unmarshal(resp_body, &result); err != nil {
+				log.Printf("Unmarshal response error: %s", err.Error())
+			}
 		}
 	}
 	return result, err

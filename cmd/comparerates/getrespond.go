@@ -70,11 +70,11 @@ func GetResponse(method string, url string,
 	if err != nil {
 		return resbody, err
 	} else {
-		defer func(){
-			if err:=resp.Body.Close(); err != nil {
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
 				log.Printf("Response body close error: %s", err.Error())
 			}
-		}
+		}()
 		switch resp.StatusCode {
 		case 200:
 			resbody, err = ioutil.ReadAll(resp.Body)

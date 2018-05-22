@@ -60,7 +60,9 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/pending_intermediate_tx", self.PendingIntermediateTxs)
 	}
 
-	self.r.Run(self.host)
+	if err := self.r.Run(self.host); err != nil {
+		log.Printf("Http server run error: %s", err.Error())
+	}
 }
 
 func NewHuobiHTTPServer(app Huobi) *HTTPServer {

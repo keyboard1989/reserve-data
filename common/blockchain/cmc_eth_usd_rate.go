@@ -102,7 +102,11 @@ func fetchRate(timepoint uint64) ([][]float64, error) {
 	if err != nil {
 		return [][]float64{}, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Response body close error: %s", err.Error())
+		}
+	}()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return [][]float64{}, err
@@ -145,7 +149,11 @@ func (self *CMCEthUSDRate) FetchEthRate() (err error) {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Response body close error: %s", err.Error())
+		}
+	}()
 	body, err := ioutil.ReadAll(resp.Body)
 	rateResponse := CoinCapRateResponse{}
 	err = json.Unmarshal(body, &rateResponse)

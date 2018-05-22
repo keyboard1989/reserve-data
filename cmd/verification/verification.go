@@ -96,7 +96,11 @@ func (self *Verification) GetResponse(
 	if err != nil {
 		return resp_body, err
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		resp_body, err = ioutil.ReadAll(resp.Body)
 		Info.Printf("request to %s, got response: %s\n", req.URL, resp_body)
 		return resp_body, err

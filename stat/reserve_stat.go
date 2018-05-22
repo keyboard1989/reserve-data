@@ -353,7 +353,9 @@ func (self ReserveStats) ControllPriceAnalyticSize() error {
 				}
 			}
 		}
-		os.Remove(fileName)
+		if err := os.Remove(fileName); err != nil {
+			log.Printf("Remove exprired data failed: %s", err.Error())
+		}
 	}
 }
 
@@ -362,7 +364,11 @@ func (self ReserveStats) RunStorageController() error {
 	if err != nil {
 		return err
 	}
-	go self.ControllPriceAnalyticSize()
+	go func() {
+		if err := self.ControllPriceAnalyticSize(); err != nil {
+			log.Printf("Control price analytic failed: %s", err.Error())
+		}
+	}()
 	return err
 }
 

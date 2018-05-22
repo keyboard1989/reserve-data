@@ -1277,7 +1277,9 @@ func (self *HTTPServer) HoldRebalance(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreRebalanceControl(false)
+	if err := self.metric.StoreRebalanceControl(false); err != nil {
+		log.Printf("Store rebalance control error: %s", err.Error())
+	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -1292,7 +1294,9 @@ func (self *HTTPServer) EnableRebalance(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreRebalanceControl(true)
+	if err := self.metric.StoreRebalanceControl(true); err != nil {
+		log.Printf("Store rebalance control: %s", err.Error())
+	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -1331,7 +1335,9 @@ func (self *HTTPServer) HoldSetrate(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreSetrateControl(false)
+	if err := self.metric.StoreSetrateControl(false); err != nil {
+		log.Printf("Store set rate control: %s", err.Error())
+	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -1346,7 +1352,9 @@ func (self *HTTPServer) EnableSetrate(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreSetrateControl(true)
+	if err := self.metric.StoreSetrateControl(true); err != nil {
+		log.Printf("Store set rate control: %s", err.Error())
+	}
 	c.JSON(
 		http.StatusOK,
 		gin.H{
@@ -2669,7 +2677,9 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-token-heatmap", self.GetTokenHeatmap)
 	}
 
-	self.r.Run(self.host)
+	if err := self.r.Run(self.host); err != nil {
+		log.Printf("Http server run error: %s", err.Error())
+	}
 }
 
 func NewHTTPServer(

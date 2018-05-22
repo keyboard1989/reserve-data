@@ -80,7 +80,9 @@ func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
-	self.runner.Start()
+	if err := self.runner.Start(); err != nil {
+		log.Printf("Runner start error: %s", err.Error())
+	}
 	go self.RunBlockFetcher()
 	go self.RunLogFetcher()
 	go self.RunReserveRatesFetcher()
@@ -137,7 +139,9 @@ func (self *Fetcher) RunCatLogProcessor() {
 					}
 				}
 			}
-			self.userStorage.SetLastProcessedCatLogTimepoint(last)
+			if err := self.userStorage.SetLastProcessedCatLogTimepoint(last); err != nil {
+				log.Printf("Set last process cat log timepoint error: %s", err.Error())
+			}
 		} else {
 			l, err := self.logStorage.GetLastCatLog()
 			if err != nil {
@@ -148,7 +152,9 @@ func (self *Fetcher) RunCatLogProcessor() {
 				if toTime < l.Timestamp {
 					// if we are querying on past logs, store toTime as the last
 					// processed trade log timepoint
-					self.userStorage.SetLastProcessedCatLogTimepoint(toTime)
+					if err := self.userStorage.SetLastProcessedCatLogTimepoint(toTime); err != nil {
+						log.Printf("Set last process cat log timepoint error: %s", err.Error())
+					}
 				}
 			}
 		}
@@ -193,8 +199,12 @@ func (self *Fetcher) RunCountryStatAggregation(t time.Time) {
 		return
 	}
 	if len(tradeLogs) > 0 {
-		self.statStorage.SetFirstTradeEver(&tradeLogs)
-		self.statStorage.SetFirstTradeInDay(&tradeLogs)
+		if err := self.statStorage.SetFirstTradeEver(&tradeLogs); err != nil {
+			log.Printf("Set first trade ever error: %s", err.Error())
+		}
+		if err := self.statStorage.SetFirstTradeInDay(&tradeLogs); err != nil {
+			log.Printf("Set first trade ever error: %s", err.Error())
+		}
 		var last uint64
 		countryStats := map[string]common.MetricStatsTimeZone{}
 		allFirstTradeEver, _ := self.statStorage.GetAllFirstTradeEver()
@@ -206,17 +216,20 @@ func (self *Fetcher) RunCountryStatAggregation(t time.Time) {
 				}
 			}
 		}
-		self.statStorage.SetCountryStat(countryStats, last)
+		if err := self.statStorage.SetCountryStat(countryStats, last); err != nil {
+			log.Printf("Set country stat error: %s", err.Error())
+		}
 	} else {
 		l, err := self.logStorage.GetLastTradeLog()
 		if err != nil {
 			log.Printf("can't get last trade log: err(%s)", err)
 			return
-		} else {
-			if toTime < l.Timestamp {
-				// if we are querying on past logs, store toTime as the last
-				// processed trade log timepoint
-				self.statStorage.SetLastProcessedTradeLogTimepoint(COUNTRY_AGGREGATION, toTime)
+		}
+		if toTime < l.Timestamp {
+			// if we are querying on past logs, store toTime as the last
+			// processed trade log timepoint
+			if err := self.statStorage.SetLastProcessedTradeLogTimepoint(COUNTRY_AGGREGATION, toTime); err != nil {
+				log.Printf("Set last processed tradelog timepoint error: %s", err.Error())
 			}
 		}
 	}
@@ -236,8 +249,12 @@ func (self *Fetcher) RunTradeSummaryAggregation(t time.Time) {
 		return
 	}
 	if len(tradeLogs) > 0 {
-		self.statStorage.SetFirstTradeEver(&tradeLogs)
-		self.statStorage.SetFirstTradeInDay(&tradeLogs)
+		if err := self.statStorage.SetFirstTradeEver(&tradeLogs); err != nil {
+			log.Printf("Set first trade ever error: %s", err.Error())
+		}
+		if err := self.statStorage.SetFirstTradeInDay(&tradeLogs); err != nil {
+			log.Printf("Set first trade in day: %s", err.Error())
+		}
 		var last uint64
 
 		tradeSummary := map[string]common.MetricStatsTimeZone{}
@@ -250,7 +267,9 @@ func (self *Fetcher) RunTradeSummaryAggregation(t time.Time) {
 				}
 			}
 		}
-		self.statStorage.SetTradeSummary(tradeSummary, last)
+		if err := self.statStorage.SetTradeSummary(tradeSummary, last); err != nil {
+			log.Printf("Set trade summary error: %s", err.Error())
+		}
 		// self.statStorage.SetLastProcessedTradeLogTimepoint(TRADE_SUMMARY_AGGREGATION, last)
 	} else {
 		l, err := self.logStorage.GetLastTradeLog()
@@ -261,7 +280,9 @@ func (self *Fetcher) RunTradeSummaryAggregation(t time.Time) {
 			if toTime < l.Timestamp {
 				// if we are querying on past logs, store toTime as the last
 				// processed trade log timepoint
-				self.statStorage.SetLastProcessedTradeLogTimepoint(TRADE_SUMMARY_AGGREGATION, toTime)
+				if err := self.statStorage.SetLastProcessedTradeLogTimepoint(TRADE_SUMMARY_AGGREGATION, toTime); err != nil {
+					log.Printf("Set last processed tradelog timepoint error: %s", err.Error())
+				}
 			}
 		}
 	}
@@ -281,8 +302,12 @@ func (self *Fetcher) RunWalletStatAggregation(t time.Time) {
 		return
 	}
 	if len(tradeLogs) > 0 {
-		self.statStorage.SetFirstTradeEver(&tradeLogs)
-		self.statStorage.SetFirstTradeInDay(&tradeLogs)
+		if err := self.statStorage.SetFirstTradeEver(&tradeLogs); err != nil {
+			log.Printf("Set first trade ever error: %s", err.Error())
+		}
+		if err := self.statStorage.SetFirstTradeInDay(&tradeLogs); err != nil {
+			log.Printf("Set first trade in day error: %s", err.Error())
+		}
 		var last uint64
 
 		walletStats := map[string]common.MetricStatsTimeZone{}
@@ -295,7 +320,9 @@ func (self *Fetcher) RunWalletStatAggregation(t time.Time) {
 				}
 			}
 		}
-		self.statStorage.SetWalletStat(walletStats, last)
+		if err := self.statStorage.SetWalletStat(walletStats, last); err != nil {
+			log.Printf("Set wallet stats error: %s", err.Error())
+		}
 		// self.statStorage.SetLastProcessedTradeLogTimepoint(WALLET_AGGREGATION, last)
 	} else {
 		l, err := self.logStorage.GetLastTradeLog()
@@ -306,7 +333,9 @@ func (self *Fetcher) RunWalletStatAggregation(t time.Time) {
 			if toTime < l.Timestamp {
 				// if we are querying on past logs, store toTime as the last
 				// processed trade log timepoint
-				self.statStorage.SetLastProcessedTradeLogTimepoint(WALLET_AGGREGATION, toTime)
+				if err := self.statStorage.SetLastProcessedTradeLogTimepoint(WALLET_AGGREGATION, toTime); err != nil {
+					log.Printf("Set last processed tradelog timepoint: %s", err.Error())
+				}
 			}
 		}
 	}
@@ -336,16 +365,19 @@ func (self *Fetcher) RunBurnFeeAggregation(t time.Time) {
 				}
 			}
 		}
-		self.statStorage.SetBurnFeeStat(burnFeeStats, last)
+		if err := self.statStorage.SetBurnFeeStat(burnFeeStats, last); err != nil {
+			log.Printf("Set burn fee error: %s", err.Error())
+		}
 		// self.statStorage.SetLastProcessedTradeLogTimepoint(BURNFEE_AGGREGATION, last)
 	} else {
 		l, err := self.logStorage.GetLastTradeLog()
 		if err != nil {
 			log.Printf("can't get last trade log: err(%s)", err)
 			return
-		} else {
-			if toTime < l.Timestamp {
-				self.statStorage.SetLastProcessedTradeLogTimepoint(BURNFEE_AGGREGATION, toTime)
+		}
+		if toTime < l.Timestamp {
+			if err := self.statStorage.SetLastProcessedTradeLogTimepoint(BURNFEE_AGGREGATION, toTime); err != nil {
+				log.Printf("Set last processed tradelog timepoint error: %s", err.Error())
 			}
 		}
 	}
@@ -375,15 +407,18 @@ func (self *Fetcher) RunVolumeStatAggregation(t time.Time) {
 				}
 			}
 		}
-		self.statStorage.SetVolumeStat(volumeStats, last)
+		if err := self.statStorage.SetVolumeStat(volumeStats, last); err != nil {
+			log.Printf("Set volume stat error: %s", err.Error())
+		}
 	} else {
 		l, err := self.logStorage.GetLastTradeLog()
 		if err != nil {
 			log.Printf("can't get last trade log: err(%s)", err)
 			return
-		} else {
-			if toTime < l.Timestamp {
-				self.statStorage.SetLastProcessedTradeLogTimepoint(VOLUME_STAT_AGGREGATION, toTime)
+		}
+		if toTime < l.Timestamp {
+			if err := self.statStorage.SetLastProcessedTradeLogTimepoint(VOLUME_STAT_AGGREGATION, toTime); err != nil {
+				log.Printf("Set last processed tradelog timepoint error: %s", err.Error())
 			}
 		}
 	}
@@ -452,15 +487,18 @@ func (self *Fetcher) RunUserInfoAggregation(t time.Time) {
 				last = trade.Timestamp
 			}
 		}
-		self.statStorage.SetUserList(userInfos, last)
+		if err := self.statStorage.SetUserList(userInfos, last); err != nil {
+			log.Printf("Set user list: %s", err.Error())
+		}
 	} else {
 		l, err := self.logStorage.GetLastTradeLog()
 		if err != nil {
 			log.Printf("can't get last trade log: err(%s)", err)
 			return
-		} else {
-			if toTime < l.Timestamp {
-				self.statStorage.SetLastProcessedTradeLogTimepoint(USER_INFO_AGGREGATION, toTime)
+		}
+		if toTime < l.Timestamp {
+			if err := self.statStorage.SetLastProcessedTradeLogTimepoint(USER_INFO_AGGREGATION, toTime); err != nil {
+				log.Printf("Set last processed tradelog timepoint error: %s", err.Error())
 			}
 		}
 	}
@@ -552,7 +590,9 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 		reserveAddr := key.(ethereum.Address)
 		rates := value.(common.ReserveRates)
 		log.Printf("Storing reserve rates to db...")
-		self.rateStorage.StoreReserveRates(reserveAddr, rates, common.GetTimepoint())
+		if err := self.rateStorage.StoreReserveRates(reserveAddr, rates, common.GetTimepoint()); err != nil {
+			log.Printf("Store reserve rates error: %s", err.Error())
+		}
 		return true
 	})
 }
@@ -590,7 +630,9 @@ func (self *Fetcher) RunLogFetcher() {
 					nextBlock = toBlock
 				}
 				log.Printf("LogFetcher - update log block: %d", nextBlock)
-				self.logStorage.UpdateLogBlock(nextBlock, timepoint)
+				if err := self.logStorage.UpdateLogBlock(nextBlock, timepoint); err != nil {
+					log.Printf("Update log block: %s", err.Error())
+				}
 			}
 		} else {
 			log.Printf("LogFetcher - failed to get last fetched log block, err: %+v", err)
@@ -617,7 +659,11 @@ func GetTradeGeo(txHash string) (string, string, error) {
 		return "", "", err
 	}
 	response := common.TradeLogGeoInfoResp{}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Response body close error: %s", err.Error())
+		}
+	}()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", "", err
@@ -705,34 +751,34 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 	if err != nil {
 		log.Printf("LogFetcher - fetching logs data from block %d failed, error: %v", fromBlock, err)
 		return enforceFromBlock(fromBlock), err
-	} else {
-		if len(logs) > 0 {
-			var maxBlock uint64 = enforceFromBlock(fromBlock)
-			for _, il := range logs {
-				if il.Type() == "TradeLog" {
-					l := il.(common.TradeLog)
-					SetcountryFields(&l)
-					if dbErr := self.CheckDupAndStoreTradeLog(l, timepoint); dbErr != nil {
-						log.Printf("LogFetcher - at block %d, storing trade log failed, stop at current block and wait till next ticker, err: %+v", l.BlockNo(), err)
-						return maxBlock, dbErr
-					}
-				} else if il.Type() == "SetCatLog" {
-					l := il.(common.SetCatLog)
-					if dbErr := self.CheckDupAndStoreCatLog(l, timepoint); dbErr != nil {
-						log.Printf("LogFetcher - at block %d, storing cat log failed, stop at current block and wait till next ticker, err: %+v", l.BlockNo(), err)
-						return maxBlock, dbErr
-					}
+	}
+	if len(logs) > 0 {
+		var maxBlock uint64 = enforceFromBlock(fromBlock)
+		for _, il := range logs {
+			if il.Type() == "TradeLog" {
+				l := il.(common.TradeLog)
+				SetcountryFields(&l)
+				if dbErr := self.CheckDupAndStoreTradeLog(l, timepoint); dbErr != nil {
+					log.Printf("LogFetcher - at block %d, storing trade log failed, stop at current block and wait till next ticker, err: %+v", l.BlockNo(), err)
+					return maxBlock, dbErr
 				}
-				if il.BlockNo() > maxBlock {
-					maxBlock = il.BlockNo()
-					self.logStorage.UpdateLogBlock(maxBlock, common.GetTimepoint())
+			} else if il.Type() == "SetCatLog" {
+				l := il.(common.SetCatLog)
+				if dbErr := self.CheckDupAndStoreCatLog(l, timepoint); dbErr != nil {
+					log.Printf("LogFetcher - at block %d, storing cat log failed, stop at current block and wait till next ticker, err: %+v", l.BlockNo(), err)
+					return maxBlock, dbErr
 				}
 			}
-			return maxBlock, nil
-		} else {
-			return enforceFromBlock(fromBlock), nil
+			if il.BlockNo() > maxBlock {
+				maxBlock = il.BlockNo()
+				if err := self.logStorage.UpdateLogBlock(maxBlock, common.GetTimepoint()); err != nil {
+					log.Printf("Update log block error: %s", err.Error())
+				}
+			}
 		}
+		return maxBlock, nil
 	}
+	return enforceFromBlock(fromBlock), nil
 }
 
 func checkWalletAddress(walletAddr ethereum.Address) bool {
@@ -817,7 +863,9 @@ func (self *Fetcher) aggregateWalletStats(trade common.TradeLog,
 	walletStats map[string]common.MetricStatsTimeZone, allFirstTradeEver map[ethereum.Address]uint64, kycEdUsers map[string]uint64) error {
 	userAddr := common.AddrToString(trade.UserAddress)
 	if checkWalletAddress(trade.WalletAddress) {
-		self.statStorage.SetWalletAddress(trade.WalletAddress)
+		if err := self.statStorage.SetWalletAddress(trade.WalletAddress); err != nil {
+			log.Printf("Set wallet address error: %s", err.Error())
+		}
 	}
 	_, _, ethAmount, burnFee := self.getTradeInfo(trade)
 	var kycEd bool

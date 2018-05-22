@@ -269,14 +269,18 @@ func (self *BoltStatStorage) SetBurnFeeStat(burnFeeStats map[string]common.BurnF
 					currentData.TotalBurnFee += stat.TotalBurnFee
 
 					dataJSON, _ := json.Marshal(currentData)
-					freqBk.Put(timestamp, dataJSON)
+					if err := freqBk.Put(timestamp, dataJSON); err != nil {
+						log.Printf("Put burn fee stat error:%s", err.Error())
+					}
 				}
 			}
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(BURNFEE_AGGREGATION), dataJSON)
+			if err := lastProcessBk.Put([]byte(BURNFEE_AGGREGATION), dataJSON); err != nil {
+				log.Printf("Put burn fee last process timepoint error: %s", err.Error())
+			}
 		}
 		return nil
 	})
@@ -306,14 +310,18 @@ func (self *BoltStatStorage) SetVolumeStat(volumeStats map[string]common.VolumeS
 					currentData.Volume += stat.Volume
 
 					dataJSON, _ := json.Marshal(currentData)
-					freqBk.Put(timestamp, dataJSON)
+					if err := freqBk.Put(timestamp, dataJSON); err != nil {
+						log.Printf("Put volume stat error: %s", err.Error())
+					}
 				}
 			}
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(VOLUME_STAT_AGGREGATION), dataJSON)
+			if err := lastProcessBk.Put([]byte(VOLUME_STAT_AGGREGATION), dataJSON); err != nil {
+				log.Printf("Put last processed volume stat error:%s", err.Error())
+			}
 		}
 		return nil
 	})
@@ -359,14 +367,18 @@ func (self *BoltStatStorage) SetWalletStat(stats map[string]common.MetricStatsTi
 					if err != nil {
 						return err
 					}
-					walletTzBucket.Put(timestamp, dataJSON)
+					if err := walletTzBucket.Put(timestamp, dataJSON); err != nil {
+						log.Printf("Put wallet stat error: %s", err.Error())
+					}
 				}
 			}
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(WALLET_AGGREGATION), dataJSON)
+			if err := lastProcessBk.Put([]byte(WALLET_AGGREGATION), dataJSON); err != nil {
+				log.Printf("Put wallet stat last process error: %s", err.Error())
+			}
 		}
 		return nil
 	})
@@ -461,14 +473,18 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 					if err != nil {
 						return err
 					}
-					countryTzBucket.Put(timestamp, dataJSON)
+					if err := countryTzBucket.Put(timestamp, dataJSON); err != nil {
+						log.Printf("Put country stat error: %s", err.Error())
+					}
 				}
 			}
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(COUNTRY_AGGREGATION), dataJSON)
+			if err := lastProcessBk.Put([]byte(COUNTRY_AGGREGATION), dataJSON); err != nil {
+				log.Printf("Set country stat last process error: %s", err.Error())
+			}
 		}
 		return nil
 	})
@@ -479,7 +495,7 @@ func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country st
 	result := common.StatTicks{}
 	tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 	country = strings.ToUpper(country)
-	self.db.Update(func(tx *bolt.Tx) error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
 		countryBk, _ := tx.CreateBucketIfNotExists([]byte(country))
 		timezoneBk, _ := countryBk.CreateBucketIfNotExists([]byte(tzstring))
 		min := uint64ToBytes(fromTime)
@@ -497,7 +513,7 @@ func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country st
 		return nil
 	})
 
-	return result, nil
+	return result, err
 }
 
 func (self *BoltStatStorage) DidTrade(tx *bolt.Tx, userAddr string, timepoint uint64) bool {
@@ -521,7 +537,9 @@ func (self *BoltStatStorage) SetFirstTradeEver(userTradeLog *[]common.TradeLog) 
 			timepoint := trade.Timestamp
 			if !self.DidTrade(tx, userAddr, timepoint) {
 				timestampByte := uint64ToBytes(timepoint)
-				b.Put([]byte(userAddr), timestampByte)
+				if err := b.Put([]byte(userAddr), timestampByte); err != nil {
+					log.Printf("Put first trade: %s", err.Error())
+				}
 			}
 		}
 		return nil
@@ -607,7 +625,9 @@ func (self *BoltStatStorage) SetFirstTradeInDay(tradeLogs *[]common.TradeLog) er
 				userDailyBucket, _ := timezoneBk.CreateBucketIfNotExists(timestamp)
 				if !self.DidTradeInDay(tx, userAddr, timepoint, timezone) {
 					timestampByte := uint64ToBytes(timepoint)
-					userDailyBucket.Put([]byte(userAddr), timestampByte)
+					if err := userDailyBucket.Put([]byte(userAddr), timestampByte); err != nil {
+						log.Printf("Put first trade in day error: %s", err.Error())
+					}
 				}
 			}
 		}
@@ -661,7 +681,9 @@ func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTim
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(USER_INFO_AGGREGATION), dataJSON)
+			if err := lastProcessBk.Put([]byte(USER_INFO_AGGREGATION), dataJSON); err != nil {
+				log.Printf("Put user list last process error: %s", err.Error())
+			}
 		}
 		return err
 	})
@@ -750,7 +772,9 @@ func (self *BoltStatStorage) GetBurnFee(fromTime uint64, toTime uint64, freq str
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.BurnFeeStats{}
-			json.Unmarshal(v, &value)
+			if err := json.Unmarshal(v, &value); err != nil {
+				log.Printf("Unmarshal burn fee error: %s", err.Error())
+			}
 			key := bytesToUint64(k) / 1000000
 			result[key] = value.TotalBurnFee
 		}
@@ -897,14 +921,18 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 					if err != nil {
 						return err
 					}
-					tzBucket.Put(timestamp, dataJSON)
+					if err := tzBucket.Put(timestamp, dataJSON); err != nil {
+						log.Printf("Set trade summary error: %s", err.Error())
+					}
 				}
 			}
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(TRADE_SUMMARY_AGGREGATION), dataJSON)
+			if err := lastProcessBk.Put([]byte(TRADE_SUMMARY_AGGREGATION), dataJSON); err != nil {
+				log.Printf("Set last processed trade summary error: %s", err.Error())
+			}
 		}
 		return nil
 	})

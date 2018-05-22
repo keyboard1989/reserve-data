@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"log"
 	"testing"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -15,7 +16,7 @@ func TestHasPendingDepositRamStorage(t *testing.T) {
 	if out != false {
 		t.Fatalf("Expected ram storage to return true false there is no pending deposit for the same currency and exchange")
 	}
-	storage.Record(
+	err := storage.Record(
 		"deposit",
 		common.NewActivityID(1, "1"),
 		string(exchange.ID()),
@@ -32,6 +33,9 @@ func TestHasPendingDepositRamStorage(t *testing.T) {
 		"",
 		"submitted",
 		common.GetTimepoint())
+	if err != nil {
+		log.Printf("Store activity error: %s", err.Error())
+	}
 	out = storage.HasPendingDeposit(token, exchange)
 	if out != true {
 		t.Fatalf("Expected ram storage to return true when there is pending deposit")

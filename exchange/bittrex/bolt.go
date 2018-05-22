@@ -35,17 +35,19 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		return nil, err
 	}
 	// init buckets
-	db.Update(func(tx *bolt.Tx) error {
-		tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY))
+	err = db.Update(func(tx *bolt.Tx) error {
+		if _, err := tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY)); err != nil {
+			log.Printf("Create bucket error: %s", err.Error())
+		}
 		return nil
 	})
 	storage := &BoltStorage{db}
-	return storage, nil
+	return storage, err
 }
 
 func (self *BoltStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID) bool {
 	res := true
-	self.db.View(func(tx *bolt.Tx) error {
+	err := self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
 		v := b.Get(uint64ToBytes(id))
 		if v != nil && string(v) != actID.String() {
@@ -54,17 +56,19 @@ func (self *BoltStorage) IsNewBittrexDeposit(id uint64, actID common.ActivityID)
 		}
 		return nil
 	})
+	if err != nil {
+		log.Printf("Check new bittrex deposit error: %s", err.Error())
+	}
 	return res
 }
 
 func (self *BoltStorage) RegisterBittrexDeposit(id uint64, actID common.ActivityID) error {
 	var err error
-	self.db.Update(func(tx *bolt.Tx) error {
+	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(BITTREX_DEPOSIT_HISTORY))
 		// actIDBytes, _ := actID.MarshalText()
 		actIDBytes, _ := actID.MarshalText()
-		err = b.Put(uint64ToBytes(id), actIDBytes)
-		return nil
+		return b.Put(uint64ToBytes(id), actIDBytes)
 	})
 	return err
 }

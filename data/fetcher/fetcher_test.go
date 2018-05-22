@@ -91,7 +91,11 @@ func TestExchangeDown(t *testing.T) {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	defer os.Remove(tmpDir)
+	defer func() {
+		if err := os.Remove(tmpDir); err != nil {
+			log.Printf("Remove temp dir error: %s", err.Error())
+		}
+	}()
 	runner := http_runner.NewHttpRunner(9000)
 	fetcher := NewFetcher(fstorage, fstorage, &world.TheWorld{}, runner, ethereum.Address{}, true)
 

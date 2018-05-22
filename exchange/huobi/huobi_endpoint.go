@@ -82,12 +82,15 @@ func (self *HuobiEndpoint) GetResponse(
 	resp, err := client.Do(req)
 	if err != nil {
 		return resp_body, err
-	} else {
-		defer resp.Body.Close()
-		resp_body, err = ioutil.ReadAll(resp.Body)
-		log.Printf("request to %s, got response from huobi: %s\n", req.URL, common.TruncStr(resp_body))
-		return resp_body, err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Response body close error: %s", err.Error())
+		}
+	}()
+	resp_body, err = ioutil.ReadAll(resp.Body)
+	log.Printf("request to %s, got response from huobi: %s\n", req.URL, common.TruncStr(resp_body))
+	return resp_body, err
 }
 
 // Get account list for later use
@@ -336,10 +339,11 @@ func (self *HuobiEndpoint) OpenOrdersForOnePair(
 	)
 	if err != nil {
 		return result, err
-	} else {
-		json.Unmarshal(resp_body, &result)
-		return result, nil
 	}
+	if err := json.Unmarshal(resp_body, &result); err != nil {
+		log.Printf("Unmarshal response error: %s", err.Error())
+	}
+	return result, nil
 }
 
 func (self *HuobiEndpoint) GetDepositAddress(asset string) (exchange.HuobiDepositAddress, error) {

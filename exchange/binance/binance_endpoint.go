@@ -69,7 +69,11 @@ func (self *BinanceEndpoint) GetResponse(
 	if err != nil {
 		return resp_body, err
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
 		switch resp.StatusCode {
 		case 429:
 			err = errors.New("breaking a request rate limit.")
@@ -180,7 +184,9 @@ func (self *BinanceEndpoint) GetTradeHistory(symbol string) (exchange.BinanceTra
 		timepoint,
 	)
 	if err == nil {
-		json.Unmarshal(resp_body, &result)
+		if err := json.Unmarshal(resp_body, &result); err != nil {
+			log.Printf("Unmarshal trade history error: %s", err.Error())
+		}
 	}
 	return result, err
 }

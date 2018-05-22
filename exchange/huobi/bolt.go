@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"log"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -29,9 +30,13 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		return nil, err
 	}
 	// init buckets
-	db.Update(func(tx *bolt.Tx) error {
-		tx.CreateBucket([]byte(INTERMEDIATE_TX))
-		tx.CreateBucket([]byte(PENDING_INTERMEDIATE_TX))
+	err = db.Update(func(tx *bolt.Tx) error {
+		if _, err := tx.CreateBucket([]byte(INTERMEDIATE_TX)); err != nil {
+			log.Printf("Create bucket error: %s", err.Error())
+		}
+		if _, err := tx.CreateBucket([]byte(PENDING_INTERMEDIATE_TX)); err != nil {
+			log.Printf("Create bucket error: %s", err.Error())
+		}
 		return nil
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db}
@@ -51,7 +56,7 @@ func bytesToUint64(b []byte) uint64 {
 func (self *BoltStorage) GetPendingIntermediateTXs() (map[common.ActivityID]common.TXEntry, error) {
 	result := make(map[common.ActivityID]common.TXEntry)
 	var err error
-	self.db.View(func(tx *bolt.Tx) error {
+	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
@@ -90,7 +95,7 @@ func (self *BoltStorage) StorePendingIntermediateTx(id common.ActivityID, data c
 
 func (self *BoltStorage) RemovePendingIntermediateTx(id common.ActivityID) error {
 	var err error
-	self.db.Update(func(tx *bolt.Tx) error {
+	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
 		idJson, err := json.Marshal(id)
 		if err != nil {
@@ -104,7 +109,7 @@ func (self *BoltStorage) RemovePendingIntermediateTx(id common.ActivityID) error
 
 func (self *BoltStorage) StoreIntermediateTx(id common.ActivityID, data common.TXEntry) error {
 	var err error
-	self.db.Update(func(tx *bolt.Tx) error {
+	err = self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(INTERMEDIATE_TX))
 		dataJson, err = json.Marshal(data)
@@ -132,7 +137,7 @@ func isTheSame(a []byte, b []byte) bool {
 func (self *BoltStorage) GetIntermedatorTx(id common.ActivityID) (common.TXEntry, error) {
 	var tx2 common.TXEntry
 	var err error
-	self.db.View(func(tx *bolt.Tx) error {
+	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(INTERMEDIATE_TX))
 		c := b.Cursor()
 		idBytes := id.ToBytes()
@@ -144,10 +149,9 @@ func (self *BoltStorage) GetIntermedatorTx(id common.ActivityID) (common.TXEntry
 				return err
 			}
 			return nil
-		} else {
-			err = errors.New("Can not find 2nd transaction tx for the deposit, please try later")
-			return err
 		}
+		err = errors.New("Can not find 2nd transaction tx for the deposit, please try later")
+		return err
 	})
 	return tx2, err
 }

@@ -315,7 +315,11 @@ func (self ReserveData) RunStorageController() error {
 	if err := self.storageController.Runner.Start(); err != nil {
 		log.Printf("Storage controller runner error: %s", err.Error())
 	}
-	go self.ControlAuthDataSize()
+	go func() {
+		if err := self.ControlAuthDataSize(); err != nil {
+			log.Printf("Control auth data size error: %s", err.Error())
+		}
+	}()
 	return nil
 }
 

@@ -73,7 +73,11 @@ func (self *BittrexEndpoint) GetResponse(
 	if err != nil {
 		return resp_body, err
 	} else {
-		defer resp.Body.Close()
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Unmarshal response error: %s", err.Error())
+			}
+		}()
 		resp_body, err = ioutil.ReadAll(resp.Body)
 		log.Printf("request to %s, got response from bittrex: %s\n", req.URL, common.TruncStr(resp_body))
 		return resp_body, err

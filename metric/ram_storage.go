@@ -110,7 +110,9 @@ func (self *RamMetricStorage) StoreTokenTargetQty(id, data string) error {
 	}
 	self.tokenTargetQty = self.pendingTargetQty
 	self.tokenTargetQty.Status = "confirmed"
-	self.RemovePendingTargetQty()
+	if err := self.RemovePendingTargetQty(); err != nil {
+		log.Printf("Remove pending target qty error: %s", err.Error())
+	}
 	return nil
 }
 

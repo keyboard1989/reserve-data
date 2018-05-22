@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -31,7 +32,11 @@ func doStatBoltTest(f func(tester *stat.StatStorageTest, t *testing.T), t *testi
 	if err != nil {
 		t.Fatalf("Testing stat_bolt as a stat storage: init failed (%s)", err)
 	}
-	defer tearDownFn()
+	defer func() {
+		if err := tearDownFn(); err != nil {
+			log.Printf("Teardown error: %s", err.Error())
+		}
+	}()
 	f(tester, t)
 }
 

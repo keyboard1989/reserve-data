@@ -232,7 +232,11 @@ func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
 func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName string) (nRecord uint64, err error) {
 	expiredTimestampByte := uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
 	outFile, err := os.Create(fileName)
-	defer outFile.Close()
+	defer func() {
+		if err := outFile.Close(); err != nil {
+			log.Printf("Close file error: %s", err.Error())
+		}
+	}()
 	if err != nil {
 		return 0, err
 	}
