@@ -2,7 +2,6 @@ package bittrex
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -290,7 +289,7 @@ func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token) (e
 			log.Printf("Unmarshal response error: %s", err.Error())
 		}
 		if !result.Success {
-			return result, errors.New(fmt.Sprintf("Cannot get trade history: %s", result.Message))
+			return result, fmt.Errorf("Cannot get trade history: %s", result.Message)
 		}
 	}
 	return result, err

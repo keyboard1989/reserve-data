@@ -136,6 +136,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 	server := http.NewHTTPServer(
 		rData, rCore, rStat,
 		config.MetricStorage,
+		config.Exchanges,
 		servPortStr,
 		config.EnableAuthentication,
 		config.AuthEngine,

@@ -96,7 +96,10 @@ func TestExchangeDown(t *testing.T) {
 			log.Printf("Remove temp dir error: %s", err.Error())
 		}
 	}()
-	runner := http_runner.NewHttpRunner(9000)
+	runner, err := http_runner.NewHttpRunner(http_runner.WithHttpRunnerPort(9000))
+	if err != nil {
+		t.Fatal(err)
+	}
 	fetcher := NewFetcher(fstorage, fstorage, &world.TheWorld{}, runner, ethereum.Address{}, true)
 
 	// mock normal data
