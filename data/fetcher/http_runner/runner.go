@@ -20,7 +20,7 @@ type HttpRunner struct {
 	tticker          chan time.Time
 	globalDataTicker chan time.Time
 
-	// TODO: following channels have no HTTP endpoint, find out why
+	// unused tickers, keep for compatibility
 	rsticker                chan time.Time
 	lticker                 chan time.Time
 	tradeLogProcessorTicker chan time.Time
