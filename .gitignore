@@ -56,3 +56,4 @@ run.sh
 test/
 cmd/verification/verification
 cmd/comparerates/comparerates
+cmd/ropsten.db
