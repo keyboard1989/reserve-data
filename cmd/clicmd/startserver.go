@@ -107,11 +107,11 @@ func serverStart(cmd *cobra.Command, args []string) {
 		if !dryrun {
 			if kyberENV != "simulation" {
 				if err := rData.RunStorageController(); err != nil {
-					log.Printf("Run storage controller error: %s", err.Error())
+					log.Fatalf("Run storage controller error: %s", err.Error())
 				}
 			}
 			if err := rData.Run(); err != nil {
-				log.Printf("rData run error: %s", err.Error())
+				log.Fatalf("rData run error: %s", err.Error())
 			}
 		}
 	}
@@ -122,11 +122,11 @@ func serverStart(cmd *cobra.Command, args []string) {
 		if !dryrun {
 			if kyberENV != "simulation" {
 				if err := rStat.RunStorageController(); err != nil {
-					log.Printf("Run storage controller error: %s", err.Error())
+					log.Fatalf("Run storage controller error: %s", err.Error())
 				}
 			}
 			if err := rStat.Run(); err != nil {
-				log.Printf("Stat run error: %s", err.Error())
+				log.Fatalf("Stat run error: %s", err.Error())
 			}
 		}
 	}

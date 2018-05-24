@@ -90,7 +90,7 @@ func run(verify *Verification) {
 		var token common.Token
 		var err error
 		if *depositBaseUrl != "" {
-			verify.UpdateBaseUrl(*depositBaseUrl)
+			verify.UpdateBaseURL(*depositBaseUrl)
 		}
 		if *depositToken != "" {
 			token, err = common.GetInternalToken(*depositToken)

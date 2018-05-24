@@ -103,9 +103,7 @@ func (self *HuobiEndpoint) GetAccounts() (exchange.HuobiAccounts, error) {
 		true,
 	)
 	if err == nil {
-		if err = json.Unmarshal(resp, &result); err != nil {
-			log.Printf("Unmarshal response error: %s", err.Error())
-		}
+		err = json.Unmarshal(resp, &result)
 	}
 	return result, err
 }
@@ -126,10 +124,8 @@ func (self *HuobiEndpoint) GetDepthOnePair(
 	if err != nil {
 		return resp_data, err
 	}
-	if err = json.Unmarshal(resp_body, &resp_data); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
-	return resp_data, nil
+	err = json.Unmarshal(resp_body, &resp_data)
+	return resp_data, err
 }
 
 func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rate, amount float64, timepoint uint64) (exchange.HuobiTrade, error) {
@@ -159,6 +155,7 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	}
 	if err := json.Unmarshal(resp_body, &result); err != nil {
 		log.Printf("Unmarshal trade error: %s", err.Error())
+		return result, err
 	}
 	if result.Status != "ok" {
 		return result, fmt.Errorf("Create order failed: %s\n", result.Reason)
@@ -182,6 +179,7 @@ func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal reponse error: %s", err.Error())
+			return result, err
 		}
 		if result.Status != "ok" {
 			err = errors.New(result.Reason)
@@ -206,6 +204,7 @@ func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal reponse error: %s", err.Error())
+			return result, err
 		}
 		if result.Status != "ok" {
 			err = fmt.Errorf("Getting deposit history from Huobi failed: %s\n", result.Reason)
@@ -227,6 +226,7 @@ func (self *HuobiEndpoint) CancelOrder(symbol string, id uint64) (exchange.Huobi
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal reponse error: %s", err.Error())
+			return result, err
 		}
 		if result.Status != "ok" {
 			err = fmt.Errorf("Cancel order failed: %s\n", result.Reason)
@@ -248,6 +248,7 @@ func (self *HuobiEndpoint) OrderStatus(symbol string, id uint64) (exchange.Huobi
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 		if result.Status != "ok" {
 			err = fmt.Errorf("Get order status failed: %s", result.Reason)
@@ -271,17 +272,15 @@ func (self *HuobiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return "", err
 		}
-		log.Printf("Response body: %+v\n", result)
 		if result.Status != "ok" {
 			return "", fmt.Errorf("Withdraw from Huobi failed: %s\n", result.Reason)
 		}
 		log.Printf("Withdraw id: %s", fmt.Sprintf("%v", result.ID))
 		return strconv.FormatUint(result.ID, 10), nil
-	} else {
-		log.Printf("Error: %v", err)
-		return "", errors.New("Withdraw rejected by Huobi")
 	}
+	return "", errors.New("Withdraw rejected by Huobi")
 }
 
 func (self *HuobiEndpoint) GetInfo() (exchange.HuobiInfo, error) {
@@ -297,9 +296,7 @@ func (self *HuobiEndpoint) GetInfo() (exchange.HuobiInfo, error) {
 		true,
 	)
 	if err == nil {
-		if err = json.Unmarshal(resp_body, &result); err != nil {
-			log.Printf("Unmarshal response error: %s", err.Error())
-		}
+		err = json.Unmarshal(resp_body, &result)
 	}
 	return result, err
 }
@@ -318,9 +315,7 @@ func (self *HuobiEndpoint) GetAccountTradeHistory(
 		true,
 	)
 	if err == nil {
-		if err = json.Unmarshal(resp_body, &result); err != nil {
-			log.Printf("Unmarshal response error: %s", err.Error())
-		}
+		err = json.Unmarshal(resp_body, &result)
 	}
 	return result, err
 }
@@ -340,10 +335,8 @@ func (self *HuobiEndpoint) OpenOrdersForOnePair(
 	if err != nil {
 		return result, err
 	}
-	if err := json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
-	return result, nil
+	err = json.Unmarshal(resp_body, &result)
+	return result, err
 }
 
 func (self *HuobiEndpoint) GetDepositAddress(asset string) (exchange.HuobiDepositAddress, error) {
@@ -359,6 +352,7 @@ func (self *HuobiEndpoint) GetDepositAddress(asset string) (exchange.HuobiDeposi
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 		if !result.Success {
 			err = fmt.Errorf("Get deposit address failed: %s\n", result.Reason)
@@ -376,9 +370,7 @@ func (self *HuobiEndpoint) GetExchangeInfo() (exchange.HuobiExchangeInfo, error)
 		false,
 	)
 	if err == nil {
-		if err = json.Unmarshal(resp_body, &result); err != nil {
-			log.Printf("Unmarshal response error: %s", err.Error())
-		}
+		err = json.Unmarshal(resp_body, &result)
 	}
 	return result, err
 }

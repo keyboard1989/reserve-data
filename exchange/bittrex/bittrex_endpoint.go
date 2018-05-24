@@ -66,41 +66,39 @@ func (self *BittrexEndpoint) GetResponse(
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, signNeeded)
 	var err error
-	var resp_body []byte
+	var respBody []byte
 	log.Printf("request to bittrex: %s\n", req.URL)
 	resp, err := client.Do(req)
 	if err != nil {
-		return resp_body, err
+		return respBody, err
 	} else {
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
 				log.Printf("Unmarshal response error: %s", err.Error())
 			}
 		}()
-		resp_body, err = ioutil.ReadAll(resp.Body)
-		log.Printf("request to %s, got response from bittrex: %s\n", req.URL, common.TruncStr(resp_body))
-		return resp_body, err
+		respBody, err = ioutil.ReadAll(resp.Body)
+		log.Printf("request to %s, got response from bittrex: %s\n", req.URL, common.TruncStr(respBody))
+		return respBody, err
 	}
 }
 
 func (self *BittrexEndpoint) GetExchangeInfo() (exchange.BittExchangeInfo, error) {
 	result := exchange.BittExchangeInfo{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.PublicEndpoint(), "getmarkets"),
 		map[string]string{},
 		false,
 	)
 	if err == nil {
-		if err = json.Unmarshal(resp_body, &result); err != nil {
-			log.Printf("Unmarshal response error: %s", err.Error())
-		}
+		err = json.Unmarshal(respBody, &result)
 	}
 	return result, err
 }
 
 func (self *BittrexEndpoint) FetchOnePairData(pair common.TokenPair) (exchange.Bittresp, error) {
 	data := exchange.Bittresp{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.PublicEndpoint(), "getorderbook"),
 		map[string]string{
 			"market": fmt.Sprintf("%s-%s", pair.Quote.ID, pair.Base.ID),
@@ -112,10 +110,8 @@ func (self *BittrexEndpoint) FetchOnePairData(pair common.TokenPair) (exchange.B
 	if err != nil {
 		return data, err
 	}
-	if err := json.Unmarshal(resp_body, &data); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
-	return data, nil
+	err = json.Unmarshal(respBody, &data)
+	return data, err
 }
 
 func (self *BittrexEndpoint) Trade(
@@ -135,21 +131,19 @@ func (self *BittrexEndpoint) Trade(
 		"quantity": strconv.FormatFloat(amount, 'f', -1, 64),
 		"rate":     strconv.FormatFloat(rate, 'f', -1, 64),
 	}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		url, params, true)
 
 	if err != nil {
 		return result, err
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
-	return result, nil
+	err = json.Unmarshal(respBody, &result)
+	return result, err
 }
 
 func (self *BittrexEndpoint) OrderStatus(uuid string) (exchange.Bitttraderesult, error) {
 	result := exchange.Bitttraderesult{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.AccountEndpoint(), "getorder"),
 		map[string]string{
 			"uuid": uuid,
@@ -159,15 +153,13 @@ func (self *BittrexEndpoint) OrderStatus(uuid string) (exchange.Bitttraderesult,
 	if err != nil {
 		return result, err
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
+	err = json.Unmarshal(respBody, &result)
 	return result, err
 }
 
 func (self *BittrexEndpoint) GetDepositAddress(currency string) (exchange.BittrexDepositAddress, error) {
 	result := exchange.BittrexDepositAddress{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.AccountEndpoint(), "getdepositaddress"),
 		map[string]string{
 			"currency": currency,
@@ -175,16 +167,14 @@ func (self *BittrexEndpoint) GetDepositAddress(currency string) (exchange.Bittre
 		true,
 	)
 	if err == nil {
-		if err = json.Unmarshal(resp_body, &result); err != nil {
-			log.Printf("Unmarshal reponse error: %s", err.Error())
-		}
+		err = json.Unmarshal(respBody, &result)
 	}
 	return result, err
 }
 
 func (self *BittrexEndpoint) WithdrawHistory(currency string) (exchange.Bittwithdrawhistory, error) {
 	result := exchange.Bittwithdrawhistory{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.AccountEndpoint(), "getwithdrawalhistory"),
 		map[string]string{
 			"currency": currency,
@@ -194,15 +184,13 @@ func (self *BittrexEndpoint) WithdrawHistory(currency string) (exchange.Bittwith
 	if err != nil {
 		return result, err
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
+	err = json.Unmarshal(respBody, &result)
 	return result, err
 }
 
 func (self *BittrexEndpoint) DepositHistory(currency string) (exchange.Bittdeposithistory, error) {
 	result := exchange.Bittdeposithistory{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.AccountEndpoint(), "getdeposithistory"),
 		map[string]string{
 			"currency": currency,
@@ -212,15 +200,13 @@ func (self *BittrexEndpoint) DepositHistory(currency string) (exchange.Bittdepos
 	if err != nil {
 		return result, err
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
+	err = json.Unmarshal(respBody, &result)
 	return result, err
 }
 
 func (self *BittrexEndpoint) Withdraw(token common.Token, amount *big.Int, address ethereum.Address) (exchange.Bittwithdraw, error) {
 	result := exchange.Bittwithdraw{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.AccountEndpoint(), "withdraw"),
 		map[string]string{
 			"currency": strings.ToUpper(token.ID),
@@ -232,15 +218,13 @@ func (self *BittrexEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	if err != nil {
 		return result, err
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
+	err = json.Unmarshal(respBody, &result)
 	return result, err
 }
 
 func (self *BittrexEndpoint) GetInfo() (exchange.Bittinfo, error) {
 	result := exchange.Bittinfo{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.AccountEndpoint(), "getbalances"),
 		map[string]string{},
 		true,
@@ -248,15 +232,13 @@ func (self *BittrexEndpoint) GetInfo() (exchange.Bittinfo, error) {
 	if err != nil {
 		return result, err
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
-	}
+	err = json.Unmarshal(respBody, &result)
 	return result, err
 }
 
 func (self *BittrexEndpoint) CancelOrder(uuid string) (exchange.Bittcancelorder, error) {
 	result := exchange.Bittcancelorder{}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.MarketEndpoint(), "cancel"),
 		map[string]string{
 			"uuid": uuid,
@@ -266,9 +248,7 @@ func (self *BittrexEndpoint) CancelOrder(uuid string) (exchange.Bittcancelorder,
 	if err != nil {
 		return result, err
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
-		log.Printf("Unmarshal reponse error: %s", err.Error())
-	}
+	err = json.Unmarshal(respBody, &result)
 	return result, err
 }
 
@@ -279,14 +259,15 @@ func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token) (e
 	if symbol != "" {
 		params["market"] = symbol
 	}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		addPath(self.interf.AccountEndpoint(), "getorderhistory"),
 		params,
 		true,
 	)
 	if err == nil {
-		if err = json.Unmarshal(resp_body, &result); err != nil {
+		if err = json.Unmarshal(respBody, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 		if !result.Success {
 			return result, fmt.Errorf("Cannot get trade history: %s", result.Message)

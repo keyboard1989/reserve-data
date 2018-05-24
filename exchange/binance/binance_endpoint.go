@@ -19,6 +19,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+// BinanceEndpoint object stand for Binance endpoint
 type BinanceEndpoint struct {
 	signer    Signer
 	interf    Interface
@@ -102,7 +103,7 @@ func (self *BinanceEndpoint) GetResponse(
 
 func (self *BinanceEndpoint) GetDepthOnePair(pair common.TokenPair) (exchange.Binaresp, error) {
 
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		"GET", self.interf.PublicEndpoint()+"/api/v1/depth",
 		map[string]string{
 			"symbol": fmt.Sprintf("%s%s", pair.Base.ID, pair.Quote.ID),
@@ -112,24 +113,22 @@ func (self *BinanceEndpoint) GetDepthOnePair(pair common.TokenPair) (exchange.Bi
 		common.GetTimepoint(),
 	)
 
-	resp_data := exchange.Binaresp{}
+	respData := exchange.Binaresp{}
 	if err != nil {
-		return resp_data, err
-	} else {
-		err = json.Unmarshal(resp_body, &resp_data)
-		if err != nil {
-			log.Printf("failed to unmarshal response from binance: %s, Response: %s", err, resp_body)
-			return resp_data, err
-		} else {
-			if resp_data.Code != 0 {
-				return resp_data, fmt.Errorf("Getting depth from Binance failed: %s", resp_data.Msg)
-			}
-		}
-		return resp_data, nil
+		return respData, err
 	}
+	err = json.Unmarshal(respBody, &respData)
+	if err != nil {
+		log.Printf("failed to unmarshal response from binance: %s, Response: %s", err, respBody)
+		return respData, err
+	}
+	if respData.Code != 0 {
+		return respData, fmt.Errorf("Getting depth from Binance failed: %s", respData.Msg)
+	}
+	return respData, nil
 }
 
-// Relevant params:
+// Trade Relevant params:
 // symbol ("%s%s", base, quote)
 // side (BUY/SELL)
 // type (LIMIT/MARKET)
@@ -153,7 +152,7 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	if orderType == "LIMIT" {
 		params["price"] = strconv.FormatFloat(rate, 'f', -1, 64)
 	}
-	resp_body, err := self.GetResponse(
+	respBody, err := self.GetResponse(
 		"POST",
 		self.interf.AuthenticatedEndpoint()+"/api/v3/order",
 		params,
@@ -163,8 +162,9 @@ func (self *BinanceEndpoint) Trade(tradeType string, base, quote common.Token, r
 	if err != nil {
 		return result, err
 	}
-	if err = json.Unmarshal(resp_body, &result); err != nil {
+	if err = json.Unmarshal(respBody, &result); err != nil {
 		log.Printf("Unmarshal response error: %s", err.Error())
+		return result, err
 	}
 	return result, nil
 
@@ -186,6 +186,7 @@ func (self *BinanceEndpoint) GetTradeHistory(symbol string) (exchange.BinanceTra
 	if err == nil {
 		if err := json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal trade history error: %s", err.Error())
+			return result, err
 		}
 	}
 	return result, err
@@ -216,6 +217,7 @@ func (self *BinanceEndpoint) GetAccountTradeHistory(
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 	}
 	return result, err
@@ -236,6 +238,7 @@ func (self *BinanceEndpoint) WithdrawHistory(startTime, endTime uint64) (exchang
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 		if !result.Success {
 			err = errors.New("Getting withdraw history from Binance failed: " + result.Msg)
@@ -259,6 +262,7 @@ func (self *BinanceEndpoint) DepositHistory(startTime, endTime uint64) (exchange
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal reponse error: %s", err.Error())
+			return result, err
 		}
 		if !result.Success {
 			err = errors.New("Getting deposit history from Binance failed: " + result.Msg)
@@ -282,6 +286,7 @@ func (self *BinanceEndpoint) CancelOrder(symbol string, id uint64) (exchange.Bin
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 		if result.Code != 0 {
 			err = errors.New("Canceling order from Binance failed: " + result.Msg)
@@ -305,6 +310,7 @@ func (self *BinanceEndpoint) OrderStatus(symbol string, id uint64) (exchange.Bin
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 		if result.Code != 0 {
 			err = errors.New(result.Msg)
@@ -329,7 +335,7 @@ func (self *BinanceEndpoint) Withdraw(token common.Token, amount *big.Int, addre
 	)
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
-			log.Printf("Unmarshal reponse error: %s", err.Error())
+			return "", err
 		}
 		if !result.Success {
 			return "", errors.New(result.Msg)
@@ -351,6 +357,7 @@ func (self *BinanceEndpoint) GetInfo() (exchange.Binainfo, error) {
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 	}
 	if result.Code != 0 {
@@ -376,6 +383,7 @@ func (self *BinanceEndpoint) OpenOrdersForOnePair(pair common.TokenPair) (exchan
 	}
 	if err = json.Unmarshal(resp_body, &result); err != nil {
 		log.Printf("Unmarshal response error: %s", err.Error())
+		return result, err
 	}
 	return result, nil
 }
@@ -394,6 +402,7 @@ func (self *BinanceEndpoint) GetDepositAddress(asset string) (exchange.Binadepos
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 		if !result.Success {
 			err = errors.New(result.Msg)
@@ -414,6 +423,7 @@ func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, er
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result, err
 		}
 	}
 	return result, err
@@ -431,6 +441,7 @@ func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
 	if err == nil {
 		if err = json.Unmarshal(resp_body, &result); err != nil {
 			log.Printf("Unmarshal response error: %s", err.Error())
+			return result.ServerTime, err
 		}
 	}
 	return result.ServerTime, err
