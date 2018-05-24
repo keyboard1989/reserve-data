@@ -2,7 +2,6 @@ package storage
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -52,19 +51,6 @@ type BoltStatStorage struct {
 	db *bolt.DB
 }
 
-func uint64ToBytes(u uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, u)
-	return b
-}
-
-func bytesToUint64(b []byte) uint64 {
-	if len(b) != 8 {
-		return 0
-	}
-	return binary.BigEndian.Uint64(b)
-}
-
 func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 	// init instance
 	var err error
@@ -97,35 +83,11 @@ func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 	return storage, nil
 }
 
-func reverseSeek(timepoint uint64, c *bolt.Cursor) (uint64, error) {
-	version, _ := c.Seek(uint64ToBytes(timepoint))
-	if version == nil {
-		version, _ = c.Prev()
-		if version == nil {
-			return 0, fmt.Errorf("There is no data before timepoint %d", timepoint)
-		} else {
-			return bytesToUint64(version), nil
-		}
-	} else {
-		v := bytesToUint64(version)
-		if v == timepoint {
-			return v, nil
-		} else {
-			version, _ = c.Prev()
-			if version == nil {
-				return 0, fmt.Errorf("There is no data before timepoint %d", timepoint)
-			} else {
-				return bytesToUint64(version), nil
-			}
-		}
-	}
-}
-
 func (self *BoltStatStorage) SetLastProcessedTradeLogTimepoint(statType string, timepoint uint64) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
-		err = b.Put([]byte(statType), uint64ToBytes(timepoint))
+		err = b.Put([]byte(statType), common.Uint64ToBytes(timepoint))
 		return err
 	})
 	return err
@@ -139,7 +101,7 @@ func (self *BoltStatStorage) GetLastProcessedTradeLogTimepoint(statType string) 
 		if b == nil {
 			return (errors.New("Can not find last processed bucket"))
 		}
-		result = bytesToUint64(b.Get([]byte(statType)))
+		result = common.BytesToUint64(b.Get([]byte(statType)))
 		return nil
 	})
 	return result, err
@@ -200,20 +162,20 @@ func getTimestampByFreq(t uint64, freq string) (result []byte) {
 	ui64Day := uint64(time.Hour * 24)
 	switch freq {
 	case "m", "M":
-		result = uint64ToBytes(t / uint64(time.Minute) * uint64(time.Minute))
+		result = common.Uint64ToBytes(t / uint64(time.Minute) * uint64(time.Minute))
 	case "h", "H":
-		result = uint64ToBytes(t / uint64(time.Hour) * uint64(time.Hour))
+		result = common.Uint64ToBytes(t / uint64(time.Hour) * uint64(time.Hour))
 	case "d", "D":
-		result = uint64ToBytes(t / ui64Day * ui64Day)
+		result = common.Uint64ToBytes(t / ui64Day * ui64Day)
 	default:
 		// utc timezone
 		offset, _ := strconv.ParseInt(strings.TrimPrefix(freq, "utc"), 10, 64)
 		ui64offset := uint64(int64(time.Hour) * offset)
 		if offset > 0 {
-			result = uint64ToBytes((t+ui64offset)/ui64Day*ui64Day + ui64offset)
+			result = common.Uint64ToBytes((t+ui64offset)/ui64Day*ui64Day + ui64offset)
 		} else {
 			offset = 0 - offset
-			result = uint64ToBytes((t-ui64offset)/ui64Day*ui64Day - ui64offset)
+			result = common.Uint64ToBytes((t-ui64offset)/ui64Day*ui64Day - ui64offset)
 		}
 	}
 
@@ -258,7 +220,7 @@ func (self *BoltStatStorage) SetBurnFeeStat(burnFeeStats map[string]common.BurnF
 				freqBkName, _ := getBucketNameByFreq(freq)
 				freqBk, _ := burnFeeBk.CreateBucketIfNotExists([]byte(freqBkName))
 				for timepoint, stat := range stats {
-					timestamp := uint64ToBytes(timepoint)
+					timestamp := common.Uint64ToBytes(timepoint)
 					currentData := common.BurnFeeStats{}
 					v := freqBk.Get(timestamp)
 					if v != nil {
@@ -273,7 +235,7 @@ func (self *BoltStatStorage) SetBurnFeeStat(burnFeeStats map[string]common.BurnF
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
-			dataJSON := uint64ToBytes(lastProcessTimePoint)
+			dataJSON := common.Uint64ToBytes(lastProcessTimePoint)
 			lastProcessBk.Put([]byte(BURNFEE_AGGREGATION), dataJSON)
 		}
 		return nil
@@ -291,7 +253,7 @@ func (self *BoltStatStorage) SetVolumeStat(volumeStats map[string]common.VolumeS
 				freqBkName, _ := getBucketNameByFreq(freq)
 				freqBk, _ := volumeBk.CreateBucketIfNotExists([]byte(freqBkName))
 				for timepoint, stat := range stats {
-					timestamp := uint64ToBytes(timepoint)
+					timestamp := common.Uint64ToBytes(timepoint)
 					currentData := common.VolumeStats{}
 					v := freqBk.Get(timestamp)
 					if v != nil {
@@ -308,7 +270,7 @@ func (self *BoltStatStorage) SetVolumeStat(volumeStats map[string]common.VolumeS
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
-			dataJSON := uint64ToBytes(lastProcessTimePoint)
+			dataJSON := common.Uint64ToBytes(lastProcessTimePoint)
 			lastProcessBk.Put([]byte(VOLUME_STAT_AGGREGATION), dataJSON)
 		}
 		return nil
@@ -332,7 +294,7 @@ func (self *BoltStatStorage) SetWalletStat(stats map[string]common.MetricStatsTi
 					return err
 				}
 				for timepoint, stat := range stats {
-					timestamp := uint64ToBytes(timepoint)
+					timestamp := common.Uint64ToBytes(timepoint)
 					currentData := common.MetricStats{}
 					v := walletTzBucket.Get(timestamp)
 					if v != nil {
@@ -359,7 +321,7 @@ func (self *BoltStatStorage) SetWalletStat(stats map[string]common.MetricStatsTi
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
-			dataJSON := uint64ToBytes(lastProcessTimePoint)
+			dataJSON := common.Uint64ToBytes(lastProcessTimePoint)
 			lastProcessBk.Put([]byte(WALLET_AGGREGATION), dataJSON)
 		}
 		return nil
@@ -374,13 +336,13 @@ func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, ethW
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		walletBk, _ := tx.CreateBucketIfNotExists([]byte(walletAddr))
 		timezoneBk, _ := walletBk.CreateBucketIfNotExists([]byte(tzstring))
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 		c := timezoneBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			walletStat := common.MetricStats{}
 			json.Unmarshal(v, &walletStat)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = walletStat
 		}
 		return nil
@@ -430,7 +392,7 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 					return err
 				}
 				for timepoint, stat := range stats {
-					timestamp := uint64ToBytes(timepoint)
+					timestamp := common.Uint64ToBytes(timepoint)
 					currentData := common.MetricStats{}
 					v := countryTzBucket.Get(timestamp)
 					if v != nil {
@@ -457,7 +419,7 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
-			dataJSON := uint64ToBytes(lastProcessTimePoint)
+			dataJSON := common.Uint64ToBytes(lastProcessTimePoint)
 			lastProcessBk.Put([]byte(COUNTRY_AGGREGATION), dataJSON)
 		}
 		return nil
@@ -472,14 +434,14 @@ func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country st
 	self.db.Update(func(tx *bolt.Tx) error {
 		countryBk, _ := tx.CreateBucketIfNotExists([]byte(country))
 		timezoneBk, _ := countryBk.CreateBucketIfNotExists([]byte(tzstring))
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 
 		c := timezoneBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			countryStat := common.MetricStats{}
 			json.Unmarshal(v, &countryStat)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = countryStat
 		}
 		return nil
@@ -493,7 +455,7 @@ func (self *BoltStatStorage) DidTrade(tx *bolt.Tx, userAddr string, timepoint ui
 	b, _ := tx.CreateBucketIfNotExists([]byte(USER_FIRST_TRADE_EVER))
 	v := b.Get([]byte(userAddr))
 	if v != nil {
-		savedTimepoint := bytesToUint64(v)
+		savedTimepoint := common.BytesToUint64(v)
 		if savedTimepoint <= timepoint {
 			result = true
 		}
@@ -508,7 +470,7 @@ func (self *BoltStatStorage) SetFirstTradeEver(userTradeLog *[]common.TradeLog) 
 			userAddr := common.AddrToString(trade.UserAddress)
 			timepoint := trade.Timestamp
 			if !self.DidTrade(tx, userAddr, timepoint) {
-				timestampByte := uint64ToBytes(timepoint)
+				timestampByte := common.Uint64ToBytes(timepoint)
 				b.Put([]byte(userAddr), timestampByte)
 			}
 		}
@@ -523,7 +485,7 @@ func (self *BoltStatStorage) GetFirstTradeEver(ethUserAddr ethereum.Address) (ui
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b, _ := tx.CreateBucketIfNotExists([]byte(USER_FIRST_TRADE_EVER))
 		v := b.Get([]byte(userAddr))
-		result = bytesToUint64(v)
+		result = common.BytesToUint64(v)
 		return nil
 	})
 	return result, err
@@ -535,7 +497,7 @@ func (self *BoltStatStorage) GetAllFirstTradeEver() (map[ethereum.Address]uint64
 		b := tx.Bucket([]byte(USER_FIRST_TRADE_EVER))
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			value := bytesToUint64(v)
+			value := common.BytesToUint64(v)
 			result[ethereum.HexToAddress(string(k))] = value
 		}
 		return nil
@@ -549,12 +511,12 @@ func (self *BoltStatStorage) DidTradeInDay(tx *bolt.Tx, userAddr string, timepoi
 	freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 	timestamp := getTimestampByFreq(timepoint, freq)
 
-	timezoneBk, _ := userStatBk.CreateBucketIfNotExists(uint64ToBytes(uint64(timezone)))
+	timezoneBk, _ := userStatBk.CreateBucketIfNotExists(common.Uint64ToBytes(uint64(timezone)))
 	userDailyBucket, _ := timezoneBk.CreateBucketIfNotExists(timestamp)
 
 	v := userDailyBucket.Get([]byte(userAddr))
 	if v != nil {
-		savedTimepoint := bytesToUint64(v)
+		savedTimepoint := common.BytesToUint64(v)
 		if savedTimepoint <= timepoint {
 			result = true
 		}
@@ -570,12 +532,12 @@ func (self *BoltStatStorage) GetFirstTradeInDay(ethUserAddr ethereum.Address, ti
 		freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 		timestamp := getTimestampByFreq(timepoint, freq)
 
-		timezoneBk, _ := userStatBk.CreateBucketIfNotExists(uint64ToBytes(uint64(timezone)))
+		timezoneBk, _ := userStatBk.CreateBucketIfNotExists(common.Uint64ToBytes(uint64(timezone)))
 		userDailyBucket, _ := timezoneBk.CreateBucketIfNotExists(timestamp)
 
 		v := userDailyBucket.Get([]byte(userAddr))
 		if v != nil {
-			result = bytesToUint64(v)
+			result = common.BytesToUint64(v)
 		}
 		return nil
 	})
@@ -591,10 +553,10 @@ func (self *BoltStatStorage) SetFirstTradeInDay(tradeLogs *[]common.TradeLog) er
 			for timezone := START_TIMEZONE; timezone <= END_TIMEZONE; timezone++ {
 				freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 				timestamp := getTimestampByFreq(timepoint, freq)
-				timezoneBk, _ := userStatBk.CreateBucketIfNotExists(uint64ToBytes(uint64(timezone)))
+				timezoneBk, _ := userStatBk.CreateBucketIfNotExists(common.Uint64ToBytes(uint64(timezone)))
 				userDailyBucket, _ := timezoneBk.CreateBucketIfNotExists(timestamp)
 				if !self.DidTradeInDay(tx, userAddr, timepoint, timezone) {
-					timestampByte := uint64ToBytes(timepoint)
+					timestampByte := common.Uint64ToBytes(timepoint)
 					userDailyBucket.Put([]byte(userAddr), timestampByte)
 				}
 			}
@@ -646,7 +608,7 @@ func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTim
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
-			dataJSON := uint64ToBytes(lastProcessTimePoint)
+			dataJSON := common.Uint64ToBytes(lastProcessTimePoint)
 			lastProcessBk.Put([]byte(USER_INFO_AGGREGATION), dataJSON)
 		}
 		return err
@@ -658,8 +620,8 @@ func (self *BoltStatStorage) GetUserList(fromTime, toTime uint64, timezone int64
 	result := map[string]common.UserInfo{}
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(USER_LIST_BUCKET))
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 
 		timezoneBkName := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 		timezoneBk, err := b.CreateBucketIfNotExists([]byte(timezoneBkName))
@@ -702,15 +664,15 @@ func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq
 		b, _ := tx.CreateBucketIfNotExists([]byte(assetAddr))
 
 		freqBkName, _ := getBucketNameByFreq(freq)
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 
 		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.VolumeStats{}
 			json.Unmarshal(v, &value)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = value
 		}
 
@@ -728,14 +690,14 @@ func (self *BoltStatStorage) GetBurnFee(fromTime uint64, toTime uint64, freq str
 
 		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
 
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.BurnFeeStats{}
 			json.Unmarshal(v, &value)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = value.TotalBurnFee
 		}
 		return nil
@@ -752,14 +714,14 @@ func (self *BoltStatStorage) GetWalletFee(fromTime uint64, toTime uint64, freq s
 		freqBkName, _ := getBucketNameByFreq(freq)
 		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
 
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.BurnFeeStats{}
 			json.Unmarshal(v, &value)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = value.TotalBurnFee
 		}
 		return nil
@@ -776,13 +738,13 @@ func (self *BoltStatStorage) GetUserVolume(fromTime uint64, toTime uint64, freq 
 		freqBkName, _ := getBucketNameByFreq(freq)
 		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
 
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.VolumeStats{}
 			json.Unmarshal(v, &value)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = value
 		}
 		return nil
@@ -798,13 +760,13 @@ func (self *BoltStatStorage) GetReserveVolume(fromTime uint64, toTime uint64, fr
 		freqBkName, _ := getBucketNameByFreq(freq)
 		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
 
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.VolumeStats{}
 			json.Unmarshal(v, &value)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = value
 		}
 		return nil
@@ -820,13 +782,13 @@ func (self *BoltStatStorage) GetTokenHeatmap(fromTime, toTime uint64, key, freq 
 		freqBkName, _ := getBucketNameByFreq(freq)
 		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
 
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.VolumeStats{}
 			json.Unmarshal(v, &value)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = value
 		}
 		return nil
@@ -849,7 +811,7 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 					return err
 				}
 				for timepoint, stat := range stats {
-					timestamp := uint64ToBytes(timepoint)
+					timestamp := common.Uint64ToBytes(timepoint)
 					// try get data from this timestamp, if exist then add more data
 					currentData := common.MetricStats{}
 					v := tzBucket.Get(timestamp)
@@ -877,7 +839,7 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
-			dataJSON := uint64ToBytes(lastProcessTimePoint)
+			dataJSON := common.Uint64ToBytes(lastProcessTimePoint)
 			lastProcessBk.Put([]byte(TRADE_SUMMARY_AGGREGATION), dataJSON)
 		}
 		return nil
@@ -891,14 +853,14 @@ func (self *BoltStatStorage) GetTradeSummary(fromTime uint64, toTime uint64, tim
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b, _ := tx.CreateBucketIfNotExists([]byte("trade_summary"))
 		timezoneBk, _ := b.CreateBucketIfNotExists([]byte(tzstring))
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 
 		c := timezoneBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			summary := common.MetricStats{}
 			json.Unmarshal(v, &summary)
-			key := bytesToUint64(k) / 1000000
+			key := common.BytesToUint64(k) / 1000000
 			result[key] = summary
 		}
 		return nil

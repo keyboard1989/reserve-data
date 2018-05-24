@@ -69,7 +69,7 @@ func (self *BoltUserStorage) SetLastProcessedCatLogTimepoint(timepoint uint64) e
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_PROCESSOR_STATE))
-		err = b.Put([]byte("last_timepoint"), uint64ToBytes(timepoint))
+		err = b.Put([]byte("last_timepoint"), common.Uint64ToBytes(timepoint))
 		return err
 	})
 	return err
@@ -80,7 +80,7 @@ func (self *BoltUserStorage) GetLastProcessedCatLogTimepoint() (uint64, error) {
 	var err error
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_PROCESSOR_STATE))
-		result = bytesToUint64(b.Get([]byte("last_timepoint")))
+		result = common.BytesToUint64(b.Get([]byte("last_timepoint")))
 		return nil
 	})
 	return result, err
@@ -191,7 +191,7 @@ func (self *BoltUserStorage) UpdateUserAddresses(user string, addrs []ethereum.A
 				}
 			}
 			log.Printf("storing timestamp for %s - %d", address, timestamps[i])
-			if err = timeBucket.Put([]byte(address), uint64ToBytes(timestamps[i])); err != nil {
+			if err = timeBucket.Put([]byte(address), common.Uint64ToBytes(timestamps[i])); err != nil {
 				return err
 			}
 		}
@@ -227,7 +227,7 @@ func (self *BoltUserStorage) GetAddressesOfUser(user string) ([]ethereum.Address
 			userBucket.ForEach(func(k, v []byte) error {
 				addr := ethereum.HexToAddress(string(k))
 				result = append(result, addr)
-				timestamps = append(timestamps, bytesToUint64(timeBucket.Get(k)))
+				timestamps = append(timestamps, common.BytesToUint64(timeBucket.Get(k)))
 				return nil
 			})
 		}
@@ -247,7 +247,7 @@ func (self *BoltUserStorage) GetUserOfAddress(ethaddr ethereum.Address) (string,
 		timeBucket := tx.Bucket([]byte(ADDRESS_TIME))
 		id := b.Get([]byte(addr))
 		result = string(id)
-		timestamp = bytesToUint64(timeBucket.Get([]byte(addr)))
+		timestamp = common.BytesToUint64(timeBucket.Get([]byte(addr)))
 		return nil
 	})
 	return result, timestamp, err
@@ -263,7 +263,7 @@ func (self *BoltUserStorage) GetKycUsers() (map[string]uint64, error) {
 			id := string(v)
 			var timestamp uint64
 			if id != "" && id != string(k) {
-				timestamp = bytesToUint64(timeBucket.Get(k))
+				timestamp = common.BytesToUint64(timeBucket.Get(k))
 				result[string(k)] = timestamp
 			}
 		}

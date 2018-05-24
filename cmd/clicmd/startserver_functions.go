@@ -1,9 +1,7 @@
 package cmd
 
 import (
-	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 
@@ -22,19 +20,6 @@ import (
 const (
 	STARTING_BLOCK uint64 = 5069586
 )
-
-func loadTimestamp(path string) []uint64 {
-	raw, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	timestamp := []uint64{}
-	err = json.Unmarshal(raw, &timestamp)
-	if err != nil {
-		panic(err)
-	}
-	return timestamp
-}
 
 //set config log: Write log into a predefined file, and rotate log daily
 //if stdoutLog is set, the log is also printed on stdout.

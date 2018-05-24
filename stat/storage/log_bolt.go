@@ -174,7 +174,7 @@ func (self *BoltLogStorage) StoreCatLog(l common.SetCatLog) error {
 			return fmt.Errorf("Duplicated cat log %+v (new block number %d is smaller or equal to latest block number %d and tx index %d is smaller or equal to last log tx index %d)", l, block, l.BlockNumber, index, l.Index)
 		}
 		// log.Printf("Storing cat log: %d", l.Timestamp)
-		idByte := uint64ToBytes(l.Timestamp)
+		idByte := common.Uint64ToBytes(l.Timestamp)
 		return b.Put(idByte, dataJson)
 	})
 	return err
@@ -195,7 +195,7 @@ func (self *BoltLogStorage) StoreTradeLog(stat common.TradeLog, timepoint uint64
 			return uErr
 		}
 		// log.Printf("Storing log: %d", stat.Timestamp)
-		idByte := uint64ToBytes(stat.Timestamp)
+		idByte := common.Uint64ToBytes(stat.Timestamp)
 		return b.Put(idByte, dataJson)
 	})
 	return err
@@ -254,8 +254,8 @@ func (self *BoltLogStorage) GetCatLogs(fromTime uint64, toTime uint64) ([]common
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_BUCKET))
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.SetCatLog{}
 			if vErr := json.Unmarshal(v, &record); vErr != nil {
@@ -314,8 +314,8 @@ func (self *BoltLogStorage) GetTradeLogs(fromTime uint64, toTime uint64) ([]comm
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADELOG_BUCKET))
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			record := common.TradeLog{}
 			if vErr := json.Unmarshal(v, &record); vErr != nil {

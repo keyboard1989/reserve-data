@@ -46,7 +46,7 @@ func (self *BoltRateStorage) StoreReserveRates(ethReserveAddr ethereum.Address, 
 		_, prevData := c.Last()
 		json.Unmarshal(prevData, &prevDataJSON)
 		if prevDataJSON.BlockNumber < rate.BlockNumber {
-			idByte := uint64ToBytes(timepoint)
+			idByte := common.Uint64ToBytes(timepoint)
 			dataJson, err := json.Marshal(rate)
 			if err != nil {
 				return err
@@ -77,8 +77,8 @@ func (self *BoltRateStorage) GetReserveRates(fromTime, toTime uint64, ethReserve
 			return err
 		}
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := common.Uint64ToBytes(fromTime)
+		max := common.Uint64ToBytes(toTime)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			rates := common.ReserveRates{}
 			err := json.Unmarshal(v, &rates)
