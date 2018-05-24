@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 
+	"time"
+
 	"github.com/KyberNetwork/reserve-data/settings"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -52,8 +54,40 @@ type Blockchain struct {
 	oldNetworks   []ethereum.Address
 	oldBurners    []ethereum.Address
 	tokenIndices  map[string]tbindex
-	setting       *settings.Settings
 	mu            sync.RWMutex
+
+	localSetRateNonce     uint64
+	setRateNonceTimestamp uint64
+
+	gasOracle *GasOracle
+}
+
+func (self *Blockchain) StandardGasPrice() float64 {
+	// we use node's recommended gas price because gas station is not returning
+	// correct gas price now
+	price, err := self.RecommendedGasPriceFromNode()
+	if err != nil {
+		return 0
+	}
+	return common.BigToFloat(price, 9)
+}
+
+func (self *Blockchain) FastGasPrice() float64 {
+	if self.gasOracle == nil {
+		return 0
+	}
+	return self.gasOracle.Fast
+}
+
+func (self *Blockchain) SafeLowGasPrice() float64 {
+	if self.gasOracle == nil {
+		return 0
+	}
+	return self.gasOracle.SafeLow
+}
+
+func (self *Blockchain) AddGasOracle(gasOracle *GasOracle) {
+	self.gasOracle = gasOracle
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
@@ -159,6 +193,15 @@ func (self *Blockchain) SetRates(
 	if err != nil {
 		return nil, err
 	}
+
+	// This is commented out because we dont want to make too much of change. Don't remove
+	// this check, it can be useful in the future.
+	//
+	// Don't submit any txs if it is just trying to set all tokens to 0 when they are already 0
+	// if common.AllZero(buys, sells, baseBuys, baseSells) {
+	// 	return nil, errors.New("Trying to set all rates to 0 but they are already 0. Skip the tx.")
+	// }
+
 	baseTokens := []ethereum.Address{}
 	newBSells := []*big.Int{}
 	newBBuys := []*big.Int{}
@@ -567,8 +610,36 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 	return result, nil
 }
 
+// SetRateMinedNonce returns nonce of the pricing operator in confirmed
+// state (not pending state).
+//
+// Getting mined nonce is not simple because there might be lag between
+// node leading us to get outdated mined nonce from an unsynced node.
+// To overcome this situation, we will keep a local nonce and require
+// the nonce from node to be equal or greater than it.
+// If the nonce from node is smaller than the local one, we will use
+// the local one. However, if the local one stay with the same value
+// for more than 15mins, the local one is considered incorrect
+// because the chain might be reorganized so we will invalidate it
+// and assign it to the nonce from node.
 func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
-	return self.GetMinedNonce(PRICING_OP)
+	nonceFromNode, err := self.GetMinedNonce(PRICING_OP)
+	if err != nil {
+		return nonceFromNode, err
+	}
+	if nonceFromNode < self.localSetRateNonce {
+		if common.GetTimepoint()-self.setRateNonceTimestamp > uint64(15*time.Minute) {
+			self.localSetRateNonce = nonceFromNode
+			self.setRateNonceTimestamp = common.GetTimepoint()
+			return nonceFromNode, nil
+		} else {
+			return self.localSetRateNonce, nil
+		}
+	} else {
+		self.localSetRateNonce = nonceFromNode
+		self.setRateNonceTimestamp = common.GetTimepoint()
+		return nonceFromNode, nil
+	}
 }
 
 func NewBlockchain(

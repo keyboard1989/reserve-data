@@ -87,7 +87,7 @@ func (self ReserveStats) GetAssetVolume(fromTime, toTime uint64, freq, asset str
 
 	token, err := settings.GetActiveTokenByID(asset)
 	if err != nil {
-		return data, errors.New(fmt.Sprintf("assets %s is not supported", asset))
+		return data, fmt.Errorf("assets %s is not supported", asset)
 	}
 
 	data, err = self.statStorage.GetAssetVolume(fromTime, toTime, freq, ethereum.HexToAddress(token.Address))
@@ -179,7 +179,7 @@ func (self ReserveStats) GetTradeLogs(fromTime uint64, toTime uint64) ([]common.
 	result := []common.TradeLog{}
 
 	if toTime-fromTime > MAX_GET_RATES_PERIOD {
-		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD))
+		return result, fmt.Errorf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD)
 	}
 
 	result, err := self.logStorage.GetTradeLogs(fromTime*1000000, toTime*1000000)
