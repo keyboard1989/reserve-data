@@ -1,5 +1,7 @@
 package common
 
+import ethereum "github.com/ethereum/go-ethereum/common"
+
 type Token struct {
 	ID                      string
 	Name                    string
@@ -26,13 +28,6 @@ func NewToken(id, name, address string, decimal int64, active bool, internal boo
 	}
 }
 
-func (self Token) MarshalText() (text []byte, err error) {
-	// return []byte(fmt.Sprintf(
-	// 	"%s-%s", self.ID, self.Address,
-	// )), nil
-	return []byte(self.ID), nil
-}
-
 func (self Token) IsETH() bool {
 	return self.ID == "ETH"
 }
@@ -44,4 +39,14 @@ type TokenPair struct {
 
 func (self *TokenPair) PairID() TokenPairID {
 	return NewTokenPairID(self.Base.ID, self.Quote.ID)
+}
+
+func GetTokenAddressesList(tokens []Token) []ethereum.Address {
+	tokenAddrs := []ethereum.Address{}
+	for _, tok := range tokens {
+		if tok.ID != "ETH" {
+			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(tok.Address))
+		}
+	}
+	return tokenAddrs
 }

@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/big"
 	"strings"
+	"sync"
 
 	"github.com/KyberNetwork/reserve-data/settings"
 
@@ -52,6 +53,7 @@ type Blockchain struct {
 	oldBurners    []ethereum.Address
 	tokenIndices  map[string]tbindex
 	setting       *settings.Settings
+	mu            sync.RWMutex
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
@@ -92,21 +94,11 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 	}
 }
 
-func (self *Blockchain) LoadAndSetTokenIndices() error {
-	tokenAddrs := []ethereum.Address{}
+func (self *Blockchain) LoadAndSetTokenIndices(tokenAddrs []ethereum.Address) error {
+	self.mu.Lock()
+	defer self.mu.Unlock()
 	self.tokenIndices = map[string]tbindex{}
-	tokens, err := settings.GetInternalTokens()
-	if err != nil {
-		return err
-	}
-	for _, tok := range tokens {
-		if tok.ID != "ETH" {
-			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(tok.Address))
-		} else {
-			// this is not really needed. Just a safe guard
-			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
-		}
-	}
+	self.tokenIndices[ethereum.HexToAddress(settings.ETHToken().Address).Hex()] = tbindex{1000000, 1000000}
 	opts := self.GetCallOpts(0)
 	bulkIndices, indicesInBulk, err := self.GeneratedGetTokenIndicies(
 		opts,
@@ -122,6 +114,7 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 			indicesInBulk[i].Uint64(),
 		}
 	}
+
 	log.Printf("Token indices: %+v", self.tokenIndices)
 	return nil
 }

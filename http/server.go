@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/settings"
 
 	"github.com/KyberNetwork/reserve-data"
@@ -32,6 +33,7 @@ type HTTPServer struct {
 	authEnabled bool
 	auth        Authentication
 	r           *gin.Engine
+	blockchain  *blockchain.Blockchain
 }
 
 const (
@@ -2684,7 +2686,8 @@ func NewHTTPServer(
 	host string,
 	enableAuth bool,
 	authEngine Authentication,
-	env string) *HTTPServer {
+	env string,
+	bc *blockchain.Blockchain) *HTTPServer {
 
 	r := gin.Default()
 	sentryCli, err := raven.NewWithTags(
@@ -2707,6 +2710,6 @@ func NewHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, core, stat, metric, host, enableAuth, authEngine, r,
+		app, core, stat, metric, host, enableAuth, authEngine, r, bc,
 	}
 }

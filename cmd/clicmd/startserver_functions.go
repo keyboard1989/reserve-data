@@ -7,6 +7,9 @@ import (
 	"log"
 	"os"
 
+	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
@@ -97,8 +100,11 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 		// bc.AddOldNetwork(...)
 		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
-
-	err = bc.LoadAndSetTokenIndices()
+	tokens, err := settings.GetInternalTokens()
+	if err != nil {
+		log.Panicf("Can't load and set token indices: %s", err)
+	}
+	err = bc.LoadAndSetTokenIndices(common.GetTokenAddressesList(tokens))
 	if err != nil {
 		log.Panicf("Can't load and set token indices: %s", err)
 	}

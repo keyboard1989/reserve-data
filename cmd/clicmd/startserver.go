@@ -129,6 +129,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		config.EnableAuthentication,
 		config.AuthEngine,
 		kyberENV,
+		bc,
 	)
 
 	if !dryrun {
