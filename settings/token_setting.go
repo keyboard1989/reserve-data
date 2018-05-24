@@ -3,7 +3,6 @@ package settings
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
 )
@@ -53,7 +52,6 @@ func LoadTokenFromFile(filePath string) error {
 	}
 	for id, t := range tokens.Tokens {
 		token := common.NewToken(id, t.Name, t.Address, t.Decimal, t.Active, t.Internal, t.MinimalRecordResolution, t.MaxPerBlockImbalance, t.MaxTotalImbalance)
-		log.Printf("damn token is %v", token)
 		err = UpdateToken(token)
 		if err != nil {
 			return err
