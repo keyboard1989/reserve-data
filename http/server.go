@@ -90,7 +90,7 @@ func eligible(ups, allowedPerms []Permission) bool {
 	return false
 }
 
-// signed message (message = url encoded both query params and post params, keys are sorted) in "signed" header
+// Authenticated signed message (message = url encoded both query params and post params, keys are sorted) in "signed" header
 // using HMAC512
 // params must contain "nonce" which is the unixtime in millisecond. The nonce will be invalid
 // if it differs from server time more than 10s
@@ -854,8 +854,7 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	for _, ex := range self.exchanges {
 		history, err := ex.GetTradeHistory(fromTime, toTime)
 		if err != nil {
-			// TODO: response should include error in reason field instead of data?
-			httputil.ResponseFailure(c, httputil.WithData(err.Error()))
+			httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
 			return
 		}
 		data.Data[ex.ID()] = history
