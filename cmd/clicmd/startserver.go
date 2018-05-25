@@ -42,6 +42,8 @@ func serverStart(cmd *cobra.Command, args []string) {
 	}
 	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
+	backupLog(config.Archive)
+
 	var rData reserve.ReserveData
 	var rCore reserve.ReserveCore
 	var rStat reserve.ReserveStats
