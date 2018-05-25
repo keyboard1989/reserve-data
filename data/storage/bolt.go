@@ -165,6 +165,9 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	return storage, nil
 }
 
+
+// reverseSeek returns the most recent time point to the given one in parameter.
+// It returns an error if no there is no record exists before the given time point.
 func reverseSeek(timepoint uint64, c *bolt.Cursor) (uint64, error) {
 	version, _ := c.Seek(boltutil.Uint64ToBytes(timepoint))
 	if version == nil {
@@ -189,6 +192,8 @@ func reverseSeek(timepoint uint64, c *bolt.Cursor) (uint64, error) {
 	}
 }
 
+// CurrentGoldInfoVersion returns the most recent time point of gold info record.
+// It implements data.GlobalStorage interface.
 func (self *BoltStorage) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
 	var result uint64
 	var err error
@@ -200,6 +205,7 @@ func (self *BoltStorage) CurrentGoldInfoVersion(timepoint uint64) (common.Versio
 	return common.Version(result), err
 }
 
+// GetGoldInfo returns gold info at given time point. It implements data.GlobalStorage interface.
 func (self *BoltStorage) GetGoldInfo(version common.Version) (common.GoldData, error) {
 	result := common.GoldData{}
 	var err error
@@ -216,6 +222,7 @@ func (self *BoltStorage) GetGoldInfo(version common.Version) (common.GoldData, e
 	return result, err
 }
 
+// StoreGoldInfo stores the given gold information to database. It implements fetcher.GlobalStorage interface.
 func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
 	var err error
 	timepoint := data.Timestamp
