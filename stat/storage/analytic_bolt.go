@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/KyberNetwork/reserve-data/boltutil"
 	"github.com/KyberNetwork/reserve-data/common"
 
 	"github.com/boltdb/bolt"
@@ -45,7 +46,7 @@ func NewBoltAnalyticStorage(dbPath string) (*BoltAnalyticStorage, error) {
 
 func (self *BoltAnalyticStorage) UpdatePriceAnalyticData(timestamp uint64, value []byte) error {
 	var err error
-	k := common.Uint64ToBytes(timestamp)
+	k := boltutil.Uint64ToBytes(timestamp)
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PRICE_ANALYTIC_BUCKET))
 		c := b.Cursor()
@@ -59,7 +60,7 @@ func (self *BoltAnalyticStorage) UpdatePriceAnalyticData(timestamp uint64, value
 }
 
 func (self *BoltAnalyticStorage) ExportExpiredPriceAnalyticData(currentTime uint64, fileName string) (nRecord uint64, err error) {
-	expiredTimestampByte := common.Uint64ToBytes(currentTime - PRICE_ANALYTIC_EXPIRED)
+	expiredTimestampByte := boltutil.Uint64ToBytes(currentTime - PRICE_ANALYTIC_EXPIRED)
 	outFile, err := os.Create(fileName)
 	defer outFile.Close()
 	if err != nil {
@@ -69,7 +70,7 @@ func (self *BoltAnalyticStorage) ExportExpiredPriceAnalyticData(currentTime uint
 		b := tx.Bucket([]byte(PRICE_ANALYTIC_BUCKET))
 		c := b.Cursor()
 		for k, v := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, v = c.Next() {
-			timestamp := common.BytesToUint64(k)
+			timestamp := boltutil.BytesToUint64(k)
 			temp := make(map[string]interface{})
 			err = json.Unmarshal(v, &temp)
 			if err != nil {
@@ -96,7 +97,7 @@ func (self *BoltAnalyticStorage) ExportExpiredPriceAnalyticData(currentTime uint
 }
 
 func (self *BoltAnalyticStorage) PruneExpiredPriceAnalyticData(currentTime uint64) (nRecord uint64, err error) {
-	expiredTimestampByte := common.Uint64ToBytes(currentTime - PRICE_ANALYTIC_EXPIRED)
+	expiredTimestampByte := boltutil.Uint64ToBytes(currentTime - PRICE_ANALYTIC_EXPIRED)
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PRICE_ANALYTIC_BUCKET))
 		c := b.Cursor()
@@ -114,8 +115,8 @@ func (self *BoltAnalyticStorage) PruneExpiredPriceAnalyticData(currentTime uint6
 
 func (self *BoltAnalyticStorage) GetPriceAnalyticData(fromTime uint64, toTime uint64) ([]common.AnalyticPriceResponse, error) {
 	var err error
-	min := common.Uint64ToBytes(fromTime)
-	max := common.Uint64ToBytes(toTime)
+	min := boltutil.Uint64ToBytes(fromTime)
+	max := boltutil.Uint64ToBytes(toTime)
 	var result []common.AnalyticPriceResponse
 	if toTime-fromTime > MAX_GET_ANALYTIC_PERIOD {
 		return result, fmt.Errorf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD)
@@ -125,7 +126,7 @@ func (self *BoltAnalyticStorage) GetPriceAnalyticData(fromTime uint64, toTime ui
 		b := tx.Bucket([]byte(PRICE_ANALYTIC_BUCKET))
 		c := b.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
-			timestamp := common.BytesToUint64(k)
+			timestamp := boltutil.BytesToUint64(k)
 			temp := make(map[string]interface{})
 			vErr := json.Unmarshal(v, &temp)
 			if vErr != nil {

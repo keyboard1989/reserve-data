@@ -1,4 +1,4 @@
-package common
+package boltutil
 
 import "encoding/binary"
 
