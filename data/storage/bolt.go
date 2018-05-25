@@ -909,23 +909,23 @@ func (self *BoltStorage) CurrentTargetQtyVersion(timepoint uint64) (common.Versi
 }
 
 func (self *BoltStorage) GetTokenTargetQty() (metric.TokenTargetQty, error) {
-	tokenTargetQty := metric.TokenTargetQty{}
-	version, err := self.CurrentTargetQtyVersion(common.GetTimepoint())
-	if err != nil {
-		log.Printf("Cannot get version: %s", err.Error())
-	}
+	var (
+		tokenTargetQty = metric.TokenTargetQty{}
+		err            error
+	)
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
-		data := b.Get(boltutil.Uint64ToBytes(uint64(version)))
-		if data == nil {
-			err = fmt.Errorf("version %s doesn't exist", string(version))
-		} else {
-			err = json.Unmarshal(data, &tokenTargetQty)
-			if err != nil {
-				log.Printf("Cannot unmarshal: %s", err.Error())
-			}
+		c := b.Cursor()
+		result, vErr := reverseSeek(common.GetTimepoint(), c)
+		if vErr != nil {
+			return vErr
 		}
-		return nil
+		data := b.Get(boltutil.Uint64ToBytes(result))
+		// be defensive, but this should never happen
+		if data == nil {
+			return fmt.Errorf("version %d doesn't exist", result)
+		}
+		return json.Unmarshal(data, &tokenTargetQty)
 	})
 	return tokenTargetQty, err
 }
