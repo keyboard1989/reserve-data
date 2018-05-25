@@ -2,7 +2,6 @@ package http
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 
@@ -45,9 +44,7 @@ func (self *HTTPServer) ReloadTokenIndices(newToken common.Token, active bool) e
 	if active {
 		tokens = append(tokens, newToken)
 	} else {
-		log.Printf("TOkens before removal: %v", tokens)
 		tokens, err = removeTokenFromList(tokens, newToken)
-		log.Printf("TOkens after removal: %v", tokens)
 		if err != nil {
 			return err
 		}
@@ -88,7 +85,7 @@ func (self *HTTPServer) UpdateToken(c *gin.Context) {
 		return
 	}
 	token := common.NewToken(ID, name, addrs, decimalint64, activeBool, internalBool, minrr, maxpbi, maxti)
-	//We only concern with internal token, of which we must query its Indices
+	//We only concern reloading indices if the token is Internal
 	if internalBool {
 		if err = self.ReloadTokenIndices(token, activeBool); err != nil {
 			returnError(c, err)

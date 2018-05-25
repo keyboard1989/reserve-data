@@ -102,7 +102,7 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 	}
 	tokens, err := settings.GetInternalTokens()
 	if err != nil {
-		log.Panicf("Can't load and set token indices: %s", err)
+		log.Panicf("Can't get the list of Internal Tokens for indices: %s", err)
 	}
 	err = bc.LoadAndSetTokenIndices(common.GetTokenAddressesList(tokens))
 	if err != nil {

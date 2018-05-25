@@ -72,8 +72,6 @@ type Config struct {
 	BackupEthereumEndpoints []string
 	Blockchain              *blockchain.BaseBlockchain
 
-	SupportedTokens []common.Token
-
 	WrapperAddress     ethereum.Address
 	PricingAddress     ethereum.Address
 	ReserveAddress     ethereum.Address
@@ -224,14 +222,6 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		kyberENV)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()
-}
-
-func (self *Config) MapTokens() map[string]common.Token {
-	result := map[string]common.Token{}
-	for _, t := range self.SupportedTokens {
-		result[t.ID] = t
-	}
-	return result
 }
 
 var ConfigPaths = map[string]SettingPaths{

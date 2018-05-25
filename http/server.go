@@ -2376,7 +2376,7 @@ func (self *HTTPServer) GetReserveVolume(c *gin.Context) {
 		)
 		return
 	}
-	token, err := settings.GetInternalTokenByID(tokenName)
+	token, err := settings.GetActiveTokenByID(tokenName)
 	if err != nil {
 		c.JSON(
 			http.StatusOK,

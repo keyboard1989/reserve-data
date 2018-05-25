@@ -3,8 +3,6 @@ package configuration
 import (
 	"log"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -120,7 +118,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		panic(err)
 	}
 	s3archive := archive.NewS3Archive(awsConf)
-	supportedToken, err := settings.GetInternalTokens()
+	//supportedToken, err := settings.GetInternalTokens()
 	if err != nil {
 		log.Panicf("Can't get internal tokens (%s)", err)
 	}
@@ -128,15 +126,15 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
-		SupportedTokens:         supportedToken,
-		WrapperAddress:          wrapperAddr,
-		PricingAddress:          pricingAddr,
-		ReserveAddress:          reserveAddr,
-		ChainType:               chainType,
-		AuthEngine:              hmac512auth,
-		EnableAuthentication:    authEnbl,
-		Archive:                 s3archive,
-		World:                   world,
+		//	SupportedTokens:         supportedToken,
+		WrapperAddress:       wrapperAddr,
+		PricingAddress:       pricingAddr,
+		ReserveAddress:       reserveAddr,
+		ChainType:            chainType,
+		AuthEngine:           hmac512auth,
+		EnableAuthentication: authEnbl,
+		Archive:              s3archive,
+		World:                world,
 	}
 
 	if enableStat {
