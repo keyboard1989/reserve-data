@@ -50,16 +50,16 @@ func (self *RamActivityStorage) StoreNewData(
 	defer self.mu.Unlock()
 	version := self.version + 1
 	self.version = version
-	record := common.ActivityRecord{
-		Action:         action,
-		ID:             id,
-		Destination:    destination,
-		Params:         params,
-		Result:         result,
-		ExchangeStatus: estatus,
-		MiningStatus:   mstatus,
-		Timestamp:      common.Timestamp(strconv.FormatUint(timepoint, 10)),
-	}
+	record := common.NewActivityRecord(
+		action,
+		id,
+		destination,
+		params,
+		result,
+		estatus,
+		mstatus,
+		common.Timestamp(strconv.FormatUint(timepoint, 10)),
+	)
 
 	self.records.PushBack(&record)
 	// all other pending set rates should be staled now
@@ -177,7 +177,7 @@ func (self *RamActivityStorage) HasPendingDeposit(token common.Token, exchange c
 			break
 		} else {
 			activity := ele.Value.(*common.ActivityRecord)
-			if activity.Action == "deposit" && activity.Params["token"].(common.Token) == token && activity.Destination == string(exchange.ID()) {
+			if activity.Action == "deposit" && activity.Params["token"].(string) == token.ID && activity.Destination == string(exchange.ID()) {
 				return true
 			}
 			ele = ele.Prev()
