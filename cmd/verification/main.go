@@ -49,7 +49,9 @@ func run(verify *Verification) {
 
 	switch os.Args[1] {
 	case "verify":
-		verify.RunVerification()
+		if err := verify.RunVerification(); err != nil {
+			log.Panic(err)
+		}
 	case "deposit":
 		err := depositCmd.Parse(os.Args[2:])
 		if err != nil {

@@ -895,7 +895,10 @@ func (self *HTTPServer) HoldRebalance(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreRebalanceControl(false)
+	if err := self.metric.StoreRebalanceControl(false); err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+		return
+	}
 	httputil.ResponseSuccess(c)
 	return
 }
@@ -905,7 +908,9 @@ func (self *HTTPServer) EnableRebalance(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreRebalanceControl(true)
+	if err := self.metric.StoreRebalanceControl(true); err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+	}
 	httputil.ResponseSuccess(c)
 	return
 }
@@ -928,7 +933,9 @@ func (self *HTTPServer) HoldSetrate(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreSetrateControl(false)
+	if err := self.metric.StoreSetrateControl(false); err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+	}
 	httputil.ResponseSuccess(c)
 	return
 }
@@ -938,7 +945,9 @@ func (self *HTTPServer) EnableSetrate(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreSetrateControl(true)
+	if err := self.metric.StoreSetrateControl(true); err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+	}
 	httputil.ResponseSuccess(c)
 	return
 }

@@ -33,7 +33,7 @@ const (
 
 var (
 	Big0   *big.Int = big.NewInt(0)
-	BigMax *big.Int = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
+	BigMax          = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
 )
 
 type Blockchain struct {
@@ -55,7 +55,7 @@ type Blockchain struct {
 	localSetRateNonce     uint64
 	setRateNonceTimestamp uint64
 
-  gasOracle *GasOracle
+	gasOracle *GasOracle
 }
 
 func (self *Blockchain) StandardGasPrice() float64 {
