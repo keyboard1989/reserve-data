@@ -148,9 +148,13 @@ func CreateStat(config *configuration.Config, kyberENV string, bc *blockchain.Bl
 		config.LogStorage,
 		config.RateStorage,
 		config.UserStorage,
+		config.FeeSetRateStorage,
 		config.StatFetcherRunner,
 		deployBlock,
 		config.ReserveAddress,
+		config.PricingAddress,
+		deployBlock,
+		config.EtherscanApiKey,
 		config.ThirdPartyReserves,
 	)
 	statFetcher.SetBlockchain(bc)
@@ -160,6 +164,7 @@ func CreateStat(config *configuration.Config, kyberENV string, bc *blockchain.Bl
 		config.LogStorage,
 		config.RateStorage,
 		config.UserStorage,
+		config.FeeSetRateStorage,
 		config.StatControllerRunner,
 		statFetcher,
 		config.Archive,

@@ -1660,6 +1660,19 @@ func (self *HTTPServer) GetTargetQtyV2(c *gin.Context) {
 	httputil.ResponseSuccess(c, httputil.WithData(data))
 }
 
+func (self *HTTPServer) GetFeeSetRateByDay(c *gin.Context) {
+	fromTime, toTime, ok := self.ValidateTimeInput(c)
+	if !ok {
+		return
+	}
+	data, err := self.stat.GetFeeSetRateByDay(fromTime, toTime)
+	if err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+		return
+	}
+	httputil.ResponseSuccess(c, httputil.WithData(data))
+}
+
 func (self *HTTPServer) Run() {
 	if self.core != nil && self.app != nil {
 		self.r.GET("/prices-version", self.AllPricesVersion)
@@ -1757,6 +1770,7 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-reserve-volume", self.GetReserveVolume)
 		self.r.GET("/get-user-list", self.GetUserList)
 		self.r.GET("/get-token-heatmap", self.GetTokenHeatmap)
+		self.r.GET("/get-fee-setrate", self.GetFeeSetRateByDay)
 	}
 
 	self.r.Run(self.host)
