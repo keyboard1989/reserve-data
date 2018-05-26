@@ -28,7 +28,7 @@
       "minimalRecordResolution": "1000000000000000",
       "maxPerBlockImbalance": "1210345280560014819328",
       "maxTotalImbalance": "1784654116185741721600",
-      "internal use": true,
+      "internal use": false,
       "listed": true
     },
     "SNT": {
