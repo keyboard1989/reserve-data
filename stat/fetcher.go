@@ -2,6 +2,7 @@ package stat
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"errors"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/stat/util"
@@ -152,7 +152,11 @@ func (self *Fetcher) FetchTxs(client http.Client) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
@@ -173,7 +177,7 @@ func (self *Fetcher) FetchTxs(client http.Client) error {
 			if self.isPricingMethod(transaction.Input) {
 				blockNumber = transaction.BlockNumber
 				sameBlockBucket = append(sameBlockBucket, transaction)
-				if index < numberEle - 1 && setRateTxsInfo[index + 1].BlockNumber == blockNumber {
+				if index < numberEle-1 && setRateTxsInfo[index+1].BlockNumber == blockNumber {
 					continue
 				}
 				err = self.feeSetRateStorage.StoreTransaction(sameBlockBucket)
@@ -186,9 +190,9 @@ func (self *Fetcher) FetchTxs(client http.Client) error {
 		}
 		log.Println("fetch and store pricing's txs done!")
 		if toBlock == self.currentBlock {
-			self.blockNumMarker = toBlock	
+			self.blockNumMarker = toBlock
 		} else {
-			self.blockNumMarker = toBlock + 1			
+			self.blockNumMarker = toBlock + 1
 		}
 	}
 	return nil
@@ -216,7 +220,7 @@ func (self *Fetcher) GetToBlock() uint64 {
 	if currentBlock == 0 {
 		return 0
 	}
-	if currentBlock <= blockNumMarker + BLOCK_RANGE {
+	if currentBlock <= blockNumMarker+BLOCK_RANGE {
 		self.sleepTime = 5 * time.Minute
 		return currentBlock
 	}
