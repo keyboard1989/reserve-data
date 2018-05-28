@@ -11,7 +11,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/KyberNetwork/reserve-data/boltutil"
 	"github.com/KyberNetwork/reserve-data/common"
@@ -37,9 +36,7 @@ const (
 	EXCHANGE_STATUS                    string = "exchange_status"
 	EXCHANGE_NOTIFICATIONS             string = "exchange_notifications"
 	MAX_NUMBER_VERSION                 int    = 1000
-	MAX_GET_RATES_PERIOD               uint64 = 86400000 //1 days in milisec
-	UI64DAY                            uint64 = uint64(time.Hour * 24)
-	EXPORT_BATCH                       int    = 1
+	MAX_GET_RATES_PERIOD               uint64 = 86400000      //1 days in milisec
 	AUTH_DATA_EXPIRED_DURATION         uint64 = 10 * 86400000 //10day in milisec
 	STABLE_TOKEN_PARAMS_BUCKET         string = "stable-token-params"
 	PENDING_STABLE_TOKEN_PARAMS_BUCKET string = "pending-stable-token-params"
