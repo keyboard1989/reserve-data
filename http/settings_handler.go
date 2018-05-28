@@ -3,25 +3,13 @@ package http
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/http/httputil"
 	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/gin-gonic/gin"
 )
-
-func returnError(c *gin.Context, err error) {
-
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": false,
-			"reason":  err.Error(),
-		},
-	)
-	return
-}
 
 func removeTokenFromList(tokens []common.Token, t common.Token) ([]common.Token, error) {
 	if len(tokens) == 0 {
@@ -70,38 +58,33 @@ func (self *HTTPServer) UpdateToken(c *gin.Context) {
 	maxti := postForm.Get("maxTotalImbalance")
 	decimalint64, err := strconv.ParseInt(decimal, 10, 64)
 	if err != nil {
-		returnError(c, err)
+		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
 	activeBool, err := strconv.ParseBool(active)
 	if err != nil {
-		returnError(c, err)
+		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
 	internalBool, err := strconv.ParseBool(internal)
 	if err != nil {
-		returnError(c, err)
+		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
 	token := common.NewToken(ID, name, addrs, decimalint64, activeBool, internalBool, minrr, maxpbi, maxti)
 	//We only concern reloading indices if the token is Internal
 	if internalBool {
 		if err = self.reloadTokenIndices(token, activeBool); err != nil {
-			returnError(c, err)
+			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
 		}
 	}
 	err = settings.UpdateToken(token)
 	if err != nil {
-		returnError(c, err)
+		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success": true,
-		},
-	)
+	httputil.ResponseSuccess(c)
 }
 
 func (self *HTTPServer) TokenSettings(c *gin.Context) {
@@ -111,15 +94,9 @@ func (self *HTTPServer) TokenSettings(c *gin.Context) {
 	}
 	data, err := settings.GetAllTokens()
 	if err != nil {
-		returnError(c, err)
+		httputil.ResponseFailure(c, httputil.WithError(err))
+		return
 	}
-	c.JSON(
-		http.StatusOK,
-		gin.H{
-			"success":   true,
-			"timestamp": common.GetTimepoint(),
-			"data":      data,
-		},
-	)
+	httputil.ResponseSuccess(c, httputil.WithData(data))
 	return
 }
