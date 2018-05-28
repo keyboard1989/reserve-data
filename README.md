@@ -1333,47 +1333,43 @@ body: json encoding data of pwis equation
 ```
 eg:
 ```
-## set-pwis-equation
 curl -X "POST" "http://localhost:8000/v2/set-pwis-equation" \
-     -H 'Content-Type: application/json; charset=utf-8' \
-     -d $'[
-  {
-    "EOS": {
-      "bid": {
-        "b": "500",
-        "min_min_spread": "0",
-        "c": "0",
-        "a": "750",
-        "price_multiply_factor": "0"
-      },
-      "ask": {
-        "b": "600",
-        "min_min_spread": "0",
-        "c": "0",
-        "a": "800",
-        "price_multiply_factor": "0"
-      }
+     -H 'Content-Type: application/x-www-form-urlencoded; charset=utf-8' \
+     --data-urlencode "data={
+  \"EOS\": {
+    \"bid\": {
+      \"a\": 750,
+      \"b\": 500,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    },
+    \"ask\": {
+      \"a\": 800,
+      \"b\": 600,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
     }
   },
-  {
-    "ETH": {
-      "bid": {
-        "b": "500",
-        "min_min_spread": "0",
-        "c": "0",
-        "a": "750",
-        "price_multiply_factor": "0"
-      },
-      "ask": {
-        "b": "600",
-        "min_min_spread": "0",
-        "c": "0",
-        "a": "800",
-        "price_multiply_factor": "0"
-      }
+  \"ETH\": {
+    \"bid\": {
+      \"a\": 750,
+      \"b\": 500,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    },
+    \"ask\": {
+      \"a\": 800,
+      \"b\": 600,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
     }
   }
-]'
+}"
+
 ```
 response
 ```

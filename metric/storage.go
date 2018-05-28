@@ -35,4 +35,6 @@ type MetricStorage interface {
 	RemovePendingTargetQtyV2() error
 	GetPendingTargetQtyV2() (map[string]interface{}, error)
 	GetTargetQtyV2() (map[string]interface{}, error)
+
+	StorePendingPWIEquationV2([]byte) error
 }

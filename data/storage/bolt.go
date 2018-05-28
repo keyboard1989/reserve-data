@@ -47,9 +47,12 @@ const (
 
 	// PENDING_TARGET_QUANTITY_V2 constant for bucket name for pending target quantity v2
 	PENDING_TARGET_QUANTITY_V2 string = "pending_target_qty_v2"
-
 	// TARGET_QUANTITY_V2 constant for bucet name for target quantity v2
 	TARGET_QUANTITY_V2 string = "target_quantity_v2"
+
+	// PENDING_PWI_EQUATION_V2 is the bucket name for storing pending
+	// pwi equation for later approval.
+	PENDING_PWI_EQUATION_V2 string = "pending_pwi_equation_v2"
 )
 
 // BoltStorage storage object
@@ -154,6 +157,11 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		if _, err := tx.CreateBucketIfNotExists([]byte(TARGET_QUANTITY_V2)); err != nil {
 			return err
 		}
+
+		if _, err := tx.CreateBucketIfNotExists([]byte(PENDING_PWI_EQUATION_V2)); err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -1506,4 +1514,19 @@ func convertTargetQtyV1toV2(target metric.TokenTargetQty) map[string]interface{}
 		}
 	}
 	return result
+}
+
+// StorePendingPWIEquationV2 stores the given PWIs equation data for later approval.
+func (self *BoltStorage) StorePendingPWIEquationV2(data []byte) error {
+	timepoint := common.GetTimepoint()
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION_V2))
+		c := b.Cursor()
+		_, v := c.First()
+		if v != nil {
+			return errors.New("pending PWI equation exists")
+		}
+		return b.Put(boltutil.Uint64ToBytes(timepoint), data)
+	})
+	return err
 }

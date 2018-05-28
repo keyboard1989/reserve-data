@@ -103,7 +103,7 @@ func eligible(ups, allowedPerms []Permission) bool {
 func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string, perms []Permission) (url.Values, bool) {
 	err := c.Request.ParseForm()
 	if err != nil {
-		httputil.ResponseFailure(c, httputil.WithReason("Malformed request package"))
+		httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("Malformed request package: %s", err.Error())))
 		return c.Request.Form, false
 	}
 
@@ -1679,8 +1679,10 @@ func (self *HTTPServer) GetFeeSetRateByDay(c *gin.Context) {
 	httputil.ResponseSuccess(c, httputil.WithData(data))
 }
 
-func (self *HTTPServer) Run() {
+func (self *HTTPServer) register() {
 	if self.core != nil && self.app != nil {
+		v2 := self.r.Group("/v2")
+
 		self.r.GET("/prices-version", self.AllPricesVersion)
 		self.r.GET("/prices", self.AllPrices)
 		self.r.GET("/prices/:base/:quote", self.Price)
@@ -1713,7 +1715,6 @@ func (self *HTTPServer) Run() {
 		self.r.POST("/confirmtargetqty", self.ConfirmTargetQty)
 		self.r.POST("/canceltargetqty", self.CancelTargetQty)
 
-		v2 := self.r.Group("/v2")
 		v2.GET("/targetqty", self.GetTargetQtyV2)
 		v2.GET("/pendingtargetqty", self.GetPendingTargetQtyV2)
 		v2.POST("/settargetqty", self.SetTargetQtyV2)
@@ -1735,6 +1736,8 @@ func (self *HTTPServer) Run() {
 		self.r.POST("/set-pwis-equation", self.SetPWIEquation)
 		self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
 		self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
+
+		v2.POST("/set-pwis-equation", self.SetPWIEquationV2)
 
 		self.r.GET("/get-exchange-status", self.GetExchangesStatus)
 		self.r.POST("/update-exchange-status", self.UpdateExchangeStatus)
@@ -1778,7 +1781,10 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-token-heatmap", self.GetTokenHeatmap)
 		self.r.GET("/get-fee-setrate", self.GetFeeSetRateByDay)
 	}
+}
 
+func (self *HTTPServer) Run() {
+	self.register()
 	self.r.Run(self.host)
 }
 
