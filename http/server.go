@@ -1783,7 +1783,7 @@ func (self *HTTPServer) Run() {
 	}
 
 	if err := self.r.Run(self.host); err != nil {
-		log.Printf("Http server run error: %s", err.Error())
+		log.Fatalf("Http server run error: %s", err.Error())
 	}
 }
 

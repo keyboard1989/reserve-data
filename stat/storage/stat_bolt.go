@@ -233,7 +233,7 @@ func (self *BoltStatStorage) SetBurnFeeStat(burnFeeStats map[string]common.BurnF
 
 					dataJSON, _ := json.Marshal(currentData)
 					if err := freqBk.Put(timestamp, dataJSON); err != nil {
-						log.Printf("Put burn fee stat error:%s", err.Error())
+						return err
 					}
 				}
 			}
@@ -272,7 +272,7 @@ func (self *BoltStatStorage) SetVolumeStat(volumeStats map[string]common.VolumeS
 
 					dataJSON, _ := json.Marshal(currentData)
 					if err := freqBk.Put(timestamp, dataJSON); err != nil {
-						log.Printf("Put volume stat error: %s", err.Error())
+						return err
 					}
 				}
 			}
@@ -327,7 +327,7 @@ func (self *BoltStatStorage) SetWalletStat(stats map[string]common.MetricStatsTi
 						return err
 					}
 					if err := walletTzBucket.Put(timestamp, dataJSON); err != nil {
-						log.Printf("Put wallet stat error: %s", err.Error())
+						return err
 					}
 				}
 			}
@@ -431,7 +431,7 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 						return err
 					}
 					if err := countryTzBucket.Put(timestamp, dataJSON); err != nil {
-						log.Printf("Put country stat error: %s", err.Error())
+						return err
 					}
 				}
 			}
@@ -612,7 +612,7 @@ func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTim
 					currentValue := timestampBk.Get([]byte(userAddr))
 					if currentValue != nil {
 						if err := json.Unmarshal(currentValue, &currentUserData); err != nil {
-							log.Printf("Unmarshal current user data error: %s", err.Error())
+							return err
 						}
 					}
 					currentUserData.USDVolume += userData.USDVolume
@@ -622,11 +622,9 @@ func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTim
 					dataJSON, _ := json.Marshal(currentUserData)
 					err = timestampBk.Put([]byte(userAddr), dataJSON)
 					if err != nil {
-						log.Printf("cannot saved user list: %s", err.Error())
 						return err
 					}
 				}
-
 			}
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
@@ -852,7 +850,7 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 					v := tzBucket.Get(timestamp)
 					if v != nil {
 						if err := json.Unmarshal(v, &currentData); err != nil {
-							log.Printf("Unmarshal trade summary error: %s", err.Error())
+							return err
 						}
 					}
 					currentData.ETHVolume += stat.ETHVolume
@@ -871,7 +869,7 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 						return err
 					}
 					if err := tzBucket.Put(timestamp, dataJSON); err != nil {
-						log.Printf("Set trade summary error: %s", err.Error())
+						return err
 					}
 				}
 			}
@@ -899,7 +897,7 @@ func (self *BoltStatStorage) GetTradeSummary(fromTime uint64, toTime uint64, tim
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			summary := common.MetricStats{}
 			if err := json.Unmarshal(v, &summary); err != nil {
-				log.Fatal(err)
+				return err
 			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = summary

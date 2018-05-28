@@ -34,7 +34,7 @@ func (self *TheWorld) getOneForgeGoldUSDInfo() common.OneForgeGoldData {
 	} else {
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.Printf("Close http body error: %s", err.Error())
+				log.Fatalf("Close http body error: %s", err.Error())
 			}
 		}()
 		if resp.StatusCode != 200 {
@@ -81,7 +81,7 @@ func (self *TheWorld) getOneForgeGoldETHInfo() common.OneForgeGoldData {
 	} else {
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.Printf("Response body close error: %s", err.Error())
+				log.Fatalf("Response body close error: %s", err.Error())
 			}
 		}()
 		if resp.StatusCode != 200 {
@@ -128,7 +128,7 @@ func (self *TheWorld) getDGXGoldInfo() common.DGXGoldData {
 	} else {
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.Printf("Close reponse body error: %s", err.Error())
+				log.Fatalf("Close reponse body error: %s", err.Error())
 			}
 		}()
 		if resp.StatusCode != 200 {
@@ -177,7 +177,7 @@ func (self *TheWorld) getGDAXGoldInfo() common.GDAXGoldData {
 	} else {
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.Printf("Response body close error: %s", err.Error())
+				log.Fatalf("Response body close error: %s", err.Error())
 			}
 		}()
 		if resp.StatusCode != 200 {
@@ -226,7 +226,7 @@ func (self *TheWorld) getKrakenGoldInfo() common.KrakenGoldData {
 	} else {
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.Printf("Response body close error: %s", err.Error())
+				log.Fatalf("Response body close error: %s", err.Error())
 			}
 		}()
 		if resp.StatusCode != 200 {
@@ -275,7 +275,7 @@ func (self *TheWorld) getGeminiGoldInfo() common.GeminiGoldData {
 	} else {
 		defer func() {
 			if err := resp.Body.Close(); err != nil {
-				log.Printf("Response body close error: %s", err.Error())
+				log.Fatalf("Response body close error: %s", err.Error())
 			}
 		}()
 		if resp.StatusCode != 200 {

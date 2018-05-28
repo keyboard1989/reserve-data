@@ -103,7 +103,7 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 		}
 	}
 	if err := self.storage.UpdateUserAddresses(email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2}); err != nil {
-		log.Printf("Update user addresses error: %s", err.Error())
+		log.Fatalf("Update user addresses error: %s", err.Error())
 	}
 	// test if pending addresses are correct
 	pendingAddrs, err = self.storage.GetPendingAddresses()
@@ -124,10 +124,10 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 	}
 	// Start receiving cat logs
 	if err := self.storage.UpdateAddressCategory(addr1, cat); err != nil {
-		log.Printf("Update user address category error: %s", err.Error())
+		log.Fatalf("Update user address category error: %s", err.Error())
 	}
 	if err := self.storage.UpdateUserAddresses(email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2}); err != nil {
-		log.Printf("Update user addresses error: %s", err.Error())
+		log.Fatalf("Update user addresses error: %s", err.Error())
 	}
 	// test if pending addresses are correct
 	pendingAddrs, err = self.storage.GetPendingAddresses()
@@ -146,7 +146,7 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 		}
 	}
 	if err := self.storage.UpdateAddressCategory(addr2, cat); err != nil {
-		log.Printf("Update address category error: %s", err.Error())
+		log.Fatalf("Update address category error: %s", err.Error())
 	}
 
 	gotAddresses, gotTimes, err := self.storage.GetAddressesOfUser(email)
@@ -203,10 +203,10 @@ func (self *UserStorageTest) TestUpdateAddressCategoryThenUpdateUserAddresses() 
 	cat := "0x4A"
 
 	if err := self.storage.UpdateAddressCategory(addr1, cat); err != nil {
-		log.Printf("Update address category error: %s", err.Error())
+		log.Fatalf("Update address category error: %s", err.Error())
 	}
 	if err := self.storage.UpdateAddressCategory(addr2, cat); err != nil {
-		log.Printf("Update address category error: %s", err.Error())
+		log.Fatalf("Update address category error: %s", err.Error())
 	}
 	err := self.storage.UpdateUserAddresses(
 		email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2},

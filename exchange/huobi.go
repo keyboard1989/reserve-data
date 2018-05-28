@@ -365,7 +365,7 @@ func (self *Huobi) FetchTradeHistory() {
 				return true
 			})
 			if err := self.storage.StoreTradeHistory(result); err != nil {
-				log.Printf("Store trade history error: %s", err.Error())
+				log.Fatalf("Store trade history error: %s", err.Error())
 			}
 			<-t.C
 		}

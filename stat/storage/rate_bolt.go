@@ -47,6 +47,7 @@ func (self *BoltRateStorage) StoreReserveRates(ethReserveAddr ethereum.Address, 
 		_, prevData := c.Last()
 		if err := json.Unmarshal(prevData, &prevDataJSON); err != nil {
 			log.Printf("Unmarshal reserve rate error: %s", err.Error())
+			return err
 		}
 		if prevDataJSON.BlockNumber < rate.BlockNumber {
 			idByte := boltutil.Uint64ToBytes(timepoint)
