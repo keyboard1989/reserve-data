@@ -2,13 +2,13 @@ package settings
 
 import (
 	"log"
-
-	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
+	"os"
 )
 
 const (
-	TOKEN_DB_FILE_PATH      string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
-	TOKEN_DEFAULT_JSON_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
+	TOKEN_DB_FILE_PATH          string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
+	TOKEN_DEFAULT_JSON_PATH     string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
+	TOKEN_DEFAULT_JSON_SIM_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
 )
 
 type Settings struct {
@@ -17,17 +17,8 @@ type Settings struct {
 
 var setting Settings
 
-func CreateTokenSetting() *TokenSetting {
-	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(TOKEN_DB_FILE_PATH)
-	if err != nil {
-		log.Panicf("Setting Init: Can not create bolt token storage (%s)", err)
-	}
-	tokenSetting := NewTokenSetting(BoltTokenStorage)
-	return tokenSetting
-}
-
 func NewSetting() *Settings {
-	tokensSetting := CreateTokenSetting()
+	tokensSetting := NewTokenSetting()
 	setting = Settings{tokensSetting}
 	allToks, err := GetAllTokens()
 	if err != nil || len(allToks) < 1 {
@@ -36,8 +27,12 @@ func NewSetting() *Settings {
 		} else {
 			log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
 		}
-		err := LoadTokenFromFile(TOKEN_DEFAULT_JSON_PATH)
-		if err != nil {
+		tokenPath := TOKEN_DEFAULT_JSON_PATH
+		if os.Getenv("KYBER_ENV") == "simulation" {
+			tokenPath = TOKEN_DEFAULT_JSON_SIM_PATH
+		}
+
+		if err = LoadTokenFromFile(tokenPath); err != nil {
 			log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err)
 		}
 	}

@@ -835,7 +835,12 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 }
 
 func (self *HTTPServer) GetAddress(c *gin.Context) {
-	httputil.ResponseSuccess(c, httputil.WithData(self.core.GetAddresses()))
+	addresses, err := self.core.GetAddresses()
+	if err != nil {
+		httputil.ResponseFailure(c, httputil.WithError(err))
+		return
+	}
+	httputil.ResponseSuccess(c, httputil.WithData(addresses))
 	return
 }
 

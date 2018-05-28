@@ -98,7 +98,7 @@ func (self *Blockchain) AddOldBurners(addr ethereum.Address) {
 	self.oldBurners = append(self.oldBurners, addr)
 }
 
-func (self *Blockchain) GetAddresses() *common.Addresses {
+func (self *Blockchain) GetAddresses() (*common.Addresses, error) {
 	exs := map[common.ExchangeID]common.TokenAddresses{}
 	for _, ex := range common.SupportedExchanges {
 		exs[ex.ID()] = ex.TokenAddresses()
@@ -106,7 +106,7 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 	tokens := map[string]common.TokenInfo{}
 	tokenSettings, err := settings.GetInternalTokens()
 	if err != nil {
-		log.Printf("ERROR: can't read Token Settings")
+		return nil, err
 	}
 	for _, t := range tokenSettings {
 		tokens[t.ID] = common.TokenInfo{
@@ -125,7 +125,7 @@ func (self *Blockchain) GetAddresses() *common.Addresses {
 		NetworkAddress:   self.networkAddr,
 		PricingOperator:  opAddrs[PRICING_OP],
 		DepositOperator:  opAddrs[DEPOSIT_OP],
-	}
+	}, nil
 }
 
 func (self *Blockchain) LoadAndSetTokenIndices(tokenAddrs []ethereum.Address) error {
