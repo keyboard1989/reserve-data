@@ -123,15 +123,14 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
-		//	SupportedTokens:         supportedToken,
-		WrapperAddress:       wrapperAddr,
-		PricingAddress:       pricingAddr,
-		ReserveAddress:       reserveAddr,
-		ChainType:            chainType,
-		AuthEngine:           hmac512auth,
-		EnableAuthentication: authEnbl,
-		Archive:              s3archive,
-		World:                world,
+		WrapperAddress:          wrapperAddr,
+		PricingAddress:          pricingAddr,
+		ReserveAddress:          reserveAddr,
+		ChainType:               chainType,
+		AuthEngine:              hmac512auth,
+		EnableAuthentication:    authEnbl,
+		Archive:                 s3archive,
+		World:                   world,
 	}
 
 	if enableStat {

@@ -46,8 +46,7 @@ func LoadTokenFromFile(filePath string) error {
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(data, &tokens)
-	if err != nil {
+	if err = json.Unmarshal(data, &tokens); err != nil {
 		return err
 	}
 	for id, t := range tokens.Tokens {

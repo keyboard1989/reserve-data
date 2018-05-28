@@ -1014,8 +1014,7 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 			return
 		}
 		token := dataParts[0]
-		_, err = settings.GetInternalTokenByID(token)
-		if err != nil {
+		if _, err = settings.GetInternalTokenByID(token); err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
 		}
