@@ -26,7 +26,6 @@ type HTTPServer struct {
 	core        reserve.ReserveCore
 	stat        reserve.ReserveStats
 	metric      metric.MetricStorage
-	exchanges   []common.Exchange
 	host        string
 	authEnabled bool
 	auth        Authentication
@@ -846,17 +845,9 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	if !ok {
 		return
 	}
-	data := common.AllTradeHistory{
-		Timestamp: common.GetTimestamp(),
-		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
-	}
-	for _, ex := range self.exchanges {
-		history, err := ex.GetTradeHistory(fromTime, toTime)
-		if err != nil {
-			httputil.ResponseFailure(c, httputil.WithError(err))
-			return
-		}
-		data.Data[ex.ID()] = history
+	data, err := self.app.GetTradeHistory(fromTime, toTime)
+	if err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
 	}
 	httputil.ResponseSuccess(c, httputil.WithData(data))
 }
@@ -1781,7 +1772,6 @@ func NewHTTPServer(
 	core reserve.ReserveCore,
 	stat reserve.ReserveStats,
 	metric metric.MetricStorage,
-	exchanges []common.Exchange,
 	host string,
 	enableAuth bool,
 	authEngine Authentication,
@@ -1808,6 +1798,6 @@ func NewHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, core, stat, metric, exchanges, host, enableAuth, authEngine, r,
+		app, core, stat, metric, host, enableAuth, authEngine, r,
 	}
 }
