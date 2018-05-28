@@ -1,7 +1,6 @@
 # Data fetcher for KyberNetwork reserve
 [![Go Report Card](https://goreportcard.com/badge/github.com/KyberNetwork/reserve-data)](https://goreportcard.com/report/github.com/KyberNetwork/reserve-data)
 [![Build Status](https://travis-ci.org/KyberNetwork/reserve-data.svg?branch=develop)](https://travis-ci.org/KyberNetwork/reserve-data)
-[![Coverage Status](https://coveralls.io/repos/github/KyberNetwork/reserve-data/badge.svg?branch=develop)](https://coveralls.io/github/KyberNetwork/reserve-data?branch=develop)
 
 ## Compile it
 
@@ -1276,6 +1275,115 @@ response:
   ],
   "success": true,
   "timestamp": 1527146481614
+}
+```
+
+
+### set target quantity v2 - (signing required)
+```
+<host>:8000/v2/settargetqty
+POST request
+URL Params:
+  - value (string) : the json enconded string, represent a map (string : interface)
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+### confirm target quantity v2- (signing required)
+```
+<host>:8000/v2/confirmtargetqty
+POST request
+URL Params:
+  - value (string) : the json enconded string, represent a map (string : interface), must be equal to current pending.
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+
+### cancel set target quantity v2- (signing required)
+```
+<host>:8000/v2/canceltargetqty
+POST request
+URL Params:
+  nil
+```
+
+
+response:
+```
+on success:
+{"success":true}
+on failure:
+{"success":false,
+ "reason":<error>}
+```
+### Get pending target quantity - (signing required) return the current pending target quantity 
+```
+<host>:8000/v2/pendingtargetqty
+GET request
+params:
+  - nonce (uint64) : the nonce to conform to signing requirement
+```
+example:
+```
+curl -x GET \
+  http://localhost:8000/v2/pendingtargetqty?nonce=111111
+```
+ 
+response:
+```
+{
+  "data": {
+     "OMG" : {
+        "TotalTarget": 1500,
+        "ReserveTarget": 1005,
+        "RebalanceThreshold": 0.33,
+        "TransferThreshold": 0.2
+    }
+  },
+  "success": true
+}
+```
+
+### Get target quantity - (signing required) return the current confirmed target quantity 
+```
+<host>:8000/v2/targetqty
+GET request
+params:
+  - nonce (uint64) : the nonce to conform to signing requirement
+```
+example:
+```
+curl -x GET \
+  http://localhost:8000/v2/targetqty?nonce=111111
+```
+ 
+response:
+```
+{
+  "data": {
+    "OMG" : {
+      "TotalTarget": 1500,
+      "ReserveTarget": 1005,
+      "RebalanceThreshold": 0.33,
+      "TransferThreshold": 0.2
+    }
+  },
+  "success": true
 }
 ```
 

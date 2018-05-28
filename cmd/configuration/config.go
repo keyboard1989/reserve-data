@@ -27,17 +27,18 @@ import (
 )
 
 type SettingPaths struct {
-	settingPath         string
-	feePath             string
-	dataStoragePath     string
-	analyticStoragePath string
-	statStoragePath     string
-	logStoragePath      string
-	rateStoragePath     string
-	userStoragePath     string
-	secretPath          string
-	endPoint            string
-	bkendpoints         []string
+	settingPath           string
+	feePath               string
+	dataStoragePath       string
+	analyticStoragePath   string
+	statStoragePath       string
+	logStoragePath        string
+	rateStoragePath       string
+	userStoragePath       string
+	feeSetRateStoragePath string
+	secretPath            string
+	endPoint              string
+	bkendpoints           []string
 }
 
 type Config struct {
@@ -49,6 +50,7 @@ type Config struct {
 	UserStorage          stat.UserStorage
 	LogStorage           stat.LogStorage
 	RateStorage          stat.RateStorage
+	FeeSetRateStorage    stat.FeeSetRateStorage
 	FetcherStorage       fetcher.Storage
 	FetcherGlobalStorage fetcher.GlobalStorage
 	MetricStorage        metric.MetricStorage
@@ -78,7 +80,11 @@ type Config struct {
 	FeeBurnerAddress   ethereum.Address
 	NetworkAddress     ethereum.Address
 	WhitelistAddress   ethereum.Address
+	SetRateAddress     ethereum.Address
 	ThirdPartyReserves []ethereum.Address
+
+	// etherscan api key (optional)
+	EtherscanApiKey string
 
 	ChainType string
 }
@@ -119,6 +125,11 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 		panic(err)
 	}
 
+	feeSetRateStorage, err := statstorage.NewBoltFeeSetRateStorage(settingPath.feeSetRateStoragePath)
+	if err != nil {
+		panic(err)
+	}
+
 	var statFetcherRunner stat.FetcherRunner
 	var statControllerRunner statpruner.ControllerRunner
 	if os.Getenv("KYBER_ENV") == "simulation" {
@@ -136,17 +147,21 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 
 	}
 
+	apiKey := GetEtherscanAPIKey(settingPath.secretPath)
+
 	self.StatStorage = statStorage
 	self.AnalyticStorage = analyticStorage
 	self.UserStorage = userStorage
 	self.LogStorage = logStorage
 	self.RateStorage = rateStorage
 	self.StatControllerRunner = statControllerRunner
+	self.FeeSetRateStorage = feeSetRateStorage
 	self.StatFetcherRunner = statFetcherRunner
 	self.ThirdPartyReserves = thirdpartyReserves
 	self.FeeBurnerAddress = burnerAddr
 	self.NetworkAddress = networkAddr
 	self.WhitelistAddress = whitelistAddr
+	self.EtherscanApiKey = apiKey
 }
 
 func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common.AddressConfig, kyberENV string) {
@@ -234,6 +249,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_fee_setrate.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"https://semi-node.kyber.network",
 		[]string{
@@ -253,6 +269,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_fee_setrate.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"https://kovan.infura.io",
 		[]string{},
@@ -266,6 +283,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_fee_setrate.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
 		"https://mainnet.infura.io",
 		[]string{
@@ -284,6 +302,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_fee_setrate.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
 		"https://mainnet.infura.io",
 		[]string{
@@ -303,6 +322,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_fee_setrate.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
 		"https://mainnet.infura.io",
 		[]string{
@@ -322,6 +342,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_fee_setrate.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"http://blockchain:8545",
 		[]string{
@@ -337,6 +358,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_fee_setrate.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"https://ropsten.infura.io",
 		[]string{
@@ -352,6 +374,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_logs.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_rates.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_users.db",
+		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_fee_setrate.db",
 		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
 		"http://blockchain:8545",
 		[]string{

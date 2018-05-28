@@ -902,3 +902,57 @@ func NewFilterQuery(fromBlock, toBlock *big.Int, addresses []ethereum.Address, t
 		Topics:    topics,
 	}
 }
+
+type TransactionInfo struct {
+	BlockNumber string `json:"blockNumber"`
+	TimeStamp   string `json:"timeStamp"`
+	Value       string `json:"value"`
+	GasPrice    string `json:"gasPrice"`
+	GasUsed     string `json:"gasUsed"`
+}
+
+type SetRateTxInfo struct {
+	BlockNumber      string `json:"blockNumber"`
+	TimeStamp        string `json:"timeStamp"`
+	TransactionIndex string `json:"transactionIndex"`
+	Input            string `json:"input"`
+	GasPrice         string `json:"gasPrice"`
+	GasUsed          string `json:"gasUsed"`
+}
+
+type StoreSetRateTx struct {
+	TimeStamp uint64 `json:"timeStamp"`
+	GasPrice  uint64 `json:"gasPrice"`
+	GasUsed   uint64 `json:"gasUsed"`
+}
+
+func GetStoreTx(tx SetRateTxInfo) (StoreSetRateTx, error) {
+	var storeTx StoreSetRateTx
+	gasPriceUint, err := strconv.ParseUint(tx.GasPrice, 10, 64)
+	if err != nil {
+		log.Printf("Cant convert %s to uint64", tx.GasPrice)
+		return storeTx, err
+	}
+	gasUsedUint, err := strconv.ParseUint(tx.GasUsed, 10, 64)
+	if err != nil {
+		log.Printf("Cant convert %s to uint64", tx.GasUsed)
+		return storeTx, err
+	}
+	timeStampUint, err := strconv.ParseUint(tx.TimeStamp, 10, 64)
+	if err != nil {
+		log.Printf("Cant convert %s to uint64", tx.TimeStamp)
+		return storeTx, err
+	}
+	storeTx = StoreSetRateTx{
+		TimeStamp: timeStampUint,
+		GasPrice:  gasPriceUint,
+		GasUsed:   gasUsedUint,
+	}
+	return storeTx, nil
+}
+
+type FeeSetRate struct {
+	TimeStamp     uint64     `json:"timeStamp"`
+	GasUsed       *big.Float `json:"gasUsed"`
+	TotalGasSpent *big.Float `json:"totalGasSpent"`
+}
