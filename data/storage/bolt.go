@@ -50,6 +50,8 @@ const (
 	// PENDING_PWI_EQUATION_V2 is the bucket name for storing pending
 	// pwi equation for later approval.
 	PENDING_PWI_EQUATION_V2 string = "pending_pwi_equation_v2"
+	// PWI_EQUATION_V2 stores the PWI equations after confirmed.
+	PWI_EQUATION_V2 string = "pwi_equation_v2"
 )
 
 // BoltStorage storage object
@@ -156,6 +158,9 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		}
 
 		if _, err := tx.CreateBucketIfNotExists([]byte(PENDING_PWI_EQUATION_V2)); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists([]byte(PWI_EQUATION_V2)); err != nil {
 			return err
 		}
 
@@ -1540,9 +1545,47 @@ func (self *BoltStorage) GetPendingPWIEquationV2() (metric.PWIEquationRequestV2,
 		c := b.Cursor()
 		_, v := c.First()
 		if v == nil {
-			return errors.New("There no pending equation")
+			return errors.New("There is no pending equation")
 		}
 		return json.Unmarshal(v, &result)
 	})
 	return result, err
+}
+
+// RemovePendingPWIEquationV2 deletes the pending equation request.
+func (self *BoltStorage) RemovePendingPWIEquationV2() error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION_V2))
+		c := b.Cursor()
+		k, _ := c.First()
+		if k == nil {
+			return errors.New("There is no pending data")
+		}
+		return b.Delete(k)
+	})
+	return err
+}
+
+// StorePWIEquationV2 moved the pending equation request to
+// PWI_EQUATION_V2 bucket and remove it from pending bucket if the
+// given data matched what stored.
+func (self *BoltStorage) StorePWIEquationV2(data string) error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION_V2))
+		c := b.Cursor()
+		k, v := c.First()
+		if v == nil {
+			return errors.New("There is no pending equation")
+		}
+		if !bytes.Equal(v, []byte(data)) {
+			return errors.New("Confirm data does not match pending data")
+		}
+		id := boltutil.Uint64ToBytes(common.GetTimepoint())
+		if uErr := tx.Bucket([]byte(PWI_EQUATION_V2)).Put(id, v); uErr != nil {
+			return uErr
+		}
+		// remove pending PWI equations request
+		return b.Delete(k)
+	})
+	return err
 }

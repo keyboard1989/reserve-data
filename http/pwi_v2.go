@@ -51,3 +51,18 @@ func (self *HTTPServer) GetPendingPWIEquationV2(c *gin.Context) {
 	}
 	httputil.ResponseSuccess(c, httputil.WithData(data))
 }
+
+// ConfirmPWIEquationV2 accepts the pending PWI equations and remove it from pending bucket.
+func (self *HTTPServer) ConfirmPWIEquationV2(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	postData := postForm.Get("data")
+	err := self.metric.StorePWIEquationV2(postData)
+	if err != nil {
+		httputil.ResponseFailure(c, httputil.WithError(err))
+		return
+	}
+	httputil.ResponseSuccess(c)
+}

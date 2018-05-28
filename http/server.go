@@ -1739,6 +1739,7 @@ func (self *HTTPServer) register() {
 
 		v2.POST("/set-pwis-equation", self.SetPWIEquationV2)
 		v2.GET("/pending-pwis-equation", self.GetPendingPWIEquationV2)
+		v2.POST("/confirm-pwis-equation", self.ConfirmPWIEquationV2)
 
 		self.r.GET("/get-exchange-status", self.GetExchangesStatus)
 		self.r.POST("/update-exchange-status", self.UpdateExchangeStatus)
