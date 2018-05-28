@@ -40,7 +40,6 @@ func GetAddressConfigFromFile(path string) (AddressConfig, error) {
 }
 
 type Addresses struct {
-	Tokens               map[string]TokenInfo          `json:"tokens"`
 	Exchanges            map[ExchangeID]TokenAddresses `json:"exchanges"`
 	WrapperAddress       ethereum.Address              `json:"wrapper"`
 	PricingAddress       ethereum.Address              `json:"pricing"`
