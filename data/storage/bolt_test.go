@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/data/testutil"
 	"github.com/KyberNetwork/reserve-data/metric"
 )
 
@@ -55,6 +56,22 @@ func TestHasPendingDepositBoltStorage(t *testing.T) {
 	if out != true {
 		t.Fatalf("Expected ram storage to return true when there is pending deposit")
 	}
+
+	if err = os.RemoveAll(tmpDir); err != nil {
+		t.Error(err)
+	}
+}
+
+func TestGlobalStorageBoltImplementation(t *testing.T) {
+	tmpDir, err := ioutil.TempDir("", "test_bolt_storage")
+	if err != nil {
+		t.Fatal(err)
+	}
+	storage, err := NewBoltStorage(filepath.Join(tmpDir, "test_bolt.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	testutil.NewGlobalStorageTestSuite(t, storage, storage).Run()
 
 	if err = os.RemoveAll(tmpDir); err != nil {
 		t.Error(err)
