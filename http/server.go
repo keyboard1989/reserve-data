@@ -1241,9 +1241,9 @@ func (self *HTTPServer) GetWalletStats(c *gin.Context) {
 		toTime = common.GetTimepoint()
 	}
 	walletAddr := ethereum.HexToAddress(c.Query("walletAddr"))
-	cap := big.NewInt(0)
-	cap.Exp(big.NewInt(2), big.NewInt(128), big.NewInt(0))
-	if walletAddr.Big().Cmp(cap) < 0 {
+	wcap := big.NewInt(0)
+	wcap.Exp(big.NewInt(2), big.NewInt(128), big.NewInt(0))
+	if walletAddr.Big().Cmp(wcap) < 0 {
 		httputil.ResponseFailure(c, httputil.WithReason("Wallet address is invalid, its integer form must be larger than 2^128"))
 		return
 	}
