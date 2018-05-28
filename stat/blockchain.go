@@ -2,8 +2,8 @@ package stat
 
 import (
 	"github.com/KyberNetwork/reserve-data/common"
-	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type Blockchain interface {
