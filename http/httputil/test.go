@@ -16,14 +16,14 @@ func expectStatus(t *testing.T, resp *httptest.ResponseRecorder, success bool) {
 	t.Helper()
 
 	if resp.Code != http.StatusOK {
-		t.Errorf("wrong return code, expected: %d, got: %d", http.StatusOK, resp.Code)
+		t.Fatalf("wrong return code, expected: %d, got: %d", http.StatusOK, resp.Code)
 	}
 	decoded := &responseBody{}
 	if err := json.NewDecoder(resp.Body).Decode(decoded); err != nil {
 		t.Fatal(err)
 	}
 	if decoded.Success != success {
-		t.Fatalf("wrong success status, expected: %t, got: %t", success, decoded.Success)
+		t.Errorf("wrong success status, expected: %t, got: %t", success, decoded.Success)
 	}
 }
 

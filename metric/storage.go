@@ -37,4 +37,5 @@ type MetricStorage interface {
 	GetTargetQtyV2() (map[string]interface{}, error)
 
 	StorePendingPWIEquationV2([]byte) error
+	GetPendingPWIEquationV2() (PWIEquationRequestV2, error)
 }

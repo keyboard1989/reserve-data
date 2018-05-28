@@ -1,28 +1,40 @@
 package http
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
 	"path/filepath"
 	"testing"
-
-	"net/url"
-
-	"os"
 
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
+	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 )
 
+type assertFn func(t *testing.T, resp *httptest.ResponseRecorder)
+
+type testCase struct {
+	msg             string
+	endpoint        string
+	method          string
+	data            string
+	expectedSuccess bool
+	assert          assertFn
+}
+
 func TestHTTPServerPWIEquationV2(t *testing.T) {
 	const (
-		endpoint = "/v2/set-pwis-equation"
-		testData = `{
+		storePendingPWIEquationV2Endpoint = "/v2/set-pwis-equation"
+		getPendingPWIEquationV2Endpoint   = "/v2/pending-pwis-equation"
+		testData                          = `{
   "EOS": {
     "bid": {
       "a": 750,
@@ -75,50 +87,92 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 		r:           gin.Default()}
 	s.register()
 
-	var tests = []struct {
-		msg             string
-		data            string
-		expectedSuccess bool
-	}{
+	var tests = []testCase{
 		{
 			msg:             "testing invalid post form",
+			endpoint:        storePendingPWIEquationV2Endpoint,
+			method:          http.MethodPost,
 			data:            `{"invalid_key": "invalid_value"}`,
 			expectedSuccess: false,
 		},
 		{
+			msg:             "getting non exists pending equation",
+			endpoint:        getPendingPWIEquationV2Endpoint,
+			method:          http.MethodGet,
+			expectedSuccess: false,
+		},
+		{
 			msg:             "testing valid post form",
+			endpoint:        storePendingPWIEquationV2Endpoint,
+			method:          http.MethodPost,
 			data:            testData,
 			expectedSuccess: true,
 		},
-		// setting PWI equations when pending exists are not allowed
 		{
 			msg:             "testing setting when pending exists",
+			endpoint:        storePendingPWIEquationV2Endpoint,
+			method:          http.MethodPost,
 			data:            testData,
 			expectedSuccess: false,
+		},
+		{
+			msg:      "getting existing pending equation",
+			endpoint: getPendingPWIEquationV2Endpoint,
+			method:   http.MethodGet,
+			assert: func(t *testing.T, resp *httptest.ResponseRecorder) {
+				if resp.Code != http.StatusOK {
+					t.Fatalf("wrong return code, expected: %d, got: %d", http.StatusOK, resp.Code)
+				}
+
+				type responseBody struct {
+					Success bool
+					Data    metric.PWIEquationRequestV2
+				}
+
+				decoded := responseBody{}
+				if err := json.NewDecoder(resp.Body).Decode(&decoded); err != nil {
+					t.Fatal(err)
+				}
+
+				if decoded.Success != true {
+					t.Errorf("wrong success status, expected: %t, got: %t", true, decoded.Success)
+				}
+
+				t.Logf("returned pending PWI equation request: %v", decoded.Data)
+
+				if len(decoded.Data) != 2 {
+					t.Fatalf("wrong number of tokens, expected: %d, got %d", 2, len(decoded.Data))
+				}
+			},
 		},
 	}
 
 	for _, tc := range tests {
 		t.Log(tc.msg)
 
-		req, tErr := http.NewRequest(http.MethodPost, endpoint, nil)
+		req, tErr := http.NewRequest(tc.method, tc.endpoint, nil)
 		if tErr != nil {
 			t.Fatal(tErr)
 		}
 
-		form := url.Values{}
-		form.Add("data", tc.data)
-		req.PostForm = form
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		if tc.data != "" {
+			form := url.Values{}
+			form.Add("data", tc.data)
+			req.PostForm = form
+			req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		}
 
 		resp := httptest.NewRecorder()
 		s.r.ServeHTTP(resp, req)
 
-		if tc.expectedSuccess {
-			httputil.ExpectSuccess(t, resp)
-		} else {
-			httputil.ExpectFailure(t, resp)
+		if tc.assert == nil {
+			if tc.expectedSuccess {
+				tc.assert = httputil.ExpectSuccess
+			} else {
+				tc.assert = httputil.ExpectFailure
+			}
 		}
+		tc.assert(t, resp)
 	}
 
 	if err = os.RemoveAll(tmpDir); err != nil {

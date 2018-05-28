@@ -1530,3 +1530,22 @@ func (self *BoltStorage) StorePendingPWIEquationV2(data []byte) error {
 	})
 	return err
 }
+
+// GetPendingPWIEquationV2 returns the stored PWIEquationRequestV2 in database.
+func (self *BoltStorage) GetPendingPWIEquationV2() (metric.PWIEquationRequestV2, error) {
+	var (
+		err    error
+		result metric.PWIEquationRequestV2
+	)
+
+	err = self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION_V2))
+		c := b.Cursor()
+		_, v := c.First()
+		if v == nil {
+			return errors.New("There no pending equation")
+		}
+		return json.Unmarshal(v, &result)
+	})
+	return result, err
+}
