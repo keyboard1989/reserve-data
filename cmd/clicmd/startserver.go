@@ -2,17 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"regexp"
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data"
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/http"
-	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
 )
 
@@ -24,51 +20,11 @@ const (
 var noAuthEnable bool
 var servPort int = 8000
 var endpointOW string
-var base_url, auth_url string
+var base_url string
 var enableStat bool
 var noCore bool
 var stdoutLog bool
 var dryrun bool
-
-func backupLog(arch archive.Archive) {
-	c := cron.New()
-	err := c.AddFunc("@daily", func() {
-		files, err := ioutil.ReadDir(LOG_PATH)
-		if err != nil {
-			log.Printf("ERROR: Log backup: Can not view log folder")
-		}
-		for _, file := range files {
-			matched, err := regexp.MatchString("core.*\\.log", file.Name())
-			if (!file.IsDir()) && (matched) && (err == nil) {
-				log.Printf("File name is %s", file.Name())
-				err := arch.UploadFile(arch.GetLogBucketName(), REMOTE_LOG_PATH, LOG_PATH+file.Name())
-				if err != nil {
-					log.Printf("ERROR: Log backup: Can not upload Log file %s", err)
-				} else {
-					var err error
-					var ok bool
-					if file.Name() != "core.log" {
-						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), REMOTE_LOG_PATH, LOG_PATH+file.Name())
-						if !ok || (err != nil) {
-							log.Printf("ERROR: Log backup: File intergrity is corrupted")
-						}
-						err = os.Remove(LOG_PATH + file.Name())
-					}
-					if err != nil {
-						log.Printf("ERROR: Log backup: Cannot remove local log file %s", err)
-					} else {
-						log.Printf("Log backup: backup file %s succesfully", file.Name())
-					}
-				}
-			}
-		}
-		return
-	})
-	if err != nil {
-		log.Printf("Cannot set cron rolling log: %s", err.Error())
-	}
-	c.Start()
-}
 
 func serverStart(cmd *cobra.Command, args []string) {
 	numCPU := runtime.NumCPU()
@@ -86,6 +42,8 @@ func serverStart(cmd *cobra.Command, args []string) {
 	}
 	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
+	backupLog(config.Archive)
+
 	var rData reserve.ReserveData
 	var rCore reserve.ReserveCore
 	var rStat reserve.ReserveStats

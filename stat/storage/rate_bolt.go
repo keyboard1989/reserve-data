@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/KyberNetwork/reserve-data/boltutil"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/boltdb/bolt"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -48,7 +49,7 @@ func (self *BoltRateStorage) StoreReserveRates(ethReserveAddr ethereum.Address, 
 			log.Printf("Unmarshal reserve rate error: %s", err.Error())
 		}
 		if prevDataJSON.BlockNumber < rate.BlockNumber {
-			idByte := uint64ToBytes(timepoint)
+			idByte := boltutil.Uint64ToBytes(timepoint)
 			dataJson, err := json.Marshal(rate)
 			if err != nil {
 				return err
@@ -79,8 +80,8 @@ func (self *BoltRateStorage) GetReserveRates(fromTime, toTime uint64, ethReserve
 			return err
 		}
 		c := b.Cursor()
-		min := uint64ToBytes(fromTime)
-		max := uint64ToBytes(toTime)
+		min := boltutil.Uint64ToBytes(fromTime)
+		max := boltutil.Uint64ToBytes(toTime)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			rates := common.ReserveRates{}
 			err := json.Unmarshal(v, &rates)

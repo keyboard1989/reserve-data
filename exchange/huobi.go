@@ -376,17 +376,6 @@ func (self *Huobi) GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTrad
 	return self.storage.GetTradeHistory(fromTime, toTime)
 }
 
-func getDepositInfo(id common.ActivityID) (string, float64, string) {
-	idParts := strings.Split(id.EID, "|")
-	txID := idParts[0]
-	sentAmount, err := strconv.ParseFloat(idParts[2], 64)
-	if err != nil {
-		log.Println("The ID is malform, cannot get Amount from EID")
-	}
-	tokenID := idParts[1]
-	return txID, sentAmount, tokenID
-}
-
 func (self *Huobi) Send2ndTransaction(amount float64, token common.Token, exchangeAddress ethereum.Address) (*types.Transaction, error) {
 	IAmount := common.FloatToBigInt(amount, token.Decimal)
 	// Check balance, removed from huobi's blockchain object.

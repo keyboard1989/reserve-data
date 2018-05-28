@@ -2,7 +2,6 @@ package huobi
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -46,16 +45,6 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	})
 	storage := &BoltStorage{sync.RWMutex{}, db}
 	return storage, nil
-}
-
-func uint64ToBytes(u uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, u)
-	return b
-}
-
-func bytesToUint64(b []byte) uint64 {
-	return binary.BigEndian.Uint64(b)
 }
 
 func (self *BoltStorage) GetPendingIntermediateTXs() (map[common.ActivityID]common.TXEntry, error) {
