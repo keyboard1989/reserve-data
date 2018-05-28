@@ -10,12 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/blockchain"
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data"
+	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/metric"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	raven "github.com/getsentry/raven-go"
@@ -1155,8 +1154,8 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 		// reserve, _ := strconv.ParseFloat(dataParts[2], 64)
 		// rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
 		// transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
-		_, err = settings.GetInternalTokenByID(token)
-		if err != nil {
+
+		if _, err = settings.GetInternalTokenByID(token); err != nil {
 			c.JSON(
 				http.StatusOK,
 				gin.H{"success": false, "reason": err.Error()},

@@ -15,7 +15,7 @@ type Token struct {
 }
 
 // NewToken creates a new Token.
-func NewToken(id, name, address string, decimal int64, active bool, internal bool, miminalrr, maxti, maxpbi string) Token {
+func NewToken(id, name, address string, decimal int64, active, internal bool, miminalrr, maxti, maxpbi string) Token {
 	return Token{
 		ID:                      id,
 		Address:                 address,

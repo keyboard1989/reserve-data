@@ -118,10 +118,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		panic(err)
 	}
 	s3archive := archive.NewS3Archive(awsConf)
-	//supportedToken, err := settings.GetInternalTokens()
-	if err != nil {
-		log.Panicf("Can't get internal tokens (%s)", err)
-	}
+
 	config := &Config{
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,

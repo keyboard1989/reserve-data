@@ -1218,15 +1218,15 @@ response:
 ```
 ### Update Token setting - (signing required) Update a token's setting for listing/ delisting and other purposes. 
 ```
-<host>:8000//update-token
+<host>:8000/update-token
 POST request
 params:
  - address (string): the token's smart contract address (required)
- -name (string) : the token's display name. (required)
- -ID (string) :the token's ID. (required)
- -decimal (int64) : decimal number of the token (required)
- -internal (bool) : set to True if the token is KNSupported (required)
- -listed (bool) : set to True if the token is active (required)
+ - name (string) : the token's display name. (required)
+ - ID (string) :the token's ID. (required)
+ - decimal (int64) : decimal number of the token (required)
+ - internal (bool) : set to True if the token is KNSupported (required)
+ - listed (bool) : set to True if the token is active (required)
  - minimalRecordResolution (string) : the minimal record solution in string form (optional)
  - maxPerBlockImbalance (string) : the maximum imbalance per block in string form (optional)
  - maxTotalImbalance (string) : the maximum total imblance in string form (optional)

@@ -9,10 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
+	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat/statpruner"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )

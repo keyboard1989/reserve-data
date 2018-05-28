@@ -8,9 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/satori/go.uuid"
 )

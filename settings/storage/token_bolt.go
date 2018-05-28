@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	ethereum "github.com/ethereum/go-ethereum/common"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/boltdb/bolt"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -23,7 +22,7 @@ func isActive(t common.Token) bool {
 	return t.Active
 }
 
-func isToken(t common.Token) bool {
+func isToken(_ common.Token) bool {
 	return true
 }
 
@@ -47,13 +46,11 @@ func NewBoltTokenStorage(dbPath string) (*BoltTokenStorage, error) {
 		panic(err)
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		_, err = tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ID))
-		if err != nil {
-			return err
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ID)); err != nil {
+			return uErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ADDRESS))
-		if err != nil {
-			return err
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ADDRESS)); err != nil {
+			return uErr
 		}
 		return nil
 	})

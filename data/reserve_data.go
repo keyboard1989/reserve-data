@@ -6,11 +6,10 @@ import (
 	"os"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/data/datapruner"
+	"github.com/KyberNetwork/reserve-data/settings"
 )
 
 type ReserveData struct {
@@ -97,8 +96,9 @@ func (self ReserveData) GetAuthData(timepoint uint64) (common.AuthDataResponse, 
 		result.Data.ReserveBalances = map[string]common.BalanceResponse{}
 		for tokenID, balance := range data.ReserveBalances {
 			token, err := settings.GetInternalTokenByID(tokenID)
+			//If the token is invalid, this must Panic
 			if err != nil {
-				log.Panicf("Must get Internal token failed: %s", err)
+				return result, fmt.Errorf("Can't get Internal token %s: (%s)", tokenID, err)
 			}
 			result.Data.ReserveBalances[tokenID] = balance.ToBalanceResponse(
 				token.Decimal,

@@ -12,9 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat/util"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -522,6 +521,7 @@ func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) []common.T
 		internalTokens, err := settings.GetInternalTokens()
 		if err != nil {
 			log.Printf("ERROR: Can not get internal tokens: %s", err)
+			return tokens
 		}
 		for _, token := range internalTokens {
 			if token.ID != "ETH" {
@@ -532,6 +532,7 @@ func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) []common.T
 		activeTokens, err := settings.GetActiveTokens()
 		if err != nil {
 			log.Printf("ERROR: Can not get internal tokens: %s", err)
+			return tokens
 		}
 		for _, token := range activeTokens {
 			if token.ID != "ETH" {

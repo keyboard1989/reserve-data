@@ -79,7 +79,6 @@ func MustCreateTokenPair(base, quote string) common.TokenPair {
 	pair, err := NewTokenPair(base, quote)
 	if err != nil {
 		panic(err)
-	} else {
-		return pair
 	}
+	return pair
 }

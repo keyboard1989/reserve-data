@@ -7,13 +7,11 @@ import (
 	"math/big"
 	"strings"
 	"sync"
-
 	"time"
-
-	"github.com/KyberNetwork/reserve-data/settings"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -343,6 +341,7 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint6
 		tokens, err := settings.GetInternalTokens()
 		if err != nil {
 			log.Printf("Fetcher ------> Can't get the list of internal Tokens (%s)", err)
+			return result, err
 		} else {
 			for _, token := range tokens {
 				result[token.ID] = common.BalanceEntry{

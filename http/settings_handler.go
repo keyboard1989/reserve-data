@@ -1,13 +1,13 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/gin-gonic/gin"
 )
 
@@ -24,8 +24,8 @@ func returnError(c *gin.Context, err error) {
 }
 
 func removeTokenFromList(tokens []common.Token, t common.Token) ([]common.Token, error) {
-	if len(tokens) < 1 {
-		return tokens, fmt.Errorf("Internal Token list is empty")
+	if len(tokens) == 0 {
+		return tokens, errors.New("Internal Token list is empty")
 	}
 	for i, token := range tokens {
 		if token.ID == t.ID {
@@ -33,10 +33,10 @@ func removeTokenFromList(tokens []common.Token, t common.Token) ([]common.Token,
 			return tokens[:len(tokens)-1], nil
 		}
 	}
-	return tokens, fmt.Errorf("The deactivating token is not in current internal token list")
+	return tokens, fmt.Errorf("The deactivating token %s is not in current internal token list", t.ID)
 }
 
-func (self *HTTPServer) ReloadTokenIndices(newToken common.Token, active bool) error {
+func (self *HTTPServer) reloadTokenIndices(newToken common.Token, active bool) error {
 	tokens, err := settings.GetInternalTokens()
 	if err != nil {
 		return err
@@ -44,8 +44,7 @@ func (self *HTTPServer) ReloadTokenIndices(newToken common.Token, active bool) e
 	if active {
 		tokens = append(tokens, newToken)
 	} else {
-		tokens, err = removeTokenFromList(tokens, newToken)
-		if err != nil {
+		if tokens, err = removeTokenFromList(tokens, newToken); err != nil {
 			return err
 		}
 	}
@@ -87,7 +86,7 @@ func (self *HTTPServer) UpdateToken(c *gin.Context) {
 	token := common.NewToken(ID, name, addrs, decimalint64, activeBool, internalBool, minrr, maxpbi, maxti)
 	//We only concern reloading indices if the token is Internal
 	if internalBool {
-		if err = self.ReloadTokenIndices(token, activeBool); err != nil {
+		if err = self.reloadTokenIndices(token, activeBool); err != nil {
 			returnError(c, err)
 			return
 		}

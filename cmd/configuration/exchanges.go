@@ -6,8 +6,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
@@ -16,6 +14,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
+	"github.com/KyberNetwork/reserve-data/settings"
 )
 
 type ExchangePool struct {

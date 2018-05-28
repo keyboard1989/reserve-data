@@ -10,12 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	huobiblockchain "github.com/KyberNetwork/reserve-data/exchange/huobi/blockchain"
 	huobihttp "github.com/KyberNetwork/reserve-data/exchange/huobi/http"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -555,7 +554,10 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 					}
 				}
 			}
-			tokens, _ := settings.GetInternalTokens()
+			tokens, uErr := settings.GetInternalTokens()
+			if uErr != nil {
+				log.Printf("Error: Can't get list of Internal Token (%s)", uErr)
+			}
 			log.Printf("Deposit doesn't exist. Huobi hasn't recognized the deposit yet or in theory, you have more than %d deposits at the same time.", len(tokens)*2)
 			return "", nil
 		} else if status == "failed" {
