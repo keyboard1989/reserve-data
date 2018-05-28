@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -21,6 +22,18 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	MAX_TIMESPOT   uint64 = 18446744073709551615
+	MAX_DATA_SIZE  int    = 1000000 //1 Megabyte in byte
+	START_TIMEZONE int64  = -11
+	END_TIMEZONE   int64  = 14
+)
+
+var (
+	// errDataSizeExceed is returned when the post data is larger than MAX_DATA_SIZE.
+	errDataSizeExceed = errors.New("the data size must be less than 1 MB")
+)
+
 type HTTPServer struct {
 	app         reserve.ReserveData
 	core        reserve.ReserveCore
@@ -32,13 +45,6 @@ type HTTPServer struct {
 	auth        Authentication
 	r           *gin.Engine
 }
-
-const (
-	MAX_TIMESPOT   uint64 = 18446744073709551615
-	MAX_DATA_SIZE  int    = 1000000 //1 Megabyte in byte
-	START_TIMEZONE int64  = -11
-	END_TIMEZONE   int64  = 14
-)
 
 func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 	timestamp := c.DefaultQuery("timestamp", "")
@@ -1371,7 +1377,7 @@ func (self *HTTPServer) UpdatePriceAnalyticData(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err = self.stat.UpdatePriceAnalyticData(timestamp, value)
@@ -1494,7 +1500,7 @@ func (self *HTTPServer) SetStableTokenParams(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err := self.metric.SetStableTokenParams(value)
@@ -1512,7 +1518,7 @@ func (self *HTTPServer) ConfirmStableTokenParams(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err := self.metric.ConfirmStableTokenParams(value)
@@ -1591,7 +1597,7 @@ func (self *HTTPServer) SetTargetQtyV2(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err := self.metric.StorePendingTargetQtyV2(value)
@@ -1623,7 +1629,7 @@ func (self *HTTPServer) ConfirmTargetQtyV2(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err := self.metric.ConfirmTargetQtyV2(value)

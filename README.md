@@ -1325,6 +1325,63 @@ response:
 }
 ```
 
+### Set pwis equation v2 (signing required)
+```
+<host>:8000/v2/set-pwis-equation
+POST request
+body: json encoding data of pwis equation
+```
+eg:
+```
+## set-pwis-equation
+curl -X "POST" "http://localhost:8000/v2/set-pwis-equation" \
+     -H 'Content-Type: application/json; charset=utf-8' \
+     -d $'[
+  {
+    "EOS": {
+      "bid": {
+        "b": "500",
+        "min_min_spread": "0",
+        "c": "0",
+        "a": "750",
+        "price_multiply_factor": "0"
+      },
+      "ask": {
+        "b": "600",
+        "min_min_spread": "0",
+        "c": "0",
+        "a": "800",
+        "price_multiply_factor": "0"
+      }
+    }
+  },
+  {
+    "ETH": {
+      "bid": {
+        "b": "500",
+        "min_min_spread": "0",
+        "c": "0",
+        "a": "750",
+        "price_multiply_factor": "0"
+      },
+      "ask": {
+        "b": "600",
+        "min_min_spread": "0",
+        "c": "0",
+        "a": "800",
+        "price_multiply_factor": "0"
+      }
+    }
+  }
+]'
+```
+response
+```
+  {
+    "success": true,
+  }
+```
+
 ## Authentication
 All APIs that are marked with (signing required) must follow authentication mechanism below:
 
