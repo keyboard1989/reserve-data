@@ -303,7 +303,7 @@ func (self ReserveData) ControlAuthDataSize() error {
 			}
 		}
 		if err := os.Remove(fileName); err != nil {
-			log.Printf("Remove file error: %s", err.Error())
+			log.Fatal(err)
 		}
 	}
 }

@@ -92,8 +92,8 @@ func TestExchangeDown(t *testing.T) {
 		log.Fatal(err.Error())
 	}
 	defer func() {
-		if err := os.Remove(tmpDir); err != nil {
-			log.Printf("Remove temp dir error: %s", err.Error())
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Error(err)
 		}
 	}()
 	runner, err := http_runner.NewHttpRunner(http_runner.WithHttpRunnerPort(9000))

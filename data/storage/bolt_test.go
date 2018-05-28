@@ -2,8 +2,10 @@ package storage
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -12,10 +14,11 @@ import (
 
 func TestHasPendingDepositBoltStorage(t *testing.T) {
 	boltFile := "test_bolt.db"
-	if err := os.Remove(boltFile); err != nil {
-		log.Printf("Remove db file error: %s", err.Error())
+	tmpDir, err := ioutil.TempDir("", "pending_deposit")
+	if err != nil {
+		t.Fatal(err)
 	}
-	storage, err := NewBoltStorage(boltFile)
+	storage, err := NewBoltStorage(filepath.Join(tmpDir, boltFile))
 	if err != nil {
 		t.Fatalf("Couldn't init bolt storage %v", err)
 	}
@@ -55,6 +58,10 @@ func TestHasPendingDepositBoltStorage(t *testing.T) {
 	}
 	if out != true {
 		t.Fatalf("Expected ram storage to return true when there is pending deposit")
+	}
+
+	if err = os.RemoveAll(tmpDir); err != nil {
+		t.Error(err)
 	}
 }
 

@@ -357,7 +357,7 @@ func (self ReserveStats) ControllPriceAnalyticSize() error {
 			}
 		}
 		if err := os.Remove(fileName); err != nil {
-			log.Printf("Remove exprired data failed: %s", err.Error())
+			log.Fatal(err)
 		}
 	}
 }

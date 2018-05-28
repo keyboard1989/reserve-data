@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 )
 
 type AnalyticStorageTest struct {
@@ -61,9 +62,27 @@ func (self *AnalyticStorageTest) TestPriceAnalyticData() error {
 	// 	return fmt.Errorf("Expect pruned 1 record, got %d", nRecord)
 	// }
 
-	// //test Backupfile
-	// if err = self.storage.BackupFile(fileName); err != nil {
-	// 	return err
-	// }
+	fileName := "testFile"
+	defer func() {
+		if err := os.Remove(fileName); err != nil {
+			log.Fatal(err)
+		}
+	}()
+	//test ExportExpiredPriceAnalyticData
+	nRecord, err := self.storage.ExportExpiredPriceAnalyticData(31*86400000+1, fileName)
+	if err != nil {
+		return err
+	}
+	if nRecord != 1 {
+		return fmt.Errorf("Expect pruned 1 record, got %d", nRecord)
+	}
+	//test PruneExpiredPriceAnalyticData
+	nRecord, err = self.storage.PruneExpiredPriceAnalyticData(31*86400000 + 1)
+	if err != nil {
+		return err
+	}
+	if nRecord != 1 {
+		return fmt.Errorf("Expect pruned 1 record, got %d", nRecord)
+	}
 	return err
 }

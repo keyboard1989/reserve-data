@@ -2,7 +2,6 @@ package configuration
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -21,7 +20,7 @@ func SetupBoltLogStorageTester(name string) (*stat.LogStorageTest, func() error,
 		return nil, nil, err
 	}
 	tearDownFn := func() error {
-		return os.Remove(tmpDir)
+		return os.RemoveAll(tmpDir)
 	}
 	return stat.NewLogStorageTest(storage), tearDownFn, nil
 }
@@ -34,7 +33,7 @@ func doBoltLogTest(f func(tester *stat.LogStorageTest, t *testing.T), t *testing
 	}
 	defer func() {
 		if err := tearDownFn(); err != nil {
-			log.Printf("Teardown error: %s", err.Error())
+			t.Error(err)
 		}
 	}()
 	f(tester, t)
