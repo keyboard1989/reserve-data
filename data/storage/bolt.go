@@ -165,7 +165,6 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	return storage, nil
 }
 
-
 // reverseSeek returns the most recent time point to the given one in parameter.
 // It returns an error if no there is no record exists before the given time point.
 func reverseSeek(timepoint uint64, c *bolt.Cursor) (uint64, error) {

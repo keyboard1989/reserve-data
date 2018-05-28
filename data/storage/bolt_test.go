@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"io/ioutil"
 	"encoding/json"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
