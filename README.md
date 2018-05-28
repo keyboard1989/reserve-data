@@ -336,7 +336,7 @@ Response:
     "success": true,
     "done": 0,
     "remaining": 0.01,
-    "finished": false,
+    "finished": false
 }
 ```
 Where `hash` is the transaction hash
