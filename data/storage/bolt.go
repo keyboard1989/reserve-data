@@ -1589,3 +1589,21 @@ func (self *BoltStorage) StorePWIEquationV2(data string) error {
 	})
 	return err
 }
+
+// GetPWIEquationV2 returns the current PWI equations from database.
+func (self *BoltStorage) GetPWIEquationV2() (metric.PWIEquationRequestV2, error) {
+	var (
+		err    error
+		result metric.PWIEquationRequestV2
+	)
+	err = self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PWI_EQUATION_V2))
+		c := b.Cursor()
+		_, v := c.Last()
+		if v == nil {
+			return errors.New("There is no equation")
+		}
+		return json.Unmarshal(v, &result)
+	})
+	return result, err
+}

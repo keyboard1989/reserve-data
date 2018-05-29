@@ -1,6 +1,7 @@
 package http
 
 import (
+	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -30,6 +31,41 @@ type testCase struct {
 	assert   assertFn
 }
 
+func newAssertGetEquation(expectedData []byte) assertFn {
+	return func(t *testing.T, resp *httptest.ResponseRecorder) {
+		if resp.Code != http.StatusOK {
+			t.Fatalf("wrong return code, expected: %d, got: %d", http.StatusOK, resp.Code)
+		}
+
+		type responseBody struct {
+			Success bool
+			Data    metric.PWIEquationRequestV2
+		}
+
+		decoded := responseBody{}
+		if aErr := json.NewDecoder(resp.Body).Decode(&decoded); aErr != nil {
+			t.Fatal(aErr)
+		}
+
+		if decoded.Success != true {
+			t.Errorf("wrong success status, expected: %t, got: %t", true, decoded.Success)
+		}
+
+		t.Logf("returned pending PWI equation request: %v", decoded.Data)
+
+		if len(decoded.Data) != 2 {
+			t.Fatalf("wrong number of tokens, expected: %d, got %d", 2, len(decoded.Data))
+		}
+		dataEncoded, err := json.Marshal(decoded.Data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if bytes.Equal(dataEncoded, expectedData) {
+			t.Error("returned data doesn't match")
+		}
+	}
+}
+
 func testHTTPRequest(t *testing.T, tc testCase, handler http.Handler) {
 	t.Helper()
 
@@ -56,6 +92,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 		getPendingPWIEquationV2Endpoint   = "/v2/pending-pwis-equation"
 		confirmPWIEquationV2              = "/v2/confirm-pwis-equation"
 		rejectPWIEquationV2               = "/v2/reject-pwis-equation"
+		getPWIEquationV2                  = "/v2/pwis-equation"
 		testData                          = `{
   "EOS": {
     "bid": {
@@ -188,6 +225,12 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			assert:   httputil.ExpectFailure,
 		},
 		{
+			msg:      "getting non exists equation",
+			endpoint: getPWIEquationV2,
+			method:   http.MethodGet,
+			assert:   httputil.ExpectFailure,
+		},
+		{
 			msg:      "unsupported token",
 			endpoint: storePendingPWIEquationV2Endpoint,
 			method:   http.MethodPost,
@@ -225,31 +268,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			msg:      "getting existing pending equation",
 			endpoint: getPendingPWIEquationV2Endpoint,
 			method:   http.MethodGet,
-			assert: func(t *testing.T, resp *httptest.ResponseRecorder) {
-				if resp.Code != http.StatusOK {
-					t.Fatalf("wrong return code, expected: %d, got: %d", http.StatusOK, resp.Code)
-				}
-
-				type responseBody struct {
-					Success bool
-					Data    metric.PWIEquationRequestV2
-				}
-
-				decoded := responseBody{}
-				if aErr := json.NewDecoder(resp.Body).Decode(&decoded); aErr != nil {
-					t.Fatal(aErr)
-				}
-
-				if decoded.Success != true {
-					t.Errorf("wrong success status, expected: %t, got: %t", true, decoded.Success)
-				}
-
-				t.Logf("returned pending PWI equation request: %v", decoded.Data)
-
-				if len(decoded.Data) != 2 {
-					t.Fatalf("wrong number of tokens, expected: %d, got %d", 2, len(decoded.Data))
-				}
-			},
+			assert:   newAssertGetEquation([]byte(testData)),
 		},
 		{
 			msg:      "confirm with wrong data",
@@ -264,6 +283,12 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			method:   http.MethodPost,
 			data:     testData,
 			assert:   httputil.ExpectSuccess,
+		},
+		{
+			msg:      "getting exists equation",
+			endpoint: getPWIEquationV2,
+			method:   http.MethodGet,
+			assert:   newAssertGetEquation([]byte(testData)),
 		},
 		{
 			msg:      "valid post form",

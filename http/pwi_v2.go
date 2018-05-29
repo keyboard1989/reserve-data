@@ -8,6 +8,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetPWIEquationV2 returns the current PWI equations.
+func (self *HTTPServer) GetPWIEquationV2(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ReadOnlyPermission, RebalancePermission, ConfigurePermission, ConfirmConfPermission})
+	if !ok {
+		return
+	}
+	data, err := self.metric.GetPWIEquationV2()
+	if err != nil {
+		httputil.ResponseFailure(c, httputil.WithError(err))
+		return
+	}
+	httputil.ResponseSuccess(c, httputil.WithData(data))
+}
+
 // SetPWIEquationV2 stores the given PWI equations to pending for later evaluation.
 func (self *HTTPServer) SetPWIEquationV2(c *gin.Context) {
 	postForm, ok := self.Authenticated(c, []string{}, []Permission{ConfigurePermission})

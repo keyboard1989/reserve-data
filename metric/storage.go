@@ -40,4 +40,5 @@ type MetricStorage interface {
 	GetPendingPWIEquationV2() (PWIEquationRequestV2, error)
 	StorePWIEquationV2(data string) error
 	RemovePendingPWIEquationV2() error
+	GetPWIEquationV2() (PWIEquationRequestV2, error)
 }

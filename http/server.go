@@ -1737,8 +1737,9 @@ func (self *HTTPServer) register() {
 		self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
 		self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
 
-		v2.POST("/set-pwis-equation", self.SetPWIEquationV2)
+		v2.GET("/pwis-equation", self.GetPWIEquationV2)
 		v2.GET("/pending-pwis-equation", self.GetPendingPWIEquationV2)
+		v2.POST("/set-pwis-equation", self.SetPWIEquationV2)
 		v2.POST("/confirm-pwis-equation", self.ConfirmPWIEquationV2)
 		v2.POST("/reject-pwis-equation", self.RejectPWIEquationV2)
 
