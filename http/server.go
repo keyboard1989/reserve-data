@@ -847,7 +847,7 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	}
 	data, err := self.app.GetTradeHistory(fromTime, toTime)
 	if err != nil {
-		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
 	httputil.ResponseSuccess(c, httputil.WithData(data))
 }

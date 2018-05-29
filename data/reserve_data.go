@@ -308,7 +308,6 @@ func (self ReserveData) ControlAuthDataSize() error {
 }
 
 func (self ReserveData) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
-	var err error
 	data := common.AllTradeHistory{
 		Timestamp: common.GetTimestamp(),
 		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
@@ -320,7 +319,7 @@ func (self ReserveData) GetTradeHistory(fromTime, toTime uint64) (common.AllTrad
 		}
 		data.Data[ex.ID()] = history
 	}
-	return data, err
+	return data, nil
 }
 
 func (self ReserveData) RunStorageController() error {
