@@ -1,7 +1,6 @@
 package http
 
 import (
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"reflect"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/core"
@@ -33,6 +34,9 @@ type testCase struct {
 
 func newAssertGetEquation(expectedData []byte) assertFn {
 	return func(t *testing.T, resp *httptest.ResponseRecorder) {
+		t.Helper()
+
+		var expected metric.PWIEquationRequestV2
 		if resp.Code != http.StatusOK {
 			t.Fatalf("wrong return code, expected: %d, got: %d", http.StatusOK, resp.Code)
 		}
@@ -56,12 +60,13 @@ func newAssertGetEquation(expectedData []byte) assertFn {
 		if len(decoded.Data) != 2 {
 			t.Fatalf("wrong number of tokens, expected: %d, got %d", 2, len(decoded.Data))
 		}
-		dataEncoded, err := json.Marshal(decoded.Data)
-		if err != nil {
-			t.Fatal(err)
+
+		if aErr := json.Unmarshal(expectedData, &expected); aErr != nil {
+			t.Fatal(aErr)
 		}
-		if bytes.Equal(dataEncoded, expectedData) {
-			t.Error("returned data doesn't match")
+
+		if !reflect.DeepEqual(expected, decoded.Data) {
+			t.Logf("expected data doesn't match: %v, decoded: %v", expected, decoded)
 		}
 	}
 }
@@ -93,19 +98,20 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 		confirmPWIEquationV2              = "/v2/confirm-pwis-equation"
 		rejectPWIEquationV2               = "/v2/reject-pwis-equation"
 		getPWIEquationV2                  = "/v2/pwis-equation"
+		testDataV1                        = `EOS_750_500_0.25|ETH_750_500_0.25`
 		testData                          = `{
   "EOS": {
     "bid": {
       "a": 750,
       "b": 500,
-      "c": 0,
+      "c": 0.25,
       "MinMinSpread": 0,
       "PriceMultiplyFactor": 0
     },
     "ask": {
-      "a": 800,
-      "b": 600,
-      "c": 0,
+      "a": 750,
+      "b": 500,
+      "c": 0.25,
       "MinMinSpread": 0,
       "PriceMultiplyFactor": 0
     }
@@ -114,14 +120,14 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
     "bid": {
       "a": 750,
       "b": 500,
-      "c": 0,
+      "c": 0.25,
       "MinMinSpread": 0,
       "PriceMultiplyFactor": 0
     },
     "ask": {
-      "a": 800,
-      "b": 600,
-      "c": 0,
+      "a": 750,
+      "b": 500,
+      "c": 0.25,
       "MinMinSpread": 0,
       "PriceMultiplyFactor": 0
     }
@@ -229,6 +235,26 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			endpoint: getPWIEquationV2,
 			method:   http.MethodGet,
 			assert:   httputil.ExpectFailure,
+		},
+		{
+			msg:      "setting equation v1 pending",
+			endpoint: "/set-pwis-equation",
+			method:   http.MethodPost,
+			data:     testDataV1,
+			assert:   httputil.ExpectSuccess,
+		},
+		{
+			msg:      "confirm equation v1 pending",
+			endpoint: "/confirm-pwis-equation",
+			method:   http.MethodPost,
+			data:     testDataV1,
+			assert:   httputil.ExpectSuccess,
+		},
+		{
+			msg:      "getting fallback v1 equation",
+			endpoint: getPWIEquationV2,
+			method:   http.MethodGet,
+			assert:   newAssertGetEquation([]byte(testData)),
 		},
 		{
 			msg:      "unsupported token",

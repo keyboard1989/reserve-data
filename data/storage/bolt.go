@@ -1590,6 +1590,53 @@ func (self *BoltStorage) StorePWIEquationV2(data string) error {
 	return err
 }
 
+func convertPWIEquationV1toV2(data string) (metric.PWIEquationRequestV2, error) {
+	result := metric.PWIEquationRequestV2{}
+	for _, dataConfig := range strings.Split(data, "|") {
+		dataParts := strings.Split(dataConfig, "_")
+		if len(dataParts) != 4 {
+			return nil, errors.New("malform data")
+		}
+
+		a, err := strconv.ParseFloat(dataParts[1], 64)
+		if err != nil {
+			return nil, err
+		}
+		b, err := strconv.ParseFloat(dataParts[2], 64)
+		if err != nil {
+			return nil, err
+		}
+		c, err := strconv.ParseFloat(dataParts[3], 64)
+		if err != nil {
+			return nil, err
+		}
+		eq := metric.PWIEquationV2{
+			A: a,
+			B: b,
+			C: c,
+		}
+		result[dataParts[0]] = metric.PWIEquationTokenV2{
+			"bid": eq,
+			"ask": eq,
+		}
+	}
+	return result, nil
+}
+
+func pwiEquationV1toV2(tx *bolt.Tx) (metric.PWIEquationRequestV2, error) {
+	var eqv1 metric.PWIEquation
+	b := tx.Bucket([]byte(PWI_EQUATION))
+	c := b.Cursor()
+	_, v := c.Last()
+	if v == nil {
+		return nil, errors.New("There is no equation")
+	}
+	if err := json.Unmarshal(v, &eqv1); err != nil {
+		return nil, err
+	}
+	return convertPWIEquationV1toV2(eqv1.Data)
+}
+
 // GetPWIEquationV2 returns the current PWI equations from database.
 func (self *BoltStorage) GetPWIEquationV2() (metric.PWIEquationRequestV2, error) {
 	var (
@@ -1597,11 +1644,14 @@ func (self *BoltStorage) GetPWIEquationV2() (metric.PWIEquationRequestV2, error)
 		result metric.PWIEquationRequestV2
 	)
 	err = self.db.View(func(tx *bolt.Tx) error {
+		var vErr error
 		b := tx.Bucket([]byte(PWI_EQUATION_V2))
 		c := b.Cursor()
 		_, v := c.Last()
 		if v == nil {
-			return errors.New("There is no equation")
+			log.Println("there no equation in PWI_EQUATION_V2, getting from PWI_EQUATION")
+			result, vErr = pwiEquationV1toV2(tx)
+			return vErr
 		}
 		return json.Unmarshal(v, &result)
 	})
