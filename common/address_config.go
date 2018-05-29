@@ -24,7 +24,6 @@ type AddressConfig struct {
 	FeeBurner          string              `json:"feeburner"`
 	Whitelist          string              `json:"whitelist"`
 	ThirdPartyReserves []string            `json:"third_party_reserves"`
-	Intermediator      string              `json:"intermediator"`
 	SetRate            string              `json:"setrate"`
 }
 
@@ -40,6 +39,7 @@ func GetAddressConfigFromFile(path string) (AddressConfig, error) {
 }
 
 type Addresses struct {
+	Tokens               map[string]TokenInfo          `json:"tokens"`
 	Exchanges            map[ExchangeID]TokenAddresses `json:"exchanges"`
 	WrapperAddress       ethereum.Address              `json:"wrapper"`
 	PricingAddress       ethereum.Address              `json:"pricing"`

@@ -5,22 +5,19 @@ import (
 	"os"
 )
 
-const (
-	TOKEN_DB_FILE_PATH          string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
-	TOKEN_DEFAULT_JSON_PATH     string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
-	TOKEN_DEFAULT_JSON_SIM_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
-)
-
 type Settings struct {
-	Tokens *TokenSetting
+	Tokens  *TokenSetting
+	Address *AddressSetting
 }
 
 var setting Settings
 
 func NewSetting() *Settings {
 	tokensSetting := NewTokenSetting()
-	setting = Settings{tokensSetting}
+	addressSetting := NewAddressSetting()
 	allToks, err := GetAllTokens()
+	setting := Settings{tokensSetting, addressSetting}
+
 	if err != nil || len(allToks) < 1 {
 		if err != nil {
 			log.Printf("Setting Init: Token DB is faulty (%s), attempt to load token from file", err)
@@ -36,6 +33,24 @@ func NewSetting() *Settings {
 			log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err)
 		}
 	}
-	overalSetting := Settings{tokensSetting}
-	return &overalSetting
+	handleEmptyAddress()
+	return &setting
+}
+
+func handleEmptyAddress() {
+	addressCount, err := setting.Address.Storage.CountAddress()
+	if addressCount == 0 || err != nil {
+		if err != nil {
+			log.Printf("Setting Init: Address DB is faulty (%s), attempt to load Address from file", err)
+		} else {
+			log.Printf("Setting Init: Address DB is empty, attempt to load address from file")
+		}
+		addressPath := ADDRES_DEFAULT_JSON_PATH
+		if os.Getenv("KYBER_ENV") == "simulation" {
+			addressPath = ADDRES_DEFAULT_JSON_SIM_PATH
+		}
+		if err = LoadAddressFromFile(addressPath); err != nil {
+			log.Printf("Setting Init: Can not load Address from file: %s, address DB is needed to be updated manually", err)
+		}
+	}
 }
