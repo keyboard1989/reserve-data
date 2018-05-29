@@ -66,3 +66,18 @@ func (self *HTTPServer) ConfirmPWIEquationV2(c *gin.Context) {
 	}
 	httputil.ResponseSuccess(c)
 }
+
+// RejectPWIEquationV2 rejects the PWI equations request and removes
+// it from pending storage.
+func (self *HTTPServer) RejectPWIEquationV2(c *gin.Context) {
+	_, ok := self.Authenticated(c, []string{}, []Permission{ConfirmConfPermission})
+	if !ok {
+		return
+	}
+
+	if err := self.metric.RemovePendingPWIEquationV2(); err != nil {
+		httputil.ResponseFailure(c, httputil.WithError(err))
+		return
+	}
+	httputil.ResponseSuccess(c)
+}

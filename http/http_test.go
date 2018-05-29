@@ -55,6 +55,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 		storePendingPWIEquationV2Endpoint = "/v2/set-pwis-equation"
 		getPendingPWIEquationV2Endpoint   = "/v2/pending-pwis-equation"
 		confirmPWIEquationV2              = "/v2/confirm-pwis-equation"
+		rejectPWIEquationV2               = "/v2/reject-pwis-equation"
 		testData                          = `{
   "EOS": {
     "bid": {
@@ -194,6 +195,19 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			assert:   httputil.ExpectFailure,
 		},
 		{
+			msg:      "confirm when no pending equation request exists",
+			endpoint: confirmPWIEquationV2,
+			method:   http.MethodPost,
+			data:     testData,
+			assert:   httputil.ExpectFailure,
+		},
+		{
+			msg:      "reject when no pending equation request exists",
+			endpoint: rejectPWIEquationV2,
+			method:   http.MethodPost,
+			assert:   httputil.ExpectFailure,
+		},
+		{
 			msg:      "valid post form",
 			endpoint: storePendingPWIEquationV2Endpoint,
 			method:   http.MethodPost,
@@ -238,12 +252,6 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			},
 		},
 		{
-			msg:      "confirm when no pending equation request exists",
-			endpoint: confirmPWIEquationV2,
-			method:   http.MethodPost,
-			assert:   httputil.ExpectFailure,
-		},
-		{
 			msg:      "confirm with wrong data",
 			endpoint: confirmPWIEquationV2,
 			method:   http.MethodPost,
@@ -255,6 +263,20 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			endpoint: confirmPWIEquationV2,
 			method:   http.MethodPost,
 			data:     testData,
+			assert:   httputil.ExpectSuccess,
+		},
+		{
+			msg:      "valid post form",
+			endpoint: storePendingPWIEquationV2Endpoint,
+			method:   http.MethodPost,
+			data:     testData,
+			assert:   httputil.ExpectSuccess,
+		},
+		{
+			msg:      "reject when there is pending equation",
+			endpoint: rejectPWIEquationV2,
+			method:   http.MethodPost,
+			data:     "some random post form or this request will be unauthenticated",
 			assert:   httputil.ExpectSuccess,
 		},
 	}
