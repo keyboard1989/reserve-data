@@ -20,6 +20,11 @@ var setting Settings
 func NewSetting() *Settings {
 	tokensSetting := NewTokenSetting()
 	setting = Settings{tokensSetting}
+	handleEmptyToken()
+	return &setting
+}
+
+func handleEmptyToken() {
 	allToks, err := GetAllTokens()
 	if err != nil || len(allToks) < 1 {
 		if err != nil {
@@ -36,6 +41,4 @@ func NewSetting() *Settings {
 			log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err)
 		}
 	}
-	overalSetting := Settings{tokensSetting}
-	return &overalSetting
 }
