@@ -16,6 +16,7 @@ type ReserveData struct {
 	fetcher           Fetcher
 	storageController datapruner.StorageController
 	globalStorage     GlobalStorage
+	exchanges         []common.Exchange
 }
 
 func (self ReserveData) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
@@ -302,8 +303,24 @@ func (self ReserveData) ControlAuthDataSize() error {
 				}
 			}
 		}
-		os.Remove(fileName)
+		if err := os.Remove(fileName); err != nil {
+			log.Fatal(err)
+		}
 	}
+}
+
+func (self ReserveData) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
+	data := common.AllTradeHistory{}
+	data.Data = map[common.ExchangeID]common.ExchangeTradeHistory{}
+	for _, ex := range self.exchanges {
+		history, err := ex.GetTradeHistory(fromTime, toTime)
+		if err != nil {
+			return data, err
+		}
+		data.Data[ex.ID()] = history
+	}
+	data.Timestamp = common.GetTimestamp()
+	return data, nil
 }
 
 func (self ReserveData) RunStorageController() error {
@@ -312,10 +329,13 @@ func (self ReserveData) RunStorageController() error {
 	return nil
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner, arch archive.Archive, globalStorage GlobalStorage) *ReserveData {
+func NewReserveData(storage Storage,
+	fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner,
+	arch archive.Archive, globalStorage GlobalStorage,
+	exchanges []common.Exchange) *ReserveData {
 	storageController, err := datapruner.NewStorageController(storageControllerRunner, arch)
 	if err != nil {
 		panic(err)
 	}
-	return &ReserveData{storage, fetcher, storageController, globalStorage}
+	return &ReserveData{storage, fetcher, storageController, globalStorage, exchanges}
 }

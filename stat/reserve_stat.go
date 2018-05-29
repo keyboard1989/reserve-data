@@ -356,7 +356,9 @@ func (self ReserveStats) ControllPriceAnalyticSize() error {
 				}
 			}
 		}
-		os.Remove(fileName)
+		if err := os.Remove(fileName); err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
