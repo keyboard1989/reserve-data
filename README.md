@@ -336,7 +336,7 @@ Response:
     "success": true,
     "done": 0,
     "remaining": 0.01,
-    "finished": false,
+    "finished": false
 }
 ```
 Where `hash` is the transaction hash
@@ -1323,6 +1323,252 @@ response:
   },
   "success": true
 }
+```
+
+### Get pwis equation v2 - (signing required)
+
+```
+<host>:8000/v2/pwis-equation
+GET request
+```
+
+eg:
+
+```
+curl -X "GET" "http://localhost:8000/v2/pwis-equation" \
+     -H 'Content-Type: application/x-www-form-urlencoded' \
+```
+
+response:
+```
+{
+  "data": {
+    "EOS": {
+      "ask": {
+        "A": 800,
+        "B": 600,
+        "C": 0,
+        "MinMinSpread": 0,
+        "PriceMultiplyFactor": 0
+      },
+      "bid": {
+        "A": 750,
+        "B": 500,
+        "C": 0,
+        "MinMinSpread": 0,
+        "PriceMultiplyFactor": 0
+      }
+    },
+    "ETH": {
+      "ask": {
+        "A": 800,
+        "B": 600,
+        "C": 0,
+        "MinMinSpread": 0,
+        "PriceMultiplyFactor": 0
+      },
+      "bid": {
+        "A": 750,
+        "B": 500,
+        "C": 0,
+        "MinMinSpread": 0,
+        "PriceMultiplyFactor": 0
+      }
+    }
+  },
+  "success": true
+}
+```
+
+### Get pending pwis equation v2 - (signing required)
+
+```
+<host>:8000/v2/pending-pwis-equation
+GET request
+
+```
+
+eg:
+```
+curl -X "GET" "http://localhost:8000/v2/pending-pwis-equation" \
+     -H 'Content-Type: application/x-www-form-urlencoded' \
+```
+
+response:
+```
+{
+  "data": {
+    "EOS": {
+      "ask": {
+        "A": 800,
+        "B": 600,
+        "C": 0,
+        "MinMinSpread": 0,
+        "PriceMultiplyFactor": 0
+      },
+      "bid": {
+        "A": 750,
+        "B": 500,
+        "C": 0,
+        "MinMinSpread": 0,
+        "PriceMultiplyFactor": 0
+      }
+    },
+    "ETH": {
+      "ask": {
+        "A": 800,
+        "B": 600,
+        "C": 0,
+        "MinMinSpread": 0,
+        "PriceMultiplyFactor": 0
+      },
+      "bid": {
+        "A": 750,
+        "B": 500,
+        "C": 0,
+        "MinMinSpread": 0,
+        "PriceMultiplyFactor": 0
+      }
+    }
+  },
+  "success": true
+}
+```
+
+### Set pwis equation v2 - (signing required)
+
+```
+<host>:8000/v2/set-pwis-equation
+POST request
+Post form: json encoding data of pwis equation
+```
+
+eg:
+
+```
+curl -X "POST" "http://localhost:8000/v2/set-pwis-equation" \
+     -H 'Content-Type: application/x-www-form-urlencoded' \
+     --data-urlencode "data={
+  \"EOS\": {
+    \"bid\": {
+      \"a\": 750,
+      \"b\": 500,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    },
+    \"ask\": {
+      \"a\": 800,
+      \"b\": 600,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    }
+  },
+  \"ETH\": {
+    \"bid\": {
+      \"a\": 750,
+      \"b\": 500,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    },
+    \"ask\": {
+      \"a\": 800,
+      \"b\": 600,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    }
+  }
+}"
+```
+
+response
+
+```
+  {
+    "success": true,
+  }
+```
+
+### Confirm pending pwis equation v2 - (signing required)
+
+```
+<host>:8000/v2/confirm-pwis-equation
+POST request
+Post form: json encoding data of pwis equation
+```
+
+eg
+
+```
+curl -X "POST" "http://localhost:8000/v2/confirm-pwis-equation" \
+     -H 'Content-Type: application/x-www-form-urlencoded' \
+     --data-urlencode "data={
+  \"EOS\": {
+    \"bid\": {
+      \"a\": 750,
+      \"b\": 500,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    },
+    \"ask\": {
+      \"a\": 800,
+      \"b\": 600,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    }
+  },
+  \"ETH\": {
+    \"bid\": {
+      \"a\": 750,
+      \"b\": 500,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    },
+    \"ask\": {
+      \"a\": 800,
+      \"b\": 600,
+      \"c\": 0,
+      \"MinMinSpread\": 0,
+      \"PriceMultiplyFactor\": 0
+    }
+  }
+}"
+```
+
+response
+
+```
+  {
+    "success": true,
+  }
+```
+
+### Reject pending pwis equation v2 - (signing required)
+
+```
+<host>:8000/v2/reject-pwis-equation
+POST request
+```
+
+eg
+
+```
+curl -X "POST" "http://localhost:8000/v2/reject-pwis-equation" \
+     -H 'Content-Type: application/x-www-form-urlencoded'
+```
+
+response
+
+```
+  {
+    "success": true,
+  }
 ```
 
 ## Authentication
