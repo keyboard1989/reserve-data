@@ -21,7 +21,7 @@ func SetupBoltAnalyticStorageTester(name string) (*stat.AnalyticStorageTest, fun
 		return nil, nil, err
 	}
 	tearDownFn := func() error {
-		return os.Remove(tmpDir)
+		return os.RemoveAll(tmpDir)
 	}
 	return stat.NewAnalyticStorageTest(storage), tearDownFn, nil
 }
@@ -32,7 +32,11 @@ func doAnalyticStorageTest(f func(tester *stat.AnalyticStorageTest, t *testing.T
 	if err != nil {
 		t.Fatalf("Testing bolt as a stat storage: init failed(%s)", err)
 	}
-	defer tearDownFn()
+	defer func() {
+		if err := tearDownFn(); err != nil {
+			t.Error(err)
+		}
+	}()
 	f(tester, t)
 }
 
