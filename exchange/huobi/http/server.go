@@ -58,7 +58,7 @@ func NewHuobiHTTPServer(app Huobi) *HTTPServer {
 	huobihost := fmt.Sprintf(":12221")
 	r := gin.Default()
 	sentryCli, err := raven.NewWithTags(
-		"https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067",
+		"",
 		map[string]string{
 			"env": "huobi",
 		},
