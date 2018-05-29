@@ -44,9 +44,14 @@ const (
 
 	// PENDING_TARGET_QUANTITY_V2 constant for bucket name for pending target quantity v2
 	PENDING_TARGET_QUANTITY_V2 string = "pending_target_qty_v2"
-
 	// TARGET_QUANTITY_V2 constant for bucet name for target quantity v2
 	TARGET_QUANTITY_V2 string = "target_quantity_v2"
+
+	// PENDING_PWI_EQUATION_V2 is the bucket name for storing pending
+	// pwi equation for later approval.
+	PENDING_PWI_EQUATION_V2 string = "pending_pwi_equation_v2"
+	// PWI_EQUATION_V2 stores the PWI equations after confirmed.
+	PWI_EQUATION_V2 string = "pwi_equation_v2"
 )
 
 // BoltStorage is the storage implementation of data.Storage interface
@@ -153,6 +158,14 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		if _, err := tx.CreateBucketIfNotExists([]byte(TARGET_QUANTITY_V2)); err != nil {
 			return err
 		}
+
+		if _, err := tx.CreateBucketIfNotExists([]byte(PENDING_PWI_EQUATION_V2)); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists([]byte(PWI_EQUATION_V2)); err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -1502,4 +1515,144 @@ func convertTargetQtyV1toV2(target metric.TokenTargetQty) map[string]interface{}
 		}
 	}
 	return result
+}
+
+// StorePendingPWIEquationV2 stores the given PWIs equation data for later approval.
+func (self *BoltStorage) StorePendingPWIEquationV2(data []byte) error {
+	timepoint := common.GetTimepoint()
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION_V2))
+		c := b.Cursor()
+		_, v := c.First()
+		if v != nil {
+			return errors.New("pending PWI equation exists")
+		}
+		return b.Put(boltutil.Uint64ToBytes(timepoint), data)
+	})
+	return err
+}
+
+// GetPendingPWIEquationV2 returns the stored PWIEquationRequestV2 in database.
+func (self *BoltStorage) GetPendingPWIEquationV2() (metric.PWIEquationRequestV2, error) {
+	var (
+		err    error
+		result metric.PWIEquationRequestV2
+	)
+
+	err = self.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION_V2))
+		c := b.Cursor()
+		_, v := c.First()
+		if v == nil {
+			return errors.New("There is no pending equation")
+		}
+		return json.Unmarshal(v, &result)
+	})
+	return result, err
+}
+
+// RemovePendingPWIEquationV2 deletes the pending equation request.
+func (self *BoltStorage) RemovePendingPWIEquationV2() error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION_V2))
+		c := b.Cursor()
+		k, _ := c.First()
+		if k == nil {
+			return errors.New("There is no pending data")
+		}
+		return b.Delete(k)
+	})
+	return err
+}
+
+// StorePWIEquationV2 moved the pending equation request to
+// PWI_EQUATION_V2 bucket and remove it from pending bucket if the
+// given data matched what stored.
+func (self *BoltStorage) StorePWIEquationV2(data string) error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(PENDING_PWI_EQUATION_V2))
+		c := b.Cursor()
+		k, v := c.First()
+		if v == nil {
+			return errors.New("There is no pending equation")
+		}
+		if !bytes.Equal(v, []byte(data)) {
+			return errors.New("Confirm data does not match pending data")
+		}
+		id := boltutil.Uint64ToBytes(common.GetTimepoint())
+		if uErr := tx.Bucket([]byte(PWI_EQUATION_V2)).Put(id, v); uErr != nil {
+			return uErr
+		}
+		// remove pending PWI equations request
+		return b.Delete(k)
+	})
+	return err
+}
+
+func convertPWIEquationV1toV2(data string) (metric.PWIEquationRequestV2, error) {
+	result := metric.PWIEquationRequestV2{}
+	for _, dataConfig := range strings.Split(data, "|") {
+		dataParts := strings.Split(dataConfig, "_")
+		if len(dataParts) != 4 {
+			return nil, errors.New("malform data")
+		}
+
+		a, err := strconv.ParseFloat(dataParts[1], 64)
+		if err != nil {
+			return nil, err
+		}
+		b, err := strconv.ParseFloat(dataParts[2], 64)
+		if err != nil {
+			return nil, err
+		}
+		c, err := strconv.ParseFloat(dataParts[3], 64)
+		if err != nil {
+			return nil, err
+		}
+		eq := metric.PWIEquationV2{
+			A: a,
+			B: b,
+			C: c,
+		}
+		result[dataParts[0]] = metric.PWIEquationTokenV2{
+			"bid": eq,
+			"ask": eq,
+		}
+	}
+	return result, nil
+}
+
+func pwiEquationV1toV2(tx *bolt.Tx) (metric.PWIEquationRequestV2, error) {
+	var eqv1 metric.PWIEquation
+	b := tx.Bucket([]byte(PWI_EQUATION))
+	c := b.Cursor()
+	_, v := c.Last()
+	if v == nil {
+		return nil, errors.New("There is no equation")
+	}
+	if err := json.Unmarshal(v, &eqv1); err != nil {
+		return nil, err
+	}
+	return convertPWIEquationV1toV2(eqv1.Data)
+}
+
+// GetPWIEquationV2 returns the current PWI equations from database.
+func (self *BoltStorage) GetPWIEquationV2() (metric.PWIEquationRequestV2, error) {
+	var (
+		err    error
+		result metric.PWIEquationRequestV2
+	)
+	err = self.db.View(func(tx *bolt.Tx) error {
+		var vErr error
+		b := tx.Bucket([]byte(PWI_EQUATION_V2))
+		c := b.Cursor()
+		_, v := c.Last()
+		if v == nil {
+			log.Println("there no equation in PWI_EQUATION_V2, getting from PWI_EQUATION")
+			result, vErr = pwiEquationV1toV2(tx)
+			return vErr
+		}
+		return json.Unmarshal(v, &result)
+	})
+	return result, err
 }
