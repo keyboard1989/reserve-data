@@ -147,8 +147,11 @@ func (self *BoltUserStorage) UpdateUserAddresses(user string, addrs []ethereum.A
 			// remove the addresses bucket assocciated to this temp user
 			b = tx.Bucket([]byte(ID_ADDRESSES))
 			if oldID != nil {
-				err = b.DeleteBucket(oldID)
-				if err != nil {
+				if _, err := b.CreateBucketIfNotExists(oldID); err != nil {
+					return err
+				}
+
+				if err = b.DeleteBucket(oldID); err != nil {
 					return err
 				}
 			}
