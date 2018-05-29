@@ -1325,7 +1325,7 @@ response:
 }
 ```
 
-### Get pwis equation v2 - (signing requirede)
+### Get pwis equation v2 - (signing required)
 
 ```
 <host>:8000/v2/pwis-equation
@@ -1380,7 +1380,7 @@ response:
 }
 ```
 
-### Get pending pwis equation v2 - (signing requirede)
+### Get pending pwis equation v2 - (signing required)
 
 ```
 <host>:8000/v2/pending-pwis-equation
