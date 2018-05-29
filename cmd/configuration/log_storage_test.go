@@ -20,7 +20,7 @@ func SetupBoltLogStorageTester(name string) (*stat.LogStorageTest, func() error,
 		return nil, nil, err
 	}
 	tearDownFn := func() error {
-		return os.Remove(tmpDir)
+		return os.RemoveAll(tmpDir)
 	}
 	return stat.NewLogStorageTest(storage), tearDownFn, nil
 }
@@ -31,7 +31,11 @@ func doBoltLogTest(f func(tester *stat.LogStorageTest, t *testing.T), t *testing
 	if err != nil {
 		t.Fatalf("Testing stat_bolt as a stat storage: init fialed (%s)", err)
 	}
-	defer tearDownFn()
+	defer func() {
+		if err := tearDownFn(); err != nil {
+			t.Error(err)
+		}
+	}()
 	f(tester, t)
 }
 

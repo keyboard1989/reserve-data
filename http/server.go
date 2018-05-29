@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -23,25 +24,29 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type HTTPServer struct {
-	app         reserve.ReserveData
-	core        reserve.ReserveCore
-	stat        reserve.ReserveStats
-	metric      metric.MetricStorage
-	exchanges   []common.Exchange
-	host        string
-	authEnabled bool
-	auth        Authentication
-	r           *gin.Engine
-	blockchain  *blockchain.Blockchain
-}
-
 const (
 	MAX_TIMESPOT   uint64 = 18446744073709551615
 	MAX_DATA_SIZE  int    = 1000000 //1 Megabyte in byte
 	START_TIMEZONE int64  = -11
 	END_TIMEZONE   int64  = 14
 )
+
+var (
+	// errDataSizeExceed is returned when the post data is larger than MAX_DATA_SIZE.
+	errDataSizeExceed = errors.New("the data size must be less than 1 MB")
+)
+
+type HTTPServer struct {
+	app         reserve.ReserveData
+	core        reserve.ReserveCore
+	stat        reserve.ReserveStats
+	metric      metric.MetricStorage
+	host        string
+	authEnabled bool
+	auth        Authentication
+	r           *gin.Engine
+	blockchain  *blockchain.Blockchain
+}
 
 func getTimePoint(c *gin.Context, useDefault bool) uint64 {
 	timestamp := c.DefaultQuery("timestamp", "")
@@ -100,7 +105,7 @@ func eligible(ups, allowedPerms []Permission) bool {
 func (self *HTTPServer) Authenticated(c *gin.Context, requiredParams []string, perms []Permission) (url.Values, bool) {
 	err := c.Request.ParseForm()
 	if err != nil {
-		httputil.ResponseFailure(c, httputil.WithReason("Malformed request package"))
+		httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("Malformed request package: %s", err.Error())))
 		return c.Request.Form, false
 	}
 
@@ -853,17 +858,9 @@ func (self *HTTPServer) GetTradeHistory(c *gin.Context) {
 	if !ok {
 		return
 	}
-	data := common.AllTradeHistory{
-		Timestamp: common.GetTimestamp(),
-		Data:      map[common.ExchangeID]common.ExchangeTradeHistory{},
-	}
-	for _, ex := range self.exchanges {
-		history, err := ex.GetTradeHistory(fromTime, toTime)
-		if err != nil {
-			httputil.ResponseFailure(c, httputil.WithError(err))
-			return
-		}
-		data.Data[ex.ID()] = history
+	data, err := self.app.GetTradeHistory(fromTime, toTime)
+	if err != nil {
+		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
 	httputil.ResponseSuccess(c, httputil.WithData(data))
 }
@@ -1241,9 +1238,9 @@ func (self *HTTPServer) GetWalletStats(c *gin.Context) {
 		toTime = common.GetTimepoint()
 	}
 	walletAddr := ethereum.HexToAddress(c.Query("walletAddr"))
-	cap := big.NewInt(0)
-	cap.Exp(big.NewInt(2), big.NewInt(128), big.NewInt(0))
-	if walletAddr.Big().Cmp(cap) < 0 {
+	wcap := big.NewInt(0)
+	wcap.Exp(big.NewInt(2), big.NewInt(128), big.NewInt(0))
+	if walletAddr.Big().Cmp(wcap) < 0 {
 		httputil.ResponseFailure(c, httputil.WithReason("Wallet address is invalid, its integer form must be larger than 2^128"))
 		return
 	}
@@ -1377,7 +1374,7 @@ func (self *HTTPServer) UpdatePriceAnalyticData(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err = self.stat.UpdatePriceAnalyticData(timestamp, value)
@@ -1500,7 +1497,7 @@ func (self *HTTPServer) SetStableTokenParams(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err := self.metric.SetStableTokenParams(value)
@@ -1518,7 +1515,7 @@ func (self *HTTPServer) ConfirmStableTokenParams(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err := self.metric.ConfirmStableTokenParams(value)
@@ -1597,7 +1594,7 @@ func (self *HTTPServer) SetTargetQtyV2(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err := self.metric.StorePendingTargetQtyV2(value)
@@ -1629,7 +1626,7 @@ func (self *HTTPServer) ConfirmTargetQtyV2(c *gin.Context) {
 	}
 	value := []byte(postForm.Get("value"))
 	if len(value) > MAX_DATA_SIZE {
-		httputil.ResponseFailure(c, httputil.WithReason("the data size must be less than 1 MB"))
+		httputil.ResponseFailure(c, httputil.WithReason(errDataSizeExceed.Error()))
 		return
 	}
 	err := self.metric.ConfirmTargetQtyV2(value)
@@ -1679,10 +1676,12 @@ func (self *HTTPServer) GetFeeSetRateByDay(c *gin.Context) {
 	httputil.ResponseSuccess(c, httputil.WithData(data))
 }
 
-func (self *HTTPServer) Run() {
+func (self *HTTPServer) register() {
 	self.r.POST("/update-token", self.UpdateToken)
 	self.r.GET("/token-settings", self.TokenSettings)
 	if self.core != nil && self.app != nil {
+		v2 := self.r.Group("/v2")
+
 		self.r.GET("/prices-version", self.AllPricesVersion)
 		self.r.GET("/prices", self.AllPrices)
 		self.r.GET("/prices/:base/:quote", self.Price)
@@ -1715,7 +1714,6 @@ func (self *HTTPServer) Run() {
 		self.r.POST("/confirmtargetqty", self.ConfirmTargetQty)
 		self.r.POST("/canceltargetqty", self.CancelTargetQty)
 
-		v2 := self.r.Group("/v2")
 		v2.GET("/targetqty", self.GetTargetQtyV2)
 		v2.GET("/pendingtargetqty", self.GetPendingTargetQtyV2)
 		v2.POST("/settargetqty", self.SetTargetQtyV2)
@@ -1737,6 +1735,12 @@ func (self *HTTPServer) Run() {
 		self.r.POST("/set-pwis-equation", self.SetPWIEquation)
 		self.r.POST("/confirm-pwis-equation", self.ConfirmPWIEquation)
 		self.r.POST("/reject-pwis-equation", self.RejectPWIEquation)
+
+		v2.GET("/pwis-equation", self.GetPWIEquationV2)
+		v2.GET("/pending-pwis-equation", self.GetPendingPWIEquationV2)
+		v2.POST("/set-pwis-equation", self.SetPWIEquationV2)
+		v2.POST("/confirm-pwis-equation", self.ConfirmPWIEquationV2)
+		v2.POST("/reject-pwis-equation", self.RejectPWIEquationV2)
 
 		self.r.GET("/get-exchange-status", self.GetExchangesStatus)
 		self.r.POST("/update-exchange-status", self.UpdateExchangeStatus)
@@ -1780,7 +1784,10 @@ func (self *HTTPServer) Run() {
 		self.r.GET("/get-token-heatmap", self.GetTokenHeatmap)
 		self.r.GET("/get-fee-setrate", self.GetFeeSetRateByDay)
 	}
+}
 
+func (self *HTTPServer) Run() {
+	self.register()
 	self.r.Run(self.host)
 }
 
@@ -1789,7 +1796,6 @@ func NewHTTPServer(
 	core reserve.ReserveCore,
 	stat reserve.ReserveStats,
 	metric metric.MetricStorage,
-	exchanges []common.Exchange,
 	host string,
 	enableAuth bool,
 	authEngine Authentication,
@@ -1817,6 +1823,6 @@ func NewHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, core, stat, metric, exchanges, host, enableAuth, authEngine, r, bc,
+		app, core, stat, metric, host, enableAuth, authEngine, r, bc,
 	}
 }
