@@ -209,7 +209,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 	}
 
 	s := HTTPServer{
-		app:         data.NewReserveData(st, nil, nil, nil, nil),
+		app:         data.NewReserveData(st, nil, nil, nil, nil, nil),
 		core:        core.NewReserveCore(nil, st, ethereum.Address{}),
 		metric:      st,
 		authEnabled: false,
