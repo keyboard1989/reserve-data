@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	TOKEN_DB_FILE_PATH          string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
+	tokenDBFileName             string = "token.db"
 	TOKEN_DEFAULT_JSON_PATH     string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
 	TOKEN_DEFAULT_JSON_SIM_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
 )

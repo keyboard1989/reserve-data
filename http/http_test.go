@@ -8,17 +8,16 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
-	"reflect"
-
+	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
 	"github.com/KyberNetwork/reserve-data/metric"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 )
@@ -190,6 +189,25 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 `
 	)
 	settings.NewSetting()
+	err := settings.UpdateToken(common.Token{
+		ID:       "EOS",
+		Address:  "xxx",
+		Internal: true,
+		Active:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = settings.UpdateToken(common.Token{
+		ID:       "ETH",
+		Address:  "xxx",
+		Internal: true,
+		Active:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
 	if err != nil {
 		t.Fatal(err)
