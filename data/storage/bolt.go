@@ -237,12 +237,11 @@ func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		var dataJSON []byte
 		b := tx.Bucket([]byte(GOLD_BUCKET))
-		dataJSON, err := json.Marshal(data)
-		if err != nil {
-			return err
+		dataJSON, vErr := json.Marshal(data)
+		if vErr != nil {
+			return vErr
 		}
-		err = b.Put(boltutil.Uint64ToBytes(timepoint), dataJSON)
-		return err
+		return b.Put(boltutil.Uint64ToBytes(timepoint), dataJSON)
 	})
 	return err
 }
@@ -250,14 +249,14 @@ func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
 func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName string) (nRecord uint64, err error) {
 	expiredTimestampByte := boltutil.Uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
 	outFile, err := os.Create(fileName)
+	if err != nil {
+		return 0, err
+	}
 	defer func() {
 		if err := outFile.Close(); err != nil {
 			log.Printf("Close file error: %s", err.Error())
 		}
 	}()
-	if err != nil {
-		return 0, err
-	}
 
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(AUTH_DATA_BUCKET))
@@ -267,9 +266,8 @@ func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName stri
 			timestamp := boltutil.BytesToUint64(k)
 
 			temp := common.AuthDataSnapshot{}
-			err = json.Unmarshal(v, &temp)
-			if err != nil {
-				return err
+			if vErr := json.Unmarshal(v, &temp); vErr != nil {
+				return vErr
 			}
 			record := common.NewAuthDataRecord(
 				common.Timestamp(strconv.FormatUint(timestamp, 10)),
@@ -1114,11 +1112,11 @@ func (self *BoltStorage) StorePendingPWIEquation(data string) error {
 		idByte := boltutil.Uint64ToBytes(timepoint)
 		saveData.ID = timepoint
 		saveData.Data = data
-		dataJson, uErr := json.Marshal(saveData)
+		dataJSON, uErr := json.Marshal(saveData)
 		if uErr != nil {
 			return uErr
 		}
-		return b.Put(idByte, dataJson)
+		return b.Put(idByte, dataJSON)
 	})
 	return err
 }
@@ -1228,11 +1226,11 @@ func (self *BoltStorage) UpdateExchangeStatus(data common.ExchangesStatus) error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_STATUS))
 		for k, v := range data {
-			dataJson, uErr := json.Marshal(v)
+			dataJSON, uErr := json.Marshal(v)
 			if uErr != nil {
 				return uErr
 			}
-			if uErr = b.Put([]byte(k), dataJson); uErr != nil {
+			if uErr = b.Put([]byte(k), dataJSON); uErr != nil {
 				return uErr
 			}
 		}
