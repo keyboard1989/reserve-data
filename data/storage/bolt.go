@@ -974,7 +974,10 @@ func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 			return err
 		}
 		pendingData := tokenTargetQty.Data
-		idInt, _ := strconv.ParseUint(id, 10, 64)
+		idInt, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			return err
+		}
 		if tokenTargetQty.ID != idInt {
 			return errors.New("pending target quantity ID does not match")
 		}
