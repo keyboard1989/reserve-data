@@ -10,9 +10,10 @@ import (
 type TokenStorage interface {
 	//Add Tokens by ID
 	AddTokenByID(common.Token) error
-
 	//Add Tokens by Address
 	AddTokenByAddress(common.Token) error
+	//Update common
+	UpdateToken(common.Token) error
 
 	//Active Tokens (Network Tokens)
 	GetActiveTokens() ([]common.Token, error)
