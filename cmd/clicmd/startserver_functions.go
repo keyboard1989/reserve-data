@@ -109,19 +109,12 @@ func GetConfigFromENV(kyberENV string) *configuration.Config {
 func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockchain.Blockchain, err error) {
 	bc, err = blockchain.NewBlockchain(
 		config.Blockchain,
-		config.WrapperAddress,
-		config.PricingAddress,
-		config.FeeBurnerAddress,
-		config.NetworkAddress,
-		config.ReserveAddress,
-		config.WhitelistAddress,
 	)
 	if err != nil {
 		panic(err)
 	}
 	// we need to implicitly add old contract addresses to production
 	if kyberENV == "production" || kyberENV == "mainnet" {
-		// bc.AddOldNetwork(...)
 		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
 	tokens, err := settings.GetInternalTokens()
@@ -142,7 +135,6 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.FetcherGlobalStorage,
 		config.World,
 		config.FetcherRunner,
-		config.ReserveAddress,
 		kyberENV == "simulation",
 	)
 	for _, ex := range config.FetcherExchanges {
@@ -162,7 +154,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.Exchanges,
 	)
 
-	rCore := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
+	rCore := core.NewReserveCore(bc, config.ActivityStorage)
 	return rData, rCore
 }
 
@@ -179,11 +171,8 @@ func CreateStat(config *configuration.Config, kyberENV string, bc *blockchain.Bl
 		config.FeeSetRateStorage,
 		config.StatFetcherRunner,
 		deployBlock,
-		config.ReserveAddress,
-		config.PricingAddress,
 		deployBlock,
 		config.EtherscanApiKey,
-		config.ThirdPartyReserves,
 	)
 	statFetcher.SetBlockchain(bc)
 	rStat := stat.NewReserveStats(

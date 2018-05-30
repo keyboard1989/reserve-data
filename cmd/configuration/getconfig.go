@@ -8,7 +8,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/world"
-	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -70,9 +69,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	}
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
-	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
-	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
-	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+
 	var endpoint string
 	if endpointOW != "" {
 		log.Printf("overwriting Endpoint with %s\n", endpointOW)
@@ -123,9 +120,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
-		WrapperAddress:          wrapperAddr,
-		PricingAddress:          pricingAddr,
-		ReserveAddress:          reserveAddr,
 		ChainType:               chainType,
 		AuthEngine:              hmac512auth,
 		EnableAuthentication:    authEnbl,
@@ -134,9 +128,9 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	}
 
 	if enableStat {
-		config.AddStatConfig(setPath, addressConfig)
+		config.AddStatConfig(setPath)
 	}
-
+	//TODO : remove addressconfig, add exchange to setting
 	if !noCore {
 		config.AddCoreConfig(setPath, addressConfig, kyberENV)
 	}

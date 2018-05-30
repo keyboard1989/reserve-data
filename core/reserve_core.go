@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -20,17 +22,14 @@ const HIGH_BOUND_GAS_PRICE float64 = 50.1
 type ReserveCore struct {
 	blockchain      Blockchain
 	activityStorage ActivityStorage
-	rm              ethereum.Address
 }
 
 func NewReserveCore(
 	blockchain Blockchain,
-	storage ActivityStorage,
-	rm ethereum.Address) *ReserveCore {
+	storage ActivityStorage) *ReserveCore {
 	return &ReserveCore{
 		blockchain,
 		storage,
-		rm,
 	}
 }
 
@@ -199,7 +198,10 @@ func (self ReserveCore) Withdraw(
 	} else {
 		err = sanityCheckAmount(exchange, token, amount)
 		if err == nil {
-			id, err = exchange.Withdraw(token, amount, self.rm, timepoint)
+			reserveAddr, err := settings.GetAddress("reserve")
+			if err == nil {
+				id, err = exchange.Withdraw(token, amount, reserveAddr, timepoint)
+			}
 		}
 	}
 	var status string
