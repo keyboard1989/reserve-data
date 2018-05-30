@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
+	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
@@ -124,10 +125,7 @@ func run(verify *Verification) {
 func main() {
 	InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 	var config *configuration.Config
-	kyberENV := os.Getenv("KYBER_ENV")
-	if kyberENV == "" {
-		kyberENV = "dev"
-	}
+	kyberENV := mode.Get()
 	config = configuration.GetConfig(kyberENV, !noAuthEnable, endpointOW, false, false)
 	if config.AuthEngine == nil {
 		Warning.Println("Current environment setting does not enable authentication. Please check again!!!")
