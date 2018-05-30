@@ -8,8 +8,6 @@ import (
 	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
 
-type exchange map[string]string
-
 const (
 	ADDRESS_DB_FILE_PATH         string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/address.db"
 	ADDRES_DEFAULT_JSON_PATH     string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
