@@ -3,6 +3,7 @@ package configuration
 import (
 	"log"
 
+	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -22,17 +23,17 @@ func GetAddressConfig(filePath string) common.AddressConfig {
 
 func GetChainType(kyberENV string) string {
 	switch kyberENV {
-	case "mainnet", "production":
+	case mode.MAINNET_MODE, mode.PRODUCTION_MODE:
 		return "byzantium"
-	case "dev":
+	case mode.DEV_MODE:
 		return "homestead"
-	case "kovan":
+	case mode.KOVAN_MODE:
 		return "homestead"
-	case "staging":
+	case mode.STAGING_MODE:
 		return "byzantium"
-	case "simulation", "analytic_dev":
+	case mode.SIMULATION_MODE, mode.ANALYTIC_DEV_MODE:
 		return "homestead"
-	case "ropsten":
+	case mode.ROPSTEN_MODE:
 		return "byzantium"
 	default:
 		return "homestead"
@@ -40,25 +41,16 @@ func GetChainType(kyberENV string) string {
 }
 
 func GetConfigPaths(kyberENV string) SettingPaths {
-	switch kyberENV {
-	case "mainnet", "production":
-		return (ConfigPaths["mainnet"])
-	case "dev":
-		return (ConfigPaths["dev"])
-	case "kovan":
-		return (ConfigPaths["kovan"])
-	case "staging":
-		return (ConfigPaths["staging"])
-	case "simulation":
-		return (ConfigPaths["simulation"])
-	case "ropsten":
-		return (ConfigPaths["ropsten"])
-	case "analytic_dev":
-		return (ConfigPaths["analytic_dev"])
-	default:
-		log.Println("Environment setting paths is not found, using dev...")
-		return (ConfigPaths["dev"])
+	// mode.PRODUCTION_MODE and mode.MAINNET_MODE are same thing.
+	if kyberENV == mode.PRODUCTION_MODE {
+		kyberENV = mode.MAINNET_MODE
 	}
+
+	if sp, ok := ConfigPaths[kyberENV]; ok {
+		return sp
+	}
+	log.Println("Environment setting paths is not found, using dev...")
+	return ConfigPaths[mode.DEV_MODE]
 }
 
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {

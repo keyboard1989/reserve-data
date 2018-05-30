@@ -10,9 +10,10 @@ import (
 	"path/filepath"
 	"testing"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"reflect"
 
-	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/storage"
@@ -188,10 +189,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
   }
 `
 	)
-
-	common.RegisterInternalActiveToken(common.Token{ID: "EOS"})
-	common.RegisterInternalActiveToken(common.Token{ID: "ETH"})
-
+	settings.NewSetting()
 	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
 	if err != nil {
 		t.Fatal(err)
