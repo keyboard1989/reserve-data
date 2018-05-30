@@ -74,7 +74,7 @@ func (self *Fetcher) Stop() error {
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	if err := self.runner.Start(); err != nil {
-		log.Printf("Start runner error: %s", err.Error())
+		log.Panicf("Start runner error: %s", err.Error())
 	}
 	go self.RunOrderbookFetcher()
 	go self.RunAuthDataFetcher()

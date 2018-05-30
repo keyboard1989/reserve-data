@@ -44,7 +44,7 @@ func GetActivitiesResponse(url string, params map[string]string, config configur
 		return allActionRep, err
 	}
 	if err := json.Unmarshal(data, &allActionRep); err != nil {
-		fmt.Println("can't decode the reply", err)
+		log.Printf("can't decode the reply: %s", err.Error())
 		return allActionRep, err
 	}
 	return allActionRep, err
@@ -155,10 +155,10 @@ func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) 
 					idx++
 				}
 				if (idx < len(rates)) && (curBlock <= rates[idx].BlockNumber) && (curBlock >= rates[idx].ToBlockNumber) {
-					fmt.Printf("\n Block %d is found between block %d to block %d \n", curBlock, rates[idx].BlockNumber, rates[idx].ToBlockNumber)
+					log.Printf("\n Block %d is found between block %d to block %d \n", curBlock, rates[idx].BlockNumber, rates[idx].ToBlockNumber)
 					CompareRate(oneAct, rates[idx], curBlock)
 				} else {
-					fmt.Printf("\n Block %d is not found\n", curBlock)
+					log.Printf("\n Block %d is not found\n", curBlock)
 				}
 			}
 		}
