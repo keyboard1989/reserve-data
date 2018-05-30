@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data"
@@ -13,11 +14,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const (
-	LOG_PATH        string = "/go/src/github.com/KyberNetwork/reserve-data/log/"
-	REMOTE_LOG_PATH string = "core-log/"
-)
+const remoteLogPath string = "core-log/"
 
+// logDir is located at base of this repository.
+var logDir = filepath.Join(filepath.Dir(filepath.Dir(common.CurrentDir())), "log")
 var noAuthEnable bool
 var servPort int = 8000
 var endpointOW string

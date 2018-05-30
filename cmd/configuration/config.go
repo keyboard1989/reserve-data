@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"log"
+	"path/filepath"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
@@ -26,6 +27,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+// SettingPaths contains path of all setting files.
 type SettingPaths struct {
 	settingPath           string
 	feePath               string
@@ -39,6 +41,28 @@ type SettingPaths struct {
 	secretPath            string
 	endPoint              string
 	bkendpoints           []string
+}
+
+// NewSettingPaths creates new SettingPaths instance from given parameters.
+func NewSettingPaths(
+	settingPath, feePath, dataStoragePath, analyticStoragePath, statStoragePath,
+	logStoragePath, rateStoragePath, userStoragePath, feeSetRateStoragePath, secretPath, endPoint string,
+	bkendpoints []string) SettingPaths {
+	cmdDir := mode.CmdDirLocation()
+	return SettingPaths{
+		settingPath:           filepath.Join(cmdDir, settingPath),
+		feePath:               filepath.Join(cmdDir, feePath),
+		dataStoragePath:       filepath.Join(cmdDir, dataStoragePath),
+		analyticStoragePath:   filepath.Join(cmdDir, analyticStoragePath),
+		statStoragePath:       filepath.Join(cmdDir, statStoragePath),
+		logStoragePath:        filepath.Join(cmdDir, logStoragePath),
+		rateStoragePath:       filepath.Join(cmdDir, rateStoragePath),
+		userStoragePath:       filepath.Join(cmdDir, userStoragePath),
+		feeSetRateStoragePath: filepath.Join(cmdDir, feeSetRateStoragePath),
+		secretPath:            filepath.Join(cmdDir, secretPath),
+		endPoint:              endPoint,
+		bkendpoints:           bkendpoints,
+	}
 }
 
 type Config struct {
@@ -176,7 +200,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		log.Fatalf("Fees file %s cannot found at: %s", settingPath.feePath, err)
 	}
 
-	minDepositPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/min_deposit.json"
+	minDepositPath := filepath.Join(mode.CmdDirLocation(), "min_deposit.json")
 	minDeposit, err := common.GetMinDepositFromFile(minDepositPath)
 	if err != nil {
 		log.Fatalf("Fees file %s cannot found at: %s", minDepositPath, err.Error())
@@ -250,51 +274,47 @@ func (self *Config) MapTokens() map[string]common.Token {
 }
 
 var ConfigPaths = map[string]SettingPaths{
-	mode.DEV_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	mode.DEV_MODE: NewSettingPaths(
+		"dev_setting.json",
+		"fee.json",
+		"dev.db",
+		"dev_analytics.db",
+		"dev_stats.db",
+		"dev_logs.db",
+		"dev_rates.db",
+		"dev_users.db",
+		"dev_fee_setrate.db",
+		"config.json",
 		"https://semi-node.kyber.network",
 		[]string{
 			"https://semi-node.kyber.network",
 		},
-		// "https://mainnet.infura.io",
-		// []string{
-		// 	"https://mainnet.infura.io",
-		// },
-	},
-	mode.KOVAN_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	),
+	mode.KOVAN_MODE: NewSettingPaths(
+		"kovan_setting.json",
+		"fee.json",
+		"kovan.db",
+		"kovan_analytics.db",
+		"kovan_stats.db",
+		"kovan_logs.db",
+		"kovan_rates.db",
+		"kovan_users.db",
+		"kovan_fee_setrate.db",
+		"config.json",
 		"https://kovan.infura.io",
 		[]string{},
-	},
-	mode.PRODUCTION_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
+	),
+	mode.PRODUCTION_MODE: NewSettingPaths(
+		"mainnet_setting.json",
+		"fee.json",
+		"mainnet.db",
+		"mainnet_analytics.db",
+		"mainnet_stats.db",
+		"mainnet_logs.db",
+		"mainnet_rates.db",
+		"mainnet_users.db",
+		"mainnet_fee_setrate.db",
+		"mainnet_config.json",
 		"https://mainnet.infura.io",
 		[]string{
 			"https://semi-node.kyber.network",
@@ -302,38 +322,18 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://api.myetherapi.com/eth",
 			"https://mew.giveth.io/",
 		},
-	},
-	mode.MAINNET_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"https://mainnet.infura.io",
-		[]string{
-			"https://mainnet.infura.io",
-			"https://semi-node.kyber.network",
-			"https://api.mycryptoapi.com/eth",
-			"https://api.myetherapi.com/eth",
-			"https://mew.giveth.io/",
-		},
-	},
-	mode.STAGING_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
+	),
+	mode.MAINNET_MODE: NewSettingPaths(
+		filepath.Join(common.CurrentDir(), "mainnet_setting.json"),
+		"fee.json",
+		"mainnet.db",
+		"mainnet_analytics.db",
+		"mainnet_stats.db",
+		"mainnet_logs.db",
+		"mainnet_rates.db",
+		"mainnet_users.db",
+		"mainnet_fee_setrate.db",
+		"mainnet_config.json",
 		"https://mainnet.infura.io",
 		[]string{
 			"https://mainnet.infura.io",
@@ -342,55 +342,75 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://api.myetherapi.com/eth",
 			"https://mew.giveth.io/",
 		},
-	},
-	mode.SIMULATION_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	),
+	mode.STAGING_MODE: NewSettingPaths(
+		"staging_setting.json",
+		"fee.json",
+		"staging.db",
+		"staging_analytics.db",
+		"staging_stats.db",
+		"staging_logs.db",
+		"staging_rates.db",
+		"staging_users.db",
+		"staging_fee_setrate.db",
+		"staging_config.json",
+		"https://mainnet.infura.io",
+		[]string{
+			"https://mainnet.infura.io",
+			"https://semi-node.kyber.network",
+			"https://api.mycryptoapi.com/eth",
+			"https://api.myetherapi.com/eth",
+			"https://mew.giveth.io/",
+		},
+	),
+	mode.SIMULATION_MODE: NewSettingPaths(
+		"shared/deployment_dev.json",
+		"fee.json",
+		"core.db",
+		"core_analytics.db",
+		"core_stats.db",
+		"core_logs.db",
+		"core_rates.db",
+		"core_users.db",
+		"core_fee_setrate.db",
+		"config.json",
 		"http://blockchain:8545",
 		[]string{
 			"http://blockchain:8545",
 		},
-	},
-	mode.ROPSTEN_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	),
+	mode.ROPSTEN_MODE: NewSettingPaths(
+		"ropsten_setting.json",
+		"fee.json",
+		"ropsten.db",
+		"ropsten_analytics.db",
+		"ropsten_stats.db",
+		"ropsten_logs.db",
+		"ropsten_rates.db",
+		"ropsten_users.db",
+		"ropsten_fee_setrate.db",
+		"config.json",
 		"https://ropsten.infura.io",
 		[]string{
 			"https://api.myetherapi.com/rop",
 		},
-	},
-	mode.ANALYTIC_DEV_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	),
+	mode.ANALYTIC_DEV_MODE: NewSettingPaths(
+		"shared/deployment_dev.json",
+		"fee.json",
+		"core.db",
+		"core_analytics.db",
+		"core_stats.db",
+		"core_logs.db",
+		"core_rates.db",
+		"core_users.db",
+		"core_fee_setrate.db",
+		"config.json",
 		"http://blockchain:8545",
 		[]string{
 			"http://blockchain:8545",
 		},
-	},
+	),
 }
 
 var Baseurl string = "http://127.0.0.1"

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
@@ -28,7 +29,7 @@ const (
 func backupLog(arch archive.Archive) {
 	c := cron.New()
 	c.AddFunc("@daily", func() {
-		files, err := ioutil.ReadDir(LOG_PATH)
+		files, err := ioutil.ReadDir(logDir)
 		if err != nil {
 			log.Printf("ERROR: Log backup: Can not view log folder")
 		}
@@ -36,18 +37,18 @@ func backupLog(arch archive.Archive) {
 			matched, err := regexp.MatchString("core.*\\.log", file.Name())
 			if (!file.IsDir()) && (matched) && (err == nil) {
 				log.Printf("File name is %s", file.Name())
-				err := arch.UploadFile(arch.GetLogBucketName(), REMOTE_LOG_PATH, LOG_PATH+file.Name())
+				err := arch.UploadFile(arch.GetLogBucketName(), remoteLogPath, logDir+file.Name())
 				if err != nil {
 					log.Printf("ERROR: Log backup: Can not upload Log file %s", err)
 				} else {
 					var err error
 					var ok bool
 					if file.Name() != "core.log" {
-						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), REMOTE_LOG_PATH, LOG_PATH+file.Name())
+						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), remoteLogPath, logDir+file.Name())
 						if !ok || (err != nil) {
 							log.Printf("ERROR: Log backup: File intergrity is corrupted")
 						}
-						err = os.Remove(LOG_PATH + file.Name())
+						err = os.Remove(logDir + file.Name())
 					}
 					if err != nil {
 						log.Printf("ERROR: Log backup: Cannot remove local log file %s", err)
@@ -66,7 +67,7 @@ func backupLog(arch archive.Archive) {
 //if stdoutLog is set, the log is also printed on stdout.
 func configLog(stdoutLog bool) {
 	logger := &lumberjack.Logger{
-		Filename: "/go/src/github.com/KyberNetwork/reserve-data/log/core.log",
+		Filename: filepath.Join(logDir, "core.log"),
 		// MaxSize:  1, // megabytes
 		MaxBackups: 0,
 		MaxAge:     0, //days
