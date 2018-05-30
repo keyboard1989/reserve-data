@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 
+	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
 
 const (
-	ADDRESS_DB_FILE_PATH         string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/address.db"
+	addressDBFileName            string = "address.db"
 	ADDRES_DEFAULT_JSON_PATH     string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
 	ADDRES_DEFAULT_JSON_SIM_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
 )
@@ -31,7 +33,7 @@ type AddressSetting struct {
 }
 
 func NewAddressSetting() *AddressSetting {
-	BoltAddressStorage, err := settingstorage.NewBoltAddressStorage(ADDRESS_DB_FILE_PATH)
+	BoltAddressStorage, err := settingstorage.NewBoltAddressStorage(filepath.Join(mode.CmdDirLocation(), addressDBFileName))
 	if err != nil {
 		log.Panicf("Setting Init: Can not create bolt address storage (%s)", err)
 	}
