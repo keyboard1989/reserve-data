@@ -6,6 +6,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
@@ -29,26 +30,27 @@ func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *s
 	}
 	ex.UpdateDepositAddress(token, addr)
 }
+
 func getBittrexInterface(kyberENV string) bittrex.Interface {
-	envInterface, err := BittrexInterfaces[kyberENV]
-	if !err {
-		envInterface = BittrexInterfaces["dev"]
+	envInterface, ok := BittrexInterfaces[kyberENV]
+	if !ok {
+		envInterface = BittrexInterfaces[mode.DEV_MODE]
 	}
 	return envInterface
 }
 
 func getBinanceInterface(kyberENV string) binance.Interface {
-	envInterface, err := BinanceInterfaces[kyberENV]
-	if !err {
-		envInterface = BinanceInterfaces["dev"]
+	envInterface, ok := BinanceInterfaces[kyberENV]
+	if !ok {
+		envInterface = BinanceInterfaces[mode.DEV_MODE]
 	}
 	return envInterface
 }
 
 func getHuobiInterface(kyberENV string) huobi.Interface {
-	envInterface, err := HuobiInterfaces[kyberENV]
-	if !err {
-		envInterface = HuobiInterfaces["dev"]
+	envInterface, ok := HuobiInterfaces[kyberENV]
+	if !ok {
+		envInterface = HuobiInterfaces[mode.DEV_MODE]
 	}
 	return envInterface
 }

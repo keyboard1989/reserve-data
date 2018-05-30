@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
@@ -294,13 +295,13 @@ func (self *TheWorld) GetGoldInfo() (common.GoldData, error) {
 
 func NewTheWorld(env string, keyfile string) (*TheWorld, error) {
 	switch env {
-	case "dev", "kovan", "mainnet", "production", "staging", "ropsten", "analytic_dev":
+	case mode.DEV_MODE, mode.KOVAN_MODE, mode.MAINNET_MODE, mode.PRODUCTION_MODE, mode.STAGING_MODE, mode.ROPSTEN_MODE, mode.ANALYTIC_DEV_MODE:
 		endpoint, err := NewRealEndpointFromFile(keyfile)
 		if err != nil {
 			return nil, err
 		}
 		return &TheWorld{endpoint}, nil
-	case "simulation":
+	case mode.SIMULATION_MODE:
 		return &TheWorld{SimulatedEndpoint{}}, nil
 	}
 	panic("unsupported environment")
