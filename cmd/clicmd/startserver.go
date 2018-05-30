@@ -27,7 +27,7 @@ var noCore bool
 var stdoutLog bool
 var dryrun bool
 
-func serverStart(cmd *cobra.Command, args []string) {
+func serverStart(_ *cobra.Command, _ []string) {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 	configLog(stdoutLog)
