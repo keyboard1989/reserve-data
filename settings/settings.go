@@ -15,7 +15,7 @@ var setting Settings
 func NewSetting() *Settings {
 	tokensSetting := NewTokenSetting()
 	addressSetting := NewAddressSetting()
-	setting := Settings{tokensSetting, addressSetting}
+	setting = Settings{tokensSetting, addressSetting}
 	handleEmptyToken()
 	handleEmptyAddress()
 	return &setting

@@ -11,7 +11,7 @@ import (
 type exchange map[string]string
 
 const (
-	ADDRESS_DB_FILE_PATH         string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/token.db"
+	ADDRESS_DB_FILE_PATH         string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/address.db"
 	ADDRES_DEFAULT_JSON_PATH     string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
 	ADDRES_DEFAULT_JSON_SIM_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
 )
@@ -65,7 +65,7 @@ func LoadAddressFromFile(path string) error {
 	if err = setting.Address.Storage.UpdateOneAddress("pricing", addrs.Pricing); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("feeburner", addrs.FeeBurner); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress("burner", addrs.FeeBurner); err != nil {
 		return err
 	}
 	if err = setting.Address.Storage.UpdateOneAddress("whitelist", addrs.Whitelist); err != nil {
