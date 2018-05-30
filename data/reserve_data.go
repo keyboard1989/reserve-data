@@ -17,6 +17,7 @@ type ReserveData struct {
 	fetcher           Fetcher
 	storageController datapruner.StorageController
 	globalStorage     GlobalStorage
+	exchanges         []common.Exchange
 }
 
 func (self ReserveData) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
@@ -314,6 +315,20 @@ func (self ReserveData) ControlAuthDataSize() error {
 	}
 }
 
+func (self ReserveData) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
+	data := common.AllTradeHistory{}
+	data.Data = map[common.ExchangeID]common.ExchangeTradeHistory{}
+	for _, ex := range self.exchanges {
+		history, err := ex.GetTradeHistory(fromTime, toTime)
+		if err != nil {
+			return data, err
+		}
+		data.Data[ex.ID()] = history
+	}
+	data.Timestamp = common.GetTimestamp()
+	return data, nil
+}
+
 func (self ReserveData) RunStorageController() error {
 	if err := self.storageController.Runner.Start(); err != nil {
 		log.Fatalf("Storage controller runner error: %s", err.Error())
@@ -327,12 +342,13 @@ func (self ReserveData) RunStorageController() error {
 }
 
 //NewReserveData initiate a new reserve instance
-func NewReserveData(storage Storage, fetcher Fetcher,
-	storageControllerRunner datapruner.StorageControllerRunner,
-	arch archive.Archive, globalStorage GlobalStorage) *ReserveData {
+func NewReserveData(storage Storage,
+	fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner,
+	arch archive.Archive, globalStorage GlobalStorage,
+	exchanges []common.Exchange) *ReserveData {
 	storageController, err := datapruner.NewStorageController(storageControllerRunner, arch)
 	if err != nil {
 		panic(err)
 	}
-	return &ReserveData{storage, fetcher, storageController, globalStorage}
+	return &ReserveData{storage, fetcher, storageController, globalStorage, exchanges}
 }

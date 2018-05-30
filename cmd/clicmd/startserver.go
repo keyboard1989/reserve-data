@@ -7,6 +7,7 @@ import (
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data"
+	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/spf13/cobra"
@@ -26,7 +27,7 @@ var noCore bool
 var stdoutLog bool
 var dryrun bool
 
-func serverStart(cmd *cobra.Command, args []string) {
+func serverStart(_ *cobra.Command, _ []string) {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 	configLog(stdoutLog)
@@ -36,10 +37,7 @@ func serverStart(cmd *cobra.Command, args []string) {
 		panic(err)
 	}
 	//get configuration from ENV variable
-	kyberENV := os.Getenv("KYBER_ENV")
-	if kyberENV == "" {
-		kyberENV = "dev"
-	}
+	kyberENV := mode.Get()
 	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
 	backupLog(config.Archive)
@@ -63,13 +61,8 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if !noCore {
 		rData, rCore = CreateDataCore(config, kyberENV, bc)
 		if !dryrun {
-			if kyberENV != "simulation" {
-				if err := rData.RunStorageController(); err != nil {
-					log.Fatalf("Run storage controller error: %s", err.Error())
-				}
-			}
-			if err := rData.Run(); err != nil {
-				log.Fatalf("rData run error: %s", err.Error())
+			if kyberENV != mode.SIMULATION_MODE {
+				rData.RunStorageController()
 			}
 		}
 	}
@@ -78,13 +71,8 @@ func serverStart(cmd *cobra.Command, args []string) {
 	if enableStat {
 		rStat = CreateStat(config, kyberENV, bc)
 		if !dryrun {
-			if kyberENV != "simulation" {
-				if err := rStat.RunStorageController(); err != nil {
-					log.Fatalf("Run storage controller error: %s", err.Error())
-				}
-			}
-			if err := rStat.Run(); err != nil {
-				log.Fatalf("Stat run error: %s", err.Error())
+			if kyberENV != mode.SIMULATION_MODE {
+				rStat.RunStorageController()
 			}
 		}
 	}
@@ -94,7 +82,6 @@ func serverStart(cmd *cobra.Command, args []string) {
 	server := http.NewHTTPServer(
 		rData, rCore, rStat,
 		config.MetricStorage,
-		config.Exchanges,
 		servPortStr,
 		config.EnableAuthentication,
 		config.AuthEngine,

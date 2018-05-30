@@ -9,6 +9,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
+	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
 	"github.com/KyberNetwork/reserve-data/core"
@@ -17,7 +18,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/stat"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/robfig/cron"
-	lumberjack "gopkg.in/natefinch/lumberjack.v2"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
@@ -125,8 +126,7 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 		panic(err)
 	}
 	// we need to implicitly add old contract addresses to production
-	if kyberENV == "production" || kyberENV == "mainnet" {
-		// bc.AddOldNetwork(...)
+	if kyberENV == mode.PRODUCTION_MODE || kyberENV == mode.MAINNET_MODE {
 		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
 
@@ -148,7 +148,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.World,
 		config.FetcherRunner,
 		config.ReserveAddress,
-		kyberENV == "simulation",
+		kyberENV == mode.SIMULATION_MODE,
 	)
 	for _, ex := range config.FetcherExchanges {
 		dataFetcher.AddExchange(ex)
@@ -164,6 +164,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.DataControllerRunner,
 		config.Archive,
 		config.DataGlobalStorage,
+		config.Exchanges,
 	)
 
 	rCore := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
@@ -172,7 +173,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 
 func CreateStat(config *configuration.Config, kyberENV string, bc *blockchain.Blockchain) *stat.ReserveStats {
 	var deployBlock uint64
-	if kyberENV == "mainnet" || kyberENV == "production" || kyberENV == "dev" {
+	if kyberENV == mode.MAINNET_MODE || kyberENV == mode.PRODUCTION_MODE || kyberENV == mode.DEV_MODE {
 		deployBlock = STARTING_BLOCK
 	}
 	statFetcher := stat.NewFetcher(

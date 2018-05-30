@@ -70,6 +70,8 @@ type ReserveData interface {
 	UpdateExchangeNotification(exchange, action, tokenPair string, from, to uint64, isWarning bool, msg string) error
 	GetNotifications() (common.ExchangeNotifications, error)
 
+	GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error)
+
 	Run() error
 	RunStorageController() error
 	Stop() error
