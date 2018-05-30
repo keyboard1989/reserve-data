@@ -61,6 +61,43 @@ func NewBoltTokenStorage(dbPath string) (*BoltTokenStorage, error) {
 	return &storage, nil
 }
 
+func addTokenByID(tx *bolt.Tx, t common.Token) error {
+	b, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ID))
+	if uErr != nil {
+		return uErr
+	}
+	dataJSON, uErr := json.Marshal(t)
+	if uErr != nil {
+		return uErr
+	}
+	return b.Put([]byte(strings.ToLower(t.ID)), dataJSON)
+}
+
+func addTokenByAddress(tx *bolt.Tx, t common.Token) error {
+	b, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ADDRESS))
+	if uErr != nil {
+		return uErr
+	}
+	dataJson, uErr := json.Marshal(t)
+	if uErr != nil {
+		return uErr
+	}
+	return b.Put([]byte(strings.ToLower(t.Address)), dataJson)
+}
+
+func (self *BoltTokenStorage) UpdateToken(t common.Token) error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		if uErr := addTokenByID(tx, t); uErr != nil {
+			return uErr
+		}
+		if uErr := addTokenByAddress(tx, t); uErr != nil {
+			return uErr
+		}
+		return nil
+	})
+	return err
+}
+
 func (self *BoltTokenStorage) AddTokenByID(t common.Token) error {
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ID))

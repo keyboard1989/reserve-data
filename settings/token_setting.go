@@ -39,13 +39,7 @@ func NewTokenSetting() *TokenSetting {
 }
 
 func UpdateToken(t common.Token) error {
-	if err := setting.Tokens.Storage.AddTokenByID(t); err != nil {
-		return err
-	}
-	if err := setting.Tokens.Storage.AddTokenByAddress(t); err != nil {
-		return err
-	}
-	return nil
+	return setting.Tokens.Storage.UpdateToken(t)
 }
 
 func LoadTokenFromFile(filePath string) error {
