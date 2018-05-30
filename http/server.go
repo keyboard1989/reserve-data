@@ -1679,6 +1679,8 @@ func (self *HTTPServer) GetFeeSetRateByDay(c *gin.Context) {
 func (self *HTTPServer) register() {
 	self.r.POST("/update-token", self.UpdateToken)
 	self.r.GET("/token-settings", self.TokenSettings)
+	self.r.POST("/update-address", self.UpdateAddress)
+	self.r.POST("/add-address-to-set", self.AddAddressToSet)
 	if self.core != nil && self.app != nil {
 		v2 := self.r.Group("/v2")
 

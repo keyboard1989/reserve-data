@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 
+	ethereum "github.com/ethereum/go-ethereum/common"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
 	"github.com/KyberNetwork/reserve-data/settings"
@@ -99,4 +101,34 @@ func (self *HTTPServer) TokenSettings(c *gin.Context) {
 	}
 	httputil.ResponseSuccess(c, httputil.WithData(data))
 	return
+}
+
+func (self *HTTPServer) UpdateAddress(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{"name", "address"}, []Permission{RebalancePermission, ConfigurePermission})
+	if !ok {
+		return
+	}
+	addrStr := postForm.Get("address")
+	name := postForm.Get("name")
+	addr := ethereum.HexToAddress(addrStr)
+	err := settings.UpdateAdress(name, addr)
+	if err != nil {
+		httputil.ResponseFailure(c, httputil.WithError(err))
+	}
+	httputil.ResponseSuccess(c)
+}
+
+func (self *HTTPServer) AddAddressToSet(c *gin.Context) {
+	postForm, ok := self.Authenticated(c, []string{"setname", "address"}, []Permission{RebalancePermission, ConfigurePermission})
+	if !ok {
+		return
+	}
+	addrStr := postForm.Get("address")
+	setName := postForm.Get("setname")
+	addr := ethereum.HexToAddress(addrStr)
+	err := settings.AddAddressToSet(setName, addr)
+	if err != nil {
+		httputil.ResponseFailure(c, httputil.WithError(err))
+	}
+	httputil.ResponseSuccess(c)
 }
