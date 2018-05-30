@@ -11,6 +11,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/datapruner"
 )
 
+//ReserveData struct for reserve data
 type ReserveData struct {
 	storage           Storage
 	fetcher           Fetcher
@@ -250,14 +251,17 @@ func (self ReserveData) GetNotifications() (common.ExchangeNotifications, error)
 	return self.storage.GetExchangeNotifications()
 }
 
+//Run run fetcher
 func (self ReserveData) Run() error {
 	return self.fetcher.Run()
 }
 
+//Stop stop the fetcher
 func (self ReserveData) Stop() error {
 	return self.fetcher.Stop()
 }
 
+//ControlAuthDataSize pack old data to file, push to S3 and prune outdated data
 func (self ReserveData) ControlAuthDataSize() error {
 	for {
 		log.Printf("DataPruner: waiting for signal from runner AuthData controller channel")
@@ -287,6 +291,7 @@ func (self ReserveData) ControlAuthDataSize() error {
 						removalErr := self.storageController.Arch.RemoveFile(self.storageController.Arch.GetReserveDataBucketName(), self.storageController.ExpiredAuthDataPath, fileName)
 						if removalErr != nil {
 							log.Printf("ERROR: DataPruner: cannot remove remote file :(%s)", removalErr)
+							return err
 						}
 					}
 				}
@@ -295,6 +300,7 @@ func (self ReserveData) ControlAuthDataSize() error {
 				nPrunedRecords, err := self.storage.PruneExpiredAuthData(common.TimeToTimepoint(t))
 				if err != nil {
 					log.Printf("DataPruner: Can not prune Auth Data (%s)", err)
+					return err
 				} else if nPrunedRecords != nRecord {
 					log.Printf("DataPruner: Number of Exported Data is %d, which is different from number of pruned data %d", nRecord, nPrunedRecords)
 				} else {
@@ -303,14 +309,14 @@ func (self ReserveData) ControlAuthDataSize() error {
 			}
 		}
 		if err := os.Remove(fileName); err != nil {
-			log.Fatal(err)
+			return err
 		}
 	}
 }
 
 func (self ReserveData) RunStorageController() error {
 	if err := self.storageController.Runner.Start(); err != nil {
-		log.Printf("Storage controller runner error: %s", err.Error())
+		log.Fatalf("Storage controller runner error: %s", err.Error())
 	}
 	go func() {
 		if err := self.ControlAuthDataSize(); err != nil {
@@ -320,7 +326,10 @@ func (self ReserveData) RunStorageController() error {
 	return nil
 }
 
-func NewReserveData(storage Storage, fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner, arch archive.Archive, globalStorage GlobalStorage) *ReserveData {
+//NewReserveData initiate a new reserve instance
+func NewReserveData(storage Storage, fetcher Fetcher,
+	storageControllerRunner datapruner.StorageControllerRunner,
+	arch archive.Archive, globalStorage GlobalStorage) *ReserveData {
 	storageController, err := datapruner.NewStorageController(storageControllerRunner, arch)
 	if err != nil {
 		panic(err)

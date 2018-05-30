@@ -56,13 +56,13 @@ func (self *LiquiEndpoint) Depth(tokens string, timepoint uint64) (exchange.Liqr
 		if resp.StatusCode == 200 {
 			defer func() {
 				if err := resp.Body.Close(); err != nil {
-					log.Fatalf("Response body close error: %s", err.Error())
+					log.Printf("Response body close error: %s", err.Error())
 				}
 			}()
 			respBody, err := ioutil.ReadAll(resp.Body)
 			if err == nil {
 				if err := json.Unmarshal(respBody, &result); err != nil {
-					log.Fatalf("Unmarshal response error: %s", err.Error())
+					log.Printf("Unmarshal response error: %s", err.Error())
 				}
 			}
 		} else {
@@ -187,10 +187,10 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		}()
 		respBody, err := ioutil.ReadAll(resp.Body)
 		log.Printf("response: %s\n", respBody)
-		if err == nil {
-			err = json.Unmarshal(respBody, &result)
-		}
 		if err != nil {
+			return err
+		}
+		if err = json.Unmarshal(respBody, &result); err != nil {
 			return err
 		}
 		if result.Error != "" {
@@ -198,7 +198,6 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		}
 		return nil
 	}
-	log.Printf("Error: %v, Code: %v\n", err, resp)
 	return errors.New("withdraw rejected by Liqui")
 }
 
@@ -328,22 +327,27 @@ func (self *LiquiEndpoint) ActiveOrders(timepoint uint64) (exchange.Liqorders, e
 	return result, err
 }
 
+//NewLiquiEndpoint return new endpoint instance
 func NewLiquiEndpoint(signer Signer, interf Interface) *LiquiEndpoint {
 	return &LiquiEndpoint{signer, interf}
 }
 
+//NewRealLiquiEndpoint return real endpoint instance
 func NewRealLiquiEndpoint(signer Signer) *LiquiEndpoint {
 	return &LiquiEndpoint{signer, NewRealInterface()}
 }
 
+//NewSimulatedLiquiEndpoint return simulated endpoint instance
 func NewSimulatedLiquiEndpoint(signer Signer) *LiquiEndpoint {
 	return &LiquiEndpoint{signer, NewSimulatedInterface()}
 }
 
+//NewKovanLiquiEndpoint return kovan endpoint instance
 func NewKovanLiquiEndpoint(signer Signer) *LiquiEndpoint {
 	return &LiquiEndpoint{signer, NewKovanInterface()}
 }
 
+//NewDevLiquiEndpoint return dev endpoint instance
 func NewDevLiquiEndpoint(signer Signer) *LiquiEndpoint {
 	return &LiquiEndpoint{signer, NewDevInterface()}
 }

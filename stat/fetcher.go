@@ -129,7 +129,7 @@ func (self *Fetcher) RunFeeSetrateFetcher() {
 	for {
 		err := self.FetchTxs(client)
 		if err != nil {
-			log.Fatalf("failed to fetch data from etherescan: %s", err)
+			log.Printf("failed to fetch data from etherescan: %s", err)
 		}
 		time.Sleep(self.sleepTime)
 	}
@@ -154,7 +154,7 @@ func (self *Fetcher) FetchTxs(client http.Client) error {
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Fatal(err)
+			log.Printf("cannot close response body: %s", err.Error())
 		}
 	}()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -238,7 +238,7 @@ func (self *Fetcher) RunCatLogProcessor() {
 			log.Printf("get last processor state from db failed: %v", err)
 			continue
 		}
-		fromTime += 1
+		fromTime++
 		if fromTime == 1 {
 			// there is no cat log being processed before
 			// load the first log we have and set the fromTime to it's timestamp
@@ -269,7 +269,7 @@ func (self *Fetcher) RunCatLogProcessor() {
 					l.Category,
 				)
 				if err != nil {
-					log.Fatalf("updating address and category failed: err(%s)", err)
+					log.Printf("updating address and category failed: err(%s)", err)
 				} else {
 					if l.Timestamp > last {
 						last = l.Timestamp
@@ -277,20 +277,19 @@ func (self *Fetcher) RunCatLogProcessor() {
 				}
 			}
 			if err := self.userStorage.SetLastProcessedCatLogTimepoint(last); err != nil {
-				log.Fatalf("Set last process cat log timepoint error: %s", err.Error())
+				log.Printf("Set last process cat log timepoint error: %s", err.Error())
 			}
 		} else {
 			l, err := self.logStorage.GetLastCatLog()
 			if err != nil {
 				log.Printf("LogFetcher - can't get last cat log: err(%s)", err)
-				continue
 			} else {
 				// log.Printf("LogFetcher - got last cat log: %+v", l)
 				if toTime < l.Timestamp {
 					// if we are querying on past logs, store toTime as the last
 					// processed trade log timepoint
 					if err := self.userStorage.SetLastProcessedCatLogTimepoint(toTime); err != nil {
-						log.Fatalf("Set last process cat log timepoint error: %s", err.Error())
+						log.Printf("Set last process cat log timepoint error: %s", err.Error())
 					}
 				}
 			}
@@ -301,13 +300,13 @@ func (self *Fetcher) RunCatLogProcessor() {
 }
 
 func (self *Fetcher) GetTradeLogTimeRange(fromTime uint64, t time.Time) (uint64, uint64) {
-	fromTime += 1
+	fromTime++
 	if fromTime == 1 {
 		// there is no trade log being processed before
 		// load the first log we have and set the fromTime to it's timestamp
 		l, err := self.logStorage.GetFirstTradeLog()
 		if err != nil {
-			log.Fatalf("can't get first trade log: err(%s)", err)
+			log.Printf("can't get first trade log: err(%s)", err)
 			// continue
 		} else {
 			log.Printf("got first trade: %+v", l)
@@ -326,13 +325,13 @@ func (self *Fetcher) RunCountryStatAggregation(t time.Time) {
 	// get trade log from db
 	fromTime, err := self.statStorage.GetLastProcessedTradeLogTimepoint(COUNTRY_AGGREGATION)
 	if err != nil {
-		log.Fatalf("get trade log processor state from db failed: %v", err)
+		log.Printf("get trade log processor state from db failed: %v", err)
 		return
 	}
 	fromTime, toTime := self.GetTradeLogTimeRange(fromTime, t)
 	tradeLogs, err := self.logStorage.GetTradeLogs(fromTime, toTime)
 	if err != nil {
-		log.Fatalf("get trade log from db failed: %v", err)
+		log.Printf("get trade log from db failed: %v", err)
 	}
 	if len(tradeLogs) > 0 {
 		if err := self.statStorage.SetFirstTradeEver(&tradeLogs); err != nil {
@@ -412,13 +411,12 @@ func (self *Fetcher) RunTradeSummaryAggregation(t time.Time) {
 		if err != nil {
 			log.Printf("can't get last trade log: err(%s)", err)
 			return
-		} else {
-			if toTime < l.Timestamp {
-				// if we are querying on past logs, store toTime as the last
-				// processed trade log timepoint
-				if err := self.statStorage.SetLastProcessedTradeLogTimepoint(TRADE_SUMMARY_AGGREGATION, toTime); err != nil {
-					log.Printf("Set last processed tradelog timepoint error: %s", err.Error())
-				}
+		}
+		if toTime < l.Timestamp {
+			// if we are querying on past logs, store toTime as the last
+			// processed trade log timepoint
+			if err := self.statStorage.SetLastProcessedTradeLogTimepoint(TRADE_SUMMARY_AGGREGATION, toTime); err != nil {
+				log.Printf("Set last processed tradelog timepoint error: %s", err.Error())
 			}
 		}
 	}
@@ -465,15 +463,15 @@ func (self *Fetcher) RunWalletStatAggregation(t time.Time) {
 		if err != nil {
 			log.Printf("can't get last trade log: err(%s)", err)
 			return
-		} else {
-			if toTime < l.Timestamp {
-				// if we are querying on past logs, store toTime as the last
-				// processed trade log timepoint
-				if err := self.statStorage.SetLastProcessedTradeLogTimepoint(WALLET_AGGREGATION, toTime); err != nil {
-					log.Printf("Set last processed tradelog timepoint: %s", err.Error())
-				}
+		}
+		if toTime < l.Timestamp {
+			// if we are querying on past logs, store toTime as the last
+			// processed trade log timepoint
+			if err := self.statStorage.SetLastProcessedTradeLogTimepoint(WALLET_AGGREGATION, toTime); err != nil {
+				log.Printf("Set last processed tradelog timepoint: %s", err.Error())
 			}
 		}
+
 	}
 }
 
@@ -747,6 +745,7 @@ func (self *Fetcher) RunBlockFetcher() {
 	}
 }
 
+//GetTradeGeo get geo from trade log
 func GetTradeGeo(txHash string) (string, string, error) {
 	url := fmt.Sprintf("https://broadcast.kyber.network/get-tx-info/%s", txHash)
 
@@ -793,6 +792,7 @@ func enforceFromBlock(fromBlock uint64) uint64 {
 // 	block, index,
 // }
 
+//SetCountryField set country field for tradelog
 func SetcountryFields(l *common.TradeLog) {
 	txHash := l.TxHash()
 	ip, country, err := GetTradeGeo(txHash.Hex())
@@ -803,7 +803,7 @@ func SetcountryFields(l *common.TradeLog) {
 	l.Country = country
 }
 
-// Check if the tradelog is duplicated, if it is not, manage to store it into DB
+// CheckDupAndStoreTradeLog Check if the tradelog is duplicated, if it is not, manage to store it into DB
 // return error if db operation is not successful
 func (self *Fetcher) CheckDupAndStoreTradeLog(l common.TradeLog, timepoint uint64) error {
 	var err error
@@ -822,7 +822,7 @@ func (self *Fetcher) CheckDupAndStoreTradeLog(l common.TradeLog, timepoint uint6
 	return err
 }
 
-// Check if the catlog is duplicated, if it is not, manage to store it into DB
+// CheckDupAndStoreCatLog Check if the catlog is duplicated, if it is not, manage to store it into DB
 // return error if db operation is not successful
 func (self *Fetcher) CheckDupAndStoreCatLog(l common.SetCatLog, timepoint uint64) error {
 	var err error
@@ -841,7 +841,7 @@ func (self *Fetcher) CheckDupAndStoreCatLog(l common.SetCatLog, timepoint uint64
 	return err
 }
 
-// return block number that we just fetched the logs
+// FetchLogs return block number that we just fetched the logs
 func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint64) (uint64, error) {
 	logs, err := self.blockchain.GetLogs(fromBlock, toBlock)
 	if err != nil {
@@ -849,7 +849,7 @@ func (self *Fetcher) FetchLogs(fromBlock uint64, toBlock uint64, timepoint uint6
 		return enforceFromBlock(fromBlock), err
 	}
 	if len(logs) > 0 {
-		var maxBlock uint64 = enforceFromBlock(fromBlock)
+		var maxBlock = enforceFromBlock(fromBlock)
 		for _, il := range logs {
 			if il.Type() == "TradeLog" {
 				l := il.(common.TradeLog)

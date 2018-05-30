@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"log"
 	"testing"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -34,7 +33,7 @@ func TestHasPendingDepositRamStorage(t *testing.T) {
 		"submitted",
 		common.GetTimepoint())
 	if err != nil {
-		log.Printf("Store activity error: %s", err.Error())
+		t.Fatalf("Store activity error: %s", err.Error())
 	}
 	out = storage.HasPendingDeposit(token, exchange)
 	if out != true {

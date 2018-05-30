@@ -2,12 +2,11 @@ package stat
 
 import (
 	"fmt"
-	"log"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-// This test type enforces necessary logic required for a stat storage.
+// UserStorageTest -  This test type enforces necessary logic required for a stat storage.
 // - It requires an actual storage instance to be able to run the tests.
 // - It DOESNT do any tear up or tear down processes.
 // - Each of its functions is for one test and will return non-nil error
@@ -20,6 +19,7 @@ type UserStorageTest struct {
 	storage UserStorage
 }
 
+//NewUserStorageTest return new test storage instance
 func NewUserStorageTest(storage UserStorage) *UserStorageTest {
 	return &UserStorageTest{storage}
 }
@@ -103,7 +103,6 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 		}
 	}
 	if err := self.storage.UpdateUserAddresses(email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2}); err != nil {
-		log.Printf("Update user addresses error: %s", err.Error())
 		return err
 	}
 	// test if pending addresses are correct
@@ -125,11 +124,9 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 	}
 	// Start receiving cat logs
 	if err := self.storage.UpdateAddressCategory(addr1, cat); err != nil {
-		log.Printf("Update user address category error: %s", err.Error())
 		return err
 	}
 	if err := self.storage.UpdateUserAddresses(email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2}); err != nil {
-		log.Printf("Update user addresses error: %s", err.Error())
 		return err
 	}
 	// test if pending addresses are correct
@@ -149,7 +146,6 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 		}
 	}
 	if err := self.storage.UpdateAddressCategory(addr2, cat); err != nil {
-		log.Printf("Update address category error: %s", err.Error())
 		return err
 	}
 
@@ -207,10 +203,10 @@ func (self *UserStorageTest) TestUpdateAddressCategoryThenUpdateUserAddresses() 
 	cat := "0x4A"
 
 	if err := self.storage.UpdateAddressCategory(addr1, cat); err != nil {
-		log.Fatalf("Update address category error: %s", err.Error())
+		return err
 	}
 	if err := self.storage.UpdateAddressCategory(addr2, cat); err != nil {
-		log.Fatalf("Update address category error: %s", err.Error())
+		return err
 	}
 	err := self.storage.UpdateUserAddresses(
 		email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2},

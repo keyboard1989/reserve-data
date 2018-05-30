@@ -48,10 +48,12 @@ const (
 	USER_INFO_AGGREGATION     string = "user_info_aggregation"
 )
 
+//BoltStatStorage object
 type BoltStatStorage struct {
 	db *bolt.DB
 }
 
+//NewBoltStatStorage return new storage instance
 func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 	// init instance
 	var err error
@@ -226,7 +228,8 @@ func (self *BoltStatStorage) SetBurnFeeStat(burnFeeStats map[string]common.BurnF
 					v := freqBk.Get(timestamp)
 					if v != nil {
 						if err := json.Unmarshal(v, &currentData); err != nil {
-							log.Fatalf("Unmarshal current data error: %s", err.Error())
+							log.Printf("Unmarshal current data error: %s", err.Error())
+							return err
 						}
 					}
 					currentData.TotalBurnFee += stat.TotalBurnFee
@@ -355,7 +358,8 @@ func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, ethW
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			walletStat := common.MetricStats{}
 			if err := json.Unmarshal(v, &walletStat); err != nil {
-				log.Fatalf("Unmarshal wallet stat error: %s", err.Error())
+				log.Printf("Unmarshal wallet stat error: %s", err.Error())
+				return err
 			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = walletStat
@@ -412,7 +416,8 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 					v := countryTzBucket.Get(timestamp)
 					if v != nil {
 						if err := json.Unmarshal(v, &currentData); err != nil {
-							log.Fatalf("Unmarshal current data error: %s", err.Error())
+							log.Printf("Unmarshal current data error: %s", err.Error())
+							return err
 						}
 					}
 					currentData.ETHVolume += stat.ETHVolume
@@ -784,8 +789,8 @@ func (self *BoltStatStorage) GetUserVolume(fromTime uint64, toTime uint64, freq 
 func (self *BoltStatStorage) GetReserveVolume(fromTime uint64, toTime uint64, freq string, reserveAddr, token ethereum.Address) (common.StatTicks, error) {
 	result := common.StatTicks{}
 	err := self.db.Update(func(tx *bolt.Tx) error {
-		bucket_key := fmt.Sprintf("%s_%s", common.AddrToString(reserveAddr), common.AddrToString(token))
-		b, _ := tx.CreateBucketIfNotExists([]byte(bucket_key))
+		bucketKey := fmt.Sprintf("%s_%s", common.AddrToString(reserveAddr), common.AddrToString(token))
+		b, _ := tx.CreateBucketIfNotExists([]byte(bucketKey))
 		freqBkName, _ := getBucketNameByFreq(freq)
 		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
 

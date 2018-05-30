@@ -3,7 +3,6 @@ package storage
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"testing"
@@ -51,7 +50,7 @@ func TestHasPendingDepositBoltStorage(t *testing.T) {
 		"submitted",
 		common.GetTimepoint())
 	if err != nil {
-		log.Printf("Store activity error: %s", err.Error())
+		t.Fatalf("Store activity error: %s", err.Error())
 	}
 	out, err = storage.HasPendingDeposit(token, exchange)
 	if err != nil {
