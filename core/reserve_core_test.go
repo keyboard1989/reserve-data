@@ -142,7 +142,6 @@ func getTestCore(hasPendingDeposit bool) *ReserveCore {
 	return NewReserveCore(
 		testBlockchain{},
 		testActivityStorage{hasPendingDeposit},
-		ethereum.Address{},
 	)
 }
 

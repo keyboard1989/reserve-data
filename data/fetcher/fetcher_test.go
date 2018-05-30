@@ -12,7 +12,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/world"
-	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 func TestUnchangedFunc(t *testing.T) {
@@ -100,7 +99,7 @@ func TestExchangeDown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fetcher := NewFetcher(fstorage, fstorage, &world.TheWorld{}, runner, ethereum.Address{}, true)
+	fetcher := NewFetcher(fstorage, fstorage, &world.TheWorld{}, runner, true)
 
 	// mock normal data
 	var estatuses, bstatuses sync.Map

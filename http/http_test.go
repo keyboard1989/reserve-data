@@ -19,7 +19,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
 	"github.com/KyberNetwork/reserve-data/metric"
-	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 )
 
@@ -208,7 +207,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 
 	s := HTTPServer{
 		app:         data.NewReserveData(st, nil, nil, nil, nil, nil),
-		core:        core.NewReserveCore(nil, st, ethereum.Address{}),
+		core:        core.NewReserveCore(nil, st),
 		metric:      st,
 		authEnabled: false,
 		r:           gin.Default()}
