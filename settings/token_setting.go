@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"path/filepath"
 
+	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
@@ -29,7 +31,7 @@ type TokenSetting struct {
 }
 
 func NewTokenSetting() *TokenSetting {
-	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(TOKEN_DB_FILE_PATH)
+	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(filepath.Join(mode.CmdDirLocation(), tokenDBFileName))
 	if err != nil {
 		log.Panicf("Setting Init: Can not create bolt token storage (%s)", err)
 	}

@@ -1,6 +1,10 @@
 package mode
 
-import "os"
+import (
+	"os"
+	"path/filepath"
+	"runtime"
+)
 
 const (
 	// mode_env is the name environment variable that set the running mode of core.
@@ -47,4 +51,11 @@ func Get() string {
 		return DEV_MODE
 	}
 	return mode
+}
+
+// CmdDirLocation returns the absolute location of cmd directory where
+// public settings will be read.
+func CmdDirLocation() string {
+	_, fileName, _, _ := runtime.Caller(0)
+	return filepath.Dir(filepath.Dir(filepath.Dir(fileName)))
 }
