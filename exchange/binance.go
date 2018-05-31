@@ -470,7 +470,7 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 
 func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface,
 	minDepositConfig common.ExchangesMinDeposit, storage BinanceStorage, setting Setting) *Binance {
-	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance")
+	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance", setting)
 	binance := &Binance{
 		interf,
 		pairs,

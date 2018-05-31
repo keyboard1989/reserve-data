@@ -424,7 +424,7 @@ func NewBittrex(addressConfig map[string]string,
 	storage BittrexStorage,
 	minDepositConfig common.ExchangesMinDeposit,
 	setting Setting) *Bittrex {
-	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex")
+	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex", setting)
 	bittrex := &Bittrex{
 		interf,
 		pairs,
