@@ -16,5 +16,6 @@ const (
 func createSetting() *settings.Settings {
 	tokensSetting := settings.NewTokenSetting(filepath.Join(mode.CmdDirLocation(), tokenDBFileName))
 	setting := settings.NewSetting(tokensSetting)
-	setting.HandleEmptyToken()
+	setting.HandleEmptyToken(TOKEN_DEFAULT_JSON_PATH, TOKEN_DEFAULT_JSON_SIM_PATH)
+	return setting
 }

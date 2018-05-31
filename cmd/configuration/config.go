@@ -4,6 +4,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
@@ -87,6 +89,7 @@ type Config struct {
 	EtherscanApiKey string
 
 	ChainType string
+	Setting   *settings.Settings
 }
 
 // GetStatConfig: load config to run stat server only
@@ -234,7 +237,9 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		settingPath,
 		self.Blockchain,
 		minDeposit,
-		kyberENV)
+		kyberENV,
+		self.Setting,
+	)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()
 }

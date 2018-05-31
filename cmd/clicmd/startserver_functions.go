@@ -16,7 +16,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
-	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/robfig/cron"
@@ -116,6 +115,7 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 		config.NetworkAddress,
 		config.ReserveAddress,
 		config.WhitelistAddress,
+		config.Setting,
 	)
 	if err != nil {
 		panic(err)
@@ -124,7 +124,7 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 	if kyberENV == mode.PRODUCTION_MODE || kyberENV == mode.MAINNET_MODE {
 		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
-	tokens, err := settings.GetInternalTokens()
+	tokens, err := config.Setting.GetInternalTokens()
 	if err != nil {
 		log.Panicf("Can't get the list of Internal Tokens for indices: %s", err)
 	}
@@ -160,6 +160,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.Archive,
 		config.DataGlobalStorage,
 		config.Exchanges,
+		config.Setting,
 	)
 
 	rCore := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)

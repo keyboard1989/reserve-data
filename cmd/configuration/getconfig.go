@@ -60,6 +60,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
+	setting := createSetting()
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
@@ -123,6 +124,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		EnableAuthentication:    authEnbl,
 		Archive:                 s3archive,
 		World:                   world,
+		Setting:                 setting,
 	}
 
 	if enableStat {
