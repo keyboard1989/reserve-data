@@ -286,7 +286,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"config.json",
 		"https://semi-node.kyber.network",
 		[]string{
-			"https://semi-node.kyber.network",
+			"https://mainnet.infura.io",
 		},
 	),
 	common.KOVAN_MODE: NewSettingPaths(
