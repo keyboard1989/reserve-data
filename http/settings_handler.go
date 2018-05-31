@@ -7,7 +7,6 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
-	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,7 +24,7 @@ func removeTokenFromList(tokens []common.Token, t common.Token) ([]common.Token,
 }
 
 func (self *HTTPServer) reloadTokenIndices(newToken common.Token, active bool) error {
-	tokens, err := settings.GetInternalTokens()
+	tokens, err := self.setting.GetInternalTokens()
 	if err != nil {
 		return err
 	}
@@ -79,7 +78,7 @@ func (self *HTTPServer) UpdateToken(c *gin.Context) {
 			return
 		}
 	}
-	err = settings.UpdateToken(token)
+	err = self.setting.UpdateToken(token)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
@@ -92,7 +91,7 @@ func (self *HTTPServer) TokenSettings(c *gin.Context) {
 	if !ok {
 		return
 	}
-	data, err := settings.GetAllTokens()
+	data, err := self.setting.GetAllTokens()
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
