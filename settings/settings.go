@@ -15,10 +15,8 @@ type Settings struct {
 	Tokens *TokenSetting
 }
 
-var setting Settings
-
 func NewSetting(tokenSetting *TokenSetting) *Settings {
-	setting = Settings{tokenSetting}
+	setting := Settings{tokenSetting}
 	return &setting
 }
 
