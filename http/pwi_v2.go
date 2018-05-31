@@ -42,7 +42,7 @@ func (self *HTTPServer) SetPWIEquationV2(c *gin.Context) {
 		return
 	}
 
-	for tokenID, _ := range input {
+	for tokenID := range input {
 		if _, err := self.setting.GetInternalTokenByID(tokenID); err != nil {
 			httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("Token %s is unsupported", tokenID)))
 		}
