@@ -1,9 +1,7 @@
-package mode
+package common
 
 import (
 	"os"
-	"path/filepath"
-	"runtime"
 )
 
 const (
@@ -40,8 +38,8 @@ var validModes = map[string]struct{}{
 	ANALYTIC_DEV_MODE: {},
 }
 
-// Get returns the current running mode of application.
-func Get() string {
+// RunningMode returns the current running mode of application.
+func RunningMode() string {
 	mode, ok := os.LookupEnv(mode_env)
 	if !ok {
 		return DEV_MODE
@@ -51,11 +49,4 @@ func Get() string {
 		return DEV_MODE
 	}
 	return mode
-}
-
-// CmdDirLocation returns the absolute location of cmd directory where
-// public settings will be read.
-func CmdDirLocation() string {
-	_, fileName, _, _ := runtime.Caller(0)
-	return filepath.Dir(filepath.Dir(filepath.Dir(fileName)))
 }

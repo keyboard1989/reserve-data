@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -48,7 +47,7 @@ func NewSettingPaths(
 	settingPath, feePath, dataStoragePath, analyticStoragePath, statStoragePath,
 	logStoragePath, rateStoragePath, userStoragePath, feeSetRateStoragePath, secretPath, endPoint string,
 	bkendpoints []string) SettingPaths {
-	cmdDir := mode.CmdDirLocation()
+	cmdDir := common.CmdDirLocation()
 	return SettingPaths{
 		settingPath:           filepath.Join(cmdDir, settingPath),
 		feePath:               filepath.Join(cmdDir, feePath),
@@ -158,7 +157,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 
 	var statFetcherRunner stat.FetcherRunner
 	var statControllerRunner statpruner.ControllerRunner
-	if mode.Get() == mode.SIMULATION_MODE {
+	if common.RunningMode() == common.SIMULATION_MODE {
 		if statFetcherRunner, err = http_runner.NewHttpRunner(http_runner.WithHttpRunnerPort(8002)); err != nil {
 			panic(err)
 		}
@@ -200,7 +199,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		log.Fatalf("Fees file %s cannot found at: %s", settingPath.feePath, err)
 	}
 
-	minDepositPath := filepath.Join(mode.CmdDirLocation(), "min_deposit.json")
+	minDepositPath := filepath.Join(common.CmdDirLocation(), "min_deposit.json")
 	minDeposit, err := common.GetMinDepositFromFile(minDepositPath)
 	if err != nil {
 		log.Fatalf("Fees file %s cannot found at: %s", minDepositPath, err.Error())
@@ -213,7 +212,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 
 	var fetcherRunner fetcher.FetcherRunner
 	var dataControllerRunner datapruner.StorageControllerRunner
-	if mode.Get() == mode.SIMULATION_MODE {
+	if common.RunningMode() == common.SIMULATION_MODE {
 		if fetcherRunner, err = http_runner.NewHttpRunner(http_runner.WithHttpRunnerPort(8001)); err != nil {
 			log.Fatalf("failed to create HTTP runner: %s", err.Error())
 		}
@@ -274,7 +273,7 @@ func (self *Config) MapTokens() map[string]common.Token {
 }
 
 var ConfigPaths = map[string]SettingPaths{
-	mode.DEV_MODE: NewSettingPaths(
+	common.DEV_MODE: NewSettingPaths(
 		"dev_setting.json",
 		"fee.json",
 		"dev.db",
@@ -290,7 +289,7 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://semi-node.kyber.network",
 		},
 	),
-	mode.KOVAN_MODE: NewSettingPaths(
+	common.KOVAN_MODE: NewSettingPaths(
 		"kovan_setting.json",
 		"fee.json",
 		"kovan.db",
@@ -304,7 +303,7 @@ var ConfigPaths = map[string]SettingPaths{
 		"https://kovan.infura.io",
 		[]string{},
 	),
-	mode.PRODUCTION_MODE: NewSettingPaths(
+	common.PRODUCTION_MODE: NewSettingPaths(
 		"mainnet_setting.json",
 		"fee.json",
 		"mainnet.db",
@@ -323,7 +322,7 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://mew.giveth.io/",
 		},
 	),
-	mode.MAINNET_MODE: NewSettingPaths(
+	common.MAINNET_MODE: NewSettingPaths(
 		filepath.Join(common.CurrentDir(), "mainnet_setting.json"),
 		"fee.json",
 		"mainnet.db",
@@ -343,7 +342,7 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://mew.giveth.io/",
 		},
 	),
-	mode.STAGING_MODE: NewSettingPaths(
+	common.STAGING_MODE: NewSettingPaths(
 		"staging_setting.json",
 		"fee.json",
 		"staging.db",
@@ -363,7 +362,7 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://mew.giveth.io/",
 		},
 	),
-	mode.SIMULATION_MODE: NewSettingPaths(
+	common.SIMULATION_MODE: NewSettingPaths(
 		"shared/deployment_dev.json",
 		"fee.json",
 		"core.db",
@@ -379,7 +378,7 @@ var ConfigPaths = map[string]SettingPaths{
 			"http://blockchain:8545",
 		},
 	),
-	mode.ROPSTEN_MODE: NewSettingPaths(
+	common.ROPSTEN_MODE: NewSettingPaths(
 		"ropsten_setting.json",
 		"fee.json",
 		"ropsten.db",
@@ -395,7 +394,7 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://api.myetherapi.com/rop",
 		},
 	),
-	mode.ANALYTIC_DEV_MODE: NewSettingPaths(
+	common.ANALYTIC_DEV_MODE: NewSettingPaths(
 		"shared/deployment_dev.json",
 		"fee.json",
 		"core.db",
@@ -420,27 +419,27 @@ var HuobiInterfaces = make(map[string]huobi.Interface)
 var BittrexInterfaces = make(map[string]bittrex.Interface)
 
 func SetInterface(base_url string) {
-	BittrexInterfaces[mode.DEV_MODE] = bittrex.NewDevInterface()
-	BittrexInterfaces[mode.KOVAN_MODE] = bittrex.NewKovanInterface(base_url)
-	BittrexInterfaces[mode.MAINNET_MODE] = bittrex.NewRealInterface()
-	BittrexInterfaces[mode.STAGING_MODE] = bittrex.NewRealInterface()
-	BittrexInterfaces[mode.SIMULATION_MODE] = bittrex.NewSimulatedInterface(base_url)
-	BittrexInterfaces[mode.ROPSTEN_MODE] = bittrex.NewRopstenInterface(base_url)
-	BittrexInterfaces[mode.ANALYTIC_DEV_MODE] = bittrex.NewRopstenInterface(base_url)
+	BittrexInterfaces[common.DEV_MODE] = bittrex.NewDevInterface()
+	BittrexInterfaces[common.KOVAN_MODE] = bittrex.NewKovanInterface(base_url)
+	BittrexInterfaces[common.MAINNET_MODE] = bittrex.NewRealInterface()
+	BittrexInterfaces[common.STAGING_MODE] = bittrex.NewRealInterface()
+	BittrexInterfaces[common.SIMULATION_MODE] = bittrex.NewSimulatedInterface(base_url)
+	BittrexInterfaces[common.ROPSTEN_MODE] = bittrex.NewRopstenInterface(base_url)
+	BittrexInterfaces[common.ANALYTIC_DEV_MODE] = bittrex.NewRopstenInterface(base_url)
 
-	HuobiInterfaces[mode.DEV_MODE] = huobi.NewDevInterface()
-	HuobiInterfaces[mode.KOVAN_MODE] = huobi.NewKovanInterface(base_url)
-	HuobiInterfaces[mode.MAINNET_MODE] = huobi.NewRealInterface()
-	HuobiInterfaces[mode.STAGING_MODE] = huobi.NewRealInterface()
-	HuobiInterfaces[mode.SIMULATION_MODE] = huobi.NewSimulatedInterface(base_url)
-	HuobiInterfaces[mode.ROPSTEN_MODE] = huobi.NewRopstenInterface(base_url)
-	HuobiInterfaces[mode.ANALYTIC_DEV_MODE] = huobi.NewRopstenInterface(base_url)
+	HuobiInterfaces[common.DEV_MODE] = huobi.NewDevInterface()
+	HuobiInterfaces[common.KOVAN_MODE] = huobi.NewKovanInterface(base_url)
+	HuobiInterfaces[common.MAINNET_MODE] = huobi.NewRealInterface()
+	HuobiInterfaces[common.STAGING_MODE] = huobi.NewRealInterface()
+	HuobiInterfaces[common.SIMULATION_MODE] = huobi.NewSimulatedInterface(base_url)
+	HuobiInterfaces[common.ROPSTEN_MODE] = huobi.NewRopstenInterface(base_url)
+	HuobiInterfaces[common.ANALYTIC_DEV_MODE] = huobi.NewRopstenInterface(base_url)
 
-	BinanceInterfaces[mode.DEV_MODE] = binance.NewDevInterface()
-	BinanceInterfaces[mode.KOVAN_MODE] = binance.NewKovanInterface(base_url)
-	BinanceInterfaces[mode.MAINNET_MODE] = binance.NewRealInterface()
-	BinanceInterfaces[mode.STAGING_MODE] = binance.NewRealInterface()
-	BinanceInterfaces[mode.SIMULATION_MODE] = binance.NewSimulatedInterface(base_url)
-	BinanceInterfaces[mode.ROPSTEN_MODE] = binance.NewRopstenInterface(base_url)
-	BinanceInterfaces[mode.ANALYTIC_DEV_MODE] = binance.NewRopstenInterface(base_url)
+	BinanceInterfaces[common.DEV_MODE] = binance.NewDevInterface()
+	BinanceInterfaces[common.KOVAN_MODE] = binance.NewKovanInterface(base_url)
+	BinanceInterfaces[common.MAINNET_MODE] = binance.NewRealInterface()
+	BinanceInterfaces[common.STAGING_MODE] = binance.NewRealInterface()
+	BinanceInterfaces[common.SIMULATION_MODE] = binance.NewSimulatedInterface(base_url)
+	BinanceInterfaces[common.ROPSTEN_MODE] = binance.NewRopstenInterface(base_url)
+	BinanceInterfaces[common.ANALYTIC_DEV_MODE] = binance.NewRopstenInterface(base_url)
 }

@@ -8,7 +8,6 @@ import (
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data"
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/spf13/cobra"
@@ -37,7 +36,7 @@ func serverStart(_ *cobra.Command, _ []string) {
 		panic(err)
 	}
 	//get configuration from ENV variable
-	kyberENV := mode.Get()
+	kyberENV := common.RunningMode()
 	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
 	backupLog(config.Archive)
@@ -61,7 +60,7 @@ func serverStart(_ *cobra.Command, _ []string) {
 	if !noCore {
 		rData, rCore = CreateDataCore(config, kyberENV, bc)
 		if !dryrun {
-			if kyberENV != mode.SIMULATION_MODE {
+			if kyberENV != common.SIMULATION_MODE {
 				rData.RunStorageController()
 			}
 			rData.Run()
@@ -72,7 +71,7 @@ func serverStart(_ *cobra.Command, _ []string) {
 	if enableStat {
 		rStat = CreateStat(config, kyberENV, bc)
 		if !dryrun {
-			if kyberENV != mode.SIMULATION_MODE {
+			if kyberENV != common.SIMULATION_MODE {
 				rStat.RunStorageController()
 			}
 			rStat.Run()
