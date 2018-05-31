@@ -3,7 +3,7 @@ package configuration
 import (
 	"path/filepath"
 
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
+	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/settings"
 )
 
@@ -14,8 +14,8 @@ const (
 )
 
 func createSetting() *settings.Settings {
-	tokensSetting := settings.NewTokenSetting(filepath.Join(mode.CmdDirLocation(), tokenDBFileName))
+	tokensSetting := settings.NewTokenSetting(filepath.Join(common.CmdDirLocation(), tokenDBFileName))
 	setting := settings.NewSetting(tokensSetting)
-	setting.HandleEmptyToken(filepath.Join(mode.CmdDirLocation(), tokenSettingDefaultName), filepath.Join(mode.CmdDirLocation(), tokenSettingSimName))
+	setting.HandleEmptyToken(filepath.Join(common.CmdDirLocation(), tokenSettingDefaultName), filepath.Join(common.CmdDirLocation(), tokenSettingSimName))
 	return setting
 }

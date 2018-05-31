@@ -27,13 +27,6 @@ func CurrentDir() string {
 	return filepath.Join(path.Dir(current))
 }
 
-// CmdDirLocation returns the absolute location of cmd directory where
-// public settings will be read.
-func CmdDirLocation() string {
-	_, fileName, _, _ := runtime.Caller(0)
-	return filepath.Join(filepath.Dir(filepath.Dir(fileName)), "cmd")
-}
-
 // ErrorToString returns error as string and an empty string if the error is nil
 func ErrorToString(err error) string {
 	if err == nil {
