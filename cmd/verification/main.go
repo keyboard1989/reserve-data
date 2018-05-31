@@ -11,7 +11,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/settings"
 )
 
 var noAuthEnable bool
@@ -95,7 +94,7 @@ func run(verify *Verification) {
 			verify.UpdateBaseUrl(*depositBaseUrl)
 		}
 		if *depositToken != "" {
-			token, err = settings.GetInternalTokenByID(*depositToken)
+			token, err = verify.setting.GetInternalTokenByID(*depositToken)
 			if err != nil {
 				log.Println(err.Error())
 				os.Exit(1)
@@ -131,7 +130,7 @@ func main() {
 	if config.AuthEngine == nil {
 		Warning.Println("Current environment setting does not enable authentication. Please check again!!!")
 	}
-	verify := NewVerification(config.AuthEngine)
+	verify := NewVerification(config.AuthEngine, config.Setting)
 	validateArgs()
 
 	run(verify)
