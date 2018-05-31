@@ -5,13 +5,13 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
-	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -50,8 +50,8 @@ type Blockchain struct {
 
 	localSetRateNonce     uint64
 	setRateNonceTimestamp uint64
-
-	gasOracle *GasOracle
+	setting               Setting
+	gasOracle             *GasOracle
 }
 
 func (self *Blockchain) StandardGasPrice() float64 {
@@ -83,11 +83,11 @@ func (self *Blockchain) AddGasOracle(gasOracle *GasOracle) {
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
-	settings.AddAddressToSet("oldNetworkds", addr)
+	self.setting.AddAddressToSet("oldNetworkds", addr)
 }
 
 func (self *Blockchain) AddOldBurners(addr ethereum.Address) {
-	settings.AddAddressToSet("oldBurners", addr)
+	self.setting.AddAddressToSet("oldBurners", addr)
 }
 
 func (self *Blockchain) GetAddresses() (*common.Addresses, error) {
@@ -96,7 +96,7 @@ func (self *Blockchain) GetAddresses() (*common.Addresses, error) {
 		exs[ex.ID()] = ex.TokenAddresses()
 	}
 	tokens := map[string]common.TokenInfo{}
-	tokenSettings, err := settings.GetInternalTokens()
+	tokenSettings, err := self.setting.GetInternalTokens()
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (self *Blockchain) LoadAndSetTokenIndices(tokenAddrs []ethereum.Address) er
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.tokenIndices = map[string]tbindex{}
-	self.tokenIndices[ethereum.HexToAddress(settings.ETHToken().Address).Hex()] = tbindex{1000000, 1000000}
+	self.tokenIndices[ethereum.HexToAddress(self.setting.ETHToken().Address).Hex()] = tbindex{1000000, 1000000}
 	opts := self.GetCallOpts(0)
 	pricingAddr, err := settings.GetAddress("pricing")
 	if err != nil {
@@ -346,7 +346,7 @@ func (self *Blockchain) SetQtyStepFunction(token ethereum.Address, xBuy []*big.I
 func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint64) (map[string]common.BalanceEntry, error) {
 	result := map[string]common.BalanceEntry{}
 	tokens := []ethereum.Address{}
-	tokensSetting, err := settings.GetInternalTokens()
+	tokensSetting, err := self.setting.GetInternalTokens()
 	if err != nil {
 		return result, err
 	}
@@ -359,20 +359,15 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint6
 	returnTime := common.GetTimestamp()
 	log.Printf("Fetcher ------> balances: %v, err: %s", balances, err)
 	if err != nil {
-		tokens, err := settings.GetInternalTokens()
-		if err != nil {
-			log.Printf("Fetcher ------> Can't get the list of internal Tokens (%s)", err)
-			return result, err
-		} else {
-			for _, token := range tokens {
-				result[token.ID] = common.BalanceEntry{
-					Valid:      false,
-					Error:      err.Error(),
-					Timestamp:  timestamp,
-					ReturnTime: returnTime,
-				}
+		for _, token := range tokensSetting {
+			result[token.ID] = common.BalanceEntry{
+				Valid:      false,
+				Error:      err.Error(),
+				Timestamp:  timestamp,
+				ReturnTime: returnTime,
 			}
 		}
+
 	} else {
 		for i, tok := range tokensSetting {
 			if balances[i].Cmp(Big0) == 0 || balances[i].Cmp(BigMax) > 0 {
@@ -401,7 +396,7 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	result := common.AllRateEntry{}
 	tokenAddrs := []ethereum.Address{}
 	validTokens := []common.Token{}
-	tokenSettings, err := settings.GetInternalTokens()
+	tokenSettings, err := self.setting.GetInternalTokens()
 	if err != nil {
 		return result, err
 	}
@@ -451,7 +446,7 @@ func (self *Blockchain) GetReserveRates(
 	rates := common.ReserveRates{}
 	rates.Timestamp = common.GetTimepoint()
 
-	ETH := settings.ETHToken()
+	ETH := self.setting.ETHToken()
 	srcAddresses := []ethereum.Address{}
 	destAddresses := []ethereum.Address{}
 	for _, token := range tokens {
@@ -626,7 +621,7 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 
 					if ethRate := self.GetEthRate(tradeLog.Timestamp / 1000000); ethRate != 0 {
 						// fiatAmount = amount * ethRate
-						eth := settings.ETHToken()
+						eth := self.setting.ETHToken()
 
 						f := new(big.Float)
 						if strings.ToLower(eth.Address) == strings.ToLower(srcAddr.String()) {
@@ -700,7 +695,7 @@ func (self *Blockchain) GetPricingMethod(inputData string) (*abi.Method, error) 
 	return method, nil
 }
 
-func NewBlockchain(base *blockchain.BaseBlockchain) (*Blockchain, error) {
+func NewBlockchain(base *blockchain.BaseBlockchain, setting Setting) (*Blockchain, error) {
 	wrapperAddr, err := settings.GetAddress("wrapper")
 	if err != nil {
 		log.Panicf("Can not get wrapper Address %s", err)
@@ -708,7 +703,7 @@ func NewBlockchain(base *blockchain.BaseBlockchain) (*Blockchain, error) {
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper := blockchain.NewContract(
 		wrapperAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/wrapper.abi",
+		filepath.Join(common.CurrentDir(), "wrapper.abi"),
 	)
 	reserveAddr, err := settings.GetAddress("reserve")
 	if err != nil {
@@ -717,7 +712,7 @@ func NewBlockchain(base *blockchain.BaseBlockchain) (*Blockchain, error) {
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve := blockchain.NewContract(
 		reserveAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/reserve.abi",
+		filepath.Join(common.CurrentDir(), "reserve.abi"),
 	)
 	pricingAddr, err := settings.GetAddress("pricing")
 	if err != nil {
@@ -726,7 +721,7 @@ func NewBlockchain(base *blockchain.BaseBlockchain) (*Blockchain, error) {
 	log.Printf("pricing address: %s", pricingAddr.Hex())
 	pricing := blockchain.NewContract(
 		pricingAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/pricing.abi",
+		filepath.Join(common.CurrentDir(), "pricing.abi"),
 	)
 	burnerAddr, err := settings.GetAddress("burner")
 	if err != nil {
@@ -753,5 +748,6 @@ func NewBlockchain(base *blockchain.BaseBlockchain) (*Blockchain, error) {
 		wrapper: wrapper,
 		pricing: pricing,
 		reserve: reserve,
+		setting: setting,
 	}, nil
 }

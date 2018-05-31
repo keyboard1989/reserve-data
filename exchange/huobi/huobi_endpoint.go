@@ -16,7 +16,6 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
-	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -91,7 +90,7 @@ func (self *HuobiEndpoint) GetResponse(
 	}
 }
 
-// Get account list for later use
+// RunningMode account list for later use
 func (self *HuobiEndpoint) GetAccounts() (exchange.HuobiAccounts, error) {
 	result := exchange.HuobiAccounts{}
 	resp, err := self.GetResponse(
@@ -160,12 +159,8 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	}
 }
 
-func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
+func (self *HuobiEndpoint) WithdrawHistory(tokens []common.Token) (exchange.HuobiWithdraws, error) {
 	result := exchange.HuobiWithdraws{}
-	tokens, err := settings.GetInternalTokens()
-	if err != nil {
-		return result, err
-	}
 	size := len(tokens) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
@@ -186,12 +181,8 @@ func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 	return result, err
 }
 
-func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
+func (self *HuobiEndpoint) DepositHistory(tokens []common.Token) (exchange.HuobiDeposits, error) {
 	result := exchange.HuobiDeposits{}
-	tokens, err := settings.GetInternalTokens()
-	if err != nil {
-		return result, err
-	}
 	size := len(tokens) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
@@ -244,7 +235,7 @@ func (self *HuobiEndpoint) OrderStatus(symbol string, id uint64) (exchange.Huobi
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
 		if result.Status != "ok" {
-			err = fmt.Errorf("Get order status failed: %s", result.Reason)
+			err = fmt.Errorf("RunningMode order status failed: %s", result.Reason)
 		}
 	}
 	return result, err
@@ -346,7 +337,7 @@ func (self *HuobiEndpoint) GetDepositAddress(asset string) (exchange.HuobiDeposi
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
 		if !result.Success {
-			err = fmt.Errorf("Get deposit address failed: %s\n", result.Reason)
+			err = fmt.Errorf("RunningMode deposit address failed: %s\n", result.Reason)
 		}
 	}
 	return result, err

@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat/util"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -52,6 +51,7 @@ type Fetcher struct {
 	apiKey                 string
 	sleepTime              time.Duration
 	blockNumMarker         uint64
+	setting                Setting
 }
 
 func NewFetcher(
@@ -661,7 +661,7 @@ func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) ([]common.
 			}
 		}
 	} else {
-		activeTokens, err := settings.GetActiveTokens()
+		activeTokens, err := self.setting.GetActiveTokens()
 		if err != nil {
 			log.Printf("ERROR: Can not get internal tokens: %s", err)
 			return tokens, err
@@ -931,7 +931,7 @@ func (self *Fetcher) getTradeInfo(trade common.TradeLog) (float64, float64, floa
 
 	var srcAmount, destAmount, ethAmount, burnFee float64
 
-	srcToken, err := settings.GetTokenByAddress(ethereum.HexToAddress(srcAddr))
+	srcToken, err := self.setting.GetTokenByAddress(ethereum.HexToAddress(srcAddr))
 	if err != nil {
 		log.Panicf("GetTradeInfo: can't get src Token (%s)", err)
 	}
@@ -941,7 +941,7 @@ func (self *Fetcher) getTradeInfo(trade common.TradeLog) (float64, float64, floa
 		ethAmount = srcAmount
 	}
 
-	destToken, err := settings.GetTokenByAddress(ethereum.HexToAddress(dstAddr))
+	destToken, err := self.setting.GetTokenByAddress(ethereum.HexToAddress(dstAddr))
 	if err != nil {
 		log.Panicf("GetTradeInfo: can't get dest Token (%s)", err)
 	}
@@ -951,7 +951,7 @@ func (self *Fetcher) getTradeInfo(trade common.TradeLog) (float64, float64, floa
 		ethAmount = destAmount
 	}
 
-	eth := settings.ETHToken()
+	eth := self.setting.ETHToken()
 	if trade.BurnFee != nil {
 		burnFee = common.BigToFloat(trade.BurnFee, eth.Decimal)
 	}
@@ -1024,7 +1024,7 @@ func (self *Fetcher) aggregateVolumeStats(trade common.TradeLog, volumeStats map
 	self.aggregateVolumeStat(trade, userAddr, srcAmount, ethAmount, trade.FiatAmount, volumeStats)
 
 	// reserve volume
-	eth := settings.ETHToken()
+	eth := self.setting.ETHToken()
 	var assetAddr string
 	var assetAmount float64
 	if srcAddr != eth.Address {
@@ -1061,7 +1061,7 @@ func (self *Fetcher) aggregateBurnFeeStats(trade common.TradeLog, burnFeeStats m
 
 	// wallet fee
 	var walletFee float64
-	eth := settings.ETHToken()
+	eth := self.setting.ETHToken()
 	if trade.WalletFee != nil {
 		walletFee = common.BigToFloat(trade.WalletFee, eth.Decimal)
 	}
@@ -1075,7 +1075,7 @@ func (self *Fetcher) aggregateUserInfo(trade common.TradeLog, userInfos map[stri
 	dstAddr := common.AddrToString(trade.DestAddress)
 
 	var srcAmount, destAmount, ethAmount float64
-	srcToken, err := settings.GetTokenByAddress(ethereum.HexToAddress(srcAddr))
+	srcToken, err := self.setting.GetTokenByAddress(ethereum.HexToAddress(srcAddr))
 	if err != nil {
 		log.Panicf("AggregateUserInfo: can't get src Token (%s)", err)
 	}
@@ -1085,7 +1085,7 @@ func (self *Fetcher) aggregateUserInfo(trade common.TradeLog, userInfos map[stri
 		ethAmount = srcAmount
 	}
 
-	destToken, err := settings.GetTokenByAddress(ethereum.HexToAddress(dstAddr))
+	destToken, err := self.setting.GetTokenByAddress(ethereum.HexToAddress(dstAddr))
 	if err != nil {
 		log.Panicf("GetTradeInfo: can't get dest Token (%s)", err)
 	}

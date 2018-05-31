@@ -15,7 +15,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
 	"github.com/KyberNetwork/reserve-data/metric"
-	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/getsentry/raven-go"
@@ -46,6 +45,7 @@ type HTTPServer struct {
 	auth        Authentication
 	r           *gin.Engine
 	blockchain  *blockchain.Blockchain
+	setting     Setting
 }
 
 func getTimePoint(c *gin.Context, useDefault bool) uint64 {
@@ -171,7 +171,7 @@ func (self *HTTPServer) Price(c *gin.Context) {
 	base := c.Param("base")
 	quote := c.Param("quote")
 	log.Printf("Getting price for %s - %s \n", base, quote)
-	pair, err := settings.NewTokenPair(base, quote)
+	pair, err := self.setting.NewTokenPair(base, quote)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithReason("Token pair is not supported"))
 	} else {
@@ -264,7 +264,7 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	msgs := strings.Split(postForm.Get("msgs"), "-")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenAddrs, "-") {
-		token, err := settings.GetInternalTokenByID(tok)
+		token, err := self.setting.GetInternalTokenByID(tok)
 		if err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
@@ -334,12 +334,12 @@ func (self *HTTPServer) Trade(c *gin.Context) {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-	base, err := settings.GetInternalTokenByID(baseTokenParam)
+	base, err := self.setting.GetInternalTokenByID(baseTokenParam)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-	quote, err := settings.GetInternalTokenByID(quoteTokenParam)
+	quote, err := self.setting.GetInternalTokenByID(quoteTokenParam)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
@@ -416,7 +416,7 @@ func (self *HTTPServer) Withdraw(c *gin.Context) {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-	token, err := settings.GetInternalTokenByID(tokenParam)
+	token, err := self.setting.GetInternalTokenByID(tokenParam)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
@@ -450,7 +450,7 @@ func (self *HTTPServer) Deposit(c *gin.Context) {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-	token, err := settings.GetInternalTokenByID(tokenParam)
+	token, err := self.setting.GetInternalTokenByID(tokenParam)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
@@ -565,7 +565,7 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 	toParam := postForm.Get("to")
 	tokens := []common.Token{}
 	for _, tok := range strings.Split(tokenParam, "-") {
-		token, err := settings.GetInternalTokenByID(tok)
+		token, err := self.setting.GetInternalTokenByID(tok)
 		if err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
@@ -682,7 +682,7 @@ func (self *HTTPServer) GetPairInfo(c *gin.Context) {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-	pair, err := settings.NewTokenPair(base, quote)
+	pair, err := self.setting.NewTokenPair(base, quote)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
@@ -819,7 +819,7 @@ func (self *HTTPServer) SetTargetQty(c *gin.Context) {
 		// reserve, _ := strconv.ParseFloat(dataParts[2], 64)
 		// rebalanceThresold, _ := strconv.ParseFloat(dataParts[3], 64)
 		// transferThresold, _ := strconv.ParseFloat(dataParts[4], 64)
-		if _, err = settings.GetInternalTokenByID(token); err != nil {
+		if _, err = self.setting.GetInternalTokenByID(token); err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
 		}
@@ -1016,7 +1016,7 @@ func (self *HTTPServer) SetPWIEquation(c *gin.Context) {
 			return
 		}
 		token := dataParts[0]
-		if _, err = settings.GetInternalTokenByID(token); err != nil {
+		if _, err = self.setting.GetInternalTokenByID(token); err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
 		}
@@ -1144,7 +1144,7 @@ func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
 	if !ok {
 		return
 	}
-	// postData := postForm.Get("data")
+	// postData := postForm.RunningMode("data")
 	err := self.metric.RemovePendingPWIEquation()
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
@@ -1477,7 +1477,7 @@ func (self *HTTPServer) GetReserveVolume(c *gin.Context) {
 		httputil.ResponseFailure(c, httputil.WithReason("token is required"))
 		return
 	}
-	token, err := settings.GetActiveTokenByID(tokenName)
+	token, err := self.setting.GetActiveTokenByID(tokenName)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
@@ -1802,7 +1802,8 @@ func NewHTTPServer(
 	enableAuth bool,
 	authEngine Authentication,
 	env string,
-	bc *blockchain.Blockchain) *HTTPServer {
+	bc *blockchain.Blockchain,
+	setting Setting) *HTTPServer {
 
 	r := gin.Default()
 	sentryCli, err := raven.NewWithTags(
@@ -1825,6 +1826,6 @@ func NewHTTPServer(
 	r.Use(cors.New(corsConfig))
 
 	return &HTTPServer{
-		app, core, stat, metric, host, enableAuth, authEngine, r, bc,
+		app, core, stat, metric, host, enableAuth, authEngine, r, bc, setting,
 	}
 }

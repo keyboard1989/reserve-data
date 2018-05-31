@@ -2,9 +2,9 @@ package configuration
 
 import (
 	"log"
+	"path/filepath"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -19,12 +19,14 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
+	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat"
 	"github.com/KyberNetwork/reserve-data/stat/statpruner"
 	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
 	"github.com/KyberNetwork/reserve-data/world"
 )
 
+// SettingPaths contains path of all setting files.
 type SettingPaths struct {
 	settingPath           string
 	feePath               string
@@ -38,6 +40,28 @@ type SettingPaths struct {
 	secretPath            string
 	endPoint              string
 	bkendpoints           []string
+}
+
+// NewSettingPaths creates new SettingPaths instance from given parameters.
+func NewSettingPaths(
+	settingPath, feePath, dataStoragePath, analyticStoragePath, statStoragePath,
+	logStoragePath, rateStoragePath, userStoragePath, feeSetRateStoragePath, secretPath, endPoint string,
+	bkendpoints []string) SettingPaths {
+	cmdDir := common.CmdDirLocation()
+	return SettingPaths{
+		settingPath:           filepath.Join(cmdDir, settingPath),
+		feePath:               filepath.Join(cmdDir, feePath),
+		dataStoragePath:       filepath.Join(cmdDir, dataStoragePath),
+		analyticStoragePath:   filepath.Join(cmdDir, analyticStoragePath),
+		statStoragePath:       filepath.Join(cmdDir, statStoragePath),
+		logStoragePath:        filepath.Join(cmdDir, logStoragePath),
+		rateStoragePath:       filepath.Join(cmdDir, rateStoragePath),
+		userStoragePath:       filepath.Join(cmdDir, userStoragePath),
+		feeSetRateStoragePath: filepath.Join(cmdDir, feeSetRateStoragePath),
+		secretPath:            filepath.Join(cmdDir, secretPath),
+		endPoint:              endPoint,
+		bkendpoints:           bkendpoints,
+	}
 }
 
 type Config struct {
@@ -77,6 +101,7 @@ type Config struct {
 	EtherscanApiKey string
 
 	ChainType string
+	Setting   *settings.Settings
 }
 
 // GetStatConfig: load config to run stat server only
@@ -114,7 +139,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths) {
 
 	var statFetcherRunner stat.FetcherRunner
 	var statControllerRunner statpruner.ControllerRunner
-	if mode.Get() == mode.SIMULATION_MODE {
+	if common.RunningMode() == common.SIMULATION_MODE {
 		if statFetcherRunner, err = http_runner.NewHttpRunner(http_runner.WithHttpRunnerPort(8002)); err != nil {
 			panic(err)
 		}
@@ -149,7 +174,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		log.Fatalf("Fees file %s cannot found at: %s", settingPath.feePath, err)
 	}
 
-	minDepositPath := "/go/src/github.com/KyberNetwork/reserve-data/cmd/min_deposit.json"
+	minDepositPath := filepath.Join(common.CmdDirLocation(), "min_deposit.json")
 	minDeposit, err := common.GetMinDepositFromFile(minDepositPath)
 	if err != nil {
 		log.Fatalf("Fees file %s cannot found at: %s", minDepositPath, err.Error())
@@ -162,7 +187,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 
 	var fetcherRunner fetcher.FetcherRunner
 	var dataControllerRunner datapruner.StorageControllerRunner
-	if mode.Get() == mode.SIMULATION_MODE {
+	if common.RunningMode() == common.SIMULATION_MODE {
 		if fetcherRunner, err = http_runner.NewHttpRunner(http_runner.WithHttpRunnerPort(8001)); err != nil {
 			log.Fatalf("failed to create HTTP runner: %s", err.Error())
 		}
@@ -207,57 +232,55 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		settingPath,
 		self.Blockchain,
 		minDeposit,
-		kyberENV)
+		kyberENV,
+		self.Setting,
+	)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()
 }
 
 var ConfigPaths = map[string]SettingPaths{
-	mode.DEV_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/dev_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	common.DEV_MODE: NewSettingPaths(
+		"dev_setting.json",
+		"fee.json",
+		"dev.db",
+		"dev_analytics.db",
+		"dev_stats.db",
+		"dev_logs.db",
+		"dev_rates.db",
+		"dev_users.db",
+		"dev_fee_setrate.db",
+		"config.json",
 		"https://semi-node.kyber.network",
 		[]string{
 			"https://semi-node.kyber.network",
 		},
-		// "https://mainnet.infura.io",
-		// []string{
-		// 	"https://mainnet.infura.io",
-		// },
-	},
-	mode.KOVAN_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/kovan_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	),
+	common.KOVAN_MODE: NewSettingPaths(
+		"kovan_setting.json",
+		"fee.json",
+		"kovan.db",
+		"kovan_analytics.db",
+		"kovan_stats.db",
+		"kovan_logs.db",
+		"kovan_rates.db",
+		"kovan_users.db",
+		"kovan_fee_setrate.db",
+		"config.json",
 		"https://kovan.infura.io",
 		[]string{},
-	},
-	mode.PRODUCTION_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
+	),
+	common.PRODUCTION_MODE: NewSettingPaths(
+		"mainnet_setting.json",
+		"fee.json",
+		"mainnet.db",
+		"mainnet_analytics.db",
+		"mainnet_stats.db",
+		"mainnet_logs.db",
+		"mainnet_rates.db",
+		"mainnet_users.db",
+		"mainnet_fee_setrate.db",
+		"mainnet_config.json",
 		"https://mainnet.infura.io",
 		[]string{
 			"https://semi-node.kyber.network",
@@ -265,38 +288,18 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://api.myetherapi.com/eth",
 			"https://mew.giveth.io/",
 		},
-	},
-	mode.MAINNET_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_config.json",
-		"https://mainnet.infura.io",
-		[]string{
-			"https://mainnet.infura.io",
-			"https://semi-node.kyber.network",
-			"https://api.mycryptoapi.com/eth",
-			"https://api.myetherapi.com/eth",
-			"https://mew.giveth.io/",
-		},
-	},
-	mode.STAGING_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/staging_config.json",
+	),
+	common.MAINNET_MODE: NewSettingPaths(
+		"mainnet_setting.json",
+		"fee.json",
+		"mainnet.db",
+		"mainnet_analytics.db",
+		"mainnet_stats.db",
+		"mainnet_logs.db",
+		"mainnet_rates.db",
+		"mainnet_users.db",
+		"mainnet_fee_setrate.db",
+		"mainnet_config.json",
 		"https://mainnet.infura.io",
 		[]string{
 			"https://mainnet.infura.io",
@@ -305,55 +308,75 @@ var ConfigPaths = map[string]SettingPaths{
 			"https://api.myetherapi.com/eth",
 			"https://mew.giveth.io/",
 		},
-	},
-	mode.SIMULATION_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	),
+	common.STAGING_MODE: NewSettingPaths(
+		"staging_setting.json",
+		"fee.json",
+		"staging.db",
+		"staging_analytics.db",
+		"staging_stats.db",
+		"staging_logs.db",
+		"staging_rates.db",
+		"staging_users.db",
+		"staging_fee_setrate.db",
+		"staging_config.json",
+		"https://mainnet.infura.io",
+		[]string{
+			"https://mainnet.infura.io",
+			"https://semi-node.kyber.network",
+			"https://api.mycryptoapi.com/eth",
+			"https://api.myetherapi.com/eth",
+			"https://mew.giveth.io/",
+		},
+	),
+	common.SIMULATION_MODE: NewSettingPaths(
+		"shared/deployment_dev.json",
+		"fee.json",
+		"core.db",
+		"core_analytics.db",
+		"core_stats.db",
+		"core_logs.db",
+		"core_rates.db",
+		"core_users.db",
+		"core_fee_setrate.db",
+		"config.json",
 		"http://blockchain:8545",
 		[]string{
 			"http://blockchain:8545",
 		},
-	},
-	mode.ROPSTEN_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_setting.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/ropsten_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	),
+	common.ROPSTEN_MODE: NewSettingPaths(
+		"ropsten_setting.json",
+		"fee.json",
+		"ropsten.db",
+		"ropsten_analytics.db",
+		"ropsten_stats.db",
+		"ropsten_logs.db",
+		"ropsten_rates.db",
+		"ropsten_users.db",
+		"ropsten_fee_setrate.db",
+		"config.json",
 		"https://ropsten.infura.io",
 		[]string{
 			"https://api.myetherapi.com/rop",
 		},
-	},
-	mode.ANALYTIC_DEV_MODE: {
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/fee.json",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_analytics.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_stats.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_logs.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_rates.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_users.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/core_fee_setrate.db",
-		"/go/src/github.com/KyberNetwork/reserve-data/cmd/config.json",
+	),
+	common.ANALYTIC_DEV_MODE: NewSettingPaths(
+		"shared/deployment_dev.json",
+		"fee.json",
+		"core.db",
+		"core_analytics.db",
+		"core_stats.db",
+		"core_logs.db",
+		"core_rates.db",
+		"core_users.db",
+		"core_fee_setrate.db",
+		"config.json",
 		"http://blockchain:8545",
 		[]string{
 			"http://blockchain:8545",
 		},
-	},
+	),
 }
 
 var Baseurl string = "http://127.0.0.1"
@@ -363,27 +386,27 @@ var HuobiInterfaces = make(map[string]huobi.Interface)
 var BittrexInterfaces = make(map[string]bittrex.Interface)
 
 func SetInterface(base_url string) {
-	BittrexInterfaces[mode.DEV_MODE] = bittrex.NewDevInterface()
-	BittrexInterfaces[mode.KOVAN_MODE] = bittrex.NewKovanInterface(base_url)
-	BittrexInterfaces[mode.MAINNET_MODE] = bittrex.NewRealInterface()
-	BittrexInterfaces[mode.STAGING_MODE] = bittrex.NewRealInterface()
-	BittrexInterfaces[mode.SIMULATION_MODE] = bittrex.NewSimulatedInterface(base_url)
-	BittrexInterfaces[mode.ROPSTEN_MODE] = bittrex.NewRopstenInterface(base_url)
-	BittrexInterfaces[mode.ANALYTIC_DEV_MODE] = bittrex.NewRopstenInterface(base_url)
+	BittrexInterfaces[common.DEV_MODE] = bittrex.NewDevInterface()
+	BittrexInterfaces[common.KOVAN_MODE] = bittrex.NewKovanInterface(base_url)
+	BittrexInterfaces[common.MAINNET_MODE] = bittrex.NewRealInterface()
+	BittrexInterfaces[common.STAGING_MODE] = bittrex.NewRealInterface()
+	BittrexInterfaces[common.SIMULATION_MODE] = bittrex.NewSimulatedInterface(base_url)
+	BittrexInterfaces[common.ROPSTEN_MODE] = bittrex.NewRopstenInterface(base_url)
+	BittrexInterfaces[common.ANALYTIC_DEV_MODE] = bittrex.NewRopstenInterface(base_url)
 
-	HuobiInterfaces[mode.DEV_MODE] = huobi.NewDevInterface()
-	HuobiInterfaces[mode.KOVAN_MODE] = huobi.NewKovanInterface(base_url)
-	HuobiInterfaces[mode.MAINNET_MODE] = huobi.NewRealInterface()
-	HuobiInterfaces[mode.STAGING_MODE] = huobi.NewRealInterface()
-	HuobiInterfaces[mode.SIMULATION_MODE] = huobi.NewSimulatedInterface(base_url)
-	HuobiInterfaces[mode.ROPSTEN_MODE] = huobi.NewRopstenInterface(base_url)
-	HuobiInterfaces[mode.ANALYTIC_DEV_MODE] = huobi.NewRopstenInterface(base_url)
+	HuobiInterfaces[common.DEV_MODE] = huobi.NewDevInterface()
+	HuobiInterfaces[common.KOVAN_MODE] = huobi.NewKovanInterface(base_url)
+	HuobiInterfaces[common.MAINNET_MODE] = huobi.NewRealInterface()
+	HuobiInterfaces[common.STAGING_MODE] = huobi.NewRealInterface()
+	HuobiInterfaces[common.SIMULATION_MODE] = huobi.NewSimulatedInterface(base_url)
+	HuobiInterfaces[common.ROPSTEN_MODE] = huobi.NewRopstenInterface(base_url)
+	HuobiInterfaces[common.ANALYTIC_DEV_MODE] = huobi.NewRopstenInterface(base_url)
 
-	BinanceInterfaces[mode.DEV_MODE] = binance.NewDevInterface()
-	BinanceInterfaces[mode.KOVAN_MODE] = binance.NewKovanInterface(base_url)
-	BinanceInterfaces[mode.MAINNET_MODE] = binance.NewRealInterface()
-	BinanceInterfaces[mode.STAGING_MODE] = binance.NewRealInterface()
-	BinanceInterfaces[mode.SIMULATION_MODE] = binance.NewSimulatedInterface(base_url)
-	BinanceInterfaces[mode.ROPSTEN_MODE] = binance.NewRopstenInterface(base_url)
-	BinanceInterfaces[mode.ANALYTIC_DEV_MODE] = binance.NewRopstenInterface(base_url)
+	BinanceInterfaces[common.DEV_MODE] = binance.NewDevInterface()
+	BinanceInterfaces[common.KOVAN_MODE] = binance.NewKovanInterface(base_url)
+	BinanceInterfaces[common.MAINNET_MODE] = binance.NewRealInterface()
+	BinanceInterfaces[common.STAGING_MODE] = binance.NewRealInterface()
+	BinanceInterfaces[common.SIMULATION_MODE] = binance.NewSimulatedInterface(base_url)
+	BinanceInterfaces[common.ROPSTEN_MODE] = binance.NewRopstenInterface(base_url)
+	BinanceInterfaces[common.ANALYTIC_DEV_MODE] = binance.NewRopstenInterface(base_url)
 }

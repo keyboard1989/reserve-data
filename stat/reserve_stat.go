@@ -11,7 +11,6 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
-	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat/statpruner"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -29,6 +28,7 @@ type ReserveStats struct {
 	feeSetRateStorage FeeSetRateStorage
 	fetcher           *Fetcher
 	storageController statpruner.StorageController
+	setting           Setting
 }
 
 func NewReserveStats(
@@ -87,7 +87,7 @@ func (self ReserveStats) GetAssetVolume(fromTime, toTime uint64, freq, asset str
 		return data, err
 	}
 
-	token, err := settings.GetActiveTokenByID(asset)
+	token, err := self.setting.GetActiveTokenByID(asset)
 	if err != nil {
 		return data, fmt.Errorf("assets %s is not supported", asset)
 	}
@@ -259,7 +259,7 @@ func (self ReserveStats) GetTokenHeatmap(fromTime, toTime uint64, tokenStr, freq
 	if err != nil {
 		return arrResult, err
 	}
-	token, err := settings.GetActiveTokenByID(tokenStr)
+	token, err := self.setting.GetActiveTokenByID(tokenStr)
 	if err != nil {
 		return arrResult, err
 	}
@@ -447,7 +447,7 @@ func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr et
 		}
 		latest = rate
 	}
-	log.Printf("Get reserve rate: %v", result)
+	log.Printf("RunningMode reserve rate: %v", result)
 	return result, err
 }
 

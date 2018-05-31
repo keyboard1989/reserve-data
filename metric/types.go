@@ -1,11 +1,5 @@
 package metric
 
-import (
-	"log"
-
-	"github.com/KyberNetwork/reserve-data/settings"
-)
-
 type TokenMetric struct {
 	AfpMid float64
 	Spread float64
@@ -54,23 +48,24 @@ type SetrateControl struct {
 }
 
 type TargetQtySet struct {
-	TotalTarget        float64
-	ReserveTarget      float64
-	RebalanceThreshold float64
-	TransferThreshold  float64
+	TotalTarget        float64 `json:"total_target"`
+	ReserveTarget      float64 `json:"reserve_target"`
+	RebalanceThreshold float64 `json:"rebalance_threshold"`
+	TransferThreshold  float64 `json:"transfer_threshold"`
 }
 
+//TargetQtyStruct object for save target qty
 type TargetQtyStruct struct {
-	SetTarget TargetQtySet
+	SetTarget TargetQtySet `json:"set_target"`
 }
 
 // PWIEquationV2 contains the information of a PWI equation.
 type PWIEquationV2 struct {
-	A                   float64
-	B                   float64
-	C                   float64
-	MinMinSpread        float64
-	PriceMultiplyFactor float64
+	A                   float64 `json:"a"`
+	B                   float64 `json:"b"`
+	C                   float64 `json:"c"`
+	MinMinSpread        float64 `json:"min_min_spread"`
+	PriceMultiplyFactor float64 `json:"price_multiply_factor"`
 }
 
 // PWIEquationTokenV2 is a mapping between a token id and a PWI equation.
@@ -116,13 +111,8 @@ type PWIEquationRequestV2 map[string]PWIEquationTokenV2
 // Example input:
 // [{"token_id": {equation_token}}, ...]
 func (input PWIEquationRequestV2) IsValid() bool {
-	for tokenID, et := range input {
+	for _, et := range input {
 		if !et.isValid() {
-			return false
-		}
-
-		if _, err := settings.GetInternalTokenByID(tokenID); err != nil {
-			log.Printf("unsupported token %s", tokenID)
 			return false
 		}
 	}

@@ -1576,7 +1576,15 @@ func (self *BoltStorage) StorePWIEquationV2(data string) error {
 		if v == nil {
 			return errors.New("There is no pending equation")
 		}
-		if !bytes.Equal(v, []byte(data)) {
+		confirmData := make(map[string]interface{})
+		if err := json.Unmarshal([]byte(data), &confirmData); err != nil {
+			return err
+		}
+		currentData := make(map[string]interface{})
+		if err := json.Unmarshal(v, &currentData); err != nil {
+			return err
+		}
+		if eq := reflect.DeepEqual(currentData, confirmData); !eq {
 			return errors.New("Confirm data does not match pending data")
 		}
 		id := boltutil.Uint64ToBytes(common.GetTimepoint())

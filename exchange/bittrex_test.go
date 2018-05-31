@@ -94,6 +94,7 @@ func getTestBittrex(depositHistory string, registered bool) *Bittrex {
 		&common.ExchangeInfo{},
 		common.ExchangeFees{},
 		common.ExchangesMinDeposit{},
+		nil,
 	}
 }
 

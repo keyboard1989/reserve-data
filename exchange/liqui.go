@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/satori/go.uuid"
 )
@@ -23,6 +22,7 @@ type Liqui struct {
 	interf    LiquiInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
+	setting   Setting
 }
 
 func (self *Liqui) MarshalText() (text []byte, err error) {
@@ -127,7 +127,7 @@ func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 			result.AvailableBalance = map[string]float64{}
 			result.LockedBalance = map[string]float64{}
 			result.DepositBalance = map[string]float64{}
-			tokens, err := settings.GetInternalTokens()
+			tokens, err := self.setting.GetInternalTokens()
 			if err != nil {
 				return result, err
 			}
@@ -246,22 +246,23 @@ func (self *Liqui) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	}
 }
 
-func NewLiqui(interf LiquiInterface) *Liqui {
+func NewLiqui(interf LiquiInterface, setting Setting) *Liqui {
 
 	return &Liqui{
 		interf,
 		[]common.TokenPair{
-			settings.MustCreateTokenPair("OMG", "ETH"),
-			settings.MustCreateTokenPair("DGD", "ETH"),
-			settings.MustCreateTokenPair("CVC", "ETH"),
-			settings.MustCreateTokenPair("MCO", "ETH"),
-			settings.MustCreateTokenPair("GNT", "ETH"),
-			settings.MustCreateTokenPair("ADX", "ETH"),
-			settings.MustCreateTokenPair("EOS", "ETH"),
-			settings.MustCreateTokenPair("PAY", "ETH"),
-			settings.MustCreateTokenPair("BAT", "ETH"),
-			settings.MustCreateTokenPair("KNC", "ETH"),
+			setting.MustCreateTokenPair("OMG", "ETH"),
+			setting.MustCreateTokenPair("DGD", "ETH"),
+			setting.MustCreateTokenPair("CVC", "ETH"),
+			setting.MustCreateTokenPair("MCO", "ETH"),
+			setting.MustCreateTokenPair("GNT", "ETH"),
+			setting.MustCreateTokenPair("ADX", "ETH"),
+			setting.MustCreateTokenPair("EOS", "ETH"),
+			setting.MustCreateTokenPair("PAY", "ETH"),
+			setting.MustCreateTokenPair("BAT", "ETH"),
+			setting.MustCreateTokenPair("KNC", "ETH"),
 		},
 		map[string]ethereum.Address{},
+		setting,
 	}
 }

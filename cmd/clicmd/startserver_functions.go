@@ -5,18 +5,17 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"regexp"
 
 	"github.com/KyberNetwork/reserve-data/blockchain"
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
 	"github.com/KyberNetwork/reserve-data/core"
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/fetcher"
-	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/robfig/cron"
@@ -30,7 +29,7 @@ const (
 func backupLog(arch archive.Archive) {
 	c := cron.New()
 	c.AddFunc("@daily", func() {
-		files, err := ioutil.ReadDir(LOG_PATH)
+		files, err := ioutil.ReadDir(logDir)
 		if err != nil {
 			log.Printf("ERROR: Log backup: Can not view log folder")
 		}
@@ -38,18 +37,18 @@ func backupLog(arch archive.Archive) {
 			matched, err := regexp.MatchString("core.*\\.log", file.Name())
 			if (!file.IsDir()) && (matched) && (err == nil) {
 				log.Printf("File name is %s", file.Name())
-				err := arch.UploadFile(arch.GetLogBucketName(), REMOTE_LOG_PATH, LOG_PATH+file.Name())
+				err := arch.UploadFile(arch.GetLogBucketName(), remoteLogPath, logDir+file.Name())
 				if err != nil {
 					log.Printf("ERROR: Log backup: Can not upload Log file %s", err)
 				} else {
 					var err error
 					var ok bool
 					if file.Name() != "core.log" {
-						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), REMOTE_LOG_PATH, LOG_PATH+file.Name())
+						ok, err = arch.CheckFileIntergrity(arch.GetLogBucketName(), remoteLogPath, logDir+file.Name())
 						if !ok || (err != nil) {
 							log.Printf("ERROR: Log backup: File intergrity is corrupted")
 						}
-						err = os.Remove(LOG_PATH + file.Name())
+						err = os.Remove(logDir + file.Name())
 					}
 					if err != nil {
 						log.Printf("ERROR: Log backup: Cannot remove local log file %s", err)
@@ -68,7 +67,7 @@ func backupLog(arch archive.Archive) {
 //if stdoutLog is set, the log is also printed on stdout.
 func configLog(stdoutLog bool) {
 	logger := &lumberjack.Logger{
-		Filename: "/go/src/github.com/KyberNetwork/reserve-data/log/core.log",
+		Filename: filepath.Join(logDir, "core.log"),
 		// MaxSize:  1, // megabytes
 		MaxBackups: 0,
 		MaxAge:     0, //days
@@ -110,15 +109,16 @@ func GetConfigFromENV(kyberENV string) *configuration.Config {
 func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockchain.Blockchain, err error) {
 	bc, err = blockchain.NewBlockchain(
 		config.Blockchain,
+		config.Setting,
 	)
 	if err != nil {
 		panic(err)
 	}
 	// we need to implicitly add old contract addresses to production
-	if kyberENV == mode.PRODUCTION_MODE || kyberENV == mode.MAINNET_MODE {
+	if kyberENV == common.PRODUCTION_MODE || kyberENV == common.MAINNET_MODE {
 		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
-	tokens, err := settings.GetInternalTokens()
+	tokens, err := config.Setting.GetInternalTokens()
 	if err != nil {
 		log.Panicf("Can't get the list of Internal Tokens for indices: %s", err)
 	}
@@ -153,6 +153,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.Archive,
 		config.DataGlobalStorage,
 		config.Exchanges,
+		config.Setting,
 	)
 
 	rCore := core.NewReserveCore(bc, config.ActivityStorage)
@@ -161,7 +162,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 
 func CreateStat(config *configuration.Config, kyberENV string, bc *blockchain.Blockchain) *stat.ReserveStats {
 	var deployBlock uint64
-	if kyberENV == mode.MAINNET_MODE || kyberENV == mode.PRODUCTION_MODE || kyberENV == mode.DEV_MODE {
+	if kyberENV == common.MAINNET_MODE || kyberENV == common.PRODUCTION_MODE || kyberENV == common.DEV_MODE {
 		deployBlock = STARTING_BLOCK
 	}
 	statFetcher := stat.NewFetcher(

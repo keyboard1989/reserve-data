@@ -102,33 +102,33 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
   "EOS": {
     "bid": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   },
   "ETH": {
     "bid": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 }
@@ -137,33 +137,33 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
   "EOS": {
     "bid": {
       "a": 751,
-      "b": 500,
+      "B": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
-      "b": 600,
+      "B": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   },
   "ETH": {
     "bid": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
-      "b": 600,
+      "B": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 }
@@ -172,40 +172,56 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
   "OMG": {
     "bid": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
-      "b": 600,
+      "B": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 `
+		testDataConfirmation = `{
+	"ETH": {
+		"bid": {
+		  "a": 750,
+		  "B": 500,
+		  "c": 0.25,
+		  "min_min_spread": 0,
+		  "price_multiply_factor": 0
+		},
+		"ask": {
+		  "a": 750,
+		  "B": 500,
+		  "c": 0.25,
+		  "min_min_spread": 0,
+		  "price_multiply_factor": 0
+		}
+	  },
+	"EOS": {
+		"bid": {
+		"a": 750,
+		"B": 500,
+		"c": 0.25,
+		"min_min_spread": 0,
+		"price_multiply_factor": 0
+		},
+		"ask": {
+		"a": 750,
+		"B": 500,
+		"c": 0.25,
+		"min_min_spread": 0,
+		"price_multiply_factor": 0
+		}
+	}
+}
+	`
 	)
-	settings.NewSetting()
-	err := settings.UpdateToken(common.Token{
-		ID:       "EOS",
-		Address:  "xxx",
-		Internal: true,
-		Active:   true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = settings.UpdateToken(common.Token{
-		ID:       "ETH",
-		Address:  "xxx",
-		Internal: true,
-		Active:   true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
 	if err != nil {
@@ -217,18 +233,38 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			t.Error(rErr)
 		}
 	}()
-
+	tokensSetting := settings.NewTokenSetting(filepath.Join(tmpDir, "token.db"))
+	setting := settings.NewSetting(tokensSetting)
+	err = setting.UpdateToken(common.Token{
+		ID:       "EOS",
+		Address:  "xxx",
+		Internal: true,
+		Active:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = setting.UpdateToken(common.Token{
+		ID:       "ETH",
+		Address:  "xxx",
+		Internal: true,
+		Active:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	st, err := storage.NewBoltStorage(filepath.Join(tmpDir, "test.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	s := HTTPServer{
-		app:         data.NewReserveData(st, nil, nil, nil, nil, nil),
+		app:         data.NewReserveData(st, nil, nil, nil, nil, nil, setting),
 		core:        core.NewReserveCore(nil, st),
 		metric:      st,
 		authEnabled: false,
-		r:           gin.Default()}
+		r:           gin.Default(),
+		setting:     setting}
 	s.register()
 
 	var tests = []testCase{
@@ -322,7 +358,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			msg:      "confirm with correct data",
 			endpoint: confirmPWIEquationV2,
 			method:   http.MethodPost,
-			data:     testData,
+			data:     testDataConfirmation,
 			assert:   httputil.ExpectSuccess,
 		},
 		{

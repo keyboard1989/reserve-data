@@ -217,9 +217,9 @@ func (self *Fetcher) FetchAuthDataFromBlockchain(
 	allStatuses *sync.Map,
 	pendings []common.ActivityRecord) {
 	// we apply double check strategy to mitigate race condition on exchange side like this:
-	// 1. Get list of pending activity status (A)
-	// 2. Get list of balances (B)
-	// 3. Get list of pending activity status again (C)
+	// 1. RunningMode list of pending activity status (A)
+	// 2. RunningMode list of balances (B)
+	// 3. RunningMode list of pending activity status again (C)
 	// 4. if C != A, repeat 1, otherwise return A, B
 	var balances map[string]common.BalanceEntry
 	var statuses map[common.ActivityID]common.ActivityStatus
@@ -484,9 +484,9 @@ func (self *Fetcher) FetchAuthDataFromExchange(
 	timepoint uint64) {
 	defer wg.Done()
 	// we apply double check strategy to mitigate race condition on exchange side like this:
-	// 1. Get list of pending activity status (A)
-	// 2. Get list of balances (B)
-	// 3. Get list of pending activity status again (C)
+	// 1. RunningMode list of pending activity status (A)
+	// 2. RunningMode list of balances (B)
+	// 3. RunningMode list of pending activity status again (C)
 	// 4. if C != A, repeat 1, otherwise return A, B
 	var balances common.EBalanceEntry
 	var statuses map[common.ActivityID]common.ActivityStatus
