@@ -211,6 +211,7 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 		}
 		return nil
 	}
+	log.Printf("Error: %v, Code: %v\n", err, resp)
 	return errors.New("withdraw rejected by Liqui")
 }
 
