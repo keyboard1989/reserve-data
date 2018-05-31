@@ -16,7 +16,6 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
-	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -160,12 +159,8 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	}
 }
 
-func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
+func (self *HuobiEndpoint) WithdrawHistory(tokens []common.Token) (exchange.HuobiWithdraws, error) {
 	result := exchange.HuobiWithdraws{}
-	tokens, err := settings.GetInternalTokens()
-	if err != nil {
-		return result, err
-	}
 	size := len(tokens) * 2
 	resp_body, err := self.GetResponse(
 		"GET",
@@ -186,12 +181,8 @@ func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 	return result, err
 }
 
-func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
+func (self *HuobiEndpoint) DepositHistory(tokens []common.Token) (exchange.HuobiDeposits, error) {
 	result := exchange.HuobiDeposits{}
-	tokens, err := settings.GetInternalTokens()
-	if err != nil {
-		return result, err
-	}
 	size := len(tokens) * 2
 	resp_body, err := self.GetResponse(
 		"GET",

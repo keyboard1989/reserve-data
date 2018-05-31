@@ -506,7 +506,12 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 				log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 				return "", nil
 			}
-			deposits, err := self.interf.DepositHistory()
+			tokens, err := self.setting.GetTokens()
+			if err != nil {
+				log.Printf("ERROR: Can not get list of tokens from setting (%s)", err)
+				return "", err
+			}
+			deposits, err := self.interf.DepositHistory(tokens)
 			if err != nil || deposits.Status != "ok" {
 				log.Printf("Getting deposit history from huobi failed, error: %v, status: %s", err, deposits.Status)
 				return "", nil
@@ -597,7 +602,11 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 func (self *Huobi) WithdrawStatus(
 	id, currency string, amount float64, timepoint uint64) (string, string, error) {
 	withdrawID, _ := strconv.ParseUint(id, 10, 64)
-	withdraws, err := self.interf.WithdrawHistory()
+	tokens, err := self.setting.GetTokens()
+	if err != nil {
+		return "", "", fmt.Errorf("Can't get list of token from setting (%s)", err)
+	}
+	withdraws, err := self.interf.WithdrawHistory(tokens)
 	if err != nil {
 		return "", "", nil
 	}
