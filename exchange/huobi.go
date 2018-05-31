@@ -506,7 +506,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 				log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 				return "", nil
 			}
-			tokens, err := self.setting.GetTokens()
+			tokens, err := self.setting.GetAllTokens()
 			if err != nil {
 				log.Printf("ERROR: Can not get list of tokens from setting (%s)", err)
 				return "", err
@@ -548,10 +548,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 					}
 				}
 			}
-			tokens, uErr := self.setting.GetTokens()
-			if uErr != nil {
-				log.Printf("Error: Can't get list of Supported Token (%s)", uErr)
-			}
+
 			log.Printf("Deposit doesn't exist. Huobi hasn't recognized the deposit yet or in theory, you have more than %d deposits at the same time.", len(tokens)*2)
 			return "", nil
 		} else if status == "failed" {
@@ -602,7 +599,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 func (self *Huobi) WithdrawStatus(
 	id, currency string, amount float64, timepoint uint64) (string, string, error) {
 	withdrawID, _ := strconv.ParseUint(id, 10, 64)
-	tokens, err := self.setting.GetTokens()
+	tokens, err := self.setting.GetAllTokens()
 	if err != nil {
 		return "", "", fmt.Errorf("Can't get list of token from setting (%s)", err)
 	}
