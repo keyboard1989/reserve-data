@@ -75,13 +75,12 @@ func GetResponse(method string, url string,
 			log.Printf("Response body close error: %s", err.Error())
 		}
 	}()
-	switch resp.StatusCode {
-	case 200:
+	if resp.StatusCode == http.StatusOK {
 		resbody, err = ioutil.ReadAll(resp.Body)
-	default:
+	} else {
 		log.Printf("The reply code %v was unexpected", resp.StatusCode)
 		resbody, err = ioutil.ReadAll(resp.Body)
 	}
-	log.Printf("\n request to %s, got response: \n %s \n\n", req.URL, common.TruncStr(resbody))
+	log.Printf("request to %s, got response: \n %s \n\n", req.URL, common.TruncStr(resbody))
 	return resbody, err
 }

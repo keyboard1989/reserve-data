@@ -33,10 +33,9 @@ func addPath(original string, path string) string {
 	url, err := url.Parse(original)
 	if err != nil {
 		panic(err)
-	} else {
-		url.Path = fmt.Sprintf("%s/%s", url.Path, path)
-		return url.String()
 	}
+	url.Path = fmt.Sprintf("%s/%s", url.Path, path)
+	return url.String()
 }
 
 func (self *BittrexEndpoint) fillRequest(req *http.Request, signNeeded bool) {
@@ -71,16 +70,15 @@ func (self *BittrexEndpoint) GetResponse(
 	resp, err := client.Do(req)
 	if err != nil {
 		return respBody, err
-	} else {
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				log.Printf("Unmarshal response error: %s", err.Error())
-			}
-		}()
-		respBody, err = ioutil.ReadAll(resp.Body)
-		log.Printf("request to %s, got response from bittrex: %s\n", req.URL, common.TruncStr(respBody))
-		return respBody, err
 	}
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Unmarshal response error: %s", err.Error())
+		}
+	}()
+	respBody, err = ioutil.ReadAll(resp.Body)
+	log.Printf("request to %s, got response from bittrex: %s\n", req.URL, common.TruncStr(respBody))
+	return respBody, err
 }
 
 func (self *BittrexEndpoint) GetExchangeInfo() (exchange.BittExchangeInfo, error) {
@@ -266,7 +264,6 @@ func (self *BittrexEndpoint) GetAccountTradeHistory(base, quote common.Token) (e
 	)
 	if err == nil {
 		if err = json.Unmarshal(respBody, &result); err != nil {
-			log.Printf("Unmarshal response error: %s", err.Error())
 			return result, err
 		}
 		if !result.Success {

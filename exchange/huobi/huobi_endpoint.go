@@ -52,8 +52,14 @@ func (self *HuobiEndpoint) GetResponse(
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
-	reqBody, _ := json.Marshal(params)
-	req, _ := http.NewRequest(method, reqURL, nil)
+	reqBody, err := json.Marshal(params)
+	if err != nil {
+		return nil, err
+	}
+	req, err := http.NewRequest(method, reqURL, nil)
+	if err != nil {
+		return nil, err
+	}
 	if method == "POST" {
 		req.Body = ioutil.NopCloser(strings.NewReader(string(reqBody)))
 	}
@@ -77,7 +83,6 @@ func (self *HuobiEndpoint) GetResponse(
 	}
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, signNeeded)
-	var err error
 	var respBody []byte
 	//log.Printf("request to huobi: %s\n", req.URL)
 	resp, err := client.Do(req)

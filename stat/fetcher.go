@@ -110,7 +110,7 @@ func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 func (self *Fetcher) Run() error {
 	log.Printf("Fetcher runner is starting...")
 	if err := self.runner.Start(); err != nil {
-		log.Fatalf("Runner start error: %s", err.Error())
+		return err
 	}
 	go self.RunBlockFetcher()
 	go self.RunLogFetcher()

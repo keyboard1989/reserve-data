@@ -20,7 +20,9 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-// LiquiEndpoint object
+// LiquiEndpoint endpoint for liqui
+// including signer for api authentication
+// interf for different env interfacw
 type LiquiEndpoint struct {
 	signer Signer
 	interf Interface
@@ -49,7 +51,10 @@ func (self *LiquiEndpoint) Depth(tokens string, timepoint uint64) (exchange.Liqr
 		"depth",
 		tokens,
 	)
-	req, _ := http.NewRequest("GET", u.String(), nil)
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return result, err
+	}
 	req.Header.Add("Accept", "application/json")
 	resp, err := client.Do(req)
 	if err == nil {
@@ -81,11 +86,14 @@ func (self *LiquiEndpoint) CancelOrder(id string) (exchange.Liqcancel, error) {
 	data.Set("order_id", id)
 	data.Add("nonce", nonce())
 	params := data.Encode()
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"POST",
 		self.interf.AuthenticatedEndpoint(common.GetTimepoint()),
 		bytes.NewBufferString(params),
 	)
+	if err != nil {
+		return result, err
+	}
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -120,11 +128,14 @@ func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	data.Set("amount", strconv.FormatFloat(amount, 'f', -1, 64))
 	data.Add("nonce", nonce())
 	params := data.Encode()
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"POST",
 		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
+	if err != nil {
+		return "", 0, 0, false, err
+	}
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -150,7 +161,6 @@ func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 		}
 		return strconv.FormatUint(result.Return.OrderID, 10), result.Return.Done, result.Return.Remaining, result.Return.OrderID == 0, nil
 	}
-	log.Printf("Error: %v, Code: %v\n", err, resp)
 	return "", 0, 0, false, errors.New("Trade rejected by Liqui")
 
 }
@@ -168,11 +178,14 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 	data.Set("address", address.Hex())
 	data.Add("nonce", nonce())
 	params := data.Encode()
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"POST",
 		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
+	if err != nil {
+		return err
+	}
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -210,35 +223,39 @@ func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
 	data.Add("nonce", nonce())
 	params := data.Encode()
 	log.Printf("endpoint: %v\n", self.interf.AuthenticatedEndpoint(timepoint))
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"POST",
 		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
+	if err != nil {
+		return result, err
+	}
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Key", self.signer.GetKey())
 	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
-	if err == nil {
-		if resp.StatusCode == 200 {
-			defer func() {
-				if err := resp.Body.Close(); err != nil {
-					log.Printf("Response body close error: %s", err.Error())
-				}
-			}()
-			respBody, err := ioutil.ReadAll(resp.Body)
-			log.Printf("Liqui GetInfo response: %s", string(respBody))
-			if err == nil {
-				if err := json.Unmarshal(respBody, &result); err != nil {
-					log.Printf("Unmarshal response error: %s", err.Error())
-				}
+	if err != nil {
+		return result, err
+	}
+	if resp.StatusCode == 200 {
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
 			}
-			log.Printf("Liqui GetInfo data: %v", result)
-		} else {
-			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
+		}()
+		respBody, err := ioutil.ReadAll(resp.Body)
+		log.Printf("Liqui GetInfo response: %s", string(respBody))
+		if err == nil {
+			if err := json.Unmarshal(respBody, &result); err != nil {
+				return result, err
+			}
 		}
+		log.Printf("Liqui GetInfo data: %v", result)
+	} else {
+		err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 	}
 	return result, err
 }
@@ -252,11 +269,14 @@ func (self *LiquiEndpoint) OrderInfo(orderID string, timepoint uint64) (exchange
 	data.Set("order_id", orderID)
 	data.Add("nonce", nonce())
 	params := data.Encode()
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"POST",
 		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
+	if err != nil {
+		return result, err
+	}
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -274,7 +294,7 @@ func (self *LiquiEndpoint) OrderInfo(orderID string, timepoint uint64) (exchange
 			log.Printf("Liqui Order info response: %s", string(respBody))
 			if err == nil {
 				if err := json.Unmarshal(respBody, &result); err != nil {
-					log.Printf("Unmarshal response error: %s", err.Error())
+					return result, err
 				}
 			}
 			log.Printf("Liqui Order info data: %v", result)
@@ -294,11 +314,14 @@ func (self *LiquiEndpoint) ActiveOrders(timepoint uint64) (exchange.Liqorders, e
 	data.Set("pair", "") // all pairs
 	data.Add("nonce", nonce())
 	params := data.Encode()
-	req, _ := http.NewRequest(
+	req, err := http.NewRequest(
 		"POST",
 		self.interf.AuthenticatedEndpoint(timepoint),
 		bytes.NewBufferString(params),
 	)
+	if err != nil {
+		return result, err
+	}
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -316,7 +339,7 @@ func (self *LiquiEndpoint) ActiveOrders(timepoint uint64) (exchange.Liqorders, e
 			log.Printf("Liqui ActiveOrders response: %s", string(respBody))
 			if err == nil {
 				if err := json.Unmarshal(respBody, &result); err != nil {
-					log.Printf("Unmarshal response error: %s", err.Error())
+					return result, err
 				}
 			}
 			log.Printf("Liqui ActiveOrders data: %v", result)

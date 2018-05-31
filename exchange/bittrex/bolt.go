@@ -19,10 +19,12 @@ const (
 	MAX_GET_TRADE_HISTORY   uint64 = 3 * 86400000
 )
 
+//BoltStorage storage object for bittrex
 type BoltStorage struct {
 	db *bolt.DB
 }
 
+//NewBoltStorage return new storage instance for using bittrex
 func NewBoltStorage(path string) (*BoltStorage, error) {
 	// init instance
 	var err error
@@ -33,8 +35,8 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	}
 	// init buckets
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY)); err != nil {
-			log.Printf("Create bucket error: %s", err.Error())
+		if _, vErr := tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY)); vErr != nil {
+			log.Printf("Create bucket error: %s", vErr.Error())
 		}
 		return nil
 	})
@@ -75,24 +77,23 @@ func (self *BoltStorage) StoreTradeHistory(data common.ExchangeTradeHistory) err
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
 		for pair, pairHistory := range data {
-			pairBk, err := b.CreateBucketIfNotExists([]byte(pair))
-			if err != nil {
-				log.Printf("Cannot create pair history bucket: %s", err.Error())
+			pairBk, vErr := b.CreateBucketIfNotExists([]byte(pair))
+			if vErr != nil {
 				return err
 			}
 			for _, history := range pairHistory {
 				idBytes := []byte(fmt.Sprintf("%s%s", strconv.FormatUint(history.Timestamp, 10), history.ID))
-				dataJSON, err := json.Marshal(history)
-				if err != nil {
-					log.Printf("Cannot marshal history: %s", err.Error())
+				dataJSON, vErr := json.Marshal(history)
+				if vErr != nil {
+					return vErr
 				}
-				err = pairBk.Put(idBytes, dataJSON)
-				if err != nil {
-					log.Printf("Cannot put new data: %s", err.Error())
+				vErr = pairBk.Put(idBytes, dataJSON)
+				if vErr != nil {
+					return vErr
 				}
 			}
 		}
-		return err
+		return nil
 	})
 	return err
 }
@@ -101,7 +102,7 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.Exchan
 	result := common.ExchangeTradeHistory{}
 	var err error
 	if toTime-fromTime > MAX_GET_TRADE_HISTORY {
-		return result, errors.New(fmt.Sprintf("Time range is too broad, it must be smaller or equal to 3 days (miliseconds)"))
+		return result, errors.New("Time range is too broad, it must be smaller or equal to 3 days (miliseconds)")
 	}
 	min := []byte(strconv.FormatUint(fromTime, 10))
 	max := []byte(strconv.FormatUint(toTime, 10))
@@ -115,10 +116,8 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.Exchan
 			pairCursor := pairBk.Cursor()
 			for pairKey, history := pairCursor.Seek(min); pairKey != nil && bytes.Compare(pairKey, max) <= 0; pairKey, history = pairCursor.Next() {
 				pairHistory := common.TradeHistory{}
-				err = json.Unmarshal(history, &pairHistory)
-				if err != nil {
-					log.Printf("Cannot unmarshal history: %s", err.Error())
-					return err
+				if vErr := json.Unmarshal(history, &pairHistory); vErr != nil {
+					return vErr
 				}
 				pairsHistory = append(pairsHistory, pairHistory)
 			}
@@ -134,25 +133,19 @@ func (self *BoltStorage) GetLastIDTradeHistory(exchange, pair string) (string, e
 	history := common.TradeHistory{}
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
-		exchangeBk, err := b.CreateBucketIfNotExists([]byte(exchange))
-		if err != nil {
-			log.Printf("Cannot get exchange bucket: %s", err.Error())
-			return err
+		exchangeBk, vErr := b.CreateBucketIfNotExists([]byte(exchange))
+		if vErr != nil {
+			return vErr
 		}
-		pairBk, err := exchangeBk.CreateBucketIfNotExists([]byte(pair))
-		if err != nil {
-			log.Printf("Cannot get pair bucket: %s", err.Error())
-			return err
+		pairBk, vErr := exchangeBk.CreateBucketIfNotExists([]byte(pair))
+		if vErr != nil {
+			return vErr
 		}
 		k, v := pairBk.Cursor().Last()
 		if k != nil {
-			err = json.Unmarshal(v, &history)
-			if err != nil {
-				log.Printf("Cannot unmarshal history: %s", err.Error())
-				return err
-			}
+			vErr = json.Unmarshal(v, &history)
 		}
-		return err
+		return vErr
 	})
 	return history.ID, err
 }

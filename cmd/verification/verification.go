@@ -16,14 +16,18 @@ import (
 	ihttp "github.com/KyberNetwork/reserve-data/http"
 )
 
-//Verification object
+//Verification use for verify api related to core activities
+//which interact with exchanges and blockchain
+//so require auth for authentication api call
+//and exchange for exchange call
+//baseURL use for verify in different env
 type Verification struct {
 	auth      ihttp.Authentication
 	exchanges []string
 	baseURL   string
 }
 
-//DepositWithdrawResponse object
+//DepositWithdrawResponse object using for parse response from deposit api
 type DepositWithdrawResponse struct {
 	Success bool              `json:"success"`
 	ID      common.ActivityID `json:"id"`
@@ -106,7 +110,6 @@ func (v *Verification) GetResponse(
 		}
 	}()
 	respBody, err = ioutil.ReadAll(resp.Body)
-	Info.Printf("request to %s, got response: %s\n", req.URL, respBody)
 	return respBody, err
 }
 
@@ -180,7 +183,6 @@ func (v *Verification) Deposit(
 		return result.ID, err
 	}
 	if err := json.Unmarshal(respBody, &result); err != nil {
-		log.Printf("Cannot unmarshal resp_body: %s", err.Error())
 		return result.ID, err
 	}
 	if result.Success != true {
@@ -207,7 +209,6 @@ func (v *Verification) Withdraw(
 		return result.ID, err
 	}
 	if err = json.Unmarshal(respBody, &result); err != nil {
-		log.Printf("Unmarshal response error: %s", err.Error())
 		return result.ID, err
 	}
 	if result.Success != true {
@@ -287,7 +288,6 @@ func (v *Verification) VerifyDeposit() error {
 	for _, exchange := range v.exchanges {
 		activityID, err := v.Deposit(exchange, token.ID, amount, timepoint)
 		if err != nil {
-			Error.Println(err.Error())
 			return err
 		}
 		Info.Printf("Deposit id: %s", activityID)
@@ -322,11 +322,9 @@ func (v *Verification) VerifyWithdraw() error {
 func (v *Verification) RunVerification() error {
 	Info.Println("Start verification")
 	if err := v.VerifyDeposit(); err != nil {
-		log.Printf("Verify deposit error: %s", err.Error())
 		return err
 	}
 	if err := v.VerifyWithdraw(); err != nil {
-		log.Printf("Verify withdraw error: %s", err.Error())
 		return err
 	}
 	return nil

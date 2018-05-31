@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"strconv"
 	"sync"
 
@@ -21,7 +20,8 @@ const (
 	MAX_GET_TRADE_HISTORY uint64 = 3 * 86400000
 )
 
-//BoltStorage object
+//BoltStorage strage object for using huobi
+//including boltdb
 type BoltStorage struct {
 	mu sync.RWMutex
 	db *bolt.DB
@@ -39,11 +39,9 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	// init buckets
 	err = db.Update(func(tx *bolt.Tx) error {
 		if _, err := tx.CreateBucket([]byte(INTERMEDIATE_TX)); err != nil {
-			log.Printf("Create bucket error: %s", err.Error())
 			return err
 		}
 		if _, err := tx.CreateBucket([]byte(PENDING_INTERMEDIATE_TX)); err != nil {
-			log.Printf("Create bucket error: %s", err.Error())
 			return err
 		}
 		return nil
@@ -160,26 +158,23 @@ func (self *BoltStorage) StoreTradeHistory(data common.ExchangeTradeHistory) err
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
 		for pair, pairHistory := range data {
-			pairBk, err := b.CreateBucketIfNotExists([]byte(pair))
-			if err != nil {
-				log.Printf("Cannot create pair history bucket: %s", err.Error())
-				return err
+			pairBk, vErr := b.CreateBucketIfNotExists([]byte(pair))
+			if vErr != nil {
+				return vErr
 			}
 			for _, history := range pairHistory {
 				idBytes := []byte(fmt.Sprintf("%s%s", strconv.FormatUint(history.Timestamp, 10), history.ID))
-				dataJSON, err := json.Marshal(history)
-				if err != nil {
-					log.Printf("Cannot marshal history: %s", err.Error())
-					return err
+				dataJSON, vErr := json.Marshal(history)
+				if vErr != nil {
+					return vErr
 				}
-				err = pairBk.Put(idBytes, dataJSON)
-				if err != nil {
-					log.Printf("Cannot put the new data: %s", err.Error())
-					return err
+				vErr = pairBk.Put(idBytes, dataJSON)
+				if vErr != nil {
+					return vErr
 				}
 			}
 		}
-		return err
+		return nil
 	})
 	return err
 }
@@ -203,10 +198,8 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.Exchan
 			pairCursor := pairBk.Cursor()
 			for pairKey, history := pairCursor.Seek(min); pairKey != nil && bytes.Compare(pairKey, max) <= 0; pairKey, history = pairCursor.Next() {
 				pairHistory := common.TradeHistory{}
-				err = json.Unmarshal(history, &pairHistory)
-				if err != nil {
-					log.Printf("Cannot unmarshal history: %s", err.Error())
-					return err
+				if vErr := json.Unmarshal(history, &pairHistory); vErr != nil {
+					return vErr
 				}
 				pairsHistory = append(pairsHistory, pairHistory)
 			}
@@ -223,20 +216,15 @@ func (self *BoltStorage) GetLastIDTradeHistory(exchange, pair string) (string, e
 	history := common.TradeHistory{}
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
-		pairBk, err := b.CreateBucketIfNotExists([]byte(pair))
-		if err != nil {
-			log.Printf("Cannot get pair bucket: %s", err.Error())
-			return err
+		pairBk, vErr := b.CreateBucketIfNotExists([]byte(pair))
+		if vErr != nil {
+			return vErr
 		}
 		k, v := pairBk.Cursor().Last()
 		if k != nil {
-			err = json.Unmarshal(v, &history)
-			if err != nil {
-				log.Printf("Cannot unmarshal history: %s", err.Error())
-				return err
-			}
+			vErr = json.Unmarshal(v, &history)
 		}
-		return err
+		return vErr
 	})
 	return history.ID, err
 }

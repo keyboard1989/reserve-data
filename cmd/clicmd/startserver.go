@@ -64,6 +64,9 @@ func serverStart(_ *cobra.Command, _ []string) {
 			if kyberENV != mode.SIMULATION_MODE {
 				rData.RunStorageController()
 			}
+			if err := rData.Run(); err != nil {
+				log.Panic(err)
+			}
 		}
 	}
 
@@ -73,6 +76,9 @@ func serverStart(_ *cobra.Command, _ []string) {
 		if !dryrun {
 			if kyberENV != mode.SIMULATION_MODE {
 				rStat.RunStorageController()
+			}
+			if err := rStat.Run(); err != nil {
+				log.Panic(err)
 			}
 		}
 	}

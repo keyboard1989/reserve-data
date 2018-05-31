@@ -12,7 +12,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-//HTTPServer object
+//HTTPServer for huobi which including
+//app stand for huobi exchange instance in reserve data
+//host is for api calling
+//r for http engine
 type HTTPServer struct {
 	app  Huobi
 	host string

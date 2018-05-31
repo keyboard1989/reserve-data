@@ -40,11 +40,9 @@ func GetActivitiesResponse(url string, params map[string]string, config configur
 	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", url, "activities"), params, true, config)
 
 	if err != nil {
-		log.Printf("can't get response: %s", err.Error())
 		return allActionRep, err
 	}
 	if err := json.Unmarshal(data, &allActionRep); err != nil {
-		log.Printf("can't decode the reply: %s", err.Error())
 		return allActionRep, err
 	}
 	return allActionRep, err
@@ -55,7 +53,6 @@ func GetAllRateResponse(url string, params map[string]string, config configurati
 	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", url, "get-all-rates"), params, false, config)
 
 	if err != nil {
-		log.Printf("can't get response: %s", err.Error())
 		return allRateRep, err
 	}
 	err = json.Unmarshal(data, &allRateRep)
