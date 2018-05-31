@@ -323,7 +323,7 @@ var ConfigPaths = map[string]SettingPaths{
 		},
 	),
 	common.MAINNET_MODE: NewSettingPaths(
-		filepath.Join(common.CurrentDir(), "mainnet_setting.json"),
+		"mainnet_setting.json",
 		"fee.json",
 		"mainnet.db",
 		"mainnet_analytics.db",
