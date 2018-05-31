@@ -5,7 +5,6 @@ import (
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -13,6 +12,7 @@ type Bitfinex struct {
 	interf    BitfinexInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
+	setting   Setting
 }
 
 func (self *Bitfinex) MarshalText() (text []byte, err error) {
@@ -76,10 +76,10 @@ func (self *Bitfinex) FetchEBalanceData() (common.EBalanceEntry, error) {
 	return result, nil
 }
 
-func NewBitfinex(interf BitfinexInterface) *Bitfinex {
+func NewBitfinex(interf BitfinexInterface, setting Setting) *Bitfinex {
 	tokenPair := []common.TokenPair{
-		settings.MustCreateTokenPair("OMG", "ETH"),
-		settings.MustCreateTokenPair("EOS", "ETH"),
+		setting.MustCreateTokenPair("OMG", "ETH"),
+		setting.MustCreateTokenPair("EOS", "ETH"),
 	}
 	return &Bitfinex{
 		interf,
@@ -97,5 +97,6 @@ func NewBitfinex(interf BitfinexInterface) *Bitfinex {
 			"BAT": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
 			"KNC": ethereum.HexToAddress("0x5b082bc7928e1fd5b757426fe7225cc7a6a75c55"),
 		},
+		setting,
 	}
 }

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -29,6 +28,7 @@ type Binance struct {
 	fees         common.ExchangeFees
 	minDeposit   common.ExchangesMinDeposit
 	storage      BinanceStorage
+	setting      Setting
 }
 
 func (self *Binance) TokenAddresses() map[string]ethereum.Address {
@@ -329,7 +329,7 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		} else {
 			for _, b := range resp_data.Balances {
 				tokenID := b.Asset
-				_, err := settings.GetInternalTokenByID(tokenID)
+				_, err := self.setting.GetInternalTokenByID(tokenID)
 				if err == nil {
 					avai, _ := strconv.ParseFloat(b.Free, 64)
 					locked, _ := strconv.ParseFloat(b.Locked, 64)
@@ -469,7 +469,7 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 }
 
 func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, interf BinanceInterface,
-	minDepositConfig common.ExchangesMinDeposit, storage BinanceStorage) *Binance {
+	minDepositConfig common.ExchangesMinDeposit, storage BinanceStorage, setting Setting) *Binance {
 	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "binance")
 	binance := &Binance{
 		interf,
@@ -480,6 +480,7 @@ func NewBinance(addressConfig map[string]string, feeConfig common.ExchangeFees, 
 		fees,
 		minDeposit,
 		storage,
+		setting,
 	}
 	binance.FetchTradeHistory()
 	return binance
