@@ -103,33 +103,33 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
   "EOS": {
     "bid": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   },
   "ETH": {
     "bid": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 }
@@ -138,33 +138,33 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
   "EOS": {
     "bid": {
       "a": 751,
-      "b": 500,
+      "B": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
-      "b": 600,
+      "B": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   },
   "ETH": {
     "bid": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
-      "b": 600,
+      "B": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 }
@@ -173,20 +173,55 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
   "OMG": {
     "bid": {
       "a": 750,
-      "b": 500,
+      "B": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
-      "b": 600,
+      "B": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 `
+		testDataConfirmation = `{
+	"ETH": {
+		"bid": {
+		  "a": 750,
+		  "B": 500,
+		  "c": 0.25,
+		  "min_min_spread": 0,
+		  "price_multiply_factor": 0
+		},
+		"ask": {
+		  "a": 750,
+		  "B": 500,
+		  "c": 0.25,
+		  "min_min_spread": 0,
+		  "price_multiply_factor": 0
+		}
+	  },
+	"EOS": {
+		"bid": {
+		"a": 750,
+		"B": 500,
+		"c": 0.25,
+		"min_min_spread": 0,
+		"price_multiply_factor": 0
+		},
+		"ask": {
+		"a": 750,
+		"B": 500,
+		"c": 0.25,
+		"min_min_spread": 0,
+		"price_multiply_factor": 0
+		}
+	}
+}
+	`
 	)
 
 	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
@@ -324,7 +359,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			msg:      "confirm with correct data",
 			endpoint: confirmPWIEquationV2,
 			method:   http.MethodPost,
-			data:     testData,
+			data:     testDataConfirmation,
 			assert:   httputil.ExpectSuccess,
 		},
 		{

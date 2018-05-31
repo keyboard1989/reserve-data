@@ -1407,34 +1407,34 @@ response:
   "data": {
     "EOS": {
       "ask": {
-        "A": 800,
-        "B": 600,
-        "C": 0,
-        "MinMinSpread": 0,
-        "PriceMultiplyFactor": 0
+        "a": 800,
+        "b": 600,
+        "c": 0,
+        "min_min_spread": 0,
+        "price_multiply_factor": 0
       },
       "bid": {
-        "A": 750,
-        "B": 500,
-        "C": 0,
-        "MinMinSpread": 0,
-        "PriceMultiplyFactor": 0
+        "a": 750,
+        "b": 500,
+        "c": 0,
+        "min_min_spread": 0,
+        "price_multiply_factor": 0
       }
     },
     "ETH": {
       "ask": {
-        "A": 800,
-        "B": 600,
-        "C": 0,
-        "MinMinSpread": 0,
-        "PriceMultiplyFactor": 0
+        "a": 800,
+        "b": 600,
+        "c": 0,
+        "min_min_spread": 0,
+        "price_multiply_factor": 0
       },
       "bid": {
-        "A": 750,
-        "B": 500,
-        "C": 0,
-        "MinMinSpread": 0,
-        "PriceMultiplyFactor": 0
+        "a": 750,
+        "b": 500,
+        "c": 0,
+        "min_min_spread": 0,
+        "price_multiply_factor": 0
       }
     }
   },
@@ -1462,34 +1462,34 @@ response:
   "data": {
     "EOS": {
       "ask": {
-        "A": 800,
-        "B": 600,
-        "C": 0,
-        "MinMinSpread": 0,
-        "PriceMultiplyFactor": 0
+        "a": 800,
+        "b": 600,
+        "c": 0,
+        "min_min_spread": 0,
+        "price_multiply_factor": 0
       },
       "bid": {
-        "A": 750,
-        "B": 500,
-        "C": 0,
-        "MinMinSpread": 0,
-        "PriceMultiplyFactor": 0
+        "a": 750,
+        "b": 500,
+        "c": 0,
+        "min_min_spread": 0,
+        "price_multiply_factor": 0
       }
     },
     "ETH": {
       "ask": {
-        "A": 800,
-        "B": 600,
-        "C": 0,
-        "MinMinSpread": 0,
-        "PriceMultiplyFactor": 0
+        "a": 800,
+        "b": 600,
+        "c": 0,
+        "min_min_spread": 0,
+        "price_multiply_factor": 0
       },
       "bid": {
-        "A": 750,
-        "B": 500,
-        "C": 0,
-        "MinMinSpread": 0,
-        "PriceMultiplyFactor": 0
+        "a": 750,
+        "b": 500,
+        "c": 0,
+        "min_min_spread": 0,
+        "price_multiply_factor": 0
       }
     }
   },
@@ -1516,15 +1516,15 @@ curl -X "POST" "http://localhost:8000/v2/set-pwis-equation" \
       \"a\": 750,
       \"b\": 500,
       \"c\": 0,
-      \"MinMinSpread\": 0,
-      \"PriceMultiplyFactor\": 0
+      \"min_min_spread\": 0,
+      \"price_multiply_factor\": 0
     },
     \"ask\": {
       \"a\": 800,
       \"b\": 600,
       \"c\": 0,
-      \"MinMinSpread\": 0,
-      \"PriceMultiplyFactor\": 0
+      \"min_min_spread\": 0,
+      \"price_multiply_factor\": 0
     }
   },
   \"ETH\": {
@@ -1532,15 +1532,15 @@ curl -X "POST" "http://localhost:8000/v2/set-pwis-equation" \
       \"a\": 750,
       \"b\": 500,
       \"c\": 0,
-      \"MinMinSpread\": 0,
-      \"PriceMultiplyFactor\": 0
+      \"min_min_spread\": 0,
+      \"price_multiply_factor\": 0
     },
     \"ask\": {
       \"a\": 800,
       \"b\": 600,
       \"c\": 0,
-      \"MinMinSpread\": 0,
-      \"PriceMultiplyFactor\": 0
+      \"min_min_spread\": 0,
+      \"price_multiply_factor\": 0
     }
   }
 }"
@@ -1573,15 +1573,15 @@ curl -X "POST" "http://localhost:8000/v2/confirm-pwis-equation" \
       \"a\": 750,
       \"b\": 500,
       \"c\": 0,
-      \"MinMinSpread\": 0,
-      \"PriceMultiplyFactor\": 0
+      \"min_min_spread\": 0,
+      \"price_multiply_factor\": 0
     },
     \"ask\": {
       \"a\": 800,
       \"b\": 600,
       \"c\": 0,
-      \"MinMinSpread\": 0,
-      \"PriceMultiplyFactor\": 0
+      \"min_min_spread\": 0,
+      \"price_multiply_factor\": 0
     }
   },
   \"ETH\": {
@@ -1589,15 +1589,15 @@ curl -X "POST" "http://localhost:8000/v2/confirm-pwis-equation" \
       \"a\": 750,
       \"b\": 500,
       \"c\": 0,
-      \"MinMinSpread\": 0,
-      \"PriceMultiplyFactor\": 0
+      \"min_min_spread\": 0,
+      \"price_multiply_factor\": 0
     },
     \"ask\": {
       \"a\": 800,
       \"b\": 600,
       \"c\": 0,
-      \"MinMinSpread\": 0,
-      \"PriceMultiplyFactor\": 0
+      \"min_min_spread\": 0,
+      \"price_multiply_factor\": 0
     }
   }
 }"
