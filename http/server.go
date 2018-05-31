@@ -1144,7 +1144,7 @@ func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
 	if !ok {
 		return
 	}
-	// postData := postForm.Get("data")
+	// postData := postForm.RunningMode("data")
 	err := self.metric.RemovePendingPWIEquation()
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))

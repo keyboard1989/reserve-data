@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -659,17 +660,17 @@ func NewBlockchain(
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper := blockchain.NewContract(
 		wrapperAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/wrapper.abi",
+		filepath.Join(common.CurrentDir(), "wrapper.abi"),
 	)
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve := blockchain.NewContract(
 		reserveAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/reserve.abi",
+		filepath.Join(common.CurrentDir(), "reserve.abi"),
 	)
 	log.Printf("pricing address: %s", pricingAddr.Hex())
 	pricing := blockchain.NewContract(
 		pricingAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/pricing.abi",
+		filepath.Join(common.CurrentDir(), "pricing.abi"),
 	)
 
 	log.Printf("burner address: %s", burnerAddr.Hex())

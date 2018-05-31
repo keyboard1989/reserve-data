@@ -3,12 +3,10 @@ package configuration
 import (
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
@@ -17,6 +15,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
+	"github.com/KyberNetwork/reserve-data/settings"
 )
 
 type ExchangePool struct {
@@ -35,7 +34,7 @@ func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *s
 func getBittrexInterface(kyberENV string) bittrex.Interface {
 	envInterface, ok := BittrexInterfaces[kyberENV]
 	if !ok {
-		envInterface = BittrexInterfaces[mode.DEV_MODE]
+		envInterface = BittrexInterfaces[common.DEV_MODE]
 	}
 	return envInterface
 }
@@ -43,7 +42,7 @@ func getBittrexInterface(kyberENV string) bittrex.Interface {
 func getBinanceInterface(kyberENV string) binance.Interface {
 	envInterface, ok := BinanceInterfaces[kyberENV]
 	if !ok {
-		envInterface = BinanceInterfaces[mode.DEV_MODE]
+		envInterface = BinanceInterfaces[common.DEV_MODE]
 	}
 	return envInterface
 }
@@ -51,7 +50,7 @@ func getBinanceInterface(kyberENV string) binance.Interface {
 func getHuobiInterface(kyberENV string) huobi.Interface {
 	envInterface, ok := HuobiInterfaces[kyberENV]
 	if !ok {
-		envInterface = HuobiInterfaces[mode.DEV_MODE]
+		envInterface = HuobiInterfaces[common.DEV_MODE]
 	}
 	return envInterface
 }
@@ -79,7 +78,7 @@ func NewExchangePool(
 		case "bittrex":
 			bittrexSigner := bittrex.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := bittrex.NewBittrexEndpoint(bittrexSigner, getBittrexInterface(kyberENV))
-			bittrexStorage, err := bittrex.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/bittrex.db")
+			bittrexStorage, err := bittrex.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "bittrex.db"))
 			if err != nil {
 				log.Panic(err)
 			}
@@ -101,7 +100,7 @@ func NewExchangePool(
 		case "binance":
 			binanceSigner := binance.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := binance.NewBinanceEndpoint(binanceSigner, getBinanceInterface(kyberENV))
-			storage, err := huobi.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/binance.db")
+			storage, err := huobi.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "binance.db"))
 			if err != nil {
 				log.Panic(err)
 			}
@@ -123,7 +122,7 @@ func NewExchangePool(
 		case "huobi":
 			huobiSigner := huobi.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := huobi.NewHuobiEndpoint(huobiSigner, getHuobiInterface(kyberENV))
-			storage, err := huobi.NewBoltStorage("/go/src/github.com/KyberNetwork/reserve-data/cmd/huobi.db")
+			storage, err := huobi.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "huobi.db"))
 			intermediatorSigner := HuobiIntermediatorSignerFromFile(settingPaths.secretPath)
 			intermediatorNonce := nonce.NewTimeWindow(intermediatorSigner.GetAddress(), 10000)
 			if err != nil {

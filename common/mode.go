@@ -1,4 +1,4 @@
-package mode
+package common
 
 import (
 	"os"
@@ -40,8 +40,8 @@ var validModes = map[string]struct{}{
 	ANALYTIC_DEV_MODE: {},
 }
 
-// Get returns the current running mode of application.
-func Get() string {
+// RunningMode returns the current running mode of application.
+func RunningMode() string {
 	mode, ok := os.LookupEnv(mode_env)
 	if !ok {
 		return DEV_MODE
