@@ -4,20 +4,19 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data"
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/spf13/cobra"
 )
 
-const (
-	LOG_PATH        string = "/go/src/github.com/KyberNetwork/reserve-data/log/"
-	REMOTE_LOG_PATH string = "core-log/"
-)
+const remoteLogPath string = "core-log/"
 
+// logDir is located at base of this repository.
+var logDir = filepath.Join(filepath.Dir(filepath.Dir(common.CurrentDir())), "log")
 var noAuthEnable bool
 var servPort int = 8000
 var endpointOW string
@@ -37,7 +36,7 @@ func serverStart(_ *cobra.Command, _ []string) {
 		panic(err)
 	}
 	//get configuration from ENV variable
-	kyberENV := mode.Get()
+	kyberENV := common.RunningMode()
 	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
 	backupLog(config.Archive)
@@ -61,7 +60,7 @@ func serverStart(_ *cobra.Command, _ []string) {
 	if !noCore {
 		rData, rCore = CreateDataCore(config, kyberENV, bc)
 		if !dryrun {
-			if kyberENV != mode.SIMULATION_MODE {
+			if kyberENV != common.SIMULATION_MODE {
 				rData.RunStorageController()
 			}
 			if err := rData.Run(); err != nil {
@@ -74,7 +73,7 @@ func serverStart(_ *cobra.Command, _ []string) {
 	if enableStat {
 		rStat = CreateStat(config, kyberENV, bc)
 		if !dryrun {
-			if kyberENV != mode.SIMULATION_MODE {
+			if kyberENV != common.SIMULATION_MODE {
 				rStat.RunStorageController()
 			}
 			if err := rStat.Run(); err != nil {
