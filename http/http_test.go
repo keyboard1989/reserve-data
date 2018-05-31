@@ -187,6 +187,41 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
     }
   }
 `
+		testDataConfirmation = `{
+	"ETH": {
+		"bid": {
+		  "a": 750,
+		  "B": 500,
+		  "c": 0.25,
+		  "min_min_spread": 0,
+		  "price_multiply_factor": 0
+		},
+		"ask": {
+		  "a": 750,
+		  "B": 500,
+		  "c": 0.25,
+		  "min_min_spread": 0,
+		  "price_multiply_factor": 0
+		}
+	  },
+	"EOS": {
+		"bid": {
+		"a": 750,
+		"B": 500,
+		"c": 0.25,
+		"min_min_spread": 0,
+		"price_multiply_factor": 0
+		},
+		"ask": {
+		"a": 750,
+		"B": 500,
+		"c": 0.25,
+		"min_min_spread": 0,
+		"price_multiply_factor": 0
+		}
+	}
+}
+	`
 	)
 
 	common.RegisterInternalActiveToken(common.Token{ID: "EOS"})
@@ -307,7 +342,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			msg:      "confirm with correct data",
 			endpoint: confirmPWIEquationV2,
 			method:   http.MethodPost,
-			data:     testData,
+			data:     testDataConfirmation,
 			assert:   httputil.ExpectSuccess,
 		},
 		{
