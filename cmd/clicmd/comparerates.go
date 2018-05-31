@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/cmd/comparerates"
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
+	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/spf13/cobra"
 )
 
@@ -19,7 +19,7 @@ var fromTime string
 var toTime string
 
 func compareratestart(cmd *cobra.Command, args []string) {
-	kyberENV := mode.Get()
+	kyberENV := common.RunningMode()
 	params := make(map[string]string)
 	params["fromTime"] = fromTime
 	params["toTime"] = toTime

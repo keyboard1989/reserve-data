@@ -90,7 +90,7 @@ func (self *HuobiEndpoint) GetResponse(
 	}
 }
 
-// Get account list for later use
+// RunningMode account list for later use
 func (self *HuobiEndpoint) GetAccounts() (exchange.HuobiAccounts, error) {
 	result := exchange.HuobiAccounts{}
 	resp, err := self.GetResponse(
@@ -235,7 +235,7 @@ func (self *HuobiEndpoint) OrderStatus(symbol string, id uint64) (exchange.Huobi
 	if err == nil {
 		json.Unmarshal(resp_body, &result)
 		if result.Status != "ok" {
-			err = fmt.Errorf("Get order status failed: %s", result.Reason)
+			err = fmt.Errorf("RunningMode order status failed: %s", result.Reason)
 		}
 	}
 	return result, err
@@ -337,7 +337,7 @@ func (self *HuobiEndpoint) GetDepositAddress(asset string) (exchange.HuobiDeposi
 	if err == nil {
 		err = json.Unmarshal(resp_body, &result)
 		if !result.Success {
-			err = fmt.Errorf("Get deposit address failed: %s\n", result.Reason)
+			err = fmt.Errorf("RunningMode deposit address failed: %s\n", result.Reason)
 		}
 	}
 	return result, err
