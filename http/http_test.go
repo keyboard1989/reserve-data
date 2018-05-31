@@ -105,15 +105,15 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
       "a": 750,
       "b": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 750,
       "b": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   },
   "ETH": {
@@ -121,15 +121,15 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
       "a": 750,
       "b": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 750,
       "b": 500,
       "c": 0.25,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 }
@@ -140,15 +140,15 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
       "a": 751,
       "b": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
       "b": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   },
   "ETH": {
@@ -156,15 +156,15 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
       "a": 750,
       "b": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
       "b": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 }
@@ -175,15 +175,15 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
       "a": 750,
       "b": 500,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     },
     "ask": {
       "a": 800,
       "b": 600,
       "c": 0,
-      "MinMinSpread": 0,
-      "PriceMultiplyFactor": 0
+      "min_min_spread": 0,
+      "price_multiply_factor": 0
     }
   }
 `
