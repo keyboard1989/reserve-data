@@ -337,7 +337,7 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		if resp_data.Success {
 			for _, b := range resp_data.Result {
 				tokenID := b.Currency
-				_, err := self.setting.GetInternalTokenByID(tokenID)
+				_, err := self.setting.GetTokenByID(tokenID)
 				if err == nil {
 					result.AvailableBalance[tokenID] = b.Available
 					result.DepositBalance[tokenID] = b.Pending

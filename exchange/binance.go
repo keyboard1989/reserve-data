@@ -329,7 +329,7 @@ func (self *Binance) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		} else {
 			for _, b := range resp_data.Balances {
 				tokenID := b.Asset
-				_, err := self.setting.GetInternalTokenByID(tokenID)
+				_, err := self.setting.GetTokenByID(tokenID)
 				if err == nil {
 					avai, _ := strconv.ParseFloat(b.Free, 64)
 					locked, _ := strconv.ParseFloat(b.Locked, 64)

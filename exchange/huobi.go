@@ -451,8 +451,8 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 		if status == "mined" {
 			//if it is mined, send 2nd tx.
 			log.Printf("Found a new deposit status, which deposit %f %s. Procceed to send it to Huobi", sentAmount, currency)
-			//check if the token is supported
-			token, err := self.setting.GetInternalTokenByID(currency)
+			//check if the token is supported, the token can be active or inactivee
+			token, err := self.setting.GetTokenByID(currency)
 			if err != nil {
 				return "", err
 			}
@@ -543,9 +543,9 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 					}
 				}
 			}
-			tokens, uErr := self.setting.GetInternalTokens()
+			tokens, uErr := self.setting.GetTokens()
 			if uErr != nil {
-				log.Printf("Error: Can't get list of Internal Token (%s)", uErr)
+				log.Printf("Error: Can't get list of Supported Token (%s)", uErr)
 			}
 			log.Printf("Deposit doesn't exist. Huobi hasn't recognized the deposit yet or in theory, you have more than %d deposits at the same time.", len(tokens)*2)
 			return "", nil
