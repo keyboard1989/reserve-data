@@ -188,25 +188,6 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
   }
 `
 	)
-	settings.NewSetting()
-	err := settings.UpdateToken(common.Token{
-		ID:       "EOS",
-		Address:  "xxx",
-		Internal: true,
-		Active:   true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = settings.UpdateToken(common.Token{
-		ID:       "ETH",
-		Address:  "xxx",
-		Internal: true,
-		Active:   true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
 	if err != nil {
@@ -218,18 +199,38 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			t.Error(rErr)
 		}
 	}()
-
+	tokensSetting := settings.NewTokenSetting(filepath.Join(tmpDir, "token.db"))
+	setting := settings.NewSetting(tokensSetting)
+	err = setting.UpdateToken(common.Token{
+		ID:       "EOS",
+		Address:  "xxx",
+		Internal: true,
+		Active:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = setting.UpdateToken(common.Token{
+		ID:       "ETH",
+		Address:  "xxx",
+		Internal: true,
+		Active:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	st, err := storage.NewBoltStorage(filepath.Join(tmpDir, "test.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	s := HTTPServer{
-		app:         data.NewReserveData(st, nil, nil, nil, nil, nil),
+		app:         data.NewReserveData(st, nil, nil, nil, nil, nil, setting),
 		core:        core.NewReserveCore(nil, st, ethereum.Address{}),
 		metric:      st,
 		authEnabled: false,
-		r:           gin.Default()}
+		r:           gin.Default(),
+		setting:     setting}
 	s.register()
 
 	var tests = []testCase{

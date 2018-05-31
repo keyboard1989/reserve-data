@@ -10,6 +10,12 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+const (
+	tokenDBFileName            string = "token.db"
+	tokenDefaultSettingPath    string = "mainnet_setting.json"
+	tokenDefaultSimSettingPath string = "shared/deployment_dev.json"
+)
+
 type testBittrexInterface struct {
 	DepositHistoryMock string
 }
@@ -94,6 +100,7 @@ func getTestBittrex(depositHistory string, registered bool) *Bittrex {
 		&common.ExchangeInfo{},
 		common.ExchangeFees{},
 		common.ExchangesMinDeposit{},
+		nil,
 	}
 }
 
