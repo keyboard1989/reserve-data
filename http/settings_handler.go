@@ -110,7 +110,7 @@ func (self *HTTPServer) UpdateAddress(c *gin.Context) {
 	addrStr := postForm.Get("address")
 	name := postForm.Get("name")
 	addr := ethereum.HexToAddress(addrStr)
-	err := settings.UpdateAdress(name, addr)
+	err := self.setting.UpdateAdress(name, addr)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
@@ -125,7 +125,7 @@ func (self *HTTPServer) AddAddressToSet(c *gin.Context) {
 	addrStr := postForm.Get("address")
 	setName := postForm.Get("setname")
 	addr := ethereum.HexToAddress(addrStr)
-	err := settings.AddAddressToSet(setName, addr)
+	err := self.setting.AddAddressToSet(setName, addr)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
