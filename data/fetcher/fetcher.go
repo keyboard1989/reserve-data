@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -21,6 +20,7 @@ type Fetcher struct {
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 	simulationMode         bool
+	setting                Setting
 }
 
 func NewFetcher(
@@ -28,7 +28,7 @@ func NewFetcher(
 	globalStorage GlobalStorage,
 	theworld TheWorld,
 	runner FetcherRunner,
-	simulationMode bool) *Fetcher {
+	simulationMode bool, setting Setting) *Fetcher {
 	return &Fetcher{
 		storage:        storage,
 		globalStorage:  globalStorage,
@@ -37,6 +37,7 @@ func NewFetcher(
 		theworld:       theworld,
 		runner:         runner,
 		simulationMode: simulationMode,
+		setting:        setting,
 	}
 }
 
@@ -259,7 +260,7 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 }
 
 func (self *Fetcher) FetchBalanceFromBlockchain() (map[string]common.BalanceEntry, error) {
-	reserveAddr, err := settings.GetAddress("reserve")
+	reserveAddr, err := self.setting.GetAddress("reserve")
 	if err != nil {
 		return nil, err
 	}
