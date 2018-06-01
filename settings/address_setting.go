@@ -8,12 +8,6 @@ import (
 	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
 
-const (
-	addressDBFileName            string = "address.db"
-	ADDRES_DEFAULT_JSON_PATH     string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/mainnet_setting.json"
-	ADDRES_DEFAULT_JSON_SIM_PATH string = "/go/src/github.com/KyberNetwork/reserve-data/cmd/shared/deployment_dev.json"
-)
-
 type AddressConfig struct {
 	Bank               string   `json:"bank"`
 	Reserve            string   `json:"reserve"`
