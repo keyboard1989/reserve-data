@@ -107,7 +107,6 @@ func (self *LiquiEndpoint) CancelOrder(id string) (exchange.Liqcancel, error) {
 			}
 		}()
 		respBody, err := ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", respBody)
 		if err == nil {
 			err = json.Unmarshal(respBody, &result)
 		}
@@ -149,7 +148,6 @@ func (self *LiquiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 			}
 		}()
 		respBody, err := ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", respBody)
 		if err == nil {
 			err = json.Unmarshal(respBody, &result)
 		}
@@ -293,7 +291,6 @@ func (self *LiquiEndpoint) OrderInfo(orderID string, timepoint uint64) (exchange
 					return result, err
 				}
 			}
-			log.Printf("Liqui Order info data: %v", result)
 		} else {
 			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 		}
