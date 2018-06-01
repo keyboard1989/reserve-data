@@ -3,6 +3,8 @@ package settings
 import (
 	"log"
 	"os"
+
+	"github.com/KyberNetwork/reserve-data/common"
 )
 
 type Settings struct {
@@ -34,7 +36,7 @@ func (setting *Settings) HandleEmptyToken(normalPath, simPath string) {
 	}
 }
 
-func (setting *Settings) HandleEmptyAddress() {
+func (setting *Settings) HandleEmptyAddress(normalPath, simPath string) {
 	addressCount, err := setting.Address.Storage.CountAddress()
 	if addressCount == 0 || err != nil {
 		if err != nil {
@@ -42,9 +44,9 @@ func (setting *Settings) HandleEmptyAddress() {
 		} else {
 			log.Printf("Setting Init: Address DB is empty, attempt to load address from file")
 		}
-		addressPath := ADDRES_DEFAULT_JSON_PATH
-		if os.Getenv("KYBER_ENV") == "simulation" {
-			addressPath = ADDRES_DEFAULT_JSON_SIM_PATH
+		addressPath := normalPath
+		if common.RunningMode() == common.SIMULATION_MODE {
+			addressPath = simPath
 		}
 		if err = setting.LoadAddressFromFile(addressPath); err != nil {
 			log.Printf("Setting Init: Can not load Address from file: %s, address DB is needed to be updated manually", err)

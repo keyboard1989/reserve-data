@@ -8,14 +8,19 @@ import (
 )
 
 const (
-	tokenDBFileName         string = "token.db"
-	tokenSettingDefaultName string = "mainnet_setting.json"
-	tokenSettingSimName     string = "shared/deployment_dev.json"
+	tokenDBFileName           string = "token.db"
+	tokenSettingDefaultName   string = "mainnet_setting.json"
+	tokenSettingSimName       string = "shared/deployment_dev.json"
+	addressDBFileName         string = "address.db"
+	addressSettingDefaultName string = "mainnet_setting.json"
+	addressSettingSimName     string = "deployment_dev.json"
 )
 
 func createSetting() *settings.Settings {
 	tokensSetting := settings.NewTokenSetting(filepath.Join(common.CmdDirLocation(), tokenDBFileName))
-	setting := settings.NewSetting(tokensSetting)
+	addressSetting := settings.NewAddressSetting(filepath.Join(common.CmdDirLocation(), addressDBFileName))
+	setting := settings.NewSetting(tokensSetting, addressSetting)
 	setting.HandleEmptyToken(filepath.Join(common.CmdDirLocation(), tokenSettingDefaultName), filepath.Join(common.CmdDirLocation(), tokenSettingSimName))
+	setting.HandleEmptyAddress(filepath.Join(common.CmdDirLocation(), addressSettingDefaultName), filepath.Join(common.CmdDirLocation(), addressSettingSimName))
 	return setting
 }
