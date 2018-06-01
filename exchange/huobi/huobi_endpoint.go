@@ -167,9 +167,9 @@ func (self *HuobiEndpoint) Trade(tradeType string, base, quote common.Token, rat
 	return result, nil
 }
 
-func (self *HuobiEndpoint) WithdrawHistory(tokens []common.Token) (exchange.HuobiWithdraws, error) {
+func (self *HuobiEndpoint) WithdrawHistory() (exchange.HuobiWithdraws, error) {
 	result := exchange.HuobiWithdraws{}
-	size := len(tokens) * 2
+	size := len(common.InternalTokens()) * 2
 	respBody, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",
@@ -191,9 +191,9 @@ func (self *HuobiEndpoint) WithdrawHistory(tokens []common.Token) (exchange.Huob
 	return result, err
 }
 
-func (self *HuobiEndpoint) DepositHistory(tokens []common.Token) (exchange.HuobiDeposits, error) {
+func (self *HuobiEndpoint) DepositHistory() (exchange.HuobiDeposits, error) {
 	result := exchange.HuobiDeposits{}
-	size := len(tokens) * 2
+	size := len(common.InternalTokens()) * 2
 	respBody, err := self.GetResponse(
 		"GET",
 		self.interf.AuthenticatedEndpoint()+"/v1/query/finances",

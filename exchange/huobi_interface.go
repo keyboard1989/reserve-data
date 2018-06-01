@@ -35,9 +35,9 @@ type HuobiInterface interface {
 
 	CancelOrder(symbol string, id uint64) (HuobiCancel, error)
 
-	DepositHistory(tokens []common.Token) (HuobiDeposits, error)
+	DepositHistory() (HuobiDeposits, error)
 
-	WithdrawHistory(token []common.Token) (HuobiWithdraws, error)
+	WithdrawHistory() (HuobiWithdraws, error)
 
 	OrderStatus(
 		symbol string, id uint64) (HuobiOrder, error)

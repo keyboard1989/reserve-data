@@ -102,8 +102,8 @@ func (self testBlockchain) SetRateMinedNonce() (uint64, error) {
 	return 0, nil
 }
 
-func (self testBlockchain) GetAddresses() (*common.Addresses, error) {
-	return &common.Addresses{}, nil
+func (self testBlockchain) GetAddresses() *common.Addresses {
+	return &common.Addresses{}
 }
 
 type testActivityStorage struct {
@@ -130,7 +130,8 @@ func (self testActivityStorage) PendingSetrate(minedNonce uint64) (*common.Activ
 	return nil, 0, nil
 }
 
-func (self testActivityStorage) HasPendingDeposit(token common.Token, exchange common.Exchange) (bool, error) {
+func (self testActivityStorage) HasPendingDeposit(
+	token common.Token, exchange common.Exchange) (bool, error) {
 	if token.ID == "OMG" && exchange.ID() == "bittrex" {
 		return self.PendingDeposit, nil
 	} else {
@@ -151,7 +152,7 @@ func TestNotAllowDeposit(t *testing.T) {
 	core := getTestCore(alreadyHasDepositForOMGOnBittrex)
 	_, err := core.Deposit(
 		testExchange{},
-		common.NewToken("OMG", "omise-go", "0x1111111111111111111111111111111111111111", 18, true, true, "1000", "2000", "3000"),
+		common.NewToken("OMG", "0x1111111111111111111111111111111111111111", 18),
 		big.NewInt(10),
 		common.GetTimepoint(),
 	)
@@ -160,7 +161,7 @@ func TestNotAllowDeposit(t *testing.T) {
 	}
 	_, err = core.Deposit(
 		testExchange{},
-		common.NewToken("KNC", "Kyber-coin", "0x1111111111111111111111111111111111111111", 18, true, true, "1000", "2000", "3000"),
+		common.NewToken("KNC", "0x1111111111111111111111111111111111111111", 18),
 		big.NewInt(10),
 		common.GetTimepoint(),
 	)

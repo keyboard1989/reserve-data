@@ -10,7 +10,7 @@ func getExchangePairsAndFeesFromConfig(
 	addressConfig map[string]string,
 	feeConfig common.ExchangeFees,
 	minDepositConfig common.ExchangesMinDeposit,
-	exchange string, setting Setting) ([]common.Token, []common.TokenPair, common.ExchangeFees, common.ExchangesMinDeposit) {
+	exchange string) ([]common.Token, []common.TokenPair, common.ExchangeFees, common.ExchangesMinDeposit) {
 
 	tokens := []common.Token{}
 	pairs := []common.TokenPair{}
@@ -23,13 +23,9 @@ func getExchangePairsAndFeesFromConfig(
 	}
 	minDeposit := common.ExchangesMinDeposit{}
 	for tokenID := range addressConfig {
-		token, err := setting.GetInternalTokenByID(tokenID)
-		if err != nil {
-			log.Panicf("Must Get Internal Token failed :%s", err)
-		}
-		tokens = append(tokens, token)
+		tokens = append(tokens, common.MustGetInternalToken(tokenID))
 		if tokenID != "ETH" {
-			pair := setting.MustCreateTokenPair(tokenID, "ETH")
+			pair := common.MustCreateTokenPair(tokenID, "ETH")
 			pairs = append(pairs, pair)
 		}
 		if _, exist := feeConfig.Funding.Withdraw[tokenID]; exist {
