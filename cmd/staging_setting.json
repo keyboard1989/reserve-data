@@ -274,6 +274,13 @@
       "internal use": true,
       "listed": true
     },
+    "PAL": {
+      "name": "PolicyPal",
+      "decimals": 18,
+      "address": "0xfedae5642668f8636a11987ff386bfd215f942ee",
+      "internal use": false,
+      "listed": true
+    },
     "ETH": {
       "name": "Ethereum",
       "decimals": 18,

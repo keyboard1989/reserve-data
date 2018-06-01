@@ -284,9 +284,9 @@ var ConfigPaths = map[string]SettingPaths{
 		"dev_users.db",
 		"dev_fee_setrate.db",
 		"config.json",
-		"https://semi-node.kyber.network",
+		"https://mainnet.infura.io",
 		[]string{
-			"https://semi-node.kyber.network",
+			"https://api.myetherapi.com/eth",
 		},
 	),
 	common.KOVAN_MODE: NewSettingPaths(
