@@ -86,7 +86,7 @@ func (self ReserveCore) Trade(
 		}
 	}
 	uid := timebasedID(id)
-	self.activityStorage.Record(
+	err = self.activityStorage.Record(
 		"trade",
 		uid,
 		string(exchange.ID()),
@@ -109,6 +109,9 @@ func (self ReserveCore) Trade(
 		"",
 		timepoint,
 	)
+	if err != nil {
+		log.Printf("Error save activity: %s", err.Error())
+	}
 	log.Printf(
 		"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: id: %s, done: %s, remaining: %s, finished: %t, error: %s",
 		tradeType, exchange.ID(), base.ID, quote.ID,
@@ -161,7 +164,7 @@ func (self ReserveCore) Deposit(
 	}
 	amountFloat := common.BigToFloat(amount, token.Decimal)
 	uid := timebasedID(txhex + "|" + token.ID + "|" + strconv.FormatFloat(amountFloat, 'f', -1, 64))
-	self.activityStorage.Record(
+	serr := self.activityStorage.Record(
 		"deposit",
 		uid,
 		string(exchange.ID()),
@@ -180,6 +183,9 @@ func (self ReserveCore) Deposit(
 		status,
 		timepoint,
 	)
+	if serr != nil {
+		log.Printf("Cannot save activity: %s", err.Error())
+	}
 	log.Printf(
 		"Core ----------> Deposit to %s: token: %s, amount: %s, timestamp: %d ==> Result: tx: %s, error: %s",
 		exchange.ID(), token.ID, amount.Text(10), timepoint, txhex, err,
@@ -209,7 +215,7 @@ func (self ReserveCore) Withdraw(
 		status = "submitted"
 	}
 	uid := timebasedID(id)
-	self.activityStorage.Record(
+	err = self.activityStorage.Record(
 		"withdraw",
 		uid,
 		string(exchange.ID()),
@@ -344,7 +350,7 @@ func (self ReserveCore) SetRates(
 		txprice = tx.GasPrice().Text(10)
 	}
 	uid := timebasedID(txhex)
-	self.activityStorage.Record(
+	err = self.activityStorage.Record(
 		"set_rates",
 		uid,
 		"blockchain",

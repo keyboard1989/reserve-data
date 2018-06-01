@@ -31,8 +31,7 @@ type AllActionHTTPReply struct {
 	Success bool
 }
 
-/* GetActivitiesResponse :
- */
+//GetActivitiesResponse return activities:
 func GetActivitiesResponse(url string, params map[string]string, config configuration.Config) (AllActionHTTPReply, error) {
 	timepoint := common.GetTimepoint()
 	nonce := strconv.FormatUint(timepoint, 10)
@@ -41,14 +40,12 @@ func GetActivitiesResponse(url string, params map[string]string, config configur
 	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", url, "activities"), params, true, config)
 
 	if err != nil {
-		fmt.Println("can't get response", err)
-	} else {
-		if err := json.Unmarshal(data, &allActionRep); err != nil {
-			fmt.Println("can't decode the reply", err)
-			return allActionRep, err
-		}
+		return allActionRep, err
 	}
-	return allActionRep, nil
+	if err := json.Unmarshal(data, &allActionRep); err != nil {
+		return allActionRep, err
+	}
+	return allActionRep, err
 }
 
 func GetAllRateResponse(url string, params map[string]string, config configuration.Config) (AllRateHTTPReply, error) {
@@ -56,14 +53,10 @@ func GetAllRateResponse(url string, params map[string]string, config configurati
 	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", url, "get-all-rates"), params, false, config)
 
 	if err != nil {
-		fmt.Println("can't get response", err)
-	} else {
-		if err := json.Unmarshal(data, &allRateRep); err != nil {
-			fmt.Println("can't decode the reply", err)
-			return allRateRep, err
-		}
+		return allRateRep, err
 	}
-	return allRateRep, nil
+	err = json.Unmarshal(data, &allRateRep)
+	return allRateRep, err
 
 }
 
@@ -159,10 +152,10 @@ func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) 
 					idx++
 				}
 				if (idx < len(rates)) && (curBlock <= rates[idx].BlockNumber) && (curBlock >= rates[idx].ToBlockNumber) {
-					fmt.Printf("\n Block %d is found between block %d to block %d \n", curBlock, rates[idx].BlockNumber, rates[idx].ToBlockNumber)
+					log.Printf("Block %d is found between block %d to block %d \n", curBlock, rates[idx].BlockNumber, rates[idx].ToBlockNumber)
 					CompareRate(oneAct, rates[idx], curBlock)
 				} else {
-					fmt.Printf("\n Block %d is not found\n", curBlock)
+					log.Printf("Block %d is not found\n", curBlock)
 				}
 			}
 		}
