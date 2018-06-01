@@ -38,10 +38,13 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	}
 	// init buckets
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucket([]byte(INTERMEDIATE_TX)); err != nil {
+		if _, err := tx.CreateBucketIfNotExists([]byte(INTERMEDIATE_TX)); err != nil {
 			return err
 		}
-		if _, err := tx.CreateBucket([]byte(PENDING_INTERMEDIATE_TX)); err != nil {
+		if _, err := tx.CreateBucketIfNotExists([]byte(PENDING_INTERMEDIATE_TX)); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists([]byte(TRADE_HISTORY)); err != nil {
 			return err
 		}
 		return nil

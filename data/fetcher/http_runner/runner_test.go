@@ -50,6 +50,10 @@ func TestHttpRunner(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	if err = runner.Start(); err != nil {
+		t.Fatal(err)
+	}
+
 	var tests = []struct {
 		ch   <-chan time.Time
 		path string
