@@ -183,6 +183,7 @@ func CreateStat(config *configuration.Config, kyberENV string, bc *blockchain.Bl
 		deployBlock,
 		deployBlock,
 		config.EtherscanApiKey,
+		config.Setting,
 	)
 	statFetcher.SetBlockchain(bc)
 	rStat := stat.NewReserveStats(

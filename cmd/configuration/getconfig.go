@@ -68,8 +68,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	}
 	setting := settings.NewSetting(filepath.Join(common.CmdDirLocation(), tokenDBFileName),
 		filepath.Join(common.CmdDirLocation(), addressDBFileName),
-		ConfigPaths[common.RunningMode()].settingPath,
-		settings.HandleEmptyToken, settings.HandleEmptyAddress)
+		settings.WithHandleEmptyToken(setPath.settingPath), settings.WithHandleEmptyAddress(setPath.settingPath))
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 

@@ -63,7 +63,8 @@ func NewFetcher(
 	runner FetcherRunner,
 	deployBlock uint64,
 	beginBlockSetRate uint64,
-	apiKey string) *Fetcher {
+	apiKey string,
+	setting Setting) *Fetcher {
 	sleepTime := time.Second
 	fetcher := &Fetcher{
 		statStorage:       statStorage,
@@ -76,6 +77,7 @@ func NewFetcher(
 		deployBlock:       deployBlock,
 		apiKey:            apiKey,
 		sleepTime:         sleepTime,
+		setting:           setting,
 	}
 	lastBlockChecked, err := fetcher.feeSetRateStorage.GetLastBlockChecked()
 	if err != nil {
@@ -676,7 +678,7 @@ func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) ([]common.
 
 func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	log.Printf("Fetching reserve and sanity rate from blockchain")
-	thirdPartyReserves, err := self.setting.GetAddresses("third_party_reserve")
+	thirdPartyReserves, err := self.setting.GetAddresses("third_party_reserves")
 	if err != nil {
 		log.Printf("ERROR: Can not get reserve rates %s", err)
 		return
