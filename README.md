@@ -1215,68 +1215,6 @@ response:
 ```
 {"data":{"Timestamp":1526923808631,"DGX":{"Valid":true,"Timestamp":0,"success":"","data":[{"symbol":"DGXETH","price":0.06676463,"time":1526923801},{"symbol":"ETHUSD","price":694.4,"time":1526923801},{"symbol":"ETHSGD","price":931.89,"time":1526923801},{"symbol":"DGXUSD","price":46.36,"time":1526923801},{"symbol":"EURUSD","price":1.17732,"time":1526923801},{"symbol":"USDSGD","price":1.34201,"time":1526923801},{"symbol":"XAUUSD","price":1291.468,"time":1526923801},{"symbol":"USDJPY","price":111.061,"time":1526923801}],"Error":""},"OneForgeETH":{"Value":1.85646,"Text":"1 XAU is worth 1.85646 ETH","Timestamp":1526923803,"Error":false,"Message":""},"OneForgeUSD":{"Value":1291.57,"Text":"1 XAU is worth 1291.57 USD","Timestamp":1526923803,"Error":false,"Message":""},"GDAX":{"Valid":true,"Error":"","trade_id":34527604,"price":"695.56000000","size":"0.00894700","bid":"695.55","ask":"695.56","volume":"50497.82498957","time":"2018-05-21T17:30:04.729000Z"},"Kraken":{"Valid":true,"network_error":"","error":[],"result":{"XETHZUSD":{"a":["696.66000","1","1.000"],"b":["696.33000","4","4.000"],"c":["696.33000","0.10776064"],"v":["13536.83019524","16999.30348103"],"p":["707.93621","710.18316"],"t":[5361,8276],"l":["693.97000","693.97000"],"h":["721.38000","724.80000"],"o":"715.65000"}}},"Gemini":{"Valid":true,"Error":"","bid":"694.50","ask":"695.55","volume":{"ETH":"11418.5646926","USD":"8064891.13775284649999999999999999999704534","timestamp":1526923800000},"last":"695.36"}},"success":true}
 ```
-### Update Token setting - (signing required) Update a token's setting for listing/ delisting and other purposes. 
-```
-<host>:8000/update-token
-POST request
-params:
- - address (string): the token's smart contract address (required)
- - name (string) : the token's display name. (required)
- - ID (string) :the token's ID. (required)
- - decimal (int64) : decimal number of the token (required)
- - internal (bool) : set to True if the token is KNSupported (required)
- - listed (bool) : set to True if the token is active (required)
- - minimalRecordResolution (string) : the minimal record solution in string form (optional)
- - maxPerBlockImbalance (string) : the maximum imbalance per block in string form (optional)
- - maxTotalImbalance (string) : the maximum total imblance in string form (optional)
-
-Note: the data sent over must be encoded in Json in order to make it valid for output operation
- ```
-
-response:
-```
-on success:
-{"success":true}
-on failure:
-{"success":false,
- "reason":<error>}
-```
-
-### Get Token settings - (signing required) list of tokens and its setting at current time
-```
-<host>:8000/token-settings
-GET request
-
-```
-example:
-```
-curl -x GET \
-  http://localhost:8000/token-settings
-```
- 
-response:
-```
-{
-  "data": [
-    {
-      "Timestamp": 1522755271000,
-      "Data": {
-        {
-      "ID": "ABT",
-      "Name": "",
-      "Address": "0xb98d4c97425d9908e66e53a6fdf673acca0be986",
-      "Decimal": 18,
-      "Active": true,
-      "Internal": true,
-      "MinimalRecordResolution": "100000000000000",
-      "MaxTotalImbalance": "6043192343824681664512",
-      "MaxPerBlockImbalance": "5461044951947117854720"
-    }
-  ],
-  "success": true,
-  "timestamp": 1527146481614
-}
-```
 
 
 ### set target quantity v2 - (signing required)

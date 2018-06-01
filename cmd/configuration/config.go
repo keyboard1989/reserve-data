@@ -19,7 +19,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/metric"
-	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat"
 	"github.com/KyberNetwork/reserve-data/stat/statpruner"
 	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
@@ -98,6 +97,8 @@ type Config struct {
 	BackupEthereumEndpoints []string
 	Blockchain              *blockchain.BaseBlockchain
 
+	SupportedTokens []common.Token
+
 	WrapperAddress     ethereum.Address
 	PricingAddress     ethereum.Address
 	ReserveAddress     ethereum.Address
@@ -111,7 +112,6 @@ type Config struct {
 	EtherscanApiKey string
 
 	ChainType string
-	Setting   *settings.Settings
 }
 
 // GetStatConfig: load config to run stat server only
@@ -259,11 +259,17 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		settingPath,
 		self.Blockchain,
 		minDeposit,
-		kyberENV,
-		self.Setting,
-	)
+		kyberENV)
 	self.FetcherExchanges = exchangePool.FetcherExchanges()
 	self.Exchanges = exchangePool.CoreExchanges()
+}
+
+func (self *Config) MapTokens() map[string]common.Token {
+	result := map[string]common.Token{}
+	for _, t := range self.SupportedTokens {
+		result[t.ID] = t
+	}
+	return result
 }
 
 var ConfigPaths = map[string]SettingPaths{

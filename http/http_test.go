@@ -8,8 +8,9 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"reflect"
 	"testing"
+
+	"reflect"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/core"
@@ -17,7 +18,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
 	"github.com/KyberNetwork/reserve-data/metric"
-	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 )
@@ -224,6 +224,9 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 	`
 	)
 
+	common.RegisterInternalActiveToken(common.Token{ID: "EOS"})
+	common.RegisterInternalActiveToken(common.Token{ID: "ETH"})
+
 	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
 	if err != nil {
 		t.Fatal(err)
@@ -234,37 +237,18 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			t.Error(rErr)
 		}
 	}()
-	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"))
-	err = setting.UpdateToken(common.Token{
-		ID:       "EOS",
-		Address:  "xxx",
-		Internal: true,
-		Active:   true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	err = setting.UpdateToken(common.Token{
-		ID:       "ETH",
-		Address:  "xxx",
-		Internal: true,
-		Active:   true,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
+
 	st, err := storage.NewBoltStorage(filepath.Join(tmpDir, "test.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	s := HTTPServer{
-		app:         data.NewReserveData(st, nil, nil, nil, nil, nil, setting),
+		app:         data.NewReserveData(st, nil, nil, nil, nil, nil),
 		core:        core.NewReserveCore(nil, st, ethereum.Address{}),
 		metric:      st,
 		authEnabled: false,
-		r:           gin.Default(),
-		setting:     setting}
+		r:           gin.Default()}
 	s.register()
 
 	var tests = []testCase{

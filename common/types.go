@@ -283,24 +283,6 @@ type ActivityRecord struct {
 	Timestamp      Timestamp
 }
 
-//New ActivityRecord return an activity record with params["token"] only as token.ID
-func NewActivityRecord(action string, id ActivityID, destination string, params, result map[string]interface{}, exStatus, miStatus string, timestamp Timestamp) ActivityRecord {
-	token, ok := params["token"].(Token)
-	if ok {
-		params["token"] = token.ID
-	}
-	return ActivityRecord{
-		Action:         action,
-		ID:             id,
-		Destination:    destination,
-		Params:         params,
-		Result:         result,
-		ExchangeStatus: exStatus,
-		MiningStatus:   miStatus,
-		Timestamp:      timestamp,
-	}
-}
-
 func (self ActivityRecord) IsExchangePending() bool {
 	switch self.Action {
 	case "withdraw":

@@ -2,7 +2,6 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/KyberNetwork/reserve-data/http/httputil"
 	"github.com/KyberNetwork/reserve-data/metric"
@@ -41,13 +40,6 @@ func (self *HTTPServer) SetPWIEquationV2(c *gin.Context) {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-
-	for tokenID := range input {
-		if _, err := self.setting.GetInternalTokenByID(tokenID); err != nil {
-			httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("Token %s is unsupported", tokenID)))
-		}
-	}
-
 	if !input.IsValid() {
 		httputil.ResponseFailure(c, httputil.WithReason("invalid input"))
 		return

@@ -25,7 +25,6 @@ type Verification struct {
 	auth      ihttp.Authentication
 	exchanges []string
 	baseURL   string
-	setting   Setting
 }
 
 //DepositWithdrawResponse object using for parse response from deposit api
@@ -283,7 +282,7 @@ func (v *Verification) CheckActivities(activityID common.ActivityID, timepoint u
 func (v *Verification) VerifyDeposit() error {
 	var err error
 	timepoint := common.GetTimepoint()
-	token, err := v.setting.GetInternalTokenByID("ETH")
+	token, err := common.GetInternalToken("ETH")
 	amount := getTokenAmount(0.5, token)
 	Info.Println("Start deposit to exchanges")
 	for _, exchange := range v.exchanges {
@@ -303,7 +302,7 @@ func (v *Verification) VerifyDeposit() error {
 func (v *Verification) VerifyWithdraw() error {
 	var err error
 	timepoint := common.GetTimepoint()
-	token, err := v.setting.GetInternalTokenByID("ETH")
+	token, err := common.GetInternalToken("ETH")
 	amount := getTokenAmount(0.5, token)
 	for _, exchange := range v.exchanges {
 		activityID, err := v.Withdraw(exchange, token.ID, amount, timepoint)
@@ -333,13 +332,12 @@ func (v *Verification) RunVerification() error {
 
 // NewVerification init new verification object
 func NewVerification(
-	auth ihttp.Authentication, setting Setting) *Verification {
+	auth ihttp.Authentication) *Verification {
 	params := os.Getenv("KYBER_EXCHANGES")
 	exchanges := strings.Split(params, ",")
 	return &Verification{
 		auth,
 		exchanges,
 		"http://localhost:8000",
-		setting,
 	}
 }
