@@ -136,7 +136,7 @@ func (self *Fetcher) FetchTxs(client http.Client) error {
 	if toBlock == 0 {
 		return errors.New("Can't get latest block nummber")
 	}
-	pricingAddress, err := settings.GetAddress("pricing")
+	pricingAddress, err := self.setting.GetAddress("pricing")
 	if err != nil {
 		return err
 	}
@@ -645,12 +645,12 @@ func (self *Fetcher) GetReserveRates(
 
 func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) ([]common.Token, error) {
 	tokens := []common.Token{}
-	reserveAddr, err := settings.GetAddress("reserve")
+	reserveAddr, err := self.setting.GetAddress("reserve")
 	if err != nil {
 		return tokens, err
 	}
 	if reserve == reserveAddr {
-		internalTokens, err := settings.GetInternalTokens()
+		internalTokens, err := self.setting.GetInternalTokens()
 		if err != nil {
 			log.Printf("ERROR: Can not get internal tokens: %s", err)
 			return tokens, err
@@ -677,12 +677,12 @@ func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) ([]common.
 
 func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	log.Printf("Fetching reserve and sanity rate from blockchain")
-	thirdPartyReserves, err := settings.GetAddresses("third_party_reserve")
+	thirdPartyReserves, err := self.setting.GetAddresses("third_party_reserve")
 	if err != nil {
 		log.Printf("ERROR: Can not get reserve rates %s", err)
 		return
 	}
-	reserveAddr, err := settings.GetAddress("reserve")
+	reserveAddr, err := self.setting.GetAddress("reserve")
 	if err != nil {
 		log.Printf("ERROR: Can not get reserve rates %s", err)
 		return
