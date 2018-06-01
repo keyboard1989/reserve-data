@@ -2,7 +2,6 @@ package settings
 
 import (
 	"log"
-	"os"
 
 	"github.com/KyberNetwork/reserve-data/common"
 )
@@ -26,10 +25,9 @@ func (setting *Settings) HandleEmptyToken(normalPath, simPath string) {
 			log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
 		}
 		tokenPath := normalPath
-		if os.Getenv("KYBER_ENV") == "simulation" {
+		if common.RunningMode() == common.SIMULATION_MODE {
 			tokenPath = simPath
 		}
-
 		if err = setting.LoadTokenFromFile(tokenPath); err != nil {
 			log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err)
 		}

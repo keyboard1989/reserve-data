@@ -43,7 +43,7 @@ func NewBoltTokenStorage(dbPath string) (*BoltTokenStorage, error) {
 	var db *bolt.DB
 	db, err = bolt.Open(dbPath, 0600, nil)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
 		if _, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ID)); err != nil {
