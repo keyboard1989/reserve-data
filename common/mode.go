@@ -2,8 +2,6 @@ package common
 
 import (
 	"os"
-	"path/filepath"
-	"runtime"
 )
 
 const (
@@ -51,11 +49,4 @@ func RunningMode() string {
 		return DEV_MODE
 	}
 	return mode
-}
-
-// CmdDirLocation returns the absolute location of cmd directory where
-// public settings will be read.
-func CmdDirLocation() string {
-	_, fileName, _, _ := runtime.Caller(0)
-	return filepath.Dir(filepath.Dir(filepath.Dir(fileName)))
 }

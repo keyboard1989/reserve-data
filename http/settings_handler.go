@@ -78,8 +78,8 @@ func (self *HTTPServer) UpdateToken(c *gin.Context) {
 			return
 		}
 	}
-	err = self.setting.UpdateToken(token)
-	if err != nil {
+
+	if err = self.setting.UpdateToken(token); err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
