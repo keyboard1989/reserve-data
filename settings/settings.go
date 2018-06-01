@@ -2,20 +2,15 @@ package settings
 
 import (
 	"log"
-
-	"github.com/KyberNetwork/reserve-data/common"
 )
 
 type Settings struct {
 	Tokens *TokenSetting
 }
 
-func NewSetting(tokenSetting *TokenSetting) *Settings {
-	setting := Settings{tokenSetting}
-	return &setting
-}
-
-func (setting *Settings) HandleEmptyToken(normalPath, simPath string) {
+// HandleEmptyToken will load the token settings from default file if the
+// database is empty.
+func HandleEmptyToken(setting *Settings, pathJSON string) {
 	allToks, err := setting.GetAllTokens()
 	if err != nil || len(allToks) < 1 {
 		if err != nil {
@@ -23,12 +18,20 @@ func (setting *Settings) HandleEmptyToken(normalPath, simPath string) {
 		} else {
 			log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
 		}
-		tokenPath := normalPath
-		if common.RunningMode() == common.SIMULATION_MODE {
-			tokenPath = simPath
-		}
-		if err = setting.LoadTokenFromFile(tokenPath); err != nil {
+		if err = setting.LoadTokenFromFile(pathJSON); err != nil {
 			log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err)
 		}
 	}
+}
+
+// SettingOption sets the initialization behavior of the Settings instance.
+type SettingOption func(s *Settings, path string)
+
+func NewSetting(tokenDB, pathJson string, options ...SettingOption) *Settings {
+	tokenSetting := NewTokenSetting(tokenDB)
+	setting := &Settings{Tokens: tokenSetting}
+	for _, option := range options {
+		option(setting, pathJson)
+	}
+	return setting
 }
