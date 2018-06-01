@@ -159,7 +159,6 @@ func WithHttpRunnerPort(port int) HttpRunnerOption {
 }
 
 // NewHttpRunner creates a new instance of HttpRunner.
-// The HTTP server is also started after creation.
 func NewHttpRunner(options ...HttpRunnerOption) (*HttpRunner, error) {
 	ochan := make(chan time.Time)
 	achan := make(chan time.Time)
@@ -188,10 +187,6 @@ func NewHttpRunner(options ...HttpRunnerOption) (*HttpRunner, error) {
 
 	for _, option := range options {
 		option(runner)
-	}
-
-	if err := runner.Start(); err != nil {
-		return nil, err
 	}
 	return runner, nil
 }
