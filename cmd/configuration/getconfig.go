@@ -63,7 +63,6 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
 	world, err := world.NewTheWorld(kyberENV, setPath.secretPath)
-	log.Printf("FUCKER is %s", setPath.settingPath)
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
