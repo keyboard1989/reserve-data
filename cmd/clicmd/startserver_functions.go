@@ -136,7 +136,8 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.FetcherGlobalStorage,
 		config.World,
 		config.FetcherRunner,
-		kyberENV == mode.SIMULATION_MODE,
+		kyberENV == common.SIMULATION_MODE,
+		config.Setting,
 	)
 	for _, ex := range config.FetcherExchanges {
 		dataFetcher.AddExchange(ex)
@@ -156,7 +157,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.Setting,
 	)
 
-	rCore := core.NewReserveCore(bc, config.ActivityStorage)
+	rCore := core.NewReserveCore(bc, config.ActivityStorage, config.Setting)
 	return rData, rCore
 }
 
