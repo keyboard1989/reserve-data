@@ -1,11 +1,5 @@
 package metric
 
-import (
-	"log"
-
-	"github.com/KyberNetwork/reserve-data/common"
-)
-
 type TokenMetric struct {
 	AfpMid float64
 	Spread float64
@@ -117,13 +111,8 @@ type PWIEquationRequestV2 map[string]PWIEquationTokenV2
 // Example input:
 // [{"token_id": {equation_token}}, ...]
 func (input PWIEquationRequestV2) IsValid() bool {
-	for tokenID, et := range input {
+	for _, et := range input {
 		if !et.isValid() {
-			return false
-		}
-
-		if _, err := common.GetInternalToken(tokenID); err != nil {
-			log.Printf("unsupported token %s", tokenID)
 			return false
 		}
 	}

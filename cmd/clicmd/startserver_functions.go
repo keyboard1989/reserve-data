@@ -122,6 +122,7 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 		config.NetworkAddress,
 		config.ReserveAddress,
 		config.WhitelistAddress,
+		config.Setting,
 	)
 	if err != nil {
 		panic(err)
@@ -130,11 +131,11 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 	if kyberENV == common.PRODUCTION_MODE || kyberENV == common.MAINNET_MODE {
 		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
 	}
-
-	for _, token := range config.SupportedTokens {
-		bc.AddToken(token)
+	tokens, err := config.Setting.GetInternalTokens()
+	if err != nil {
+		log.Panicf("Can't get the list of Internal Tokens for indices: %s", err)
 	}
-	err = bc.LoadAndSetTokenIndices()
+	err = bc.LoadAndSetTokenIndices(common.GetTokenAddressesList(tokens))
 	if err != nil {
 		log.Panicf("Can't load and set token indices: %s", err)
 	}
@@ -166,6 +167,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.Archive,
 		config.DataGlobalStorage,
 		config.Exchanges,
+		config.Setting,
 	)
 
 	rCore := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
@@ -190,6 +192,7 @@ func CreateStat(config *configuration.Config, kyberENV string, bc *blockchain.Bl
 		deployBlock,
 		config.EtherscanApiKey,
 		config.ThirdPartyReserves,
+		config.Setting,
 	)
 	statFetcher.SetBlockchain(bc)
 	rStat := stat.NewReserveStats(

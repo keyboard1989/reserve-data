@@ -18,6 +18,7 @@ type ReserveData struct {
 	storageController datapruner.StorageController
 	globalStorage     GlobalStorage
 	exchanges         []common.Exchange
+	setting           Setting
 }
 
 func (self ReserveData) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
@@ -96,8 +97,13 @@ func (self ReserveData) GetAuthData(timepoint uint64) (common.AuthDataResponse, 
 		result.Data.Block = data.Block
 		result.Data.ReserveBalances = map[string]common.BalanceResponse{}
 		for tokenID, balance := range data.ReserveBalances {
+			token, err := self.setting.GetInternalTokenByID(tokenID)
+			//If the token is invalid, this must Panic
+			if err != nil {
+				return result, fmt.Errorf("Can't get Internal token %s: (%s)", tokenID, err)
+			}
 			result.Data.ReserveBalances[tokenID] = balance.ToBalanceResponse(
-				common.MustGetInternalToken(tokenID).Decimal,
+				token.Decimal,
 			)
 		}
 		return result, err
@@ -345,10 +351,10 @@ func (self ReserveData) RunStorageController() error {
 func NewReserveData(storage Storage,
 	fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner,
 	arch archive.Archive, globalStorage GlobalStorage,
-	exchanges []common.Exchange) *ReserveData {
+	exchanges []common.Exchange, setting Setting) *ReserveData {
 	storageController, err := datapruner.NewStorageController(storageControllerRunner, arch)
 	if err != nil {
 		panic(err)
 	}
-	return &ReserveData{storage, fetcher, storageController, globalStorage, exchanges}
+	return &ReserveData{storage, fetcher, storageController, globalStorage, exchanges, setting}
 }

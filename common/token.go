@@ -1,29 +1,31 @@
 package common
 
-import (
-	"fmt"
-)
+import ethereum "github.com/ethereum/go-ethereum/common"
 
 type Token struct {
-	ID      string
-	Address string
-	Decimal int64
+	ID                      string
+	Name                    string
+	Address                 string
+	Decimal                 int64
+	Active                  bool
+	Internal                bool
+	MinimalRecordResolution string
+	MaxTotalImbalance       string
+	MaxPerBlockImbalance    string
 }
 
 // NewToken creates a new Token.
-func NewToken(id, address string, decimal int64) Token {
+func NewToken(id, name, address string, decimal int64, active, internal bool, miminalrr, maxti, maxpbi string) Token {
 	return Token{
-		ID:      id,
-		Address: address,
-		Decimal: decimal,
+		ID:                      id,
+		Address:                 address,
+		Decimal:                 decimal,
+		Active:                  active,
+		Internal:                internal,
+		MinimalRecordResolution: miminalrr,
+		MaxTotalImbalance:       maxti,
+		MaxPerBlockImbalance:    maxpbi,
 	}
-}
-
-func (self Token) MarshalText() (text []byte, err error) {
-	// return []byte(fmt.Sprintf(
-	// 	"%s-%s", self.ID, self.Address,
-	// )), nil
-	return []byte(self.ID), nil
 }
 
 func (self Token) IsETH() bool {
@@ -39,21 +41,12 @@ func (self *TokenPair) PairID() TokenPairID {
 	return NewTokenPairID(self.Base.ID, self.Quote.ID)
 }
 
-func NewTokenPair(base, quote string) (TokenPair, error) {
-	bToken, err1 := GetInternalToken(base)
-	qToken, err2 := GetInternalToken(quote)
-	if err1 != nil || err2 != nil {
-		return TokenPair{}, fmt.Errorf("%s or %s is not supported", base, quote)
-	} else {
-		return TokenPair{bToken, qToken}, nil
+func GetTokenAddressesList(tokens []Token) []ethereum.Address {
+	tokenAddrs := []ethereum.Address{}
+	for _, tok := range tokens {
+		if tok.ID != "ETH" {
+			tokenAddrs = append(tokenAddrs, ethereum.HexToAddress(tok.Address))
+		}
 	}
-}
-
-func MustCreateTokenPair(base, quote string) TokenPair {
-	pair, err := NewTokenPair(base, quote)
-	if err != nil {
-		panic(err)
-	} else {
-		return pair
-	}
+	return tokenAddrs
 }

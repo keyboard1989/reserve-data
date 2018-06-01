@@ -22,6 +22,7 @@ type Liqui struct {
 	interf    LiquiInterface
 	pairs     []common.TokenPair
 	addresses map[string]ethereum.Address
+	setting   Setting
 }
 
 func (self *Liqui) MarshalText() (text []byte, err error) {
@@ -126,7 +127,11 @@ func (self *Liqui) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, er
 			result.AvailableBalance = map[string]float64{}
 			result.LockedBalance = map[string]float64{}
 			result.DepositBalance = map[string]float64{}
-			for _, token := range common.InternalTokens() {
+			tokens, err := self.setting.GetInternalTokens()
+			if err != nil {
+				return result, err
+			}
+			for _, token := range tokens {
 				result.AvailableBalance[token.ID] = balances[strings.ToLower(token.ID)]
 				// TODO: need to take open order into account
 				result.LockedBalance[token.ID] = 0
@@ -241,21 +246,23 @@ func (self *Liqui) OrderStatus(id common.ActivityID, timepoint uint64) (string, 
 	}
 }
 
-func NewLiqui(interf LiquiInterface) *Liqui {
+func NewLiqui(interf LiquiInterface, setting Setting) *Liqui {
+
 	return &Liqui{
 		interf,
 		[]common.TokenPair{
-			common.MustCreateTokenPair("OMG", "ETH"),
-			common.MustCreateTokenPair("DGD", "ETH"),
-			common.MustCreateTokenPair("CVC", "ETH"),
-			common.MustCreateTokenPair("MCO", "ETH"),
-			common.MustCreateTokenPair("GNT", "ETH"),
-			common.MustCreateTokenPair("ADX", "ETH"),
-			common.MustCreateTokenPair("EOS", "ETH"),
-			common.MustCreateTokenPair("PAY", "ETH"),
-			common.MustCreateTokenPair("BAT", "ETH"),
-			common.MustCreateTokenPair("KNC", "ETH"),
+			setting.MustCreateTokenPair("OMG", "ETH"),
+			setting.MustCreateTokenPair("DGD", "ETH"),
+			setting.MustCreateTokenPair("CVC", "ETH"),
+			setting.MustCreateTokenPair("MCO", "ETH"),
+			setting.MustCreateTokenPair("GNT", "ETH"),
+			setting.MustCreateTokenPair("ADX", "ETH"),
+			setting.MustCreateTokenPair("EOS", "ETH"),
+			setting.MustCreateTokenPair("PAY", "ETH"),
+			setting.MustCreateTokenPair("BAT", "ETH"),
+			setting.MustCreateTokenPair("KNC", "ETH"),
 		},
 		map[string]ethereum.Address{},
+		setting,
 	}
 }

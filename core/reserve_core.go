@@ -52,7 +52,7 @@ func (self ReserveCore) CancelOrder(id common.ActivityID, exchange common.Exchan
 	return exchange.CancelOrder(orderId, base, quote)
 }
 
-func (self ReserveCore) GetAddresses() *common.Addresses {
+func (self ReserveCore) GetAddresses() (*common.Addresses, error) {
 	return self.blockchain.GetAddresses()
 }
 

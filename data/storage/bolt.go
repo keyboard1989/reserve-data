@@ -557,16 +557,16 @@ func (self *BoltStorage) Record(
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		var dataJson []byte
 		b := tx.Bucket([]byte(ACTIVITY_BUCKET))
-		record := common.ActivityRecord{
-			Action:         action,
-			ID:             id,
-			Destination:    destination,
-			Params:         params,
-			Result:         result,
-			ExchangeStatus: estatus,
-			MiningStatus:   mstatus,
-			Timestamp:      common.Timestamp(strconv.FormatUint(timepoint, 10)),
-		}
+		record := common.NewActivityRecord(
+			action,
+			id,
+			destination,
+			params,
+			result,
+			estatus,
+			mstatus,
+			common.Timestamp(strconv.FormatUint(timepoint, 10)),
+		)
 		dataJson, err = json.Marshal(record)
 		if err != nil {
 			return err

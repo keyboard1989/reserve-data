@@ -25,6 +25,7 @@ type Bittrex struct {
 	exchangeInfo *common.ExchangeInfo
 	fees         common.ExchangeFees
 	minDeposit   common.ExchangesMinDeposit
+	setting      Setting
 }
 
 func (self *Bittrex) TokenAddresses() map[string]ethereum.Address {
@@ -338,7 +339,7 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 		if resp_data.Success {
 			for _, b := range resp_data.Result {
 				tokenID := b.Currency
-				_, err := common.GetInternalToken(tokenID)
+				_, err := self.setting.GetTokenByID(tokenID)
 				if err == nil {
 					result.AvailableBalance[tokenID] = b.Available
 					result.DepositBalance[tokenID] = b.Pending
@@ -425,8 +426,9 @@ func NewBittrex(addressConfig map[string]string,
 	feeConfig common.ExchangeFees,
 	interf BittrexInterface,
 	storage BittrexStorage,
-	minDepositConfig common.ExchangesMinDeposit) *Bittrex {
-	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex")
+	minDepositConfig common.ExchangesMinDeposit,
+	setting Setting) *Bittrex {
+	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex", setting)
 	bittrex := &Bittrex{
 		interf,
 		pairs,
@@ -436,6 +438,7 @@ func NewBittrex(addressConfig map[string]string,
 		common.NewExchangeInfo(),
 		fees,
 		minDeposit,
+		setting,
 	}
 	bittrex.FetchTradeHistory()
 	return bittrex

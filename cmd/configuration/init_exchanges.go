@@ -15,15 +15,20 @@ import (
 	"github.com/KyberNetwork/reserve-data/exchange/binance"
 	"github.com/KyberNetwork/reserve-data/exchange/bittrex"
 	"github.com/KyberNetwork/reserve-data/exchange/huobi"
+	"github.com/KyberNetwork/reserve-data/settings"
 )
 
 type ExchangePool struct {
 	Exchanges map[common.ExchangeID]interface{}
 }
 
-func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *sync.WaitGroup) {
+func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *sync.WaitGroup, setting *settings.Settings) {
 	defer wait.Done()
-	ex.UpdateDepositAddress(common.MustGetInternalToken(tokenID), addr)
+	token, err := setting.GetInternalTokenByID(tokenID)
+	if err != nil {
+		log.Panicf("ERROR: Can't get internal token %s. Error: %s", tokenID, err)
+	}
+	ex.UpdateDepositAddress(token, addr)
 }
 
 func getBittrexInterface(kyberENV string) bittrex.Interface {
@@ -56,8 +61,7 @@ func NewExchangePool(
 	settingPaths SettingPaths,
 	blockchain *blockchain.BaseBlockchain,
 	minDeposit common.ExchangesMinDepositConfig,
-	kyberENV string) *ExchangePool {
-
+	kyberENV string, setting *settings.Settings) *ExchangePool {
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
 	exparams := strings.Split(params, ",")
@@ -68,6 +72,7 @@ func NewExchangePool(
 				addressConfig.Exchanges["stable_exchange"],
 				feeConfig.Exchanges["stable_exchange"],
 				minDeposit.Exchanges["stable_exchange"],
+				setting,
 			)
 			exchanges[stableEx.ID()] = stableEx
 		case "bittrex":
@@ -82,11 +87,12 @@ func NewExchangePool(
 				feeConfig.Exchanges["bittrex"],
 				endpoint,
 				bittrexStorage,
-				minDeposit.Exchanges["bittrex"])
+				minDeposit.Exchanges["bittrex"],
+				setting)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
-				go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait)
+				go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait, setting)
 			}
 			wait.Wait()
 			bit.UpdatePairsPrecision()
@@ -103,11 +109,12 @@ func NewExchangePool(
 				feeConfig.Exchanges["binance"],
 				endpoint,
 				minDeposit.Exchanges["binance"],
-				storage)
+				storage,
+				setting)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
-				go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait)
+				go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait, setting)
 			}
 			wait.Wait()
 			bin.UpdatePairsPrecision()
@@ -130,11 +137,12 @@ func NewExchangePool(
 				intermediatorNonce,
 				storage,
 				minDeposit.Exchanges["huobi"],
+				setting,
 			)
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
 				wait.Add(1)
-				go AsyncUpdateDepositAddress(huobi, tokenID, addr, &wait)
+				go AsyncUpdateDepositAddress(huobi, tokenID, addr, &wait, setting)
 			}
 			wait.Wait()
 			huobi.UpdatePairsPrecision()

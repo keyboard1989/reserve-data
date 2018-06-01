@@ -136,8 +136,8 @@ func (self *StableEx) GetMinDeposit() common.ExchangesMinDeposit {
 	return self.mindeposit
 }
 
-func NewStableEx(addressConfig map[string]string, feeConfig common.ExchangeFees, minDepositConfig common.ExchangesMinDeposit) *StableEx {
-	_, pairs, fees, mindeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "stable_exchange")
+func NewStableEx(addressConfig map[string]string, feeConfig common.ExchangeFees, minDepositConfig common.ExchangesMinDeposit, setting Setting) *StableEx {
+	_, pairs, fees, mindeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "stable_exchange", setting)
 	return &StableEx{
 		pairs,
 		common.NewExchangeInfo(),

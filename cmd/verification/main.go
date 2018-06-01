@@ -95,7 +95,7 @@ func run(verify *Verification) {
 			verify.UpdateBaseURL(*depositBaseUrl)
 		}
 		if *depositToken != "" {
-			token, err = common.GetInternalToken(*depositToken)
+			token, err = verify.setting.GetInternalTokenByID(*depositToken)
 			if err != nil {
 				log.Println(err.Error())
 				os.Exit(1)
@@ -131,7 +131,7 @@ func main() {
 	if config.AuthEngine == nil {
 		Warning.Println("Current environment setting does not enable authentication. Please check again!!!")
 	}
-	verify := NewVerification(config.AuthEngine)
+	verify := NewVerification(config.AuthEngine, config.Setting)
 	validateArgs()
 
 	run(verify)

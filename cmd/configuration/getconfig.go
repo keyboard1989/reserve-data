@@ -2,6 +2,9 @@ package configuration
 
 import (
 	"log"
+	"path/filepath"
+
+	"github.com/KyberNetwork/reserve-data/settings"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
@@ -11,6 +14,10 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+)
+
+const (
+	tokenDBFileName string = "token.db"
 )
 
 func GetAddressConfig(filePath string) common.AddressConfig {
@@ -55,12 +62,12 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
-
 	world, err := world.NewTheWorld(kyberENV, setPath.secretPath)
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-
+	setting := settings.NewSetting(filepath.Join(common.CmdDirLocation(), tokenDBFileName),
+		settings.WithHandleEmptyToken(setPath.settingPath))
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
@@ -72,19 +79,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		endpoint = endpointOW
 	} else {
 		endpoint = setPath.endPoint
-	}
-
-	for id, t := range addressConfig.Tokens {
-		tok := common.NewToken(id, t.Address, t.Decimals)
-		if t.Active {
-			if t.KNReserveSupport {
-				common.RegisterInternalActiveToken(tok)
-			} else {
-				common.RegisterExternalActiveToken(tok)
-			}
-		} else {
-			common.RegisterInactiveToken(tok)
-		}
 	}
 
 	bkendpoints := setPath.bkendpoints
@@ -124,11 +118,11 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		panic(err)
 	}
 	s3archive := archive.NewS3Archive(awsConf)
+
 	config := &Config{
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
-		SupportedTokens:         common.InternalTokens(),
 		WrapperAddress:          wrapperAddr,
 		PricingAddress:          pricingAddr,
 		ReserveAddress:          reserveAddr,
@@ -137,6 +131,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		EnableAuthentication:    authEnbl,
 		Archive:                 s3archive,
 		World:                   world,
+		Setting:                 setting,
 	}
 
 	if enableStat {

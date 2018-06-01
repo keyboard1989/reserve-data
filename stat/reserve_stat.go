@@ -28,6 +28,7 @@ type ReserveStats struct {
 	feeSetRateStorage FeeSetRateStorage
 	fetcher           *Fetcher
 	storageController statpruner.StorageController
+	setting           Setting
 }
 
 func NewReserveStats(
@@ -86,7 +87,7 @@ func (self ReserveStats) GetAssetVolume(fromTime, toTime uint64, freq, asset str
 		return data, err
 	}
 
-	token, err := common.GetNetworkToken(asset)
+	token, err := self.setting.GetActiveTokenByID(asset)
 	if err != nil {
 		return data, fmt.Errorf("assets %s is not supported", asset)
 	}
@@ -258,7 +259,7 @@ func (self ReserveStats) GetTokenHeatmap(fromTime, toTime uint64, tokenStr, freq
 	if err != nil {
 		return arrResult, err
 	}
-	token, err := common.GetNetworkToken(tokenStr)
+	token, err := self.setting.GetActiveTokenByID(tokenStr)
 	if err != nil {
 		return arrResult, err
 	}
