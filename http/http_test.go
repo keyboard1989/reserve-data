@@ -233,7 +233,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			t.Error(rErr)
 		}
 	}()
-	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"), "")
+	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"), "")
 	err = setting.UpdateToken(common.Token{
 		ID:       "EOS",
 		Address:  "xxx",
@@ -259,7 +259,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 
 	s := HTTPServer{
 		app:         data.NewReserveData(st, nil, nil, nil, nil, nil, setting),
-		core:        core.NewReserveCore(nil, st),
+		core:        core.NewReserveCore(nil, st, setting),
 		metric:      st,
 		authEnabled: false,
 		r:           gin.Default(),

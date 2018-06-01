@@ -1,10 +1,14 @@
 package core
 
 import (
+	"io/ioutil"
+	"log"
 	"math/big"
+	"path/filepath"
 	"testing"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -139,9 +143,16 @@ func (self testActivityStorage) HasPendingDeposit(token common.Token, exchange c
 }
 
 func getTestCore(hasPendingDeposit bool) *ReserveCore {
+	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
+	if err != nil {
+		log.Fatal(err)
+	}
+	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"), "")
+
 	return NewReserveCore(
 		testBlockchain{},
 		testActivityStorage{hasPendingDeposit},
+		setting,
 	)
 }
 

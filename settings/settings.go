@@ -25,12 +25,30 @@ func HandleEmptyToken(setting *Settings, pathJSON string) {
 	}
 }
 
+// HandleEmptyAddress will load the address settings from default file if the
+// database is empty.
+func HandleEmptyAddress(setting *Settings, pathJSON string) {
+	addressCount, err := setting.Address.Storage.CountAddress()
+	if addressCount == 0 || err != nil {
+		if err != nil {
+			log.Printf("Setting Init: Address DB is faulty (%s), attempt to load Address from file", err)
+		} else {
+			log.Printf("Setting Init: Address DB is empty, attempt to load address from file")
+		}
+		if err = setting.LoadAddressFromFile(pathJSON); err != nil {
+			log.Printf("Setting Init: Can not load Address from file: %s, address DB is needed to be updated manually", err)
+		}
+	}
+}
+
 // SettingOption sets the initialization behavior of the Settings instance.
 type SettingOption func(s *Settings, path string)
 
-func NewSetting(tokenDB, pathJson string, options ...SettingOption) *Settings {
+func NewSetting(tokenDB, addressDB, pathJson string, options ...SettingOption) *Settings {
 	tokenSetting := NewTokenSetting(tokenDB)
-	setting := &Settings{Tokens: tokenSetting}
+	addressSetting := NewAddressSetting(addressDB)
+	setting := &Settings{Tokens: tokenSetting,
+		Address: addressSetting}
 	for _, option := range options {
 		option(setting, pathJson)
 	}
