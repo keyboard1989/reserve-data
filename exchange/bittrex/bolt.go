@@ -35,8 +35,11 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	}
 	// init buckets
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, vErr := tx.CreateBucket([]byte(BITTREX_DEPOSIT_HISTORY)); vErr != nil {
-			log.Printf("Create bucket error: %s", vErr.Error())
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(BITTREX_DEPOSIT_HISTORY)); uErr != nil {
+			return uErr
+		}
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(TRADE_HISTORY)); uErr != nil {
+			return uErr
 		}
 		return nil
 	})
