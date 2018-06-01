@@ -36,7 +36,7 @@ const (
 
 var (
 	Big0   *big.Int = big.NewInt(0)
-	BigMax *big.Int = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
+	BigMax          = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
 )
 
 type Blockchain struct {

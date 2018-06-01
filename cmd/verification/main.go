@@ -49,7 +49,9 @@ func run(verify *Verification) {
 
 	switch os.Args[1] {
 	case "verify":
-		verify.RunVerification()
+		if err := verify.RunVerification(); err != nil {
+			log.Panic(err)
+		}
 	case "deposit":
 		err := depositCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -90,7 +92,7 @@ func run(verify *Verification) {
 		var token common.Token
 		var err error
 		if *depositBaseUrl != "" {
-			verify.UpdateBaseUrl(*depositBaseUrl)
+			verify.UpdateBaseURL(*depositBaseUrl)
 		}
 		if *depositToken != "" {
 			token, err = common.GetInternalToken(*depositToken)

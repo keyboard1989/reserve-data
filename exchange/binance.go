@@ -398,7 +398,9 @@ func (self *Binance) FetchTradeHistory() {
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
-			self.storage.StoreTradeHistory(result)
+			if err := self.storage.StoreTradeHistory(result); err != nil {
+				log.Printf("Store trade history error: %s", err.Error())
+			}
 			<-t.C
 		}
 	}()

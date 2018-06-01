@@ -32,7 +32,7 @@ func TestHasPendingDepositBoltStorage(t *testing.T) {
 	if out != false {
 		t.Fatalf("Expected ram storage to return true false there is no pending deposit for the same currency and exchange")
 	}
-	storage.Record(
+	err = storage.Record(
 		"deposit",
 		common.NewActivityID(1, "1"),
 		string(exchange.ID()),
@@ -49,6 +49,9 @@ func TestHasPendingDepositBoltStorage(t *testing.T) {
 		"",
 		"submitted",
 		common.GetTimepoint())
+	if err != nil {
+		t.Fatalf("Store activity error: %s", err.Error())
+	}
 	out, err = storage.HasPendingDeposit(token, exchange)
 	if err != nil {
 		t.Fatalf(err.Error())
