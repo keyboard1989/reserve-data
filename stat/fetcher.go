@@ -69,7 +69,8 @@ func NewFetcher(
 	pricingAddress ethereum.Address,
 	beginBlockSetRate uint64,
 	apiKey string,
-	thirdPartyReserves []ethereum.Address) *Fetcher {
+	thirdPartyReserves []ethereum.Address,
+	setting Setting) *Fetcher {
 	sleepTime := time.Second
 	fetcher := &Fetcher{
 		statStorage:        statStorage,
@@ -85,6 +86,7 @@ func NewFetcher(
 		apiKey:             apiKey,
 		thirdPartyReserves: thirdPartyReserves,
 		sleepTime:          sleepTime,
+		setting:            setting,
 	}
 	lastBlockChecked, err := fetcher.feeSetRateStorage.GetLastBlockChecked()
 	if err != nil {

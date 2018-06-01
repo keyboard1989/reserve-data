@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"log"
+	"path/filepath"
 
 	"github.com/KyberNetwork/reserve-data/settings"
 
@@ -62,10 +63,12 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
 	world, err := world.NewTheWorld(kyberENV, setPath.secretPath)
+	log.Printf("FUCKER is %s", setPath.settingPath)
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-	setting := settings.NewSetting(tokenDBFileName, ConfigPaths[common.RunningMode()].settingPath, settings.HandleEmptyToken)
+	setting := settings.NewSetting(filepath.Join(common.CmdDirLocation(), tokenDBFileName),
+		settings.WithHandleEmptyToken(setPath.settingPath))
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)

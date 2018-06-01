@@ -234,7 +234,7 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			t.Error(rErr)
 		}
 	}()
-	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"), "")
+	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"))
 	err = setting.UpdateToken(common.Token{
 		ID:       "EOS",
 		Address:  "xxx",
