@@ -192,27 +192,25 @@ func (self *LiquiEndpoint) Withdraw(token common.Token, amount *big.Int, address
 	req.Header.Add("Key", self.signer.GetKey())
 	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
-	if err == nil && resp.StatusCode == 200 {
-		defer func() {
-			if err := resp.Body.Close(); err != nil {
-				log.Printf("Response body close error: %s", err.Error())
-			}
-		}()
-		respBody, err := ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", respBody)
-		if err != nil {
-			return err
-		}
-		if err = json.Unmarshal(respBody, &result); err != nil {
-			return err
-		}
-		if result.Error != "" {
-			return errors.New(result.Error)
-		}
-		return nil
+	if err != nil || resp.StatusCode != 200 {
+		return errors.New("withdraw rejected by Liqui")
 	}
-	log.Printf("Error: %v, Code: %v\n", err, resp)
-	return errors.New("withdraw rejected by Liqui")
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("Response body close error: %s", err.Error())
+		}
+	}()
+	respBody, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+	if err = json.Unmarshal(respBody, &result); err != nil {
+		return err
+	}
+	if result.Error != "" {
+		return errors.New(result.Error)
+	}
+	return nil
 }
 
 func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
@@ -248,13 +246,11 @@ func (self *LiquiEndpoint) GetInfo(timepoint uint64) (exchange.Liqinfo, error) {
 			}
 		}()
 		respBody, err := ioutil.ReadAll(resp.Body)
-		log.Printf("Liqui GetInfo response: %s", string(respBody))
 		if err == nil {
 			if err := json.Unmarshal(respBody, &result); err != nil {
 				return result, err
 			}
 		}
-		log.Printf("Liqui GetInfo data: %v", result)
 	} else {
 		err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 	}
@@ -292,7 +288,6 @@ func (self *LiquiEndpoint) OrderInfo(orderID string, timepoint uint64) (exchange
 				}
 			}()
 			respBody, err := ioutil.ReadAll(resp.Body)
-			log.Printf("Liqui Order info response: %s", string(respBody))
 			if err == nil {
 				if err := json.Unmarshal(respBody, &result); err != nil {
 					return result, err
@@ -337,13 +332,11 @@ func (self *LiquiEndpoint) ActiveOrders(timepoint uint64) (exchange.Liqorders, e
 				}
 			}()
 			respBody, err := ioutil.ReadAll(resp.Body)
-			log.Printf("Liqui ActiveOrders response: %s", string(respBody))
 			if err == nil {
 				if err := json.Unmarshal(respBody, &result); err != nil {
 					return result, err
 				}
 			}
-			log.Printf("Liqui ActiveOrders data: %v", result)
 		} else {
 			err = errors.New("Unsuccessful response from Liqui: Status " + resp.Status)
 		}

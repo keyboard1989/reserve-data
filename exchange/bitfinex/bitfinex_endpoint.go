@@ -21,7 +21,9 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-//BitfinexEndpoint object
+//BitfinexEndpoint endpoint for interact with bitfinex
+//with signer for authentication api
+//and interface for different env
 type BitfinexEndpoint struct {
 	signer Signer
 	interf Interface

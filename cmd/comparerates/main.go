@@ -152,10 +152,10 @@ func CompareRates(acts []common.ActivityRecord, rates []common.AllRateResponse) 
 					idx++
 				}
 				if (idx < len(rates)) && (curBlock <= rates[idx].BlockNumber) && (curBlock >= rates[idx].ToBlockNumber) {
-					log.Printf("\n Block %d is found between block %d to block %d \n", curBlock, rates[idx].BlockNumber, rates[idx].ToBlockNumber)
+					log.Printf("Block %d is found between block %d to block %d \n", curBlock, rates[idx].BlockNumber, rates[idx].ToBlockNumber)
 					CompareRate(oneAct, rates[idx], curBlock)
 				} else {
-					log.Printf("\n Block %d is not found\n", curBlock)
+					log.Printf("Block %d is not found\n", curBlock)
 				}
 			}
 		}

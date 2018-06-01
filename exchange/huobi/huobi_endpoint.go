@@ -95,7 +95,6 @@ func (self *HuobiEndpoint) GetResponse(
 		}
 	}()
 	respBody, err = ioutil.ReadAll(resp.Body)
-	log.Printf("request to %s, got response from huobi: %s\n", req.URL, common.TruncStr(respBody))
 	return respBody, err
 }
 
@@ -226,13 +225,14 @@ func (self *HuobiEndpoint) CancelOrder(symbol string, id uint64) (exchange.Huobi
 		},
 		true,
 	)
-	if err == nil {
-		if err = json.Unmarshal(respBody, &result); err != nil {
-			return result, err
-		}
-		if result.Status != "ok" {
-			err = fmt.Errorf("cancel order failed: %s", result.Reason)
-		}
+	if err != nil {
+		return result, err
+	}
+	if err = json.Unmarshal(respBody, &result); err != nil {
+		return result, err
+	}
+	if result.Status != "ok" {
+		err = fmt.Errorf("cancel order failed: %s", result.Reason)
 	}
 	return result, err
 }
@@ -247,13 +247,14 @@ func (self *HuobiEndpoint) OrderStatus(symbol string, id uint64) (exchange.Huobi
 		},
 		true,
 	)
-	if err == nil {
-		if err = json.Unmarshal(respBody, &result); err != nil {
-			return result, err
-		}
-		if result.Status != "ok" {
-			err = fmt.Errorf("RunningMode order status failed: %s", result.Reason)
-		}
+	if err != nil {
+		return result, err
+	}
+	if err = json.Unmarshal(respBody, &result); err != nil {
+		return result, err
+	}
+	if result.Status != "ok" {
+		err = fmt.Errorf("RunningMode order status failed: %s", result.Reason)
 	}
 	return result, err
 }

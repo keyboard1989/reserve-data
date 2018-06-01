@@ -20,7 +20,6 @@ const (
 	PRICE_ANALYTIC_EXPIRED  uint64 = 30 * 86400000 //30 days in milisecond
 )
 
-//BoltAnalyticStorage object
 type BoltAnalyticStorage struct {
 	db *bolt.DB
 }
