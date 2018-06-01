@@ -4,9 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
-	"path/filepath"
 
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
 
@@ -32,8 +30,8 @@ type AddressSetting struct {
 	Storage AddressStorage
 }
 
-func NewAddressSetting() *AddressSetting {
-	BoltAddressStorage, err := settingstorage.NewBoltAddressStorage(filepath.Join(mode.CmdDirLocation(), addressDBFileName))
+func NewAddressSetting(dbPath string) *AddressSetting {
+	BoltAddressStorage, err := settingstorage.NewBoltAddressStorage(dbPath)
 	if err != nil {
 		log.Panicf("Setting Init: Can not create bolt address storage (%s)", err)
 	}
@@ -41,7 +39,7 @@ func NewAddressSetting() *AddressSetting {
 	return &addressSetting
 }
 
-func LoadAddressFromFile(path string) error {
+func (setting *Settings) LoadAddressFromFile(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err

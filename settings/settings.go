@@ -10,8 +10,8 @@ type Settings struct {
 	Address *AddressSetting
 }
 
-func NewSetting(tokenSetting *TokenSetting) *Settings {
-	setting := Settings{tokenSetting}
+func NewSetting(tokenSetting *TokenSetting, addressSetting *AddressSetting) *Settings {
+	setting := Settings{tokenSetting, addressSetting}
 	return &setting
 }
 
@@ -34,7 +34,7 @@ func (setting *Settings) HandleEmptyToken(normalPath, simPath string) {
 	}
 }
 
-func handleEmptyAddress() {
+func (setting *Settings) HandleEmptyAddress() {
 	addressCount, err := setting.Address.Storage.CountAddress()
 	if addressCount == 0 || err != nil {
 		if err != nil {
@@ -46,7 +46,7 @@ func handleEmptyAddress() {
 		if os.Getenv("KYBER_ENV") == "simulation" {
 			addressPath = ADDRES_DEFAULT_JSON_SIM_PATH
 		}
-		if err = LoadAddressFromFile(addressPath); err != nil {
+		if err = setting.LoadAddressFromFile(addressPath); err != nil {
 			log.Printf("Setting Init: Can not load Address from file: %s, address DB is needed to be updated manually", err)
 		}
 	}
