@@ -147,7 +147,7 @@ func getTestCore(hasPendingDeposit bool) *ReserveCore {
 	if err != nil {
 		log.Fatal(err)
 	}
-	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"), "")
+	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"))
 
 	return NewReserveCore(
 		testBlockchain{},
