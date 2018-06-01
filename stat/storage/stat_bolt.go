@@ -48,10 +48,12 @@ const (
 	USER_INFO_AGGREGATION     string = "user_info_aggregation"
 )
 
+//BoltStatStorage object
 type BoltStatStorage struct {
 	db *bolt.DB
 }
 
+//NewBoltStatStorage return new storage instance
 func NewBoltStatStorage(path string) (*BoltStatStorage, error) {
 	// init instance
 	var err error
@@ -225,12 +227,17 @@ func (self *BoltStatStorage) SetBurnFeeStat(burnFeeStats map[string]common.BurnF
 					currentData := common.BurnFeeStats{}
 					v := freqBk.Get(timestamp)
 					if v != nil {
-						json.Unmarshal(v, &currentData)
+						if err := json.Unmarshal(v, &currentData); err != nil {
+							log.Printf("Unmarshal current data error: %s", err.Error())
+							return err
+						}
 					}
 					currentData.TotalBurnFee += stat.TotalBurnFee
 
 					dataJSON, _ := json.Marshal(currentData)
-					freqBk.Put(timestamp, dataJSON)
+					if err := freqBk.Put(timestamp, dataJSON); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -258,14 +265,18 @@ func (self *BoltStatStorage) SetVolumeStat(volumeStats map[string]common.VolumeS
 					currentData := common.VolumeStats{}
 					v := freqBk.Get(timestamp)
 					if v != nil {
-						json.Unmarshal(v, &currentData)
+						if err := json.Unmarshal(v, &currentData); err != nil {
+							return err
+						}
 					}
 					currentData.ETHVolume += stat.ETHVolume
 					currentData.USDAmount += stat.USDAmount
 					currentData.Volume += stat.Volume
 
 					dataJSON, _ := json.Marshal(currentData)
-					freqBk.Put(timestamp, dataJSON)
+					if err := freqBk.Put(timestamp, dataJSON); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -299,7 +310,9 @@ func (self *BoltStatStorage) SetWalletStat(stats map[string]common.MetricStatsTi
 					currentData := common.MetricStats{}
 					v := walletTzBucket.Get(timestamp)
 					if v != nil {
-						json.Unmarshal(v, &currentData)
+						if err := json.Unmarshal(v, &currentData); err != nil {
+							return err
+						}
 					}
 					currentData.ETHVolume += stat.ETHVolume
 					currentData.USDVolume += stat.USDVolume
@@ -316,7 +329,9 @@ func (self *BoltStatStorage) SetWalletStat(stats map[string]common.MetricStatsTi
 					if err != nil {
 						return err
 					}
-					walletTzBucket.Put(timestamp, dataJSON)
+					if err := walletTzBucket.Put(timestamp, dataJSON); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -342,7 +357,10 @@ func (self *BoltStatStorage) GetWalletStats(fromTime uint64, toTime uint64, ethW
 		c := timezoneBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			walletStat := common.MetricStats{}
-			json.Unmarshal(v, &walletStat)
+			if err := json.Unmarshal(v, &walletStat); err != nil {
+				log.Printf("Unmarshal wallet stat error: %s", err.Error())
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = walletStat
 		}
@@ -397,7 +415,10 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 					currentData := common.MetricStats{}
 					v := countryTzBucket.Get(timestamp)
 					if v != nil {
-						json.Unmarshal(v, &currentData)
+						if err := json.Unmarshal(v, &currentData); err != nil {
+							log.Printf("Unmarshal current data error: %s", err.Error())
+							return err
+						}
 					}
 					currentData.ETHVolume += stat.ETHVolume
 					currentData.USDVolume += stat.USDVolume
@@ -414,7 +435,9 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 					if err != nil {
 						return err
 					}
-					countryTzBucket.Put(timestamp, dataJSON)
+					if err := countryTzBucket.Put(timestamp, dataJSON); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -432,7 +455,7 @@ func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country st
 	result := common.StatTicks{}
 	tzstring := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
 	country = strings.ToUpper(country)
-	self.db.Update(func(tx *bolt.Tx) error {
+	err := self.db.Update(func(tx *bolt.Tx) error {
 		countryBk, _ := tx.CreateBucketIfNotExists([]byte(country))
 		timezoneBk, _ := countryBk.CreateBucketIfNotExists([]byte(tzstring))
 		min := boltutil.Uint64ToBytes(fromTime)
@@ -441,14 +464,16 @@ func (self *BoltStatStorage) GetCountryStats(fromTime, toTime uint64, country st
 		c := timezoneBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			countryStat := common.MetricStats{}
-			json.Unmarshal(v, &countryStat)
+			if err := json.Unmarshal(v, &countryStat); err != nil {
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = countryStat
 		}
 		return nil
 	})
 
-	return result, nil
+	return result, err
 }
 
 func (self *BoltStatStorage) DidTrade(tx *bolt.Tx, userAddr string, timepoint uint64) bool {
@@ -591,7 +616,9 @@ func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTim
 					currentUserData := common.UserInfo{}
 					currentValue := timestampBk.Get([]byte(userAddr))
 					if currentValue != nil {
-						json.Unmarshal(currentValue, &currentUserData)
+						if err := json.Unmarshal(currentValue, &currentUserData); err != nil {
+							return err
+						}
 					}
 					currentUserData.USDVolume += userData.USDVolume
 					currentUserData.ETHVolume += userData.ETHVolume
@@ -600,11 +627,9 @@ func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTim
 					dataJSON, _ := json.Marshal(currentUserData)
 					err = timestampBk.Put([]byte(userAddr), dataJSON)
 					if err != nil {
-						log.Printf("cannot saved user list: %s", err.Error())
 						return err
 					}
 				}
-
 			}
 		}
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
@@ -672,7 +697,9 @@ func (self *BoltStatStorage) GetAssetVolume(fromTime uint64, toTime uint64, freq
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.VolumeStats{}
-			json.Unmarshal(v, &value)
+			if err := json.Unmarshal(v, &value); err != nil {
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = value
 		}
@@ -697,7 +724,9 @@ func (self *BoltStatStorage) GetBurnFee(fromTime uint64, toTime uint64, freq str
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.BurnFeeStats{}
-			json.Unmarshal(v, &value)
+			if err := json.Unmarshal(v, &value); err != nil {
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = value.TotalBurnFee
 		}
@@ -721,7 +750,9 @@ func (self *BoltStatStorage) GetWalletFee(fromTime uint64, toTime uint64, freq s
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.BurnFeeStats{}
-			json.Unmarshal(v, &value)
+			if err := json.Unmarshal(v, &value); err != nil {
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = value.TotalBurnFee
 		}
@@ -744,7 +775,9 @@ func (self *BoltStatStorage) GetUserVolume(fromTime uint64, toTime uint64, freq 
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.VolumeStats{}
-			json.Unmarshal(v, &value)
+			if err := json.Unmarshal(v, &value); err != nil {
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = value
 		}
@@ -756,8 +789,8 @@ func (self *BoltStatStorage) GetUserVolume(fromTime uint64, toTime uint64, freq 
 func (self *BoltStatStorage) GetReserveVolume(fromTime uint64, toTime uint64, freq string, reserveAddr, token ethereum.Address) (common.StatTicks, error) {
 	result := common.StatTicks{}
 	err := self.db.Update(func(tx *bolt.Tx) error {
-		bucket_key := fmt.Sprintf("%s_%s", common.AddrToString(reserveAddr), common.AddrToString(token))
-		b, _ := tx.CreateBucketIfNotExists([]byte(bucket_key))
+		bucketKey := fmt.Sprintf("%s_%s", common.AddrToString(reserveAddr), common.AddrToString(token))
+		b, _ := tx.CreateBucketIfNotExists([]byte(bucketKey))
 		freqBkName, _ := getBucketNameByFreq(freq)
 		freqBk, _ := b.CreateBucketIfNotExists([]byte(freqBkName))
 
@@ -766,7 +799,9 @@ func (self *BoltStatStorage) GetReserveVolume(fromTime uint64, toTime uint64, fr
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.VolumeStats{}
-			json.Unmarshal(v, &value)
+			if err := json.Unmarshal(v, &value); err != nil {
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = value
 		}
@@ -788,7 +823,9 @@ func (self *BoltStatStorage) GetTokenHeatmap(fromTime, toTime uint64, key, freq 
 		c := freqBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			value := common.VolumeStats{}
-			json.Unmarshal(v, &value)
+			if err := json.Unmarshal(v, &value); err != nil {
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = value
 		}
@@ -817,7 +854,9 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 					currentData := common.MetricStats{}
 					v := tzBucket.Get(timestamp)
 					if v != nil {
-						json.Unmarshal(v, &currentData)
+						if err := json.Unmarshal(v, &currentData); err != nil {
+							return err
+						}
 					}
 					currentData.ETHVolume += stat.ETHVolume
 					currentData.USDVolume += stat.USDVolume
@@ -834,7 +873,9 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 					if err != nil {
 						return err
 					}
-					tzBucket.Put(timestamp, dataJSON)
+					if err := tzBucket.Put(timestamp, dataJSON); err != nil {
+						return err
+					}
 				}
 			}
 		}
@@ -860,7 +901,9 @@ func (self *BoltStatStorage) GetTradeSummary(fromTime uint64, toTime uint64, tim
 		c := timezoneBk.Cursor()
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			summary := common.MetricStats{}
-			json.Unmarshal(v, &summary)
+			if err := json.Unmarshal(v, &summary); err != nil {
+				return err
+			}
 			key := boltutil.BytesToUint64(k) / 1000000
 			result[key] = summary
 		}

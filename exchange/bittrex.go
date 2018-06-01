@@ -210,7 +210,9 @@ func (self *Bittrex) DepositStatus(
 				deposit.Amount-amount < BITTREX_EPSILON &&
 				bitttimestampToUint64(deposit.LastUpdated) > timestamp/uint64(time.Millisecond) &&
 				self.storage.IsNewBittrexDeposit(deposit.Id, id) {
-				self.storage.RegisterBittrexDeposit(deposit.Id, id)
+				if err := self.storage.RegisterBittrexDeposit(deposit.Id, id); err != nil {
+					log.Printf("Register bittrex deposit error: %s", err.Error())
+				}
 				return "done", nil
 			}
 		}
@@ -408,7 +410,9 @@ func (self *Bittrex) FetchTradeHistory() {
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
-			self.storage.StoreTradeHistory(result)
+			if err := self.storage.StoreTradeHistory(result); err != nil {
+				log.Printf("Bittrex store trade history error: %s", err.Error())
+			}
 			<-t.C
 		}
 	}()

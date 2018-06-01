@@ -368,7 +368,11 @@ func (self ReserveStats) RunStorageController() error {
 	if err != nil {
 		return err
 	}
-	go self.ControllPriceAnalyticSize()
+	go func() {
+		if err := self.ControllPriceAnalyticSize(); err != nil {
+			log.Printf("Control price analytic failed: %s", err.Error())
+		}
+	}()
 	return err
 }
 

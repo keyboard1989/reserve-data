@@ -3,6 +3,8 @@ package configuration
 import (
 	"log"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
@@ -10,6 +12,10 @@ import (
 	"github.com/KyberNetwork/reserve-data/world"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
+)
+
+const (
+	tokenDBFileName string = "token.db"
 )
 
 func GetAddressConfig(filePath string) common.AddressConfig {
@@ -58,7 +64,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-	setting := createSetting()
+	setting := settings.NewSetting(tokenDBFileName, ConfigPaths[common.RunningMode()].settingPath, settings.HandleEmptyToken)
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 

@@ -5,6 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -30,8 +31,7 @@ func NewKNAuthenticationFromFile(path string) KNAuthentication {
 		panic(err)
 	}
 	result := KNAuthentication{}
-	err = json.Unmarshal(raw, &result)
-	if err != nil {
+	if err = json.Unmarshal(raw, &result); err != nil {
 		panic(err)
 	}
 	return result
@@ -39,25 +39,33 @@ func NewKNAuthenticationFromFile(path string) KNAuthentication {
 
 func (self KNAuthentication) KNSign(msg string) string {
 	mac := hmac.New(sha512.New, []byte(self.KNSecret))
-	mac.Write([]byte(msg))
+	if _, err := mac.Write([]byte(msg)); err != nil {
+		log.Printf("Encode message error: %s", err.Error())
+	}
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }
 
 func (self KNAuthentication) KNReadonlySign(msg string) string {
 	mac := hmac.New(sha512.New, []byte(self.KNReadOnly))
-	mac.Write([]byte(msg))
+	if _, err := mac.Write([]byte(msg)); err != nil {
+		log.Printf("Encode message error: %s", err.Error())
+	}
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }
 
 func (self KNAuthentication) KNConfigurationSign(msg string) string {
 	mac := hmac.New(sha512.New, []byte(self.KNConfiguration))
-	mac.Write([]byte(msg))
+	if _, err := mac.Write([]byte(msg)); err != nil {
+		log.Printf("Encode message error: %s", err.Error())
+	}
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }
 
 func (self KNAuthentication) KNConfirmConfSign(msg string) string {
 	mac := hmac.New(sha512.New, []byte(self.KNConfirmConf))
-	mac.Write([]byte(msg))
+	if _, err := mac.Write([]byte(msg)); err != nil {
+		log.Printf("Encode message error: %s", err.Error())
+	}
 	return ethereum.Bytes2Hex(mac.Sum(nil))
 }
 
