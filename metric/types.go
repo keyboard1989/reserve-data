@@ -99,13 +99,11 @@ func (et PWIEquationTokenV2) isValid() bool {
 	var requiredFields = []string{"bid", "ask"}
 	// validates that both bid and ask are present
 	if len(et) != len(requiredFields) {
-		log.Printf("token input 1: +v")
 		return false
 	}
 
 	for _, field := range requiredFields {
 		if _, ok := et[field]; !ok {
-			log.Printf("token input 2: +v")
 			return false
 		}
 	}
@@ -119,10 +117,8 @@ type PWIEquationRequestV2 map[string]PWIEquationTokenV2
 // Example input:
 // [{"token_id": {equation_token}}, ...]
 func (input PWIEquationRequestV2) IsValid() bool {
-	log.Printf("pwi input: %+v", input)
 	for tokenID, et := range input {
 		if !et.isValid() {
-			log.Printf("token invalid: %+v", et)
 			return false
 		}
 
