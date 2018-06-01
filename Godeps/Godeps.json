@@ -17,11 +17,6 @@
 			"Rev": "fa5367d20c994db73282594be0146ab221657943"
 		},
 		{
-			"ImportPath": "github.com/btcsuite/btcd/btcec",
-			"Comment": "BTCD_0_12_0_BETA-606-gc7588cb",
-			"Rev": "c7588cbf7690cd9f047a28efa2dcd8f2435a4e5e"
-		},
-		{
 			"ImportPath": "github.com/certifi/gocertifi",
 			"Comment": "2017.07.27",
 			"Rev": "3fd9e1adb12b72d2f3f82191d49be9b93c69f67c"
@@ -173,11 +168,6 @@
 			"Rev": "130e6b02ab059e7b717a096f397c5b60111cae74"
 		},
 		{
-			"ImportPath": "github.com/json-iterator/go",
-			"Comment": "1.0.3",
-			"Rev": "6240e1e7983a85228f7fd9c3e1b6932d46ec58e2"
-		},
-		{
 			"ImportPath": "github.com/mattn/go-isatty",
 			"Comment": "v0.0.3-1-ga5cdd64",
 			"Rev": "a5cdd64afdee435007ee3e9f6ed4684af949d568"
@@ -188,10 +178,6 @@
 			"Rev": "e790cca94e6cc75c7064b1332e63811d4aae1a53"
 		},
 		{
-			"ImportPath": "github.com/rcrowley/go-metrics",
-			"Rev": "1f30fe9094a513ce4c700b9a54458bbb0c96996c"
-		},
-		{
 			"ImportPath": "github.com/rjeczalik/notify",
 			"Rev": "767eb674ef14b09119b2fff3601e64558d530c47"
 		},
@@ -199,11 +185,6 @@
 			"ImportPath": "github.com/rs/cors",
 			"Comment": "v1.2-1-geabcc6a",
 			"Rev": "eabcc6af4bbe5ad3a949d36450326a2b0b9894b8"
-		},
-		{
-			"ImportPath": "github.com/rs/xhandler",
-			"Comment": "v.11-5-g1eb70cf",
-			"Rev": "1eb70cf1520d43c307a89c5dabb7a7efd132fccd"
 		},
 		{
 			"ImportPath": "github.com/satori/go.uuid",
@@ -255,10 +236,6 @@
 		{
 			"ImportPath": "gopkg.in/karalabe/cookiejar.v2/collections/prque",
 			"Rev": "8dcd6a7f4951f6ff3ee9cbb919a06d8925822e57"
-		},
-		{
-			"ImportPath": "gopkg.in/natefinch/npipe.v2",
-			"Rev": "c1b8fa8bdccecb0b8db834ee0b92fdbcfa606dd6"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
