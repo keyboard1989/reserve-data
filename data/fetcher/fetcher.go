@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -264,7 +265,7 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 }
 
 func (self *Fetcher) FetchBalanceFromBlockchain() (map[string]common.BalanceEntry, error) {
-	reserveAddr, err := self.setting.GetAddress("reserve")
+	reserveAddr, err := self.setting.GetAddress(settings.RESERVE)
 	if err != nil {
 		return nil, err
 	}

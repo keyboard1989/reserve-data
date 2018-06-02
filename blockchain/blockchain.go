@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -106,23 +108,23 @@ func (self *Blockchain) GetAddresses() (*common.Addresses, error) {
 			Decimals: t.Decimal,
 		}
 	}
-	wrapperAddr, err := self.setting.GetAddress("wrapper")
+	wrapperAddr, err := self.setting.GetAddress(settings.WRAPPER)
 	if err != nil {
 		return nil, err
 	}
-	pricingAddr, err := self.setting.GetAddress("pricing")
+	pricingAddr, err := self.setting.GetAddress(settings.PRICING)
 	if err != nil {
 		return nil, err
 	}
-	reserveAddr, err := self.setting.GetAddress("reserve")
+	reserveAddr, err := self.setting.GetAddress(settings.RESERVE)
 	if err != nil {
 		return nil, err
 	}
-	burnerAddr, err := self.setting.GetAddress("burner")
+	burnerAddr, err := self.setting.GetAddress(settings.BURNER)
 	if err != nil {
 		return nil, err
 	}
-	networkAddr, err := self.setting.GetAddress("network")
+	networkAddr, err := self.setting.GetAddress(settings.NETWORK)
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +148,7 @@ func (self *Blockchain) LoadAndSetTokenIndices(tokenAddrs []ethereum.Address) er
 	self.tokenIndices = map[string]tbindex{}
 	self.tokenIndices[ethereum.HexToAddress(self.setting.ETHToken().Address).Hex()] = tbindex{1000000, 1000000}
 	opts := self.GetCallOpts(0)
-	pricingAddr, err := self.setting.GetAddress("pricing")
+	pricingAddr, err := self.setting.GetAddress(settings.PRICING)
 	if err != nil {
 		return err
 	}
@@ -200,7 +202,7 @@ func (self *Blockchain) SetRates(
 	block *big.Int,
 	nonce *big.Int,
 	gasPrice *big.Int) (*types.Transaction, error) {
-	pricingAddr, err := self.setting.GetAddress("pricing")
+	pricingAddr, err := self.setting.GetAddress(settings.PRICING)
 	if err != nil {
 		return nil, err
 	}
@@ -408,7 +410,7 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	}
 	timestamp := common.GetTimestamp()
 	opts := self.GetCallOpts(atBlock)
-	pricingAddr, err := self.setting.GetAddress("pricing")
+	pricingAddr, err := self.setting.GetAddress(settings.PRICING)
 	if err != nil {
 		return result, err
 	}
@@ -493,24 +495,24 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 	// we have to track events from network and fee burner contracts
 	// including their old contracts
 	addresses := []ethereum.Address{}
-	networkAddr, err := self.setting.GetAddress("network")
+	networkAddr, err := self.setting.GetAddress(settings.NETWORK)
 	if err != nil {
 		return nil, err
 	}
-	burnerAddr, err := self.setting.GetAddress("burner")
+	burnerAddr, err := self.setting.GetAddress(settings.BURNER)
 	if err != nil {
 		return nil, err
 	}
-	whitelistAddr, err := self.setting.GetAddress("whitelist")
+	whitelistAddr, err := self.setting.GetAddress(settings.WHITELIST)
 	if err != nil {
 		return nil, err
 	}
 	addresses = append(addresses, networkAddr, burnerAddr, whitelistAddr)
-	oldNetworks, err := self.setting.GetAddresses("oldNetworks")
+	oldNetworks, err := self.setting.GetAddresses(settings.OLDNETWORK)
 	if err != nil {
 		log.Printf("WARNING: can't get old network addresses (%s)", err)
 	}
-	oldBurners, err := self.setting.GetAddresses("oldBurners")
+	oldBurners, err := self.setting.GetAddresses(settings.OLDBURNER)
 	if err != nil {
 		log.Printf("WARNING: can't get old burners addresses (%s)", err)
 	}
@@ -696,46 +698,46 @@ func (self *Blockchain) GetPricingMethod(inputData string) (*abi.Method, error) 
 }
 
 func NewBlockchain(base *blockchain.BaseBlockchain, setting Setting) (*Blockchain, error) {
-	wrapperAddr, err := setting.GetAddress("wrapper")
+	wrapperAddr, err := setting.GetAddress(settings.WRAPPER)
 	if err != nil {
-		log.Panicf("Can not get wrapper Address %s", err)
+		return nil, err
 	}
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper := blockchain.NewContract(
 		wrapperAddr,
 		filepath.Join(common.CurrentDir(), "wrapper.abi"),
 	)
-	reserveAddr, err := setting.GetAddress("reserve")
+	reserveAddr, err := setting.GetAddress(settings.RESERVE)
 	if err != nil {
-		log.Panicf("Can not get reserve Address %s", err)
+		return nil, err
 	}
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve := blockchain.NewContract(
 		reserveAddr,
 		filepath.Join(common.CurrentDir(), "reserve.abi"),
 	)
-	pricingAddr, err := setting.GetAddress("pricing")
+	pricingAddr, err := setting.GetAddress(settings.PRICING)
 	if err != nil {
-		log.Panicf("Can not get pricing Address %s", err)
+		return nil, err
 	}
 	log.Printf("pricing address: %s", pricingAddr.Hex())
 	pricing := blockchain.NewContract(
 		pricingAddr,
 		filepath.Join(common.CurrentDir(), "pricing.abi"),
 	)
-	burnerAddr, err := setting.GetAddress("burner")
+	burnerAddr, err := setting.GetAddress(settings.BURNER)
 	if err != nil {
-		log.Panicf("Can not get burner address %s", err)
+		return nil, err
 	}
 	log.Printf("burner address: %s", burnerAddr.Hex())
-	networkAddr, err := setting.GetAddress("network")
+	networkAddr, err := setting.GetAddress(settings.NETWORK)
 	if err != nil {
-		log.Panicf("Can not get network address %s", err)
+		return nil, err
 	}
 	log.Printf("network address: %s", networkAddr.Hex())
-	whitelistAddr, err := setting.GetAddress("whitelist")
+	whitelistAddr, err := setting.GetAddress(settings.WHITELIST)
 	if err != nil {
-		log.Panicf("Can not get whitelist address %s", err)
+		return nil, err
 	}
 	log.Printf("whitelist address: %s", whitelistAddr.Hex())
 

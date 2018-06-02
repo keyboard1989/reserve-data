@@ -2,12 +2,28 @@ package settings
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
-	"log"
 
 	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
 
+const (
+	RESERVE         string = "reserve"
+	BURNER          string = "burner"
+	BANK            string = "bank"
+	NETWORK         string = "network"
+	WRAPPER         string = "wrapper"
+	PRICING         string = "pricing"
+	WHITELIST       string = "whitelist"
+	SETRATE         string = "setrate"
+	RESERVE3RDPARTY string = "third_party_reserves"
+	OLDNETWORK      string = "oldNetworks"
+	OLDBURNER       string = "oldBurners"
+)
+
+// AddressConfig type defines a list of address attribute avaiable in core.
+// It is used mainly for
 type AddressConfig struct {
 	Bank               string   `json:"bank"`
 	Reserve            string   `json:"reserve"`
@@ -20,17 +36,19 @@ type AddressConfig struct {
 	SetRate            string   `json:"setrate"`
 }
 
+// AddressSetting type defines component to handle all address setting in core.
+// It contains the storage interface used to query addresses.
 type AddressSetting struct {
 	Storage AddressStorage
 }
 
-func NewAddressSetting(dbPath string) *AddressSetting {
+func NewAddressSetting(dbPath string) (*AddressSetting, error) {
 	BoltAddressStorage, err := settingstorage.NewBoltAddressStorage(dbPath)
 	if err != nil {
-		log.Panicf("Setting Init: Can not create bolt address storage (%s)", err)
+		return nil, fmt.Errorf("Setting Init: Can not create bolt address storage (%s)", err)
 	}
 	addressSetting := AddressSetting{BoltAddressStorage}
-	return &addressSetting
+	return &addressSetting, nil
 }
 
 func (setting *Settings) LoadAddressFromFile(path string) error {
@@ -42,32 +60,32 @@ func (setting *Settings) LoadAddressFromFile(path string) error {
 	if err = json.Unmarshal(data, &addrs); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("bank", addrs.Bank); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(BANK, addrs.Bank); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("reserve", addrs.Reserve); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(RESERVE, addrs.Reserve); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("network", addrs.Network); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(NETWORK, addrs.Network); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("wrapper", addrs.Wrapper); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(WRAPPER, addrs.Wrapper); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("pricing", addrs.Pricing); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(PRICING, addrs.Pricing); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("burner", addrs.FeeBurner); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(BURNER, addrs.FeeBurner); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("whitelist", addrs.Whitelist); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(WHITELIST, addrs.Whitelist); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress("setrate", addrs.SetRate); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(SETRATE, addrs.SetRate); err != nil {
 		return err
 	}
 	for _, addr := range addrs.ThirdPartyReserves {
-		if err = setting.Address.Storage.AddAddressToSet("third_party_reserves", addr); err != nil {
+		if err = setting.Address.Storage.AddAddressToSet(RESERVE3RDPARTY, addr); err != nil {
 			return err
 		}
 	}

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -205,7 +206,7 @@ func (self ReserveCore) Withdraw(
 	} else {
 		err = sanityCheckAmount(exchange, token, amount)
 		if err == nil {
-			reserveAddr, err := self.setting.GetAddress("reserve")
+			reserveAddr, err := self.setting.GetAddress(settings.RESERVE)
 			if err == nil {
 				id, err = exchange.Withdraw(token, amount, reserveAddr, timepoint)
 			}

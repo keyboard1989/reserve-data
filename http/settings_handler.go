@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"strconv"
 
-	ethereum "github.com/ethereum/go-ethereum/common"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
+	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 )
 
@@ -110,8 +109,7 @@ func (self *HTTPServer) UpdateAddress(c *gin.Context) {
 	addrStr := postForm.Get("address")
 	name := postForm.Get("name")
 	addr := ethereum.HexToAddress(addrStr)
-	err := self.setting.UpdateAdress(name, addr)
-	if err != nil {
+	if err := self.setting.UpdateAdress(name, addr); err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
 	httputil.ResponseSuccess(c)
@@ -125,8 +123,7 @@ func (self *HTTPServer) AddAddressToSet(c *gin.Context) {
 	addrStr := postForm.Get("address")
 	setName := postForm.Get("setname")
 	addr := ethereum.HexToAddress(addrStr)
-	err := self.setting.AddAddressToSet(setName, addr)
-	if err != nil {
+	if err := self.setting.AddAddressToSet(setName, addr); err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
 	httputil.ResponseSuccess(c)
