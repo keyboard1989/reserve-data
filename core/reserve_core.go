@@ -110,7 +110,7 @@ func (self ReserveCore) Trade(
 		timepoint,
 	)
 	if sErr != nil {
-		log.Printf("Error save activity: %s", err.Error())
+		log.Printf("Error save activity: %s", sErr.Error())
 	}
 	log.Printf(
 		"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: id: %s, done: %s, remaining: %s, finished: %t, error: %s",
@@ -237,7 +237,7 @@ func (self ReserveCore) Withdraw(
 	)
 
 	if sErr != nil {
-		log.Printf("failed to save withdraw record: %s", err.Error())
+		log.Printf("failed to save withdraw record: %s", sErr.Error())
 	}
 
 	log.Printf(
