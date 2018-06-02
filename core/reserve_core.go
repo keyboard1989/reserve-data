@@ -86,7 +86,7 @@ func (self ReserveCore) Trade(
 		}
 	}
 	uid := timebasedID(id)
-	err = self.activityStorage.Record(
+	sErr := self.activityStorage.Record(
 		"trade",
 		uid,
 		string(exchange.ID()),
@@ -109,8 +109,8 @@ func (self ReserveCore) Trade(
 		"",
 		timepoint,
 	)
-	if err != nil {
-		log.Printf("Error save activity: %s", err.Error())
+	if sErr != nil {
+		log.Printf("Error save activity: %s", sErr.Error())
 	}
 	log.Printf(
 		"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: id: %s, done: %s, remaining: %s, finished: %t, error: %s",
@@ -215,7 +215,7 @@ func (self ReserveCore) Withdraw(
 		status = "submitted"
 	}
 	uid := timebasedID(id)
-	err = self.activityStorage.Record(
+	sErr := self.activityStorage.Record(
 		"withdraw",
 		uid,
 		string(exchange.ID()),
@@ -235,6 +235,11 @@ func (self ReserveCore) Withdraw(
 		"",
 		timepoint,
 	)
+
+	if sErr != nil {
+		log.Printf("failed to save withdraw record: %s", sErr.Error())
+	}
+
 	log.Printf(
 		"Core ----------> Withdraw from %s: token: %s, amount: %s, timestamp: %d ==> Result: id: %s, error: %s",
 		exchange.ID(), token.ID, amount.Text(10), timepoint, id, err,
