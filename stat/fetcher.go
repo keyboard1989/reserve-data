@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/KyberNetwork/reserve-data/stat/util"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -140,7 +141,7 @@ func (self *Fetcher) FetchTxs(client http.Client) error {
 	if toBlock == 0 {
 		return errors.New("Can't get latest block nummber")
 	}
-	pricingAddress, err := self.setting.GetAddress("pricing")
+	pricingAddress, err := self.setting.GetAddress(settings.PRICING)
 	if err != nil {
 		return err
 	}
@@ -646,7 +647,7 @@ func (self *Fetcher) GetReserveRates(
 
 func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) ([]common.Token, error) {
 	tokens := []common.Token{}
-	reserveAddr, err := self.setting.GetAddress("reserve")
+	reserveAddr, err := self.setting.GetAddress(settings.RESERVE)
 	if err != nil {
 		return tokens, err
 	}
@@ -678,12 +679,12 @@ func (self *Fetcher) ReserveSupportedTokens(reserve ethereum.Address) ([]common.
 
 func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 	log.Printf("Fetching reserve and sanity rate from blockchain")
-	thirdPartyReserves, err := self.setting.GetAddresses("third_party_reserves")
+	thirdPartyReserves, err := self.setting.GetAddresses(settings.RESERVE3RDPARTY)
 	if err != nil {
 		log.Printf("ERROR: Can not get reserve rates %s", err)
 		return
 	}
-	reserveAddr, err := self.setting.GetAddress("reserve")
+	reserveAddr, err := self.setting.GetAddress(settings.RESERVE)
 	if err != nil {
 		log.Printf("ERROR: Can not get reserve rates %s", err)
 		return

@@ -48,13 +48,19 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 // SettingOption sets the initialization behavior of the Settings instance.
 type SettingOption func(s *Settings)
 
-func NewSetting(tokenDB, addressDB string, options ...SettingOption) *Settings {
-	tokenSetting := NewTokenSetting(tokenDB)
-	addressSetting := NewAddressSetting(addressDB)
+func NewSetting(tokenDB, addressDB string, options ...SettingOption) (*Settings, error) {
+	tokenSetting, err := NewTokenSetting(tokenDB)
+	if err != nil {
+		return nil, err
+	}
+	addressSetting, err := NewAddressSetting(addressDB)
+	if err != nil {
+		return nil, err
+	}
 	setting := &Settings{Tokens: tokenSetting,
 		Address: addressSetting}
 	for _, option := range options {
 		option(setting)
 	}
-	return setting
+	return setting, err
 }

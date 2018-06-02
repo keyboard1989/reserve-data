@@ -22,7 +22,7 @@ func NewBoltAddressStorage(dbPath string) (*BoltAddressStorage, error) {
 	var db *bolt.DB
 	db, err = bolt.Open(dbPath, 0600, nil)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
 		if _, uErr := tx.CreateBucketIfNotExists([]byte(ADDRESS_SETTING_BUCKET)); err != nil {
@@ -34,7 +34,7 @@ func NewBoltAddressStorage(dbPath string) (*BoltAddressStorage, error) {
 		return nil
 	})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	return &BoltAddressStorage{db}, nil
 }

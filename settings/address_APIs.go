@@ -9,8 +9,8 @@ func (setting *Settings) UpdateAdress(name string, address ethereum.Address) err
 }
 
 func (setting *Settings) GetAddress(name string) (ethereum.Address, error) {
-	addr, err := setting.Address.Storage.GetAddress(name)
 	result := ethereum.Address{}
+	addr, err := setting.Address.Storage.GetAddress(name)
 	if err != nil {
 		return result, err
 	}

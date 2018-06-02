@@ -143,12 +143,14 @@ func (self testActivityStorage) HasPendingDeposit(token common.Token, exchange c
 }
 
 func getTestCore(hasPendingDeposit bool) *ReserveCore {
-	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
+	tmpDir, err := ioutil.TempDir("", "core_test")
 	if err != nil {
 		log.Fatal(err)
 	}
-	setting := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"))
-
+	setting, err := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"))
+	if err != nil {
+		log.Fatal(err)
+	}
 	return NewReserveCore(
 		testBlockchain{},
 		testActivityStorage{hasPendingDeposit},
