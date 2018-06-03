@@ -1,3 +1,13 @@
+# 0.8.0 (2018-06-03)
+
+## Features:
+
+## Bug fixes:
+
+## Compatability:
+- KyberNetwork smart contracts (>= 0.3.0)
+- KyberNetwork analytic (0.8.0)
+
 # 0.7.0 (2018-04-30)
 
 ## Features:
@@ -5,7 +15,7 @@
 - Support stable exchange (the virtual exchange to handle tokens that are not listed on big cexs)
 
 ## Bug fixes:
-- TODO
+- Only some small bug fixes
 
 ## Compatability:
 - This version only works with KyberNetwork smart contracts version 0.3.0 or later
