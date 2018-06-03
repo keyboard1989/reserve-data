@@ -1,8 +1,24 @@
 # 0.8.0 (2018-06-03)
 
 ## Features:
+- Support dry mode to check all configs and initializations (#223)
+- Support more price feeds (XAU-ETH, USD-ETH...)
+- Set target qty v2 to support more targets on ETH (#227)
+- Add API to monitor pricing gas cost (#207)
+- Add support for pwis in both side (sell/buy)
 
 ## Bug fixes:
+- Fixed where trade logs are skipped if db writes failed (#216)
+- Handled a lot of shadow errors
+- Fixed a lot of minor bugs and design defects
+
+## Improvements:
+- Push old log to s3 (#217)
+- Improved a lot code base quality
+- Removed redundant signal field of TickerRunner
+- Start having APIs version 2 to use json instead of string concatenation format
+
+
 
 ## Compatability:
 - KyberNetwork smart contracts (>= 0.3.0)
