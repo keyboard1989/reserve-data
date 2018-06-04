@@ -2,10 +2,7 @@ package settings
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-
-	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
 
 const (
@@ -42,12 +39,8 @@ type AddressSetting struct {
 	Storage AddressStorage
 }
 
-func NewAddressSetting(dbPath string) (*AddressSetting, error) {
-	BoltAddressStorage, err := settingstorage.NewBoltAddressStorage(dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("Setting Init: Can not create bolt address storage (%s)", err)
-	}
-	addressSetting := AddressSetting{BoltAddressStorage}
+func NewAddressSetting(addressStorage AddressStorage) (*AddressSetting, error) {
+	addressSetting := AddressSetting{addressStorage}
 	return &addressSetting, nil
 }
 

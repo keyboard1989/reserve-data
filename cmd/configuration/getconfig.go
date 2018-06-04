@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	tokenDBFileName   string = "token.db"
-	addressDBFileName string = "address.db"
+	settingDBFileName string = "setting.db"
 )
 
 func GetAddressConfig(filePath string) common.AddressConfig {
@@ -66,8 +65,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-	setting, err := settings.NewSetting(filepath.Join(common.CmdDirLocation(), tokenDBFileName),
-		filepath.Join(common.CmdDirLocation(), addressDBFileName),
+	setting, err := settings.NewSetting(filepath.Join(common.CmdDirLocation(), settingDBFileName),
 		settings.WithHandleEmptyToken(setPath.settingPath), settings.WithHandleEmptyAddress(setPath.settingPath))
 	if err != nil {
 		log.Panicf("Can't innit setting component (%s), err", err)

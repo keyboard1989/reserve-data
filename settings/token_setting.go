@@ -1,11 +1,5 @@
 package settings
 
-import (
-	"fmt"
-
-	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
-)
-
 type token struct {
 	Address                 string `json:"address"`
 	Name                    string `json:"name"`
@@ -25,12 +19,8 @@ type TokenSetting struct {
 	Storage TokenStorage
 }
 
-func NewTokenSetting(dbPath string) (*TokenSetting, error) {
-	BoltTokenStorage, err := settingstorage.NewBoltTokenStorage(dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("Setting Init: Can not create bolt token storage (%s)", err)
-	}
-	tokenSetting := TokenSetting{BoltTokenStorage}
+func NewTokenSetting(tokenStorage TokenStorage) (*TokenSetting, error) {
+	tokenSetting := TokenSetting{tokenStorage}
 	return &tokenSetting, nil
 
 }
