@@ -35,6 +35,11 @@ type tbindex struct {
 	IndexInBulk uint64
 }
 
+// newTBIndex creates new tbindex instance with given parameters.
+func newTBIndex(bulkIndex, indexInBulk uint64) tbindex {
+	return tbindex{BulkIndex: bulkIndex, IndexInBulk: indexInBulk}
+}
+
 const (
 	FeeToWalletEvent string = "0x366bc34352215bf0bd3b527cfd6718605e1f5938777e42bcd8ed92f578368f52"
 	BurnFeeEvent     string = "0xf838f6ddc89706878e3c3e698e9b5cbfbf2c0e3d3dcd0bd2e00f1ccf313e0185"
@@ -145,7 +150,7 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 		} else {
 			// this is not really needed. Just a safe guard. Use a very big indices so it is does not exist.
-			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
+			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = newTBIndex(1000000, 1000000)
 		}
 	}
 	opts := self.GetCallOpts(0)
@@ -159,10 +164,10 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 		return err
 	}
 	for i, tok := range tokens {
-		self.tokenIndices[tok.Hex()] = tbindex{
+		self.tokenIndices[tok.Hex()] = newTBIndex(
 			bulkIndices[i].Uint64(),
 			indicesInBulk[i].Uint64(),
-		}
+		)
 	}
 	log.Printf("Token indices: %+v", self.tokenIndices)
 	return nil
