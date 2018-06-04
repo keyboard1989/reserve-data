@@ -2,8 +2,6 @@ package settings
 
 import (
 	"log"
-
-	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
 
 type Settings struct {
@@ -50,23 +48,11 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 // SettingOption sets the initialization behavior of the Settings instance.
 type SettingOption func(s *Settings)
 
-func NewSetting(dbPath string, options ...SettingOption) (*Settings, error) {
-	boltSettingStorage, err := settingstorage.NewBoltSettingStorage(dbPath)
-	if err != nil {
-		return nil, err
-	}
-	tokenSetting, err := NewTokenSetting(boltSettingStorage)
-	if err != nil {
-		return nil, err
-	}
-	addressSetting, err := NewAddressSetting(boltSettingStorage)
-	if err != nil {
-		return nil, err
-	}
+func NewSetting(tokenSetting *TokenSetting, addressSetting *AddressSetting, options ...SettingOption) (*Settings, error) {
 	setting := &Settings{Tokens: tokenSetting,
 		Address: addressSetting}
 	for _, option := range options {
 		option(setting)
 	}
-	return nil, setting
+	return setting, nil
 }

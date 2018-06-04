@@ -10,6 +10,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
+	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/KyberNetwork/reserve-data/world"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -59,22 +60,40 @@ func GetConfigPaths(kyberENV string) SettingPaths {
 	return ConfigPaths[common.DEV_MODE]
 }
 
+func GetSetting(setPath SettingPaths) (*settings.Settings, error) {
+	boltSettingStorage, err := settingstorage.NewBoltSettingStorage(filepath.Join(common.CmdDirLocation(), settingDBFileName))
+	if err != nil {
+		return nil, err
+	}
+	tokenSetting, err := settings.NewTokenSetting(boltSettingStorage)
+	if err != nil {
+		return nil, err
+	}
+	addressSetting, err := settings.NewAddressSetting(boltSettingStorage)
+	if err != nil {
+		return nil, err
+	}
+	setting, err := settings.NewSetting(
+		tokenSetting,
+		addressSetting,
+		settings.WithHandleEmptyToken(setPath.settingPath),
+		settings.WithHandleEmptyAddress(setPath.settingPath))
+	return setting, err
+}
+
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
 	setPath := GetConfigPaths(kyberENV)
 	world, err := world.NewTheWorld(kyberENV, setPath.secretPath)
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-	setting, err := settings.NewSetting(
-		filepath.Join(common.CmdDirLocation(), settingDBFileName),
-		settings.WithHandleEmptyToken(setPath.settingPath),
-		settings.WithHandleEmptyAddress(setPath.settingPath))
-	if err != nil {
-		log.Panicf("failed to create token storage: %s", err.Error())
-	}
+
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
-
+	setting, err := GetSetting(setPath)
+	if err != nil {
+		log.Panicf("Failed to create setting: %s", err.Error())
+	}
 	var endpoint string
 	if endpointOW != "" {
 		log.Printf("overwriting Endpoint with %s\n", endpointOW)
