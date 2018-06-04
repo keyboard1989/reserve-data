@@ -22,8 +22,16 @@ const (
 	DEPOSIT_OP string = "depositOP"
 )
 
+// tbindex is where the token data stored in blockchain.
+// In blockchain, data of a token (sell/buy rates) is stored in an array of 32 bytes values called (tokenRatesCompactData).
+// Each data is stored in a byte.
+// https://github.com/KyberNetwork/smart-contracts/blob/fed8e09dc6e4365e1597474d9b3f53634eb405d2/contracts/ConversionRates.sol#L48
 type tbindex struct {
-	BulkIndex   uint64
+	// BulkIndex is the index of bytes32 value that store data of multiple tokens.
+	BulkIndex uint64
+	// IndexInBulk is the index in the above BulkIndex value where the sell/buy rates are stored following structure:
+	// sell: IndexInBulk + 4
+	// buy: IndexInBulk + 8
 	IndexInBulk uint64
 }
 
@@ -136,7 +144,7 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 		if tok.ID != "ETH" {
 			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 		} else {
-			// this is not really needed. Just a safe guard
+			// this is not really needed. Just a safe guard. Use a very big indices so it is does not exist.
 			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
 		}
 	}
