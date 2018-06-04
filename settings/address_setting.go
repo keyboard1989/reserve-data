@@ -2,25 +2,62 @@ package settings
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
-
-	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 )
+
+// AddressName is the name of ethereum address used in core.
+//go:generate stringer -type=AddressName
+type AddressName int
 
 const (
-	RESERVE         string = "reserve"
-	BURNER          string = "burner"
-	BANK            string = "bank"
-	NETWORK         string = "network"
-	WRAPPER         string = "wrapper"
-	PRICING         string = "pricing"
-	WHITELIST       string = "whitelist"
-	SETRATE         string = "setrate"
-	RESERVE3RDPARTY string = "third_party_reserves"
-	OLDNETWORK      string = "oldNetworks"
-	OLDBURNER       string = "oldBurners"
+	Reserve AddressName = iota
+	Burner
+	Bank
+	Network
+	Wrapper
+	Pricing
+	Whitelist
+	SetRate
 )
+
+var addressNameValues = map[string]AddressName{
+	"reserve":   Reserve,
+	"burner":    Burner,
+	"bank":      Bank,
+	"network":   Network,
+	"wrapper":   Wrapper,
+	"pricing":   Pricing,
+	"whitelist": Whitelist,
+	"setrate":   SetRate,
+}
+
+// AddressTypeValues returns the mapping of the string presentation
+// of address name and its value.
+func AddressTypeValues() map[string]AddressName {
+	return addressNameValues
+}
+
+// AddressSetName is the name of ethereum address set used in core.
+//go:generate stringer -type=AddressSetName
+type AddressSetName int
+
+const (
+	ThirdPartyReserves AddressSetName = iota
+	OldNetWorks
+	OldBurners
+)
+
+var addressSetNameValues = map[string]AddressSetName{
+	"third_party_reserves": ThirdPartyReserves,
+	"oldNetworks":          OldNetWorks,
+	"oldBurners":           OldBurners,
+}
+
+// AddressSetTypeValues returns the mapping of the string presentation
+// of address set name and its value.
+func AddressSetTypeValues() map[string]AddressSetName {
+	return addressSetNameValues
+}
 
 // AddressConfig type defines a list of address attribute avaiable in core.
 // It is used mainly for
@@ -42,13 +79,8 @@ type AddressSetting struct {
 	Storage AddressStorage
 }
 
-func NewAddressSetting(dbPath string) (*AddressSetting, error) {
-	BoltAddressStorage, err := settingstorage.NewBoltAddressStorage(dbPath)
-	if err != nil {
-		return nil, fmt.Errorf("Setting Init: Can not create bolt address storage (%s)", err)
-	}
-	addressSetting := AddressSetting{BoltAddressStorage}
-	return &addressSetting, nil
+func NewAddressSetting(storage AddressStorage) *AddressSetting {
+	return &AddressSetting{Storage: storage}
 }
 
 func (setting *Settings) LoadAddressFromFile(path string) error {
@@ -60,32 +92,32 @@ func (setting *Settings) LoadAddressFromFile(path string) error {
 	if err = json.Unmarshal(data, &addrs); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress(BANK, addrs.Bank); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(Bank, addrs.Bank); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress(RESERVE, addrs.Reserve); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(Reserve, addrs.Reserve); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress(NETWORK, addrs.Network); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(Network, addrs.Network); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress(WRAPPER, addrs.Wrapper); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(Wrapper, addrs.Wrapper); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress(PRICING, addrs.Pricing); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(Pricing, addrs.Pricing); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress(BURNER, addrs.FeeBurner); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(Burner, addrs.FeeBurner); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress(WHITELIST, addrs.Whitelist); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(Whitelist, addrs.Whitelist); err != nil {
 		return err
 	}
-	if err = setting.Address.Storage.UpdateOneAddress(SETRATE, addrs.SetRate); err != nil {
+	if err = setting.Address.Storage.UpdateOneAddress(SetRate, addrs.SetRate); err != nil {
 		return err
 	}
 	for _, addr := range addrs.ThirdPartyReserves {
-		if err = setting.Address.Storage.AddAddressToSet(RESERVE3RDPARTY, addr); err != nil {
+		if err = setting.Address.Storage.AddAddressToSet(ThirdPartyReserves, addr); err != nil {
 			return err
 		}
 	}

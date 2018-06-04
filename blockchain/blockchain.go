@@ -85,11 +85,11 @@ func (self *Blockchain) AddGasOracle(gasOracle *GasOracle) {
 }
 
 func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
-	self.setting.AddAddressToSet("oldNetworkds", addr)
+	self.setting.AddAddressToSet(settings.OldNetWorks, addr)
 }
 
 func (self *Blockchain) AddOldBurners(addr ethereum.Address) {
-	self.setting.AddAddressToSet("oldBurners", addr)
+	self.setting.AddAddressToSet(settings.OldBurners, addr)
 }
 
 func (self *Blockchain) GetAddresses() (*common.Addresses, error) {
@@ -108,23 +108,23 @@ func (self *Blockchain) GetAddresses() (*common.Addresses, error) {
 			Decimals: t.Decimal,
 		}
 	}
-	wrapperAddr, err := self.setting.GetAddress(settings.WRAPPER)
+	wrapperAddr, err := self.setting.GetAddress(settings.Wrapper)
 	if err != nil {
 		return nil, err
 	}
-	pricingAddr, err := self.setting.GetAddress(settings.PRICING)
+	pricingAddr, err := self.setting.GetAddress(settings.Pricing)
 	if err != nil {
 		return nil, err
 	}
-	reserveAddr, err := self.setting.GetAddress(settings.RESERVE)
+	reserveAddr, err := self.setting.GetAddress(settings.Reserve)
 	if err != nil {
 		return nil, err
 	}
-	burnerAddr, err := self.setting.GetAddress(settings.BURNER)
+	burnerAddr, err := self.setting.GetAddress(settings.Burner)
 	if err != nil {
 		return nil, err
 	}
-	networkAddr, err := self.setting.GetAddress(settings.NETWORK)
+	networkAddr, err := self.setting.GetAddress(settings.Network)
 	if err != nil {
 		return nil, err
 	}
@@ -148,7 +148,7 @@ func (self *Blockchain) LoadAndSetTokenIndices(tokenAddrs []ethereum.Address) er
 	self.tokenIndices = map[string]tbindex{}
 	self.tokenIndices[ethereum.HexToAddress(self.setting.ETHToken().Address).Hex()] = tbindex{1000000, 1000000}
 	opts := self.GetCallOpts(0)
-	pricingAddr, err := self.setting.GetAddress(settings.PRICING)
+	pricingAddr, err := self.setting.GetAddress(settings.Pricing)
 	if err != nil {
 		return err
 	}
@@ -202,7 +202,7 @@ func (self *Blockchain) SetRates(
 	block *big.Int,
 	nonce *big.Int,
 	gasPrice *big.Int) (*types.Transaction, error) {
-	pricingAddr, err := self.setting.GetAddress(settings.PRICING)
+	pricingAddr, err := self.setting.GetAddress(settings.Pricing)
 	if err != nil {
 		return nil, err
 	}
@@ -410,7 +410,7 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	}
 	timestamp := common.GetTimestamp()
 	opts := self.GetCallOpts(atBlock)
-	pricingAddr, err := self.setting.GetAddress(settings.PRICING)
+	pricingAddr, err := self.setting.GetAddress(settings.Pricing)
 	if err != nil {
 		return result, err
 	}
@@ -495,24 +495,24 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 	// we have to track events from network and fee burner contracts
 	// including their old contracts
 	addresses := []ethereum.Address{}
-	networkAddr, err := self.setting.GetAddress(settings.NETWORK)
+	networkAddr, err := self.setting.GetAddress(settings.Network)
 	if err != nil {
 		return nil, err
 	}
-	burnerAddr, err := self.setting.GetAddress(settings.BURNER)
+	burnerAddr, err := self.setting.GetAddress(settings.Burner)
 	if err != nil {
 		return nil, err
 	}
-	whitelistAddr, err := self.setting.GetAddress(settings.WHITELIST)
+	whitelistAddr, err := self.setting.GetAddress(settings.Whitelist)
 	if err != nil {
 		return nil, err
 	}
 	addresses = append(addresses, networkAddr, burnerAddr, whitelistAddr)
-	oldNetworks, err := self.setting.GetAddresses(settings.OLDNETWORK)
+	oldNetworks, err := self.setting.GetAddresses(settings.OldNetWorks)
 	if err != nil {
 		log.Printf("WARNING: can't get old network addresses (%s)", err)
 	}
-	oldBurners, err := self.setting.GetAddresses(settings.OLDBURNER)
+	oldBurners, err := self.setting.GetAddresses(settings.OldBurners)
 	if err != nil {
 		log.Printf("WARNING: can't get old burners addresses (%s)", err)
 	}
@@ -698,7 +698,7 @@ func (self *Blockchain) GetPricingMethod(inputData string) (*abi.Method, error) 
 }
 
 func NewBlockchain(base *blockchain.BaseBlockchain, setting Setting) (*Blockchain, error) {
-	wrapperAddr, err := setting.GetAddress(settings.WRAPPER)
+	wrapperAddr, err := setting.GetAddress(settings.Wrapper)
 	if err != nil {
 		return nil, err
 	}
@@ -707,7 +707,7 @@ func NewBlockchain(base *blockchain.BaseBlockchain, setting Setting) (*Blockchai
 		wrapperAddr,
 		filepath.Join(common.CurrentDir(), "wrapper.abi"),
 	)
-	reserveAddr, err := setting.GetAddress(settings.RESERVE)
+	reserveAddr, err := setting.GetAddress(settings.Reserve)
 	if err != nil {
 		return nil, err
 	}
@@ -716,7 +716,7 @@ func NewBlockchain(base *blockchain.BaseBlockchain, setting Setting) (*Blockchai
 		reserveAddr,
 		filepath.Join(common.CurrentDir(), "reserve.abi"),
 	)
-	pricingAddr, err := setting.GetAddress(settings.PRICING)
+	pricingAddr, err := setting.GetAddress(settings.Pricing)
 	if err != nil {
 		return nil, err
 	}
@@ -725,17 +725,17 @@ func NewBlockchain(base *blockchain.BaseBlockchain, setting Setting) (*Blockchai
 		pricingAddr,
 		filepath.Join(common.CurrentDir(), "pricing.abi"),
 	)
-	burnerAddr, err := setting.GetAddress(settings.BURNER)
+	burnerAddr, err := setting.GetAddress(settings.Burner)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("burner address: %s", burnerAddr.Hex())
-	networkAddr, err := setting.GetAddress(settings.NETWORK)
+	networkAddr, err := setting.GetAddress(settings.Network)
 	if err != nil {
 		return nil, err
 	}
 	log.Printf("network address: %s", networkAddr.Hex())
-	whitelistAddr, err := setting.GetAddress(settings.WHITELIST)
+	whitelistAddr, err := setting.GetAddress(settings.Whitelist)
 	if err != nil {
 		return nil, err
 	}

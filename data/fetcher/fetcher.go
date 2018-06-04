@@ -265,7 +265,7 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 }
 
 func (self *Fetcher) FetchBalanceFromBlockchain() (map[string]common.BalanceEntry, error) {
-	reserveAddr, err := self.setting.GetAddress(settings.RESERVE)
+	reserveAddr, err := self.setting.GetAddress(settings.Reserve)
 	if err != nil {
 		return nil, err
 	}

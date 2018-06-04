@@ -10,6 +10,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
+	"github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/KyberNetwork/reserve-data/world"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -66,12 +67,19 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-	setting, err := settings.NewSetting(filepath.Join(common.CmdDirLocation(), tokenDBFileName),
-		filepath.Join(common.CmdDirLocation(), addressDBFileName),
-		settings.WithHandleEmptyToken(setPath.settingPath), settings.WithHandleEmptyAddress(setPath.settingPath))
+	tokenStorage, err := storage.NewBoltTokenStorage(filepath.Join(common.CmdDirLocation(), tokenDBFileName))
 	if err != nil {
-		log.Panicf("Can't innit setting component (%s), err", err)
+		log.Panicf("failed to create token storage: %s", err.Error())
 	}
+	addressStorage, err := storage.NewBoltAddressStorage(filepath.Join(common.CmdDirLocation(), addressDBFileName))
+	if err != nil {
+		log.Panicf("failed to create address storage: %s", err.Error())
+	}
+	setting := settings.NewSetting(
+		tokenStorage,
+		addressStorage,
+		settings.WithHandleEmptyToken(setPath.settingPath),
+		settings.WithHandleEmptyAddress(setPath.settingPath))
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 
