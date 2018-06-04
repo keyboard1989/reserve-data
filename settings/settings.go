@@ -5,8 +5,9 @@ import (
 )
 
 type Settings struct {
-	Tokens  *TokenSetting
-	Address *AddressSetting
+	Tokens   *TokenSetting
+	Address  *AddressSetting
+	Exchange *ExchangeSetting
 }
 
 // HandleEmptyToken will load the token settings from default file if the
@@ -48,9 +49,12 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 // SettingOption sets the initialization behavior of the Settings instance.
 type SettingOption func(s *Settings)
 
-func NewSetting(tokenSetting *TokenSetting, addressSetting *AddressSetting, options ...SettingOption) (*Settings, error) {
-	setting := &Settings{Tokens: tokenSetting,
-		Address: addressSetting}
+func NewSetting(token *TokenSetting, address *AddressSetting, exchange *ExchangeSetting, options ...SettingOption) (*Settings, error) {
+	setting := &Settings{
+		Tokens:   token,
+		Address:  address,
+		Exchange: exchange,
+	}
 	for _, option := range options {
 		option(setting)
 	}
