@@ -1202,6 +1202,7 @@ func (self *BoltStorage) RemovePendingPWIEquation() error {
 	return err
 }
 
+// GetExchangeStatus get exchange status to dashboard and analytics
 func (self *BoltStorage) GetExchangeStatus() (common.ExchangesStatus, error) {
 	result := make(common.ExchangesStatus)
 	var err error
@@ -1210,8 +1211,10 @@ func (self *BoltStorage) GetExchangeStatus() (common.ExchangesStatus, error) {
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var exstat common.ExStatus
-			vErr := json.Unmarshal(v, &exstat)
-			if vErr != nil {
+			if _, vErr := common.GetExchange(strings.ToLower(string(k))); vErr != nil {
+				continue
+			}
+			if vErr := json.Unmarshal(v, &exstat); vErr != nil {
 				return vErr
 			}
 			result[string(k)] = exstat
