@@ -115,7 +115,7 @@ func (self *HTTPServer) UpdateAddress(c *gin.Context) {
 		return
 	}
 	addr := ethereum.HexToAddress(addrStr)
-	if err := self.setting.UpdateAdress(addressName, addr); err != nil {
+	if err := self.setting.UpdateAddress(addressName, addr); err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
 	httputil.ResponseSuccess(c)
