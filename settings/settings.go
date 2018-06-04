@@ -68,5 +68,5 @@ func NewSetting(dbPath string, options ...SettingOption) (*Settings, error) {
 	for _, option := range options {
 		option(setting)
 	}
-	return setting, err
+	return nil, setting
 }

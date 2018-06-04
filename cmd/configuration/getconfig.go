@@ -65,10 +65,12 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-	setting, err := settings.NewSetting(filepath.Join(common.CmdDirLocation(), settingDBFileName),
-		settings.WithHandleEmptyToken(setPath.settingPath), settings.WithHandleEmptyAddress(setPath.settingPath))
+	setting, err := settings.NewSetting(
+		filepath.Join(common.CmdDirLocation(), settingDBFileName),
+		settings.WithHandleEmptyToken(setPath.settingPath),
+		settings.WithHandleEmptyAddress(setPath.settingPath))
 	if err != nil {
-		log.Panicf("Can't innit setting component (%s), err", err)
+		log.Panicf("failed to create token storage: %s", err.Error())
 	}
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
