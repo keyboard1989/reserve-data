@@ -13,6 +13,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/settings"
+	settingsstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/KyberNetwork/reserve-data/world"
 )
 
@@ -102,10 +103,17 @@ func TestExchangeDown(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	setting, err := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"))
+	tokenStorage, err := settingsstorage.NewBoltTokenStorage(filepath.Join(tmpDir, "token.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	addressStorage, err := settingsstorage.NewBoltAddressStorage(filepath.Join(tmpDir, "address.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setting := settings.NewSetting(tokenStorage, addressStorage)
 	fetcher := NewFetcher(fstorage, fstorage, &world.TheWorld{}, runner, true, setting)
 
 	// mock normal data

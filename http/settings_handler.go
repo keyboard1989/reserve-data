@@ -7,6 +7,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 )
@@ -108,8 +109,13 @@ func (self *HTTPServer) UpdateAddress(c *gin.Context) {
 	}
 	addrStr := postForm.Get("address")
 	name := postForm.Get("name")
+	addressName, ok := settings.AddressTypeValues()[name]
+	if !ok {
+		httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("invalid address name: %s", name)))
+		return
+	}
 	addr := ethereum.HexToAddress(addrStr)
-	if err := self.setting.UpdateAdress(name, addr); err != nil {
+	if err := self.setting.UpdateAdress(addressName, addr); err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
 	httputil.ResponseSuccess(c)
@@ -121,9 +127,14 @@ func (self *HTTPServer) AddAddressToSet(c *gin.Context) {
 		return
 	}
 	addrStr := postForm.Get("address")
-	setName := postForm.Get("setname")
 	addr := ethereum.HexToAddress(addrStr)
-	if err := self.setting.AddAddressToSet(setName, addr); err != nil {
+	setName := postForm.Get("setname")
+	addrSetName, ok := settings.AddressSetTypeValues()[setName]
+	if !ok {
+		httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("invalid address set name: %s", setName)))
+		return
+	}
+	if err := self.setting.AddAddressToSet(addrSetName, addr); err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
 	httputil.ResponseSuccess(c)

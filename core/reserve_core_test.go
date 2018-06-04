@@ -9,6 +9,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/settings"
+	"github.com/KyberNetwork/reserve-data/settings/storage"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -147,10 +148,19 @@ func getTestCore(hasPendingDeposit bool) *ReserveCore {
 	if err != nil {
 		log.Fatal(err)
 	}
-	setting, err := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"))
+
+	tokenStorage, err := storage.NewBoltTokenStorage(filepath.Join(tmpDir, "token.db"))
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	addressStorage, err := storage.NewBoltAddressStorage(filepath.Join(tmpDir, "address.db"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	setting := settings.NewSetting(tokenStorage, addressStorage)
+
 	return NewReserveCore(
 		testBlockchain{},
 		testActivityStorage{hasPendingDeposit},

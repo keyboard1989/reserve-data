@@ -206,7 +206,7 @@ func (self ReserveCore) Withdraw(
 	} else {
 		err = sanityCheckAmount(exchange, token, amount)
 		if err == nil {
-			reserveAddr, err := self.setting.GetAddress(settings.RESERVE)
+			reserveAddr, err := self.setting.GetAddress(settings.Reserve)
 			if err == nil {
 				id, err = exchange.Withdraw(token, amount, reserveAddr, timepoint)
 			}

@@ -18,6 +18,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/http/httputil"
 	"github.com/KyberNetwork/reserve-data/metric"
 	"github.com/KyberNetwork/reserve-data/settings"
+	settingsstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/gin-gonic/gin"
 )
 
@@ -233,10 +234,18 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 			t.Error(rErr)
 		}
 	}()
-	setting, err := settings.NewSetting(filepath.Join(tmpDir, "token.db"), filepath.Join(tmpDir, "address.db"))
+
+	tokenStorage, err := settingsstorage.NewBoltTokenStorage(filepath.Join(tmpDir, "token.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	addressStorage, err := settingsstorage.NewBoltAddressStorage(filepath.Join(tmpDir, "address.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setting := settings.NewSetting(tokenStorage, addressStorage)
 	err = setting.UpdateToken(common.Token{
 		ID:       "EOS",
 		Address:  "xxx",
