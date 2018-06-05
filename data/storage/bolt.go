@@ -518,27 +518,35 @@ func (self *BoltStorage) StoreAuthSnapshot(
 //StoreRate store rate history
 func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) error {
 	log.Printf("Storing rate data to bolt: data(%v), timespoint(%v)", data, timepoint)
-	var err error
-	var lastEntryjson common.AllRateEntry
-	err = self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		var (
+			uErr          error
+			lastEntryJSON common.AllRateEntry
+			dataJson      []byte
+		)
+
 		b := tx.Bucket([]byte(RATE_BUCKET))
 		c := b.Cursor()
-		_, lastEntry := c.Last()
-		if err := json.Unmarshal(lastEntry, &lastEntryjson); err != nil {
-			return err
+		lastKey, lastEntry := c.Last()
+		if lastKey == nil {
+			log.Printf("Bucket %s is empty", RATE_BUCKET)
+		} else {
+			if uErr = json.Unmarshal(lastEntry, &lastEntryJSON); uErr != nil {
+				return uErr
+			}
 		}
 		// we still update when blocknumber is not changed because we want
 		// to update the version and timestamp so api users will get
 		// the newest data even it is identical to the old one.
-		if lastEntryjson.BlockNumber <= data.BlockNumber {
-			dataJson, err = json.Marshal(data)
-			if err != nil {
-				return err
+		if lastEntryJSON.BlockNumber <= data.BlockNumber {
+			if dataJson, uErr = json.Marshal(data); uErr != nil {
+				return uErr
 			}
 			return b.Put(boltutil.Uint64ToBytes(timepoint), dataJson)
 		}
-		return err
+		return fmt.Errorf("rejected storing rates with smaller block number: %d, stored: %d",
+			data.BlockNumber,
+			lastEntryJSON.BlockNumber)
 	})
 	return err
 }
