@@ -3,8 +3,6 @@ package http
 import (
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
-	"net/url"
 	"os"
 	"path/filepath"
 	"testing"
@@ -16,35 +14,6 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/gin-gonic/gin"
 )
-
-type newAssertFn func(t *testing.T, resp *httptest.ResponseRecorder)
-type targetQtytestCase struct {
-	msg      string
-	endpoint string
-	method   string
-	value    string
-	assert   newAssertFn
-}
-
-func testTargetQtyRequest(t *testing.T, tc targetQtytestCase, handler http.Handler) {
-	t.Helper()
-
-	req, tErr := http.NewRequest(tc.method, tc.endpoint, nil)
-	if tErr != nil {
-		t.Fatal(tErr)
-	}
-
-	if tc.value != "" {
-		form := url.Values{}
-		form.Add("value", tc.value)
-		req.PostForm = form
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	}
-
-	resp := httptest.NewRecorder()
-	handler.ServeHTTP(resp, req)
-	tc.assert(t, resp)
-}
 
 //TestHTTPServerTargetQtyV2 check if api v2 work correctly
 func TestHTTPServerTargetQtyV2(t *testing.T) {
@@ -124,7 +93,7 @@ func TestHTTPServerTargetQtyV2(t *testing.T) {
 		r:           gin.Default()}
 	s.register()
 
-	var tests = []targetQtytestCase{
+	var tests = []testCase{
 		{
 			msg:      "getting non exists pending target quantity",
 			endpoint: getPendingTargetQtyV2,
@@ -141,8 +110,10 @@ func TestHTTPServerTargetQtyV2(t *testing.T) {
 			msg:      "confirm when no pending target quantity request exists",
 			endpoint: confirmTargetQtyV2,
 			method:   http.MethodPost,
-			value:    testData,
-			assert:   httputil.ExpectFailure,
+			data: map[string]string{
+				"value": testData,
+			},
+			assert: httputil.ExpectFailure,
 		},
 		{
 			msg:      "reject when no pending target quantity request exists",
@@ -154,47 +125,59 @@ func TestHTTPServerTargetQtyV2(t *testing.T) {
 			msg:      "valid post form",
 			endpoint: storePendingTargetQtyV2,
 			method:   http.MethodPost,
-			value:    testData,
-			assert:   httputil.ExpectSuccess,
+			data: map[string]string{
+				"value": testData,
+			},
+			assert: httputil.ExpectSuccess,
 		},
 		{
 			msg:      "setting when pending exists",
 			endpoint: storePendingTargetQtyV2,
 			method:   http.MethodPost,
-			value:    testData,
-			assert:   httputil.ExpectFailure,
+			data: map[string]string{
+				"value": testData,
+			},
+			assert: httputil.ExpectFailure,
 		},
 		{
 			msg:      "confirm with wrong data",
 			endpoint: confirmTargetQtyV2,
 			method:   http.MethodPost,
-			value:    testDataWrongConfirmation,
-			assert:   httputil.ExpectFailure,
+			data: map[string]string{
+				"value": testDataWrongConfirmation,
+			},
+			assert: httputil.ExpectFailure,
 		},
 		{
 			msg:      "confirm with correct data",
 			endpoint: confirmTargetQtyV2,
 			method:   http.MethodPost,
-			value:    testData,
-			assert:   httputil.ExpectSuccess,
+			data: map[string]string{
+				"value": testData,
+			},
+			assert: httputil.ExpectSuccess,
 		},
 		{
 			msg:      "valid post form",
 			endpoint: storePendingTargetQtyV2,
 			method:   http.MethodPost,
-			value:    testData,
-			assert:   httputil.ExpectSuccess,
+			data: map[string]string{
+				"value": testData,
+			},
+			assert: httputil.ExpectSuccess,
 		},
 		{
 			msg:      "reject when there is pending equation",
 			endpoint: rejectTargetQtyV2,
 			method:   http.MethodPost,
-			value:    "some random post form or this request will be unauthenticated",
-			assert:   httputil.ExpectSuccess,
+			data: map[string]string{
+				"value": "some random post form or this request will be unauthenticated",
+			},
+			assert: httputil.ExpectSuccess,
 		},
 	}
 
 	for _, tc := range tests {
-		t.Run(tc.msg, func(t *testing.T) { testTargetQtyRequest(t, tc, s.r) })
+		t.Run(tc.msg, func(t *testing.T) { testHTTPRequest(t, tc, s.r) })
 	}
 }
