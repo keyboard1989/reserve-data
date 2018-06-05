@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -23,7 +24,6 @@ type Bittrex struct {
 	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
 	exchangeInfo *common.ExchangeInfo
-	fees         common.ExchangeFees
 	minDeposit   common.ExchangesMinDeposit
 	setting      Setting
 }
@@ -41,8 +41,8 @@ func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
 	return addr, supported
 }
 
-func (self *Bittrex) GetFee() common.ExchangeFees {
-	return self.fees
+func (self *Bittrex) GetFee() (common.ExchangeFees, error) {
+	return self.setting.GetFee(settings.Bittrex)
 }
 
 func (self *Bittrex) GetMinDeposit() common.ExchangesMinDeposit {
@@ -423,12 +423,14 @@ func (self *Bittrex) GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTr
 }
 
 func NewBittrex(addressConfig map[string]string,
-	feeConfig common.ExchangeFees,
 	interf BittrexInterface,
 	storage BittrexStorage,
 	minDepositConfig common.ExchangesMinDeposit,
-	setting Setting) *Bittrex {
-	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "bittrex", setting)
+	setting Setting) (*Bittrex, error) {
+	tokens, pairs, minDeposit, err := getExchangePairsAndFeesFromConfig(addressConfig, minDepositConfig, settings.Bittrex, setting)
+	if err != nil {
+		return nil, err
+	}
 	bittrex := &Bittrex{
 		interf,
 		pairs,
@@ -436,10 +438,9 @@ func NewBittrex(addressConfig map[string]string,
 		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),
-		fees,
 		minDeposit,
 		setting,
 	}
 	bittrex.FetchTradeHistory()
-	return bittrex
+	return bittrex, nil
 }

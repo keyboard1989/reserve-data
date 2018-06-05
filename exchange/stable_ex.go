@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -12,8 +14,8 @@ import (
 type StableEx struct {
 	pairs        []common.TokenPair
 	exchangeInfo *common.ExchangeInfo
-	fees         common.ExchangeFees
 	mindeposit   common.ExchangesMinDeposit
+	setting      Setting
 }
 
 func (self *StableEx) TokenAddresses() map[string]ethereum.Address {
@@ -50,8 +52,8 @@ func (self *StableEx) GetExchangeInfo(pair common.TokenPairID) (common.ExchangeP
 	return data, err
 }
 
-func (self *StableEx) GetFee() common.ExchangeFees {
-	return self.fees
+func (self *StableEx) GetFee() (common.ExchangeFees, error) {
+	return self.setting.GetFee(settings.StableExchange)
 }
 
 func (self *StableEx) ID() common.ExchangeID {
@@ -136,12 +138,15 @@ func (self *StableEx) GetMinDeposit() common.ExchangesMinDeposit {
 	return self.mindeposit
 }
 
-func NewStableEx(addressConfig map[string]string, feeConfig common.ExchangeFees, minDepositConfig common.ExchangesMinDeposit, setting Setting) *StableEx {
-	_, pairs, fees, mindeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "stable_exchange", setting)
+func NewStableEx(addressConfig map[string]string, minDepositConfig common.ExchangesMinDeposit, setting Setting) (*StableEx, error) {
+	_, pairs, mindeposit, err := getExchangePairsAndFeesFromConfig(addressConfig, minDepositConfig, settings.StableExchange, setting)
+	if err != nil {
+		return nil, err
+	}
 	return &StableEx{
 		pairs,
 		common.NewExchangeInfo(),
-		fees,
 		mindeposit,
-	}
+		setting,
+	}, nil
 }

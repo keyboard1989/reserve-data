@@ -1,5 +1,12 @@
 package settings
 
+import (
+	"encoding/json"
+	"io/ioutil"
+
+	"github.com/KyberNetwork/reserve-data/common"
+)
+
 // ExchangeName is the name of exchanges of which core will use to rebalance.
 //go:generate stringer -type=ExchangeName
 type ExchangeName int
@@ -10,6 +17,10 @@ const (
 	Huobi
 	StableExchange
 )
+
+type ExchangeFeesConfig struct {
+	Exchanges map[string]common.ExchangeFees `json:"exchanges"`
+}
 
 var exchangeNameValue = map[string]ExchangeName{
 	"binance":         Binance,
@@ -31,6 +42,19 @@ func NewExchangeSetting(exchangeStorage ExchangeStorage) (*ExchangeSetting, erro
 }
 
 func (setting *Settings) LoadFeeFromFile(path string) error {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var exConfig ExchangeFeesConfig
+	if err = json.Unmarshal(data, &exConfig); err != nil {
+		return err
+	}
+	for ex, exFee := range exConfig.Exchanges {
+		if err = setting.Exchange.Storage.StoreFee(exchangeNameValue[ex], exFee); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

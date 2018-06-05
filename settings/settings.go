@@ -46,6 +46,23 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 	}
 }
 
+// HandleEmptyFee
+func WithHandleEmptyFee(pathJSON string) SettingOption {
+	return func(setting *Settings) {
+		feeCount, err := setting.Exchange.Storage.CountFee()
+		if feeCount == 0 || err != nil {
+			if err != nil {
+				log.Printf("Setting Init: Fee DB is faulty (%s), attempt to load Fee from file", err)
+			} else {
+				log.Printf("Setting Init: Fee DB is empty, attempt to load Fee from file", err)
+			}
+			if err = setting.LoadFeeFromFile(pathJSON); err != nil {
+				log.Printf("Setting Init: cannot load Fee from file: %s, Fee is needed to be updated mnaually", err)
+			}
+		}
+	}
+}
+
 // SettingOption sets the initialization behavior of the Settings instance.
 type SettingOption func(s *Settings)
 

@@ -10,6 +10,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/KyberNetwork/reserve-data/settings"
+
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	huobiblockchain "github.com/KyberNetwork/reserve-data/exchange/huobi/blockchain"
@@ -28,7 +30,6 @@ type Huobi struct {
 	tokens            []common.Token
 	addresses         *common.ExchangeAddresses
 	exchangeInfo      *common.ExchangeInfo
-	fees              common.ExchangeFees
 	blockchain        HuobiBlockchain
 	intermediatorAddr ethereum.Address
 	storage           HuobiStorage
@@ -101,8 +102,8 @@ func (self *Huobi) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrec
 	return data, err
 }
 
-func (self *Huobi) GetFee() common.ExchangeFees {
-	return self.fees
+func (self *Huobi) GetFee() (common.ExchangeFees, error) {
+	return self.setting.GetFee(settings.Huobi)
 }
 
 func (self *Huobi) GetMinDeposit() common.ExchangesMinDeposit {
@@ -640,16 +641,17 @@ func (self *Huobi) OrderStatus(id string, base, quote string) (string, error) {
 
 func NewHuobi(
 	addressConfig map[string]string,
-	feeConfig common.ExchangeFees,
 	interf HuobiInterface, blockchain *blockchain.BaseBlockchain,
 	signer blockchain.Signer, nonce blockchain.NonceCorpus, storage HuobiStorage,
-	minDepositConfig common.ExchangesMinDeposit, setting Setting) *Huobi {
+	minDepositConfig common.ExchangesMinDeposit, setting Setting) (*Huobi, error) {
 
-	tokens, pairs, fees, minDeposit := getExchangePairsAndFeesFromConfig(addressConfig, feeConfig, minDepositConfig, "huobi", setting)
+	tokens, pairs, minDeposit, err := getExchangePairsAndFeesFromConfig(addressConfig, minDepositConfig, settings.Huobi, setting)
+	if err != nil {
+		return nil, err
+	}
 	bc, err := huobiblockchain.NewBlockchain(blockchain, signer, nonce)
 	if err != nil {
-		log.Printf("Cant create Huobi's blockchain: %v", err)
-		panic(err)
+		return nil, err
 	}
 
 	huobiObj := Huobi{
@@ -658,7 +660,6 @@ func NewHuobi(
 		tokens,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
-		fees,
 		bc,
 		signer.GetAddress(),
 		storage,
@@ -668,5 +669,5 @@ func NewHuobi(
 	huobiObj.FetchTradeHistory()
 	huobiServer := huobihttp.NewHuobiHTTPServer(&huobiObj)
 	go huobiServer.Run()
-	return &huobiObj
+	return &huobiObj, nil
 }

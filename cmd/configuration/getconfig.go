@@ -73,11 +73,17 @@ func GetSetting(setPath SettingPaths) (*settings.Settings, error) {
 	if err != nil {
 		return nil, err
 	}
+	exchangeSetting, err := settings.NewExchangeSetting(boltSettingStorage)
+	if err != nil {
+		return nil, err
+	}
 	setting, err := settings.NewSetting(
 		tokenSetting,
 		addressSetting,
+		exchangeSetting,
 		settings.WithHandleEmptyToken(setPath.settingPath),
-		settings.WithHandleEmptyAddress(setPath.settingPath))
+		settings.WithHandleEmptyAddress(setPath.settingPath),
+		settings.WithHandleEmptyFee(setPath.feePath))
 	return setting, err
 }
 

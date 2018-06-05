@@ -56,24 +56,25 @@ func getHuobiInterface(kyberENV string) huobi.Interface {
 }
 
 func NewExchangePool(
-	feeConfig common.ExchangeFeesConfig,
 	addressConfig common.AddressConfig,
 	settingPaths SettingPaths,
 	blockchain *blockchain.BaseBlockchain,
 	minDeposit common.ExchangesMinDepositConfig,
-	kyberENV string, setting *settings.Settings) *ExchangePool {
+	kyberENV string, setting *settings.Settings) (*ExchangePool, error) {
 	exchanges := map[common.ExchangeID]interface{}{}
 	params := os.Getenv("KYBER_EXCHANGES")
 	exparams := strings.Split(params, ",")
 	for _, exparam := range exparams {
 		switch exparam {
 		case "stable_exchange":
-			stableEx := exchange.NewStableEx(
+			stableEx, err := exchange.NewStableEx(
 				addressConfig.Exchanges["stable_exchange"],
-				feeConfig.Exchanges["stable_exchange"],
 				minDeposit.Exchanges["stable_exchange"],
 				setting,
 			)
+			if err != nil {
+				return nil, err
+			}
 			exchanges[stableEx.ID()] = stableEx
 		case "bittrex":
 			bittrexSigner := bittrex.NewSignerFromFile(settingPaths.secretPath)
@@ -82,13 +83,15 @@ func NewExchangePool(
 			if err != nil {
 				log.Panic(err)
 			}
-			bit := exchange.NewBittrex(
+			bit, err := exchange.NewBittrex(
 				addressConfig.Exchanges["bittrex"],
-				feeConfig.Exchanges["bittrex"],
 				endpoint,
 				bittrexStorage,
 				minDeposit.Exchanges["bittrex"],
 				setting)
+			if err != nil {
+				return nil, err
+			}
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
 				wait.Add(1)
@@ -104,13 +107,15 @@ func NewExchangePool(
 			if err != nil {
 				log.Panic(err)
 			}
-			bin := exchange.NewBinance(
+			bin, err := exchange.NewBinance(
 				addressConfig.Exchanges["binance"],
-				feeConfig.Exchanges["binance"],
 				endpoint,
 				minDeposit.Exchanges["binance"],
 				storage,
 				setting)
+			if err != nil {
+				return nil, err
+			}
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["binance"] {
 				wait.Add(1)
@@ -128,9 +133,8 @@ func NewExchangePool(
 			if err != nil {
 				log.Panic(err)
 			}
-			huobi := exchange.NewHuobi(
+			huobi, err := exchange.NewHuobi(
 				addressConfig.Exchanges["huobi"],
-				feeConfig.Exchanges["huobi"],
 				endpoint,
 				blockchain,
 				intermediatorSigner,
@@ -139,6 +143,9 @@ func NewExchangePool(
 				minDeposit.Exchanges["huobi"],
 				setting,
 			)
+			if err != nil {
+				return nil, err
+			}
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addressConfig.Exchanges["huobi"] {
 				wait.Add(1)
@@ -149,7 +156,7 @@ func NewExchangePool(
 			exchanges[huobi.ID()] = huobi
 		}
 	}
-	return &ExchangePool{exchanges}
+	return &ExchangePool{exchanges}, nil
 }
 
 func (self *ExchangePool) FetcherExchanges() []fetcher.Exchange {

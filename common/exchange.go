@@ -17,7 +17,7 @@ type Exchange interface {
 	MarshalText() (text []byte, err error)
 	GetInfo() (*ExchangeInfo, error)
 	GetExchangeInfo(TokenPairID) (ExchangePrecisionLimit, error)
-	GetFee() ExchangeFees
+	GetFee() (ExchangeFees, error)
 	GetMinDeposit() ExchangesMinDeposit
 	TokenAddresses() map[string]ethereum.Address
 	GetTradeHistory(fromTime, toTime uint64) (ExchangeTradeHistory, error)

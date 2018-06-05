@@ -3,12 +3,12 @@ package settings
 import "github.com/KyberNetwork/reserve-data/common"
 
 // GetFee returns a map[tokenID]exchangeFees and error if occur
-func (setting *Settings) GetFee(ex ExchangeName) (map[string]common.ExchangeFees, error) {
+func (setting *Settings) GetFee(ex ExchangeName) (common.ExchangeFees, error) {
 	return setting.Exchange.Storage.GetFee(ex)
 }
 
 // StoreFee stores the fee with exchangeName as key into database and return error if occur
-func (setting *Settings) StoreFee(ex ExchangeName, data map[string]common.Exchange) error {
+func (setting *Settings) StoreFee(ex ExchangeName, data common.ExchangeFees) error {
 	return setting.Exchange.Storage.StoreFee(ex, data)
 }
 
