@@ -10,14 +10,15 @@ import (
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
+	"github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/KyberNetwork/reserve-data/world"
-	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
 const (
-	tokenDBFileName string = "token.db"
+	tokenDBFileName   string = "token.db"
+	addressDBFileName string = "address.db"
 )
 
 func GetAddressConfig(filePath string) common.AddressConfig {
@@ -66,13 +67,22 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if err != nil {
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
-	setting := settings.NewSetting(filepath.Join(common.CmdDirLocation(), tokenDBFileName),
-		settings.WithHandleEmptyToken(setPath.settingPath))
+	tokenStorage, err := storage.NewBoltTokenStorage(filepath.Join(common.CmdDirLocation(), tokenDBFileName))
+	if err != nil {
+		log.Panicf("failed to create token storage: %s", err.Error())
+	}
+	addressStorage, err := storage.NewBoltAddressStorage(filepath.Join(common.CmdDirLocation(), addressDBFileName))
+	if err != nil {
+		log.Panicf("failed to create address storage: %s", err.Error())
+	}
+	setting := settings.NewSetting(
+		tokenStorage,
+		addressStorage,
+		settings.WithHandleEmptyToken(setPath.settingPath),
+		settings.WithHandleEmptyAddress(setPath.settingPath))
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
-	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
-	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
-	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
+
 	var endpoint string
 	if endpointOW != "" {
 		log.Printf("overwriting Endpoint with %s\n", endpointOW)
@@ -123,9 +133,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
 		BackupEthereumEndpoints: bkendpoints,
-		WrapperAddress:          wrapperAddr,
-		PricingAddress:          pricingAddr,
-		ReserveAddress:          reserveAddr,
 		ChainType:               chainType,
 		AuthEngine:              hmac512auth,
 		EnableAuthentication:    authEnbl,
@@ -135,9 +142,9 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	}
 
 	if enableStat {
-		config.AddStatConfig(setPath, addressConfig)
+		config.AddStatConfig(setPath)
 	}
-
+	//TODO : remove addressconfig, add exchange to setting
 	if !noCore {
 		config.AddCoreConfig(setPath, addressConfig, kyberENV)
 	}

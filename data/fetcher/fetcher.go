@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
@@ -17,10 +18,10 @@ type Fetcher struct {
 	blockchain             Blockchain
 	theworld               TheWorld
 	runner                 FetcherRunner
-	rmaddr                 ethereum.Address
 	currentBlock           uint64
 	currentBlockUpdateTime uint64
 	simulationMode         bool
+	setting                Setting
 }
 
 func NewFetcher(
@@ -28,8 +29,7 @@ func NewFetcher(
 	globalStorage GlobalStorage,
 	theworld TheWorld,
 	runner FetcherRunner,
-	address ethereum.Address,
-	simulationMode bool) *Fetcher {
+	simulationMode bool, setting Setting) *Fetcher {
 	return &Fetcher{
 		storage:        storage,
 		globalStorage:  globalStorage,
@@ -37,8 +37,8 @@ func NewFetcher(
 		blockchain:     nil,
 		theworld:       theworld,
 		runner:         runner,
-		rmaddr:         address,
 		simulationMode: simulationMode,
+		setting:        setting,
 	}
 }
 
@@ -265,7 +265,11 @@ func (self *Fetcher) FetchCurrentBlock(timepoint uint64) {
 }
 
 func (self *Fetcher) FetchBalanceFromBlockchain() (map[string]common.BalanceEntry, error) {
-	return self.blockchain.FetchBalanceData(self.rmaddr, 0)
+	reserveAddr, err := self.setting.GetAddress(settings.Reserve)
+	if err != nil {
+		return nil, err
+	}
+	return self.blockchain.FetchBalanceData(reserveAddr, 0)
 }
 
 func (self *Fetcher) newNonceValidator() func(common.ActivityRecord) bool {

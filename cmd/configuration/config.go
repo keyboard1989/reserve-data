@@ -24,7 +24,6 @@ import (
 	"github.com/KyberNetwork/reserve-data/stat/statpruner"
 	statstorage "github.com/KyberNetwork/reserve-data/stat/storage"
 	"github.com/KyberNetwork/reserve-data/world"
-	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 // SettingPaths contains path of all setting files.
@@ -98,15 +97,6 @@ type Config struct {
 	BackupEthereumEndpoints []string
 	Blockchain              *blockchain.BaseBlockchain
 
-	WrapperAddress     ethereum.Address
-	PricingAddress     ethereum.Address
-	ReserveAddress     ethereum.Address
-	FeeBurnerAddress   ethereum.Address
-	NetworkAddress     ethereum.Address
-	WhitelistAddress   ethereum.Address
-	SetRateAddress     ethereum.Address
-	ThirdPartyReserves []ethereum.Address
-
 	// etherscan api key (optional)
 	EtherscanApiKey string
 
@@ -115,15 +105,7 @@ type Config struct {
 }
 
 // GetStatConfig: load config to run stat server only
-func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common.AddressConfig) {
-	networkAddr := ethereum.HexToAddress(addressConfig.Network)
-	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
-	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
-
-	thirdpartyReserves := []ethereum.Address{}
-	for _, address := range addressConfig.ThirdPartyReserves {
-		thirdpartyReserves = append(thirdpartyReserves, ethereum.HexToAddress(address))
-	}
+func (self *Config) AddStatConfig(settingPath SettingPaths) {
 
 	analyticStorage, err := statstorage.NewBoltAnalyticStorage(settingPath.analyticStoragePath)
 	if err != nil {
@@ -182,17 +164,10 @@ func (self *Config) AddStatConfig(settingPath SettingPaths, addressConfig common
 	self.StatControllerRunner = statControllerRunner
 	self.FeeSetRateStorage = feeSetRateStorage
 	self.StatFetcherRunner = statFetcherRunner
-	self.ThirdPartyReserves = thirdpartyReserves
-	self.FeeBurnerAddress = burnerAddr
-	self.NetworkAddress = networkAddr
-	self.WhitelistAddress = whitelistAddr
 	self.EtherscanApiKey = apiKey
 }
 
 func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common.AddressConfig, kyberENV string) {
-	networkAddr := ethereum.HexToAddress(addressConfig.Network)
-	burnerAddr := ethereum.HexToAddress(addressConfig.FeeBurner)
-	whitelistAddr := ethereum.HexToAddress(addressConfig.Whitelist)
 
 	feeConfig, err := common.GetFeeFromFile(settingPath.feePath)
 	if err != nil {
@@ -242,9 +217,7 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 	self.BlockchainSigner = pricingSigner
 	//self.IntermediatorSigner = huoBiintermediatorSigner
 	self.DepositSigner = depositSigner
-	self.FeeBurnerAddress = burnerAddr
-	self.NetworkAddress = networkAddr
-	self.WhitelistAddress = whitelistAddr
+
 	//self.ExchangeStorage = exsStorage
 	// var huobiConfig common.HuobiConfig
 	// exchangesIDs := os.Getenv("KYBER_EXCHANGES")

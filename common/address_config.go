@@ -24,7 +24,6 @@ type AddressConfig struct {
 	FeeBurner          string              `json:"feeburner"`
 	Whitelist          string              `json:"whitelist"`
 	ThirdPartyReserves []string            `json:"third_party_reserves"`
-	Intermediator      string              `json:"intermediator"`
 	SetRate            string              `json:"setrate"`
 }
 

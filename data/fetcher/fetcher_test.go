@@ -5,14 +5,16 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"sync"
 	"testing"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/data/fetcher/http_runner"
 	"github.com/KyberNetwork/reserve-data/data/storage"
+	"github.com/KyberNetwork/reserve-data/settings"
+	settingsstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/KyberNetwork/reserve-data/world"
-	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 func TestUnchangedFunc(t *testing.T) {
@@ -100,7 +102,19 @@ func TestExchangeDown(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	fetcher := NewFetcher(fstorage, fstorage, &world.TheWorld{}, runner, ethereum.Address{}, true)
+
+	tokenStorage, err := settingsstorage.NewBoltTokenStorage(filepath.Join(tmpDir, "token.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	addressStorage, err := settingsstorage.NewBoltAddressStorage(filepath.Join(tmpDir, "address.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setting := settings.NewSetting(tokenStorage, addressStorage)
+	fetcher := NewFetcher(fstorage, fstorage, &world.TheWorld{}, runner, true, setting)
 
 	// mock normal data
 	var estatuses, bstatuses sync.Map

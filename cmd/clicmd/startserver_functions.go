@@ -116,12 +116,6 @@ func GetConfigFromENV(kyberENV string) *configuration.Config {
 func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockchain.Blockchain, err error) {
 	bc, err = blockchain.NewBlockchain(
 		config.Blockchain,
-		config.WrapperAddress,
-		config.PricingAddress,
-		config.FeeBurnerAddress,
-		config.NetworkAddress,
-		config.ReserveAddress,
-		config.WhitelistAddress,
 		config.Setting,
 	)
 	if err != nil {
@@ -149,8 +143,8 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.FetcherGlobalStorage,
 		config.World,
 		config.FetcherRunner,
-		config.ReserveAddress,
 		kyberENV == common.SIMULATION_MODE,
+		config.Setting,
 	)
 	for _, ex := range config.FetcherExchanges {
 		dataFetcher.AddExchange(ex)
@@ -170,7 +164,7 @@ func CreateDataCore(config *configuration.Config, kyberENV string, bc *blockchai
 		config.Setting,
 	)
 
-	rCore := core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
+	rCore := core.NewReserveCore(bc, config.ActivityStorage, config.Setting)
 	return rData, rCore
 }
 
@@ -187,11 +181,8 @@ func CreateStat(config *configuration.Config, kyberENV string, bc *blockchain.Bl
 		config.FeeSetRateStorage,
 		config.StatFetcherRunner,
 		deployBlock,
-		config.ReserveAddress,
-		config.PricingAddress,
 		deployBlock,
 		config.EtherscanApiKey,
-		config.ThirdPartyReserves,
 		config.Setting,
 	)
 	statFetcher.SetBlockchain(bc)
