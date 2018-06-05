@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -21,9 +22,22 @@ const (
 	DEPOSIT_OP string = "depositOP"
 )
 
+// tbindex is where the token data stored in blockchain.
+// In blockchain, data of a token (sell/buy rates) is stored in an array of 32 bytes values called (tokenRatesCompactData).
+// Each data is stored in a byte.
+// https://github.com/KyberNetwork/smart-contracts/blob/fed8e09dc6e4365e1597474d9b3f53634eb405d2/contracts/ConversionRates.sol#L48
 type tbindex struct {
-	BulkIndex   uint64
+	// BulkIndex is the index of bytes32 value that store data of multiple tokens.
+	BulkIndex uint64
+	// IndexInBulk is the index in the above BulkIndex value where the sell/buy rates are stored following structure:
+	// sell: IndexInBulk + 4
+	// buy: IndexInBulk + 8
 	IndexInBulk uint64
+}
+
+// newTBIndex creates new tbindex instance with given parameters.
+func newTBIndex(bulkIndex, indexInBulk uint64) tbindex {
+	return tbindex{BulkIndex: bulkIndex, IndexInBulk: indexInBulk}
 }
 
 const (
@@ -35,7 +49,7 @@ const (
 
 var (
 	Big0   *big.Int = big.NewInt(0)
-	BigMax *big.Int = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
+	BigMax          = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
 )
 
 type Blockchain struct {
@@ -135,8 +149,8 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 		if tok.ID != "ETH" {
 			tokens = append(tokens, ethereum.HexToAddress(tok.Address))
 		} else {
-			// this is not really needed. Just a safe guard
-			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = tbindex{1000000, 1000000}
+			// this is not really needed. Just a safe guard. Use a very big indices so it is does not exist.
+			self.tokenIndices[ethereum.HexToAddress(tok.Address).Hex()] = newTBIndex(1000000, 1000000)
 		}
 	}
 	opts := self.GetCallOpts(0)
@@ -150,10 +164,10 @@ func (self *Blockchain) LoadAndSetTokenIndices() error {
 		return err
 	}
 	for i, tok := range tokens {
-		self.tokenIndices[tok.Hex()] = tbindex{
+		self.tokenIndices[tok.Hex()] = newTBIndex(
 			bulkIndices[i].Uint64(),
 			indicesInBulk[i].Uint64(),
-		}
+		)
 	}
 	log.Printf("Token indices: %+v", self.tokenIndices)
 	return nil
@@ -655,17 +669,17 @@ func NewBlockchain(
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper := blockchain.NewContract(
 		wrapperAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/wrapper.abi",
+		filepath.Join(common.CurrentDir(), "wrapper.abi"),
 	)
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve := blockchain.NewContract(
 		reserveAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/reserve.abi",
+		filepath.Join(common.CurrentDir(), "reserve.abi"),
 	)
 	log.Printf("pricing address: %s", pricingAddr.Hex())
 	pricing := blockchain.NewContract(
 		pricingAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/pricing.abi",
+		filepath.Join(common.CurrentDir(), "pricing.abi"),
 	)
 
 	log.Printf("burner address: %s", burnerAddr.Hex())

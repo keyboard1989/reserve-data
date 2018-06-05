@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
@@ -20,7 +21,9 @@ func (self Signer) GetKey() string {
 
 func (self Signer) Sign(msg string) string {
 	mac := hmac.New(sha256.New, []byte(self.Secret))
-	mac.Write([]byte(msg))
+	if _, err := mac.Write([]byte(msg)); err != nil {
+		log.Printf("Encode message error: %s", err.Error())
+	}
 	result := ethereum.Bytes2Hex(mac.Sum(nil))
 	return result
 }

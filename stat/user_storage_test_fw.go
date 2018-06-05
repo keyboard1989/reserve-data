@@ -6,7 +6,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-// This test type enforces necessary logic required for a stat storage.
+// UserStorageTest -  This test type enforces necessary logic required for a stat storage.
 // - It requires an actual storage instance to be able to run the tests.
 // - It DOESNT do any tear up or tear down processes.
 // - Each of its functions is for one test and will return non-nil error
@@ -19,6 +19,7 @@ type UserStorageTest struct {
 	storage UserStorage
 }
 
+//NewUserStorageTest return new test storage instance
 func NewUserStorageTest(storage UserStorage) *UserStorageTest {
 	return &UserStorageTest{storage}
 }
@@ -101,9 +102,9 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 			return fmt.Errorf("Expected to find %v, got not found", addr)
 		}
 	}
-	self.storage.UpdateUserAddresses(
-		email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2},
-	)
+	if vErr := self.storage.UpdateUserAddresses(email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2}); vErr != nil {
+		return vErr
+	}
 	// test if pending addresses are correct
 	pendingAddrs, err = self.storage.GetPendingAddresses()
 	if err != nil {
@@ -122,10 +123,12 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 		}
 	}
 	// Start receiving cat logs
-	self.storage.UpdateAddressCategory(addr1, cat)
-	self.storage.UpdateUserAddresses(
-		email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2},
-	)
+	if vErr := self.storage.UpdateAddressCategory(addr1, cat); vErr != nil {
+		return vErr
+	}
+	if vErr := self.storage.UpdateUserAddresses(email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2}); vErr != nil {
+		return vErr
+	}
 	// test if pending addresses are correct
 	pendingAddrs, err = self.storage.GetPendingAddresses()
 	if err != nil {
@@ -142,7 +145,9 @@ func (self *UserStorageTest) TestUpdateUserAddressesThenUpdateAddressCategory() 
 			return fmt.Errorf("Expected to find %s, got not found", addr)
 		}
 	}
-	self.storage.UpdateAddressCategory(addr2, cat)
+	if vErr := self.storage.UpdateAddressCategory(addr2, cat); vErr != nil {
+		return vErr
+	}
 
 	gotAddresses, gotTimes, err := self.storage.GetAddressesOfUser(email)
 	if err != nil {
@@ -197,8 +202,12 @@ func (self *UserStorageTest) TestUpdateAddressCategoryThenUpdateUserAddresses() 
 	time2 := uint64(1520825136557)
 	cat := "0x4A"
 
-	self.storage.UpdateAddressCategory(addr1, cat)
-	self.storage.UpdateAddressCategory(addr2, cat)
+	if err := self.storage.UpdateAddressCategory(addr1, cat); err != nil {
+		return err
+	}
+	if err := self.storage.UpdateAddressCategory(addr2, cat); err != nil {
+		return err
+	}
 	err := self.storage.UpdateUserAddresses(
 		email, []ethereum.Address{addr1, addr2}, []uint64{time1, time2},
 	)

@@ -69,16 +69,18 @@ func GetResponse(method string, url string,
 	resp, err := client.Do(req)
 	if err != nil {
 		return resbody, err
-	} else {
-		defer resp.Body.Close()
-		switch resp.StatusCode {
-		case 200:
-			resbody, err = ioutil.ReadAll(resp.Body)
-		default:
-			log.Printf("The reply code %v was unexpected", resp.StatusCode)
-			resbody, err = ioutil.ReadAll(resp.Body)
-		}
-		log.Printf("\n request to %s, got response: \n %s \n\n", req.URL, common.TruncStr(resbody))
-		return resbody, err
 	}
+	defer func() {
+		if vErr := resp.Body.Close(); vErr != nil {
+			log.Printf("Response body close error: %s", vErr.Error())
+		}
+	}()
+	if resp.StatusCode == http.StatusOK {
+		resbody, err = ioutil.ReadAll(resp.Body)
+	} else {
+		log.Printf("The reply code %v was unexpected", resp.StatusCode)
+		resbody, err = ioutil.ReadAll(resp.Body)
+	}
+	log.Printf("request to %s, got response: \n %s \n\n", req.URL, common.TruncStr(resbody))
+	return resbody, err
 }

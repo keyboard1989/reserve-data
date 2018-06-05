@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/KyberNetwork/reserve-data/cmd/configuration"
-	"github.com/KyberNetwork/reserve-data/cmd/configuration/mode"
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
@@ -50,7 +49,9 @@ func run(verify *Verification) {
 
 	switch os.Args[1] {
 	case "verify":
-		verify.RunVerification()
+		if err := verify.RunVerification(); err != nil {
+			log.Panic(err)
+		}
 	case "deposit":
 		err := depositCmd.Parse(os.Args[2:])
 		if err != nil {
@@ -91,7 +92,7 @@ func run(verify *Verification) {
 		var token common.Token
 		var err error
 		if *depositBaseUrl != "" {
-			verify.UpdateBaseUrl(*depositBaseUrl)
+			verify.UpdateBaseURL(*depositBaseUrl)
 		}
 		if *depositToken != "" {
 			token, err = common.GetInternalToken(*depositToken)
@@ -125,7 +126,7 @@ func run(verify *Verification) {
 func main() {
 	InitLogger(ioutil.Discard, os.Stdout, os.Stdout, os.Stderr)
 	var config *configuration.Config
-	kyberENV := mode.Get()
+	kyberENV := common.RunningMode()
 	config = configuration.GetConfig(kyberENV, !noAuthEnable, endpointOW, false, false)
 	if config.AuthEngine == nil {
 		Warning.Println("Current environment setting does not enable authentication. Please check again!!!")

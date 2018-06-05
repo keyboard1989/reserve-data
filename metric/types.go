@@ -60,8 +60,9 @@ type TargetQtySet struct {
 	TransferThreshold  float64 `json:"transfer_threshold"`
 }
 
+//TargetQtyStruct object for save target qty
 type TargetQtyStruct struct {
-	SetTarget TargetQtySet `json:"target_qty_set"`
+	SetTarget TargetQtySet `json:"set_target"`
 }
 
 // PWIEquationV2 contains the information of a PWI equation.

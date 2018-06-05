@@ -112,7 +112,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 func (self *Binance) UpdatePairsPrecision() {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err != nil {
-		log.Printf("Get exchange info failed: %s\n", err)
+		log.Printf("RunningMode exchange info failed: %s\n", err)
 	} else {
 		symbols := exchangeInfo.Symbols
 		for _, pair := range self.pairs {
@@ -398,7 +398,9 @@ func (self *Binance) FetchTradeHistory() {
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
-			self.storage.StoreTradeHistory(result)
+			if err := self.storage.StoreTradeHistory(result); err != nil {
+				log.Printf("Store trade history error: %s", err.Error())
+			}
 			<-t.C
 		}
 	}()

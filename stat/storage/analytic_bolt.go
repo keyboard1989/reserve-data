@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/KyberNetwork/reserve-data/boltutil"
@@ -23,6 +24,7 @@ type BoltAnalyticStorage struct {
 	db *bolt.DB
 }
 
+//NewBoltAnalyticStorage return new storage instance
 func NewBoltAnalyticStorage(dbPath string) (*BoltAnalyticStorage, error) {
 	var err error
 	var db *bolt.DB
@@ -52,7 +54,7 @@ func (self *BoltAnalyticStorage) UpdatePriceAnalyticData(timestamp uint64, value
 		c := b.Cursor()
 		existedKey, _ := c.Seek(k)
 		if existedKey != nil {
-			return errors.New("The timestamp is already existed.")
+			return errors.New("timestamp is already existed")
 		}
 		return b.Put(k, value)
 	})
@@ -62,7 +64,11 @@ func (self *BoltAnalyticStorage) UpdatePriceAnalyticData(timestamp uint64, value
 func (self *BoltAnalyticStorage) ExportExpiredPriceAnalyticData(currentTime uint64, fileName string) (nRecord uint64, err error) {
 	expiredTimestampByte := boltutil.Uint64ToBytes(currentTime - PRICE_ANALYTIC_EXPIRED)
 	outFile, err := os.Create(fileName)
-	defer outFile.Close()
+	defer func() {
+		if err := outFile.Close(); err != nil {
+			log.Fatalf("Expire file close error: %s", err.Error())
+		}
+	}()
 	if err != nil {
 		return 0, err
 	}
@@ -72,8 +78,7 @@ func (self *BoltAnalyticStorage) ExportExpiredPriceAnalyticData(currentTime uint
 		for k, v := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, v = c.Next() {
 			timestamp := boltutil.BytesToUint64(k)
 			temp := make(map[string]interface{})
-			err = json.Unmarshal(v, &temp)
-			if err != nil {
+			if err = json.Unmarshal(v, &temp); err != nil {
 				return err
 			}
 			record := common.NewAnalyticPriceResponse(
@@ -102,8 +107,7 @@ func (self *BoltAnalyticStorage) PruneExpiredPriceAnalyticData(currentTime uint6
 		b := tx.Bucket([]byte(PRICE_ANALYTIC_BUCKET))
 		c := b.Cursor()
 		for k, _ := c.First(); k != nil && bytes.Compare(k, expiredTimestampByte) <= 0; k, _ = c.Next() {
-			err = b.Delete(k)
-			if err != nil {
+			if err = b.Delete(k); err != nil {
 				return err
 			}
 			nRecord++
@@ -128,8 +132,7 @@ func (self *BoltAnalyticStorage) GetPriceAnalyticData(fromTime uint64, toTime ui
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			timestamp := boltutil.BytesToUint64(k)
 			temp := make(map[string]interface{})
-			vErr := json.Unmarshal(v, &temp)
-			if vErr != nil {
+			if vErr := json.Unmarshal(v, &temp); vErr != nil {
 				return vErr
 			}
 			record := common.AnalyticPriceResponse{

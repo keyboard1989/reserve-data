@@ -29,9 +29,9 @@ func NewBoltRateStorage(path string) (*BoltRateStorage, error) {
 		return nil, err
 	}
 	// init buckets
-	db.Update(func(tx *bolt.Tx) error {
-		tx.CreateBucketIfNotExists([]byte(RESERVE_RATES))
-		return nil
+	err = db.Update(func(tx *bolt.Tx) error {
+		_, err = tx.CreateBucketIfNotExists([]byte(RESERVE_RATES))
+		return err
 	})
 	storage := &BoltRateStorage{db}
 	return storage, nil
@@ -45,7 +45,13 @@ func (self *BoltRateStorage) StoreReserveRates(ethReserveAddr ethereum.Address, 
 		c := b.Cursor()
 		var prevDataJSON common.ReserveRates
 		_, prevData := c.Last()
-		json.Unmarshal(prevData, &prevDataJSON)
+		if prevData != nil {
+			if err := json.Unmarshal(prevData, &prevDataJSON); err != nil {
+				log.Printf("Unmarshal reserve rate error: %s", err.Error())
+				return err
+			}
+
+		}
 		if prevDataJSON.BlockNumber < rate.BlockNumber {
 			idByte := boltutil.Uint64ToBytes(timepoint)
 			dataJson, err := json.Marshal(rate)

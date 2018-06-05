@@ -167,22 +167,18 @@ func reverseSeek(timepoint uint64, c *bolt.Cursor) (uint64, error) {
 		version, _ = c.Prev()
 		if version == nil {
 			return 0, fmt.Errorf("There is no data before timepoint %d", timepoint)
-		} else {
-			return boltutil.BytesToUint64(version), nil
 		}
-	} else {
-		v := boltutil.BytesToUint64(version)
-		if v == timepoint {
-			return v, nil
-		} else {
-			version, _ = c.Prev()
-			if version == nil {
-				return 0, fmt.Errorf("There is no data before timepoint %d", timepoint)
-			} else {
-				return boltutil.BytesToUint64(version), nil
-			}
-		}
+		return boltutil.BytesToUint64(version), nil
 	}
+	v := boltutil.BytesToUint64(version)
+	if v == timepoint {
+		return v, nil
+	}
+	version, _ = c.Prev()
+	if version == nil {
+		return 0, fmt.Errorf("There is no data before timepoint %d", timepoint)
+	}
+	return boltutil.BytesToUint64(version), nil
 }
 
 // CurrentGoldInfoVersion returns the most recent time point of gold info record.
@@ -210,7 +206,7 @@ func (self *BoltStorage) GetGoldInfo(version common.Version) (common.GoldData, e
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
-		return nil
+		return err
 	})
 	return result, err
 }
@@ -220,14 +216,13 @@ func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
 	var err error
 	timepoint := data.Timestamp
 	err = self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
+		var dataJSON []byte
 		b := tx.Bucket([]byte(GOLD_BUCKET))
-		dataJson, err = json.Marshal(data)
-		if err != nil {
-			return err
+		dataJSON, vErr := json.Marshal(data)
+		if vErr != nil {
+			return vErr
 		}
-		err = b.Put(boltutil.Uint64ToBytes(timepoint), dataJson)
-		return err
+		return b.Put(boltutil.Uint64ToBytes(timepoint), dataJSON)
 	})
 	return err
 }
@@ -235,10 +230,14 @@ func (self *BoltStorage) StoreGoldInfo(data common.GoldData) error {
 func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName string) (nRecord uint64, err error) {
 	expiredTimestampByte := boltutil.Uint64ToBytes(currentTime - AUTH_DATA_EXPIRED_DURATION)
 	outFile, err := os.Create(fileName)
-	defer outFile.Close()
 	if err != nil {
 		return 0, err
 	}
+	defer func() {
+		if vErr := outFile.Close(); vErr != nil {
+			log.Printf("Close file error: %s", vErr.Error())
+		}
+	}()
 
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(AUTH_DATA_BUCKET))
@@ -248,9 +247,8 @@ func (self *BoltStorage) ExportExpiredAuthData(currentTime uint64, fileName stri
 			timestamp := boltutil.BytesToUint64(k)
 
 			temp := common.AuthDataSnapshot{}
-			err = json.Unmarshal(v, &temp)
-			if err != nil {
-				return err
+			if vErr := json.Unmarshal(v, &temp); vErr != nil {
+				return vErr
 			}
 			record := common.NewAuthDataRecord(
 				common.Timestamp(strconv.FormatUint(timestamp, 10)),
@@ -322,7 +320,7 @@ func (self *BoltStorage) CurrentPriceVersion(timepoint uint64) (common.Version, 
 	err = self.db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket([]byte(PRICE_BUCKET)).Cursor()
 		result, err = reverseSeek(timepoint, c)
-		return nil
+		return err
 	})
 	return common.Version(result), err
 }
@@ -350,7 +348,7 @@ func (self *BoltStorage) GetAllPrices(version common.Version) (common.AllPriceEn
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
-		return nil
+		return err
 	})
 	return result, err
 }
@@ -366,36 +364,36 @@ func (self *BoltStorage) GetOnePrice(pair common.TokenPairID, version common.Ver
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
-		return nil
+		return err
 	})
 	if err != nil {
 		return common.OnePrice{}, err
-	} else {
-		pair, exist := result.Data[pair]
-		if exist {
-			return pair, nil
-		} else {
-			return common.OnePrice{}, errors.New("Pair of token is not supported")
-		}
 	}
+	dataPair, exist := result.Data[pair]
+	if exist {
+		return dataPair, nil
+	}
+	return common.OnePrice{}, errors.New("Pair of token is not supported")
 }
 
 func (self *BoltStorage) StorePrice(data common.AllPriceEntry, timepoint uint64) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
+		var dataJSON []byte
 		b := tx.Bucket([]byte(PRICE_BUCKET))
 
 		// remove outdated data from bucket
 		log.Printf("Version number: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
-		self.PruneOutdatedData(tx, PRICE_BUCKET)
-		log.Printf("After prune number version: %d\n", self.GetNumberOfVersion(tx, PRICE_BUCKET))
+		if vErr := self.PruneOutdatedData(tx, PRICE_BUCKET); vErr != nil {
+			log.Printf("Prune out data: %s", vErr.Error())
+			return vErr
+		}
 
-		dataJson, err = json.Marshal(data)
+		dataJSON, err = json.Marshal(data)
 		if err != nil {
 			return err
 		}
-		return b.Put(boltutil.Uint64ToBytes(timepoint), dataJson)
+		return b.Put(boltutil.Uint64ToBytes(timepoint), dataJSON)
 	})
 	return err
 }
@@ -406,7 +404,7 @@ func (self *BoltStorage) CurrentAuthDataVersion(timepoint uint64) (common.Versio
 	err = self.db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket([]byte(AUTH_DATA_BUCKET)).Cursor()
 		result, err = reverseSeek(timepoint, c)
-		return nil
+		return err
 	})
 	return common.Version(result), err
 }
@@ -422,22 +420,24 @@ func (self *BoltStorage) GetAuthData(version common.Version) (common.AuthDataSna
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
-		return nil
+		return err
 	})
 	return result, err
 }
 
+//CurrentRateVersion return current rate version
 func (self *BoltStorage) CurrentRateVersion(timepoint uint64) (common.Version, error) {
 	var result uint64
 	var err error
 	err = self.db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket([]byte(RATE_BUCKET)).Cursor()
 		result, err = reverseSeek(timepoint, c)
-		return nil
+		return err
 	})
 	return common.Version(result), err
 }
 
+//GetRates return rates history
 func (self *BoltStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntry, error) {
 	result := []common.AllRateEntry{}
 	if toTime-fromTime > MAX_GET_RATES_PERIOD {
@@ -458,7 +458,7 @@ func (self *BoltStorage) GetRates(fromTime, toTime uint64) ([]common.AllRateEntr
 			}
 			result = append([]common.AllRateEntry{data}, result...)
 		}
-		return nil
+		return err
 	})
 	return result, err
 }
@@ -474,7 +474,7 @@ func (self *BoltStorage) GetRate(version common.Version) (common.AllRateEntry, e
 		} else {
 			err = json.Unmarshal(data, &result)
 		}
-		return nil
+		return err
 	})
 	return result, err
 }
@@ -496,31 +496,43 @@ func (self *BoltStorage) StoreAuthSnapshot(
 	return err
 }
 
+//StoreRate store rate history
 func (self *BoltStorage) StoreRate(data common.AllRateEntry, timepoint uint64) error {
 	log.Printf("Storing rate data to bolt: data(%v), timespoint(%v)", data, timepoint)
-	var err error
-	var lastEntryjson common.AllRateEntry
-	err = self.db.Update(func(tx *bolt.Tx) error {
-		var dataJson []byte
+	err := self.db.Update(func(tx *bolt.Tx) error {
+		var (
+			uErr      error
+			lastEntry common.AllRateEntry
+			dataJson  []byte
+		)
+
 		b := tx.Bucket([]byte(RATE_BUCKET))
 		c := b.Cursor()
-		_, lastEntry := c.Last()
-		json.Unmarshal(lastEntry, &lastEntryjson)
+		lastKey, lastValue := c.Last()
+		if lastKey == nil {
+			log.Printf("Bucket %s is empty", RATE_BUCKET)
+		} else {
+			if uErr = json.Unmarshal(lastValue, &lastEntry); uErr != nil {
+				return uErr
+			}
+		}
 		// we still update when blocknumber is not changed because we want
 		// to update the version and timestamp so api users will get
 		// the newest data even it is identical to the old one.
-		if lastEntryjson.BlockNumber <= data.BlockNumber {
-			dataJson, err = json.Marshal(data)
-			if err != nil {
-				return err
+		if lastEntry.BlockNumber <= data.BlockNumber {
+			if dataJson, uErr = json.Marshal(data); uErr != nil {
+				return uErr
 			}
 			return b.Put(boltutil.Uint64ToBytes(timepoint), dataJson)
 		}
-		return err
+		return fmt.Errorf("rejected storing rates with smaller block number: %d, stored: %d",
+			data.BlockNumber,
+			lastEntry.BlockNumber)
 	})
 	return err
 }
 
+//Record save activity
 func (self *BoltStorage) Record(
 	action string,
 	id common.ActivityID,
@@ -548,7 +560,7 @@ func (self *BoltStorage) Record(
 		if err != nil {
 			return err
 		}
-		// idByte, _ := id.MarshalText()
+
 		idByte := id.ToBytes()
 		err = b.Put(idByte[:], dataJson)
 		if err != nil {
@@ -588,13 +600,13 @@ func (self *BoltStorage) Record(
 func formatTimepointToActivityID(timepoint uint64, id []byte) []byte {
 	if timepoint == 0 {
 		return id
-	} else {
-		activityID := common.NewActivityID(timepoint, "")
-		byteID := activityID.ToBytes()
-		return byteID[:]
 	}
+	activityID := common.NewActivityID(timepoint, "")
+	byteID := activityID.ToBytes()
+	return byteID[:]
 }
 
+//GetActivity get activity
 func (self *BoltStorage) GetActivity(id common.ActivityID) (common.ActivityRecord, error) {
 	result := common.ActivityRecord{}
 
@@ -632,7 +644,7 @@ func (self *BoltStorage) GetAllRecords(fromTime, toTime uint64) ([]common.Activi
 			}
 			result = append([]common.ActivityRecord{record}, result...)
 		}
-		return nil
+		return err
 	})
 	return result, err
 }
@@ -641,7 +653,7 @@ func getLastAndCountPendingSetrate(pendings []common.ActivityRecord, minedNonce 
 	var maxNonce uint64
 	var maxPrice uint64
 	var result *common.ActivityRecord
-	var count uint64 = 0
+	var count uint64
 	for i, act := range pendings {
 		if act.Action == "set_rates" {
 			log.Printf("looking for pending set_rates: %+v", act)
@@ -669,7 +681,7 @@ func getLastAndCountPendingSetrate(pendings []common.ActivityRecord, minedNonce 
 					result = &pendings[i]
 					maxPrice = gasPrice
 				}
-				count += 1
+				count++
 			} else if nonce > maxNonce {
 				maxNonce = nonce
 				result = &pendings[i]
@@ -681,6 +693,7 @@ func getLastAndCountPendingSetrate(pendings []common.ActivityRecord, minedNonce 
 	return result, count, nil
 }
 
+//RemovePendingActivities remove it
 func (self *BoltStorage) RemoveStalePendingActivities(tx *bolt.Tx, stales []common.ActivityRecord) error {
 	pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
 	for _, stale := range stales {
@@ -692,15 +705,16 @@ func (self *BoltStorage) RemoveStalePendingActivities(tx *bolt.Tx, stales []comm
 	return nil
 }
 
+//PendingSetrate return pending set rate activity
 func (self *BoltStorage) PendingSetrate(minedNonce uint64) (*common.ActivityRecord, uint64, error) {
 	pendings, err := self.GetPendingActivities()
 	if err != nil {
 		return nil, 0, err
-	} else {
-		return getLastAndCountPendingSetrate(pendings, minedNonce)
 	}
+	return getLastAndCountPendingSetrate(pendings, minedNonce)
 }
 
+//GetPendingActivities return pending activities
 func (self *BoltStorage) GetPendingActivities() ([]common.ActivityRecord, error) {
 	result := []common.ActivityRecord{}
 	var err error
@@ -716,17 +730,18 @@ func (self *BoltStorage) GetPendingActivities() ([]common.ActivityRecord, error)
 			result = append(
 				[]common.ActivityRecord{record}, result...)
 		}
-		return nil
+		return err
 	})
 	return result, err
 }
 
+//UpdateActivity update activity info
 func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.ActivityRecord) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		pb := tx.Bucket([]byte(PENDING_ACTIVITY_BUCKET))
 		idBytes := id.ToBytes()
-		dataJson, uErr := json.Marshal(activity)
+		dataJSON, uErr := json.Marshal(activity)
 		if uErr != nil {
 			return uErr
 		}
@@ -734,7 +749,7 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 		// It might be deleted if it is replaced by another activity
 		found := pb.Get(idBytes[:])
 		if found != nil {
-			uErr = pb.Put(idBytes[:], dataJson)
+			uErr = pb.Put(idBytes[:], dataJSON)
 			if uErr != nil {
 				return uErr
 			}
@@ -749,11 +764,12 @@ func (self *BoltStorage) UpdateActivity(id common.ActivityID, activity common.Ac
 		if uErr != nil {
 			return uErr
 		}
-		return b.Put(idBytes[:], dataJson)
+		return b.Put(idBytes[:], dataJSON)
 	})
 	return err
 }
 
+//HasPendingDeposit check if a deposit is pending
 func (self *BoltStorage) HasPendingDeposit(token common.Token, exchange common.Exchange) (bool, error) {
 	result := false
 	var err error
@@ -762,7 +778,9 @@ func (self *BoltStorage) HasPendingDeposit(token common.Token, exchange common.E
 		c := pb.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			record := common.ActivityRecord{}
-			json.Unmarshal(v, &record)
+			if vErr := json.Unmarshal(v, &record); vErr != nil {
+				return vErr
+			}
 			if record.Action == "deposit" && record.Params["token"].(string) == token.ID && record.Destination == string(exchange.ID()) {
 				result = true
 			}
@@ -772,6 +790,7 @@ func (self *BoltStorage) HasPendingDeposit(token common.Token, exchange common.E
 	return result, err
 }
 
+//StoreMetric store metric info
 func (self *BoltStorage) StoreMetric(data *metric.MetricEntry, timepoint uint64) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
@@ -788,6 +807,7 @@ func (self *BoltStorage) StoreMetric(data *metric.MetricEntry, timepoint uint64)
 	return err
 }
 
+//GetMetric return metric data
 func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint64) (map[string]metric.MetricList, error) {
 	imResult := map[string]*metric.MetricList{}
 	for _, tok := range tokens {
@@ -827,6 +847,7 @@ func (self *BoltStorage) GetMetric(tokens []common.Token, fromTime, toTime uint6
 	return result, err
 }
 
+//GetPendingTargetQty return pending target quantity if available
 func (self *BoltStorage) GetPendingTargetQty() (metric.TokenTargetQty, error) {
 	var err error
 	var tokenTargetQty metric.TokenTargetQty
@@ -834,18 +855,17 @@ func (self *BoltStorage) GetPendingTargetQty() (metric.TokenTargetQty, error) {
 		b := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
 		_, data := b.Cursor().Last()
 		if data == nil {
-			err = errors.New("There no pending target quantity")
-		} else {
-			err = json.Unmarshal(data, &tokenTargetQty)
-			if err != nil {
-				log.Printf("Cannot unmarshal: %s", err.Error())
-			}
+			return errors.New("There no pending target quantity")
 		}
-		return nil
+		if err = json.Unmarshal(data, &tokenTargetQty); err != nil {
+			return err
+		}
+		return err
 	})
 	return tokenTargetQty, err
 }
 
+//StorePendingTargetQty store pending target quantity if there is none
 func (self *BoltStorage) StorePendingTargetQty(data, dataType string) error {
 	var err error
 	timepoint := common.GetTimepoint()
@@ -854,7 +874,7 @@ func (self *BoltStorage) StorePendingTargetQty(data, dataType string) error {
 		b := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
 		_, lastPending := b.Cursor().Last()
 		if lastPending != nil {
-			err = errors.New("There is another pending target quantity. Please confirm or cancel it before setting new target.")
+			err = errors.New("there is another pending target quantity. please confirm or cancel it before setting new target")
 			return err
 		}
 
@@ -874,6 +894,7 @@ func (self *BoltStorage) StorePendingTargetQty(data, dataType string) error {
 	return err
 }
 
+//RemovePendingTargetQty remove pending target quantity
 func (self *BoltStorage) RemovePendingTargetQty() error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
@@ -881,26 +902,26 @@ func (self *BoltStorage) RemovePendingTargetQty() error {
 		k, lastPending := b.Cursor().Last()
 		log.Printf("Last key: %s", k)
 		if lastPending == nil {
-			return errors.New("There is no pending target quantity.")
+			return errors.New("there is no pending target quantity")
 		}
-
-		b.Delete([]byte(k))
-		return nil
+		return b.Delete([]byte(k))
 	})
 	return err
 }
 
+//CurrentTargetQtyVersion return current target quantity version
 func (self *BoltStorage) CurrentTargetQtyVersion(timepoint uint64) (common.Version, error) {
 	var result uint64
 	var err error
 	err = self.db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket([]byte(METRIC_TARGET_QUANTITY)).Cursor()
 		result, err = reverseSeek(timepoint, c)
-		return nil
+		return err
 	})
 	return common.Version(result), err
 }
 
+//GetTokenTargetQty get target quantity
 func (self *BoltStorage) GetTokenTargetQty() (metric.TokenTargetQty, error) {
 	var (
 		tokenTargetQty = metric.TokenTargetQty{}
@@ -923,41 +944,43 @@ func (self *BoltStorage) GetTokenTargetQty() (metric.TokenTargetQty, error) {
 	return tokenTargetQty, err
 }
 
+//StoreTokenTargetQty store token target quantity in db
 func (self *BoltStorage) StoreTokenTargetQty(id, data string) error {
 	var err error
 	var tokenTargetQty metric.TokenTargetQty
-	var dataJson []byte
+	var dataJSON []byte
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		pending := tx.Bucket([]byte(PENDING_TARGET_QUANTITY))
 		_, pendingTargetQty := pending.Cursor().Last()
 
 		if pendingTargetQty == nil {
-			err = errors.New("There is no pending target activity to confirm.")
-			return err
-		} else {
-			// verify confirm data
-			json.Unmarshal(pendingTargetQty, &tokenTargetQty)
-			pendingData := tokenTargetQty.Data
-			idInt, _ := strconv.ParseUint(id, 10, 64)
-			if tokenTargetQty.ID != idInt {
-				err = errors.New("Pending target quantity ID does not match")
-				return err
-			}
-			if data != pendingData {
-				err = errors.New("Pending target quantity data does not match")
-				return err
-			}
-
-			// Save to confirmed target quantity
-			tokenTargetQty.Status = "confirmed"
-			b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
-			dataJson, err = json.Marshal(tokenTargetQty)
-			if err != nil {
-				return err
-			}
-			idByte := boltutil.Uint64ToBytes(common.GetTimepoint())
-			return b.Put(idByte, dataJson)
+			return errors.New("there is no pending target activity to confirm")
 		}
+		// verify confirm data
+		if vErr := json.Unmarshal(pendingTargetQty, &tokenTargetQty); vErr != nil {
+			return vErr
+		}
+		pendingData := tokenTargetQty.Data
+		idInt, vErr := strconv.ParseUint(id, 10, 64)
+		if vErr != nil {
+			return vErr
+		}
+		if tokenTargetQty.ID != idInt {
+			return errors.New("pending target quantity ID does not match")
+		}
+		if data != pendingData {
+			return errors.New("pending target quantity data does not match")
+		}
+
+		// Save to confirmed target quantity
+		tokenTargetQty.Status = "confirmed"
+		b := tx.Bucket([]byte(METRIC_TARGET_QUANTITY))
+		dataJSON, err = json.Marshal(tokenTargetQty)
+		if err != nil {
+			return err
+		}
+		idByte := boltutil.Uint64ToBytes(common.GetTimepoint())
+		return b.Put(idByte, dataJSON)
 	})
 	if err == nil {
 		// remove pending target qty
@@ -976,9 +999,10 @@ func (self *BoltStorage) GetRebalanceControl() (metric.RebalanceControl, error) 
 			result = metric.RebalanceControl{
 				Status: false,
 			}
-			self.StoreRebalanceControl(false)
-		} else {
-			json.Unmarshal(data, &result)
+			return self.StoreRebalanceControl(false)
+		}
+		if vErr := json.Unmarshal(data, &result); vErr != nil {
+			return vErr
 		}
 		return nil
 	})
@@ -1024,9 +1048,10 @@ func (self *BoltStorage) GetSetrateControl() (metric.SetrateControl, error) {
 			result = metric.SetrateControl{
 				Status: false,
 			}
-			self.StoreSetrateControl(false)
-		} else {
-			json.Unmarshal(data, &result)
+			return self.StoreSetrateControl(false)
+		}
+		if vErr := json.Unmarshal(data, &result); vErr != nil {
+			return vErr
 		}
 		return nil
 	})
@@ -1076,11 +1101,11 @@ func (self *BoltStorage) StorePendingPWIEquation(data string) error {
 		idByte := boltutil.Uint64ToBytes(timepoint)
 		saveData.ID = timepoint
 		saveData.Data = data
-		dataJson, uErr := json.Marshal(saveData)
+		dataJSON, uErr := json.Marshal(saveData)
 		if uErr != nil {
 			return uErr
 		}
-		return b.Put(idByte, dataJson)
+		return b.Put(idByte, dataJSON)
 	})
 	return err
 }
@@ -1094,8 +1119,9 @@ func (self *BoltStorage) GetPendingPWIEquation() (metric.PWIEquation, error) {
 		_, v := c.First()
 		if v == nil {
 			return errors.New("There no pending equation")
-		} else {
-			json.Unmarshal(v, &result)
+		}
+		if vErr := json.Unmarshal(v, &result); vErr != nil {
+			return vErr
 		}
 		return nil
 	})
@@ -1125,7 +1151,7 @@ func (self *BoltStorage) StorePWIEquation(data string) error {
 		return p.Put(idByte, saveData)
 	})
 	if err == nil {
-		self.RemovePendingPWIEquation()
+		return self.RemovePendingPWIEquation()
 	}
 	return err
 }
@@ -1140,10 +1166,8 @@ func (self *BoltStorage) GetPWIEquation() (metric.PWIEquation, error) {
 		if v == nil {
 			err = errors.New("There is no equation")
 			return err
-		} else {
-			json.Unmarshal(v, &result)
 		}
-		return err
+		return json.Unmarshal(v, &result)
 	})
 	return result, err
 }
@@ -1167,6 +1191,7 @@ func (self *BoltStorage) RemovePendingPWIEquation() error {
 	return err
 }
 
+// GetExchangeStatus get exchange status to dashboard and analytics
 func (self *BoltStorage) GetExchangeStatus() (common.ExchangesStatus, error) {
 	result := make(common.ExchangesStatus)
 	var err error
@@ -1175,8 +1200,10 @@ func (self *BoltStorage) GetExchangeStatus() (common.ExchangesStatus, error) {
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			var exstat common.ExStatus
-			vErr := json.Unmarshal(v, &exstat)
-			if vErr != nil {
+			if _, vErr := common.GetExchange(strings.ToLower(string(k))); vErr != nil {
+				continue
+			}
+			if vErr := json.Unmarshal(v, &exstat); vErr != nil {
 				return vErr
 			}
 			result[string(k)] = exstat
@@ -1191,11 +1218,11 @@ func (self *BoltStorage) UpdateExchangeStatus(data common.ExchangesStatus) error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_STATUS))
 		for k, v := range data {
-			dataJson, uErr := json.Marshal(v)
+			dataJSON, uErr := json.Marshal(v)
 			if uErr != nil {
 				return uErr
 			}
-			if uErr = b.Put([]byte(k), dataJson); uErr != nil {
+			if uErr = b.Put([]byte(k), dataJSON); uErr != nil {
 				return uErr
 			}
 		}
@@ -1248,7 +1275,9 @@ func (self *BoltStorage) GetExchangeNotifications() (common.ExchangeNotification
 					action := actionToken[0]
 					token := actionToken[1]
 					notiContent := common.ExchangeNotiContent{}
-					json.Unmarshal(v, &notiContent)
+					if vErr := json.Unmarshal(v, &notiContent); vErr != nil {
+						return vErr
+					}
 					tokenContent, exist := actionContent[action]
 					if !exist {
 						tokenContent = common.ExchangeTokenNoti{}
@@ -1259,7 +1288,7 @@ func (self *BoltStorage) GetExchangeNotifications() (common.ExchangeNotification
 				result[string(name)] = actionContent
 			}
 		}
-		return err
+		return nil
 	})
 	return result, err
 }
@@ -1321,11 +1350,8 @@ func (self *BoltStorage) GetStableTokenParams() (map[string]interface{}, error) 
 			return errors.New("Bucket hasn't exist yet")
 		}
 		record := b.Get(k)
-		if record == nil {
-			return nil
-		}
-		if vErr := json.Unmarshal(record, &result); vErr != nil {
-			return vErr
+		if record != nil {
+			return json.Unmarshal(record, &result)
 		}
 		return nil
 	})
@@ -1341,12 +1367,8 @@ func (self *BoltStorage) GetPendingStableTokenParams() (map[string]interface{}, 
 			return errors.New("Bucket hasn't exist yet")
 		}
 		record := b.Get(k)
-		if record == nil {
-			return nil
-		}
-		vErr := json.Unmarshal(record, &result)
-		if vErr != nil {
-			return vErr
+		if record != nil {
+			return json.Unmarshal(record, &result)
 		}
 		return nil
 	})
@@ -1392,12 +1414,10 @@ func (self *BoltStorage) GetPendingTargetQtyV2() (map[string]interface{}, error)
 		b := tx.Bucket([]byte(PENDING_TARGET_QUANTITY_V2))
 		k := []byte("current_pending_target_qty")
 		record := b.Get(k)
-		if record != nil {
-			if vErr := json.Unmarshal(record, &result); vErr != nil {
-				return vErr
-			}
+		if record == nil {
+			return errors.New("There is no pending target qty")
 		}
-		return nil
+		return json.Unmarshal(record, &result)
 	})
 	return result, err
 }
@@ -1556,7 +1576,15 @@ func (self *BoltStorage) StorePWIEquationV2(data string) error {
 		if v == nil {
 			return errors.New("There is no pending equation")
 		}
-		if !bytes.Equal(v, []byte(data)) {
+		confirmData := make(map[string]interface{})
+		if err := json.Unmarshal([]byte(data), &confirmData); err != nil {
+			return err
+		}
+		currentData := make(map[string]interface{})
+		if err := json.Unmarshal(v, &currentData); err != nil {
+			return err
+		}
+		if eq := reflect.DeepEqual(currentData, confirmData); !eq {
 			return errors.New("Confirm data does not match pending data")
 		}
 		id := boltutil.Uint64ToBytes(common.GetTimepoint())

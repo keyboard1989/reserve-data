@@ -258,6 +258,27 @@
       "internal use": true,
       "listed": true
     },
+    "AION": {
+      "name": "Aion",
+      "decimals": 8,
+      "address": "0x4CEdA7906a5Ed2179785Cd3A40A69ee8bc99C466",
+      "internal use": true,
+      "listed": true
+    },
+    "AE": {
+      "name": "Aeternity",
+      "decimals": 18,
+      "address": "0x5ca9a71b1d01849c0a95490cc00559717fcf0d1d",
+      "internal use": true,
+      "listed": true
+    },
+    "BLZ": {
+      "name": "Bluezelle",
+      "decimals": 18,
+      "address": "0x5732046a883704404f284ce41ffadd5b007fd668",
+      "internal use": true,
+      "listed": true
+    },
     "ETH": {
       "name": "Ethereum",
       "decimals": 18,

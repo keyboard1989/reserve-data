@@ -83,7 +83,7 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExch
 func (self *Huobi) UpdatePairsPrecision() {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err != nil {
-		log.Printf("Get exchange info failed: %s\n", err)
+		log.Printf("RunningMode exchange info failed: %s\n", err)
 	} else {
 		for _, pair := range self.pairs {
 			self.UpdatePrecisionLimit(pair, exchangeInfo)
@@ -364,7 +364,9 @@ func (self *Huobi) FetchTradeHistory() {
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
-			self.storage.StoreTradeHistory(result)
+			if err := self.storage.StoreTradeHistory(result); err != nil {
+				log.Printf("Store trade history error: %s", err.Error())
+			}
 			<-t.C
 		}
 	}()

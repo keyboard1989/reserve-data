@@ -612,8 +612,8 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 		afpmidStr := parts[1]
 		spreadStr := parts[2]
 
-		afpmid, err := strconv.ParseFloat(afpmidStr, 64)
-		if err != nil {
+		afpmid, vErr := strconv.ParseFloat(afpmidStr, 64)
+		if vErr != nil {
 			httputil.ResponseFailure(c, httputil.WithReason("Afp mid "+afpmidStr+" is not float64"))
 			return
 		}
@@ -885,7 +885,10 @@ func (self *HTTPServer) HoldRebalance(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreRebalanceControl(false)
+	if err := self.metric.StoreRebalanceControl(false); err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+		return
+	}
 	httputil.ResponseSuccess(c)
 	return
 }
@@ -895,7 +898,9 @@ func (self *HTTPServer) EnableRebalance(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreRebalanceControl(true)
+	if err := self.metric.StoreRebalanceControl(true); err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+	}
 	httputil.ResponseSuccess(c)
 	return
 }
@@ -918,7 +923,9 @@ func (self *HTTPServer) HoldSetrate(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreSetrateControl(false)
+	if err := self.metric.StoreSetrateControl(false); err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+	}
 	httputil.ResponseSuccess(c)
 	return
 }
@@ -928,7 +935,9 @@ func (self *HTTPServer) EnableSetrate(c *gin.Context) {
 	if !ok {
 		return
 	}
-	self.metric.StoreSetrateControl(true)
+	if err := self.metric.StoreSetrateControl(true); err != nil {
+		httputil.ResponseFailure(c, httputil.WithReason(err.Error()))
+	}
 	httputil.ResponseSuccess(c)
 	return
 }
@@ -1132,7 +1141,7 @@ func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
 	if !ok {
 		return
 	}
-	// postData := postForm.Get("data")
+	// postData := postForm.RunningMode("data")
 	err := self.metric.RemovePendingPWIEquation()
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
