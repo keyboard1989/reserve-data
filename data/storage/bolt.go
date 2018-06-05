@@ -1403,11 +1403,10 @@ func (self *BoltStorage) GetPendingTargetQtyV2() (map[string]interface{}, error)
 }
 
 func (self *BoltStorage) ConfirmTargetQtyV2(value []byte) error {
-	var err error
 	temp := make(map[string]interface{})
-	vErr := json.Unmarshal(value, &temp)
-	if vErr != nil {
-		return fmt.Errorf("Rejected: Data could not be unmarshalled to defined format: %s", vErr)
+	err := json.Unmarshal(value, &temp)
+	if err != nil {
+		return fmt.Errorf("Rejected: Data could not be unmarshalled to defined format: %s", err)
 	}
 	pending, err := self.GetPendingTargetQtyV2()
 	if eq := reflect.DeepEqual(pending, temp); !eq {
@@ -1417,8 +1416,8 @@ func (self *BoltStorage) ConfirmTargetQtyV2(value []byte) error {
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TARGET_QUANTITY_V2))
 		targetKey := []byte("current_target_qty")
-		if err := b.Put(targetKey, value); err != nil {
-			return err
+		if vErr := b.Put(targetKey, value); vErr != nil {
+			return vErr
 		}
 		pendingBk := tx.Bucket([]byte(PENDING_TARGET_QUANTITY_V2))
 		pendingKey := []byte("current_pending_target_qty")
@@ -1458,9 +1457,9 @@ func (self *BoltStorage) GetTargetQtyV2() (map[string]interface{}, error) {
 	// we need to get current target quantity from v1 bucket and return it as v2 form.
 	if len(result) == 0 {
 		// target qty v1
-		targetQty, err := self.GetTokenTargetQty()
-		if err != nil {
-			return result, err
+		targetQty, vErr := self.GetTokenTargetQty()
+		if vErr != nil {
+			return result, vErr
 		}
 		result = convertTargetQtyV1toV2(targetQty)
 	}

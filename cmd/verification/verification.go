@@ -255,17 +255,17 @@ func (self *Verification) CheckActivities(activityID common.ActivityID, timepoin
 	Info.Printf("Activity %v stored successfully", activityID)
 }
 
+//VerifyDeposit check if core deposit works or not
 func (self *Verification) VerifyDeposit() error {
-	var err error
 	timepoint := common.GetTimepoint()
 	token, err := common.GetInternalToken("ETH")
 	amount := getTokenAmount(0.5, token)
 	Info.Println("Start deposit to exchanges")
 	for _, exchange := range self.exchanges {
-		activityID, err := self.Deposit(exchange, token.ID, amount, timepoint)
-		if err != nil {
-			Error.Println(err.Error())
-			return err
+		activityID, vErr := self.Deposit(exchange, token.ID, amount, timepoint)
+		if vErr != nil {
+			Error.Println(vErr.Error())
+			return vErr
 		}
 		Info.Printf("Deposit id: %s", activityID)
 		go self.CheckPendingActivities(activityID, timepoint)
@@ -275,16 +275,16 @@ func (self *Verification) VerifyDeposit() error {
 	return err
 }
 
+//VerifyWithdraw check if core withdraw works or not
 func (self *Verification) VerifyWithdraw() error {
-	var err error
 	timepoint := common.GetTimepoint()
 	token, err := common.GetInternalToken("ETH")
 	amount := getTokenAmount(0.5, token)
 	for _, exchange := range self.exchanges {
-		activityID, err := self.Withdraw(exchange, token.ID, amount, timepoint)
-		if err != nil {
+		activityID, vErr := self.Withdraw(exchange, token.ID, amount, timepoint)
+		if vErr != nil {
 			Error.Println(err.Error())
-			return err
+			return vErr
 		}
 		Info.Printf("Withdraw ID: %s", activityID)
 		go self.CheckPendingActivities(activityID, timepoint)
