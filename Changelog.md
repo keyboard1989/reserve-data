@@ -1,3 +1,11 @@
+# Unreleased
+
+## Features:
+
+## Bug fixes:
+
+## Comparability:
+
 # 0.8.0 (2018-06-03)
 
 ## Features:
@@ -17,8 +25,6 @@
 - Improved a lot code base quality
 - Removed redundant signal field of TickerRunner
 - Start having APIs version 2 to use json instead of string concatenation format
-
-
 
 ## Compatability:
 - KyberNetwork smart contracts (>= 0.3.0)
