@@ -72,98 +72,79 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 		return nil, err
 	}
 	// init buckets
-	db.Update(func(tx *bolt.Tx) error {
-		_, err = tx.CreateBucketIfNotExists([]byte(GOLD_BUCKET))
-		if err != nil {
-			return err
+	err = db.Update(func(tx *bolt.Tx) error {
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(GOLD_BUCKET)); vErr != nil {
+			return vErr
 		}
 
-		_, err = tx.CreateBucketIfNotExists([]byte(PRICE_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PRICE_BUCKET)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(RATE_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(RATE_BUCKET)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(ORDER_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(ORDER_BUCKET)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(ACTIVITY_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(ACTIVITY_BUCKET)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(PENDING_ACTIVITY_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PENDING_ACTIVITY_BUCKET)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(AUTH_DATA_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(AUTH_DATA_BUCKET)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(METRIC_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(METRIC_BUCKET)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(METRIC_TARGET_QUANTITY))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(METRIC_TARGET_QUANTITY)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(PENDING_TARGET_QUANTITY))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PENDING_TARGET_QUANTITY)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(ENABLE_REBALANCE))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(ENABLE_REBALANCE)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(SETRATE_CONTROL))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(SETRATE_CONTROL)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(PENDING_PWI_EQUATION))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PENDING_PWI_EQUATION)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(PWI_EQUATION))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PWI_EQUATION)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(INTERMEDIATE_TX))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(INTERMEDIATE_TX)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(EXCHANGE_STATUS))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_STATUS)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(EXCHANGE_NOTIFICATIONS))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_NOTIFICATIONS)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PENDING_STABLE_TOKEN_PARAMS_BUCKET)); vErr != nil {
+			return vErr
 		}
-		_, err = tx.CreateBucketIfNotExists([]byte(STABLE_TOKEN_PARAMS_BUCKET))
-		if err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(STABLE_TOKEN_PARAMS_BUCKET)); vErr != nil {
+			return vErr
 		}
 
-		if _, err := tx.CreateBucketIfNotExists([]byte(PENDING_TARGET_QUANTITY_V2)); err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PENDING_TARGET_QUANTITY_V2)); vErr != nil {
+			return vErr
 		}
 
-		if _, err := tx.CreateBucketIfNotExists([]byte(TARGET_QUANTITY_V2)); err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(TARGET_QUANTITY_V2)); vErr != nil {
+			return vErr
 		}
 
-		if _, err := tx.CreateBucketIfNotExists([]byte(PENDING_PWI_EQUATION_V2)); err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PENDING_PWI_EQUATION_V2)); vErr != nil {
+			return vErr
 		}
-		if _, err := tx.CreateBucketIfNotExists([]byte(PWI_EQUATION_V2)); err != nil {
-			return err
+		if _, vErr := tx.CreateBucketIfNotExists([]byte(PWI_EQUATION_V2)); vErr != nil {
+			return vErr
 		}
 
 		return nil
