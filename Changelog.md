@@ -4,7 +4,7 @@
 
 ## Bug fixes:
 
-## Comparability:
+## Compatibility:
 
 # 0.8.0 (2018-06-03)
 
@@ -39,7 +39,7 @@
 ## Bug fixes:
 - Only some small bug fixes
 
-## Compatability:
+## Compatibility:
 - This version only works with KyberNetwork smart contracts version 0.3.0 or later
 
 # 0.6.1 (2018-04-25)
@@ -49,7 +49,7 @@
 ## Bug fixes:
 - Get correct filename from AWS's Item key for intergrity check
 
-## Compatability:
+## Compatibility:
 - This version only works with KyberNetwork smart contracts version 0.3.0 or later
 
 # 0.6.0 (2018-04-25)
@@ -79,7 +79,7 @@
 - Update bittrex constants and settings
 - Persist error messages for all kind of activities (deposit/withdraw/trade)
 
-## Compatability:
+## Compatibility:
 - This version only works with KyberNetwork smart contracts version 0.3.0 or later
 
 # 0.5.0 (2018-03-08)
@@ -125,7 +125,7 @@
 - Added sanity checks on setrates, deposit, withdraw and trade
 - Added env tag to sentry
 
-## Compatability:
+## Compatibility:
 - This version only works with KyberNetwork smart contracts version 0.3.0 or later
 
 # 0.4.0 (2018-02-08)
@@ -145,7 +145,7 @@
 - Made improvements to the code base
 - Applied timeout to communication to nodes to ensure analytic doesn't have to wait for too long to set another rate
 
-## Compatability:
+## Compatibility:
 - This version only works with KyberNetwork smart contracts version 0.3.0 or later
 
 # 0.3.0 (2018-01-31)
@@ -163,7 +163,7 @@
 - Avoid storing redundant rate data
 - More code refactoring
 
-## Compatability:
+## Compatibility:
 - This version only works with KyberNetwork smart contracts version 0.3.0
 
 
