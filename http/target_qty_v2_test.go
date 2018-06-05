@@ -46,6 +46,7 @@ func testTargetQtyRequest(t *testing.T, tc targetQtytestCase, handler http.Handl
 	tc.assert(t, resp)
 }
 
+//TestHTTPServerTargetQtyV2 check if api v2 work correctly
 func TestHTTPServerTargetQtyV2(t *testing.T) {
 	const (
 		storePendingTargetQtyV2 = "/v2/settargetqty"
