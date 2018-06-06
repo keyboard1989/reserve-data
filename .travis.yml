@@ -9,6 +9,8 @@ install:
 
 script:
   - gometalinter --config=gometalinter.json ./...
+  - cd blockchain
+  - gometalinter --vendor --disable-all --enable=vetshadow ./...
   - $GOPATH/bin/goveralls -v -service=travis-ci
 
 go:
