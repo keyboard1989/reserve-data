@@ -20,14 +20,6 @@ const (
 	settingDBFileName string = "setting.db"
 )
 
-func GetAddressConfig(filePath string) common.AddressConfig {
-	addressConfig, err := common.GetAddressConfigFromFile(filePath)
-	if err != nil {
-		log.Fatalf("Config file %s is not found. Check that KYBER_ENV is set correctly. Error: %s", filePath, err)
-	}
-	return addressConfig
-}
-
 func GetChainType(kyberENV string) string {
 	switch kyberENV {
 	case common.MAINNET_MODE, common.PRODUCTION_MODE:
@@ -84,7 +76,8 @@ func GetSetting(setPath SettingPaths) (*settings.Settings, error) {
 		settings.WithHandleEmptyToken(setPath.settingPath),
 		settings.WithHandleEmptyAddress(setPath.settingPath),
 		settings.WithHandleEmptyFee(setPath.feePath),
-		settings.WithHandleEmptyMinDeposit(filepath.Join(common.CmdDirLocation(), "min_deposit.json")))
+		settings.WithHandleEmptyMinDeposit(filepath.Join(common.CmdDirLocation(), "min_deposit.json")),
+		settings.WithHandleEmptyDepositAddress(setPath.settingPath))
 	return setting, err
 }
 
@@ -95,7 +88,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		panic("Can't init the world (which is used to get global data), err " + err.Error())
 	}
 
-	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
 	setting, err := GetSetting(setPath)
 	if err != nil {
@@ -162,9 +154,8 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if enableStat {
 		config.AddStatConfig(setPath)
 	}
-	//TODO : remove addressconfig, add exchange to setting
 	if !noCore {
-		config.AddCoreConfig(setPath, addressConfig, kyberENV)
+		config.AddCoreConfig(setPath, kyberENV)
 	}
 	return config
 }

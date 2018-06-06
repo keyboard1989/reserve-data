@@ -11,15 +11,16 @@ import (
 )
 
 // GetFee returns a map[tokenID]exchangeFees and error if occur
-func (boltSettingStorage *BoltSettingStorage) GetFee(ex settings.ExchangeName) (result common.ExchangeFees, err error) {
-	err = boltSettingStorage.db.View(func(tx *bolt.Tx) error {
+func (boltSettingStorage *BoltSettingStorage) GetFee(ex settings.ExchangeName) (common.ExchangeFees, error) {
+	var result common.ExchangeFees
+	err := boltSettingStorage.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_FEE_BUCKET))
 		if b == nil {
 			return fmt.Errorf("bucket %s hasn't existed yet", EXCHANGE_FEE_BUCKET)
 		}
 		data := b.Get(boltutil.Uint64ToBytes(uint64(ex)))
 		if data == nil {
-			return fmt.Errorf("key %s hasn't existed yet", string(ex))
+			return fmt.Errorf("key %s hasn't existed yet", ex.String())
 		}
 		uErr := json.Unmarshal(data, &result)
 		if uErr != nil {
@@ -47,15 +48,16 @@ func (boltSettingStorage *BoltSettingStorage) StoreFee(ex settings.ExchangeName,
 }
 
 // GetMinDeposit returns a map[tokenID]MinDeposit and error if occur
-func (boltSettingStorage *BoltSettingStorage) GetMinDeposit(ex settings.ExchangeName) (result common.ExchangesMinDeposit, err error) {
-	err = boltSettingStorage.db.View(func(tx *bolt.Tx) error {
+func (boltSettingStorage *BoltSettingStorage) GetMinDeposit(ex settings.ExchangeName) (common.ExchangesMinDeposit, error) {
+	result := make(common.ExchangesMinDeposit)
+	err := boltSettingStorage.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_MIN_DEPOSIT_BUCKET))
 		if b == nil {
 			return fmt.Errorf("bucket %s hasn't existed yet", EXCHANGE_MIN_DEPOSIT_BUCKET)
 		}
 		data := b.Get(boltutil.Uint64ToBytes(uint64(ex)))
 		if data == nil {
-			return fmt.Errorf("key %s hasn't existed yet", string(ex))
+			return fmt.Errorf("key %s hasn't existed yet", ex.String())
 		}
 		uErr := json.Unmarshal(data, &result)
 		if uErr != nil {
@@ -83,15 +85,16 @@ func (boltSettingStorage *BoltSettingStorage) StoreMinDeposit(ex settings.Exchan
 }
 
 // GetDepositAddress returns a map[tokenID]DepositAddress and error if occur
-func (boltSettingStorage *BoltSettingStorage) GetDepositAddress(ex settings.ExchangeName) (result common.ExchangeAddresses, err error) {
-	err = boltSettingStorage.db.View(func(tx *bolt.Tx) error {
+func (boltSettingStorage *BoltSettingStorage) GetDepositAddress(ex settings.ExchangeName) (common.ExchangeAddresses, error) {
+	result := make(common.ExchangeAddresses)
+	err := boltSettingStorage.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_DEPOSIT_ADDRESS))
 		if b == nil {
 			return fmt.Errorf("bucket %s hasn't existed yet", EXCHANGE_DEPOSIT_ADDRESS)
 		}
 		data := b.Get(boltutil.Uint64ToBytes(uint64(ex)))
 		if data == nil {
-			return fmt.Errorf("key %s hasn't existed yet", string(ex))
+			return fmt.Errorf("key %s hasn't existed yet", ex.String())
 		}
 		uErr := json.Unmarshal(data, &result)
 		if uErr != nil {

@@ -638,7 +638,6 @@ func (self *Huobi) OrderStatus(id string, base, quote string) (string, error) {
 }
 
 func NewHuobi(
-	addressConfig map[string]string,
 	interf HuobiInterface,
 	blockchain *blockchain.BaseBlockchain,
 	signer blockchain.Signer,
@@ -646,7 +645,7 @@ func NewHuobi(
 	storage HuobiStorage,
 	setting Setting) (*Huobi, error) {
 
-	tokens, pairs, err := getExchangePairsAndFeesFromConfig(addressConfig, settings.Huobi, setting)
+	tokens, pairs, err := getExchangePairsAndFeesFromConfig(settings.Huobi, setting)
 	if err != nil {
 		return nil, err
 	}

@@ -469,8 +469,11 @@ func (self *Binance) OrderStatus(id string, base, quote string) (string, error) 
 	}
 }
 
-func NewBinance(addressConfig map[string]string, interf BinanceInterface, storage BinanceStorage, setting Setting) (*Binance, error) {
-	tokens, pairs, err := getExchangePairsAndFeesFromConfig(addressConfig, settings.Binance, setting)
+func NewBinance(
+	interf BinanceInterface,
+	storage BinanceStorage,
+	setting Setting) (*Binance, error) {
+	tokens, pairs, err := getExchangePairsAndFeesFromConfig(settings.Binance, setting)
 	if err != nil {
 		return nil, err
 	}

@@ -8,12 +8,14 @@ import (
 )
 
 func getExchangePairsAndFeesFromConfig(
-	addressConfig map[string]string,
 	exchange settings.ExchangeName, setting Setting) ([]common.Token, []common.TokenPair, error) {
 
 	tokens := []common.Token{}
 	pairs := []common.TokenPair{}
-
+	addressConfig, err := setting.GetDepositAddress(exchange)
+	if err != nil {
+		return nil, nil, fmt.Errorf("get exchange Deposit Address failed: (%s)", err)
+	}
 	for tokenID := range addressConfig {
 		token, err := setting.GetInternalTokenByID(tokenID)
 		if err != nil {

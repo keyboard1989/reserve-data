@@ -167,7 +167,7 @@ func (self *Config) AddStatConfig(settingPath SettingPaths) {
 	self.EtherscanApiKey = apiKey
 }
 
-func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common.AddressConfig, kyberENV string) {
+func (self *Config) AddCoreConfig(settingPath SettingPaths, kyberENV string) {
 	dataStorage, err := storage.NewBoltStorage(settingPath.dataStoragePath)
 	if err != nil {
 		panic(err)
@@ -215,7 +215,6 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 
 	// create Exchange pool
 	exchangePool, err := NewExchangePool(
-		addressConfig,
 		settingPath,
 		self.Blockchain,
 		kyberENV,

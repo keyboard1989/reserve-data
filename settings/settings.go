@@ -46,7 +46,7 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 	}
 }
 
-// HandleEmptyFee will load the Fee settings from default file if the
+// WithHandleEmptyFee will load the Fee settings from default file if the
 // fee database is empty
 func WithHandleEmptyFee(pathJSON string) SettingOption {
 	return func(setting *Settings) {
@@ -56,12 +56,22 @@ func WithHandleEmptyFee(pathJSON string) SettingOption {
 	}
 }
 
-// HandleEmptyMinDeposit will load the MinDeposit setting from fefault file if the database if
+// WithHandleEmptyMinDeposit will load the MinDeposit setting from fefault file if the database if
 // the Mindeposit database is empty
 func WithHandleEmptyMinDeposit(pathJSON string) SettingOption {
 	return func(setting *Settings) {
 		if err := setting.LoadMinDepositFromFile(pathJSON); err != nil {
 			log.Printf("WARNING: Setting Init: cannot load MinDeposit from file: %s, Fee is needed to be updated manually", err)
+		}
+	}
+}
+
+// WithHandleEmptyDepositAddress will load the MinDeposit setting from fefault file if the database if
+// the Mindeposit database is empty
+func WithHandleEmptyDepositAddress(pathJSON string) SettingOption {
+	return func(setting *Settings) {
+		if err := setting.LoadDepositAddressFromFile(pathJSON); err != nil {
+			log.Printf("WARNING: Setting Init: cannot load DepositAddress from file: %s, Fee is needed to be updated manually", err)
 		}
 	}
 }

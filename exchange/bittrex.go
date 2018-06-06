@@ -421,11 +421,11 @@ func (self *Bittrex) GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTr
 	return self.storage.GetTradeHistory(fromTime, toTime)
 }
 
-func NewBittrex(addressConfig map[string]string,
+func NewBittrex(
 	interf BittrexInterface,
 	storage BittrexStorage,
 	setting Setting) (*Bittrex, error) {
-	tokens, pairs, err := getExchangePairsAndFeesFromConfig(addressConfig, settings.Bittrex, setting)
+	tokens, pairs, err := getExchangePairsAndFeesFromConfig(settings.Bittrex, setting)
 	if err != nil {
 		return nil, err
 	}
