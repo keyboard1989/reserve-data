@@ -13,9 +13,15 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
-// HIGH_BOUND_GAS_PRICE is the price we will try to use to get higher priority
-// than trade tx to avoid price front running from users.
-const HIGH_BOUND_GAS_PRICE float64 = 50.1
+const (
+	// HIGH_BOUND_GAS_PRICE is the price we will try to use to get higher priority
+	// than trade tx to avoid price front running from users.
+	HIGH_BOUND_GAS_PRICE float64 = 50.1
+
+	statusFailed    = "failed"
+	statusSubmitted = "submitted"
+	statusDone      = "done"
+)
 
 type ReserveCore struct {
 	blockchain      Blockchain
@@ -64,10 +70,7 @@ func (self ReserveCore) Trade(
 	rate float64,
 	amount float64,
 	timepoint uint64) (common.ActivityID, float64, float64, bool, error) {
-	var (
-		err    error
-		status string
-	)
+	var err error
 
 	recordActivity := func(id, status string, done, remaining float64, finished bool, err error) error {
 		uid := timebasedID(id)
@@ -108,8 +111,7 @@ func (self ReserveCore) Trade(
 	}
 
 	if err = sanityCheckTrading(exchange, base, quote, rate, amount); err != nil {
-		status = "failed"
-		if sErr := recordActivity("", status, 0, 0, false, err); sErr != nil {
+		if sErr := recordActivity("", statusFailed, 0, 0, false, err); sErr != nil {
 			log.Printf("failed to save activity record: %s", sErr)
 		}
 		return common.ActivityID{}, 0, 0, false, err
@@ -118,17 +120,17 @@ func (self ReserveCore) Trade(
 	id, done, remaining, finished, err := exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
 	uid := timebasedID(id)
 	if err != nil {
-		status = "failed"
-		if sErr := recordActivity(id, status, done, remaining, finished, err); sErr != nil {
+		if sErr := recordActivity(id, statusFailed, done, remaining, finished, err); sErr != nil {
 			log.Printf("failed to save activity record: %s", sErr)
 		}
 		return uid, done, remaining, finished, err
 	}
 
+	var status string
 	if finished {
-		status = "done"
+		status = statusDone
 	} else {
-		status = "submitted"
+		status = statusSubmitted
 	}
 
 	if err = recordActivity(id, status, done, remaining, finished, nil); err != nil {
@@ -209,10 +211,7 @@ func (self ReserveCore) Deposit(
 func (self ReserveCore) Withdraw(
 	exchange common.Exchange, token common.Token,
 	amount *big.Int, timepoint uint64) (common.ActivityID, error) {
-	var (
-		err    error
-		status string
-	)
+	var err error
 
 	activityRecord := func(id, status string, err error) error {
 		uid := timebasedID(id)
@@ -245,8 +244,7 @@ func (self ReserveCore) Withdraw(
 	_, supported := exchange.Address(token)
 	if !supported {
 		err = fmt.Errorf("Exchange %s doesn't support token %s", exchange.ID(), token.ID)
-		status = "failed"
-		if sErr := activityRecord("", status, err); sErr != nil {
+		if sErr := activityRecord("", statusFailed, err); sErr != nil {
 			log.Printf("failed to store activiry record: %s", sErr.Error())
 		}
 		return common.ActivityID{}, err
@@ -254,8 +252,7 @@ func (self ReserveCore) Withdraw(
 	}
 
 	if err = sanityCheckAmount(exchange, token, amount); err != nil {
-		status = "failed"
-		if sErr := activityRecord("", status, err); sErr != nil {
+		if sErr := activityRecord("", statusFailed, err); sErr != nil {
 			log.Printf("failed to store activiry record: %s", sErr.Error())
 		}
 		return common.ActivityID{}, err
@@ -263,15 +260,13 @@ func (self ReserveCore) Withdraw(
 
 	id, err := exchange.Withdraw(token, amount, self.rm, timepoint)
 	if err != nil {
-		status = "failed"
-		if sErr := activityRecord("", status, err); sErr != nil {
+		if sErr := activityRecord("", statusFailed, err); sErr != nil {
 			log.Printf("failed to store activiry record: %s", sErr.Error())
 		}
 		return common.ActivityID{}, err
 	}
 
-	status = "submitted"
-	err = activityRecord(id, status, err)
+	err = activityRecord(id, statusSubmitted, err)
 	return timebasedID(id), err
 }
 
