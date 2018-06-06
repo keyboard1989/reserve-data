@@ -724,8 +724,8 @@ func (self *Fetcher) RunLogFetcher() {
 					nextBlock = toBlock
 				}
 				log.Printf("LogFetcher - update log block: %d", nextBlock)
-				if err := self.logStorage.UpdateLogBlock(nextBlock, timepoint); err != nil {
-					log.Printf("Update log block: %s", err.Error())
+				if vErr := self.logStorage.UpdateLogBlock(nextBlock, timepoint); vErr != nil {
+					log.Printf("Update log block: %s", vErr.Error())
 				}
 			}
 		} else {
