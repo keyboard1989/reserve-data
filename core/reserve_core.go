@@ -69,7 +69,7 @@ func (self ReserveCore) Trade(
 		status string
 	)
 
-	recordFn := func(id, status string, done, remaining float64, finished bool, err error) error {
+	recordActivity := func(id, status string, done, remaining float64, finished bool, err error) error {
 		uid := timebasedID(id)
 		log.Printf(
 			"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: id: %s, done: %s, remaining: %s, finished: %t, error: %s",
@@ -109,7 +109,7 @@ func (self ReserveCore) Trade(
 
 	if err = sanityCheckTrading(exchange, base, quote, rate, amount); err != nil {
 		status = "failed"
-		if sErr := recordFn("", status, 0, 0, false, err); sErr != nil {
+		if sErr := recordActivity("", status, 0, 0, false, err); sErr != nil {
 			log.Printf("failed to save activity record: %s", sErr)
 		}
 		return common.ActivityID{}, 0, 0, false, err
@@ -119,7 +119,7 @@ func (self ReserveCore) Trade(
 	uid := timebasedID(id)
 	if err != nil {
 		status = "failed"
-		if sErr := recordFn(id, status, done, remaining, finished, err); sErr != nil {
+		if sErr := recordActivity(id, status, done, remaining, finished, err); sErr != nil {
 			log.Printf("failed to save activity record: %s", sErr)
 		}
 		return uid, done, remaining, finished, err
@@ -131,7 +131,7 @@ func (self ReserveCore) Trade(
 		status = "submitted"
 	}
 
-	if err = recordFn(id, status, done, remaining, finished, nil); err != nil {
+	if err = recordActivity(id, status, done, remaining, finished, nil); err != nil {
 		return uid, done, remaining, finished, err
 	}
 
@@ -209,55 +209,70 @@ func (self ReserveCore) Deposit(
 func (self ReserveCore) Withdraw(
 	exchange common.Exchange, token common.Token,
 	amount *big.Int, timepoint uint64) (common.ActivityID, error) {
+	var (
+		err    error
+		status string
+	)
+
+	activityRecord := func(id, status string, err error) error {
+		uid := timebasedID(id)
+		log.Printf(
+			"Core ----------> Withdraw from %s: token: %s, amount: %s, timestamp: %d ==> Result: id: %s, error: %s",
+			exchange.ID(), token.ID, amount.Text(10), timepoint, id, err,
+		)
+		return self.activityStorage.Record(
+			"withdraw",
+			uid,
+			string(exchange.ID()),
+			map[string]interface{}{
+				"exchange":  exchange,
+				"token":     token,
+				"amount":    strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
+				"timepoint": timepoint,
+			}, map[string]interface{}{
+				"error": common.ErrorToString(err),
+				"id":    id,
+				// this field will be updated with real tx when data fetcher can fetch it
+				// from exchanges
+				"tx": "",
+			},
+			status,
+			"",
+			timepoint,
+		)
+	}
 
 	_, supported := exchange.Address(token)
-	var err error
-	var id string
 	if !supported {
 		err = fmt.Errorf("Exchange %s doesn't support token %s", exchange.ID(), token.ID)
-	} else {
-		err = sanityCheckAmount(exchange, token, amount)
-		if err == nil {
-			id, err = exchange.Withdraw(token, amount, self.rm, timepoint)
+		status = "failed"
+		if sErr := activityRecord("", status, err); sErr != nil {
+			log.Printf("failed to store activiry record: %s", sErr.Error())
 		}
+		return common.ActivityID{}, err
+
 	}
-	var status string
+
+	if err = sanityCheckAmount(exchange, token, amount); err != nil {
+		status = "failed"
+		if sErr := activityRecord("", status, err); sErr != nil {
+			log.Printf("failed to store activiry record: %s", sErr.Error())
+		}
+		return common.ActivityID{}, err
+	}
+
+	id, err := exchange.Withdraw(token, amount, self.rm, timepoint)
 	if err != nil {
 		status = "failed"
-	} else {
-		status = "submitted"
-	}
-	uid := timebasedID(id)
-	sErr := self.activityStorage.Record(
-		"withdraw",
-		uid,
-		string(exchange.ID()),
-		map[string]interface{}{
-			"exchange":  exchange,
-			"token":     token,
-			"amount":    strconv.FormatFloat(common.BigToFloat(amount, token.Decimal), 'f', -1, 64),
-			"timepoint": timepoint,
-		}, map[string]interface{}{
-			"error": common.ErrorToString(err),
-			"id":    id,
-			// this field will be updated with real tx when data fetcher can fetch it
-			// from exchanges
-			"tx": "",
-		},
-		status,
-		"",
-		timepoint,
-	)
-
-	if sErr != nil {
-		log.Printf("failed to save withdraw record: %s", sErr.Error())
+		if sErr := activityRecord("", status, err); sErr != nil {
+			log.Printf("failed to store activiry record: %s", sErr.Error())
+		}
+		return common.ActivityID{}, err
 	}
 
-	log.Printf(
-		"Core ----------> Withdraw from %s: token: %s, amount: %s, timestamp: %d ==> Result: id: %s, error: %s",
-		exchange.ID(), token.ID, amount.Text(10), timepoint, id, err,
-	)
-	return uid, err
+	status = "submitted"
+	err = activityRecord(id, status, err)
+	return timebasedID(id), err
 }
 
 func calculateNewGasPrice(old *big.Int, count uint64) *big.Int {
