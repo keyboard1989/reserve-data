@@ -133,10 +133,7 @@ func (self ReserveCore) Trade(
 		status = statusSubmitted
 	}
 
-	if err = recordActivity(id, status, done, remaining, finished, nil); err != nil {
-		return uid, done, remaining, finished, err
-	}
-
+	err = recordActivity(id, status, done, remaining, finished, nil)
 	return uid, done, remaining, finished, err
 }
 
@@ -266,7 +263,7 @@ func (self ReserveCore) Withdraw(
 		return common.ActivityID{}, err
 	}
 
-	err = activityRecord(id, statusSubmitted, err)
+	err = activityRecord(id, statusSubmitted, nil)
 	return timebasedID(id), err
 }
 
