@@ -403,28 +403,26 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.GeneratedGetTokenRates(
 		opts, self.pricingAddr, tokenAddrs,
 	)
+	if err != nil {
+		return result, err
+	}
 	returnTime := common.GetTimestamp()
 	result.Timestamp = timestamp
 	result.ReturnTime = returnTime
 	result.BlockNumber = currentBlock
-	if err != nil {
-		result.Valid = false
-		result.Error = err.Error()
-		return result, err
-	} else {
-		result.Valid = true
-		result.Data = map[string]common.RateEntry{}
-		for i, token := range validTokens {
-			result.Data[token.ID] = common.NewRateEntry(
-				baseBuys[i],
-				int8(compactBuys[i]),
-				baseSells[i],
-				int8(compactSells[i]),
-				blocks[i].Uint64(),
-			)
-		}
-		return result, nil
+
+	result.Data = map[string]common.RateEntry{}
+	for i, token := range validTokens {
+		result.Data[token.ID] = common.NewRateEntry(
+			baseBuys[i],
+			int8(compactBuys[i]),
+			baseSells[i],
+			int8(compactSells[i]),
+			blocks[i].Uint64(),
+		)
 	}
+	return result, nil
+
 }
 
 func (self *Blockchain) GetReserveRates(

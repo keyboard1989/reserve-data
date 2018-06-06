@@ -127,28 +127,30 @@ func (self *Fetcher) RunRateFetcher() {
 }
 
 func (self *Fetcher) FetchRate(timepoint uint64) {
+	var (
+		err  error
+		data common.AllRateEntry
+	)
 	// only fetch rates 5s after the block number is updated
 	if !self.simulationMode && self.currentBlockUpdateTime-timepoint <= 5000 {
 		return
 	}
-	var err error
-	var data common.AllRateEntry
+
+	var atBlock = self.currentBlock - 1
+	// in simulation mode, just fetches from latest known block
 	if self.simulationMode {
-		data, err = self.blockchain.FetchRates(0, self.currentBlock)
-	} else {
-		data, err = self.blockchain.FetchRates(self.currentBlock-1, self.currentBlock)
+		atBlock = 0
 	}
+
+	data, err = self.blockchain.FetchRates(atBlock, self.currentBlock)
 	if err != nil {
 		log.Printf("Fetching rates from blockchain failed: %s. Will not store it to storage.", err.Error())
-	} else {
-		if data.Valid {
-			log.Printf("Got rates from blockchain: %+v", data)
-			if err = self.storage.StoreRate(data, timepoint); err != nil {
-				log.Printf("Storing rates failed: %s", err.Error())
-			}
-		} else {
-			log.Printf("Got invalid rates from blockchain: %s. Will not store it to storage.", data.Error)
-		}
+		return
+	}
+
+	log.Printf("Got rates from blockchain: %+v", data)
+	if err = self.storage.StoreRate(data, timepoint); err != nil {
+		log.Printf("Storing rates failed: %s", err.Error())
 	}
 }
 
