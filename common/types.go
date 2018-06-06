@@ -2,9 +2,7 @@ package common
 
 import (
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/big"
 	"strconv"
@@ -152,40 +150,9 @@ func (self FundingFee) GetTokenFee(token string) float64 {
 
 type ExchangesMinDeposit map[string]float64
 
-type ExchangesMinDepositConfig struct {
-	Exchanges map[string]ExchangesMinDeposit `json:"exchanges"`
-}
-
 type ExchangeFees struct {
 	Trading TradingFee
 	Funding FundingFee
-}
-
-type ExchangeFeesConfig struct {
-	Exchanges map[string]ExchangeFees `json:"exchanges"`
-}
-
-func GetFeeFromFile(path string) (ExchangeFeesConfig, error) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return ExchangeFeesConfig{}, err
-	} else {
-		result := ExchangeFeesConfig{}
-		err := json.Unmarshal(data, &result)
-		return result, err
-	}
-}
-
-func GetMinDepositFromFile(path string) (ExchangesMinDepositConfig, error) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return ExchangesMinDepositConfig{}, err
-	} else {
-		result := ExchangesMinDepositConfig{}
-		err := json.Unmarshal(data, &result)
-		log.Printf("min deposit: %+v", result)
-		return result, err
-	}
 }
 
 func NewExchangeFee(tradingFee TradingFee, fundingFee FundingFee) ExchangeFees {

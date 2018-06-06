@@ -729,7 +729,11 @@ func (self *HTTPServer) GetFee(c *gin.Context) {
 func (self *HTTPServer) GetMinDeposit(c *gin.Context) {
 	data := map[string]common.ExchangesMinDeposit{}
 	for _, exchange := range common.SupportedExchanges {
-		minDeposit := exchange.GetMinDeposit()
+		minDeposit, err := exchange.GetMinDeposit()
+		if err != nil {
+			httputil.ResponseFailure(c, httputil.WithError(err))
+			return
+		}
 		data[string(exchange.ID())] = minDeposit
 	}
 	httputil.ResponseSuccess(c, httputil.WithData(data))

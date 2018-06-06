@@ -119,21 +119,3 @@ func (boltSettingStorage *BoltSettingStorage) StoreDepositAddress(ex settings.Ex
 	})
 	return err
 }
-
-// Count Fee return the number of element in fee database, and error if occcur.
-// It is used mainly to check if the fee database is empty
-func (boltSettingStorage *BoltSettingStorage) CountFee() (uint64, error) {
-	var result uint64 = 0
-	err := boltSettingStorage.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(EXCHANGE_FEE_BUCKET))
-		if b == nil {
-			return fmt.Errorf("bucket %s hasn't existed yet", EXCHANGE_DEPOSIT_ADDRESS)
-		}
-		c := b.Cursor()
-		for k, _ := c.First(); k != nil; k, _ = c.Next() {
-			result++
-		}
-		return nil
-	})
-	return result, err
-}

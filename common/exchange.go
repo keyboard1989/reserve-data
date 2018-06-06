@@ -18,7 +18,7 @@ type Exchange interface {
 	GetInfo() (*ExchangeInfo, error)
 	GetExchangeInfo(TokenPairID) (ExchangePrecisionLimit, error)
 	GetFee() (ExchangeFees, error)
-	GetMinDeposit() ExchangesMinDeposit
+	GetMinDeposit() (ExchangesMinDeposit, error)
 	TokenAddresses() map[string]ethereum.Address
 	GetTradeHistory(fromTime, toTime uint64) (ExchangeTradeHistory, error)
 }

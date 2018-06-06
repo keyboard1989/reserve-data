@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type StableEx struct {
 	pairs        []common.TokenPair
 	exchangeInfo *common.ExchangeInfo
-	mindeposit   common.ExchangesMinDeposit
 	setting      Setting
 }
 
@@ -134,19 +132,18 @@ func (self *StableEx) OrderStatus(id string, base, quote string) (string, error)
 	return "", errors.New("not supported")
 }
 
-func (self *StableEx) GetMinDeposit() common.ExchangesMinDeposit {
-	return self.mindeposit
+func (self *StableEx) GetMinDeposit() (common.ExchangesMinDeposit, error) {
+	return self.setting.GetMinDeposit(settings.StableExchange)
 }
 
-func NewStableEx(addressConfig map[string]string, minDepositConfig common.ExchangesMinDeposit, setting Setting) (*StableEx, error) {
-	_, pairs, mindeposit, err := getExchangePairsAndFeesFromConfig(addressConfig, minDepositConfig, settings.StableExchange, setting)
+func NewStableEx(addressConfig map[string]string, setting Setting) (*StableEx, error) {
+	_, pairs, err := getExchangePairsAndFeesFromConfig(addressConfig, settings.StableExchange, setting)
 	if err != nil {
 		return nil, err
 	}
 	return &StableEx{
 		pairs,
 		common.NewExchangeInfo(),
-		mindeposit,
 		setting,
 	}, nil
 }

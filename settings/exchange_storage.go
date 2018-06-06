@@ -6,6 +6,7 @@ import (
 
 type ExchangeStorage interface {
 	// GetFee returns a map[tokenID]exchangeFees and error if occur
+	// If there is no exchangeFee matched with key param, error is returned as well
 	GetFee(ex ExchangeName) (common.ExchangeFees, error)
 	// StoreFee stores the fee with exchangeName as key into database and return error if occur
 	StoreFee(ex ExchangeName, data common.ExchangeFees) error
@@ -18,7 +19,4 @@ type ExchangeStorage interface {
 	// StoreDepositAddress stores the depositAddress with exchangeName as key into database and
 	// return error if occur
 	StoreDepositAddress(ex ExchangeName, addrs common.ExchangeAddresses) error
-	// CountFee return the number of element in fee database, and error if occcur.
-	// It is used mainly to check if the fee database is empty
-	CountFee() (uint64, error)
 }

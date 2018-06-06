@@ -168,12 +168,6 @@ func (self *Config) AddStatConfig(settingPath SettingPaths) {
 }
 
 func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common.AddressConfig, kyberENV string) {
-	minDepositPath := filepath.Join(common.CmdDirLocation(), "min_deposit.json")
-	minDeposit, err := common.GetMinDepositFromFile(minDepositPath)
-	if err != nil {
-		log.Fatalf("Fees file %s cannot found at: %s", minDepositPath, err.Error())
-	}
-
 	dataStorage, err := storage.NewBoltStorage(settingPath.dataStoragePath)
 	if err != nil {
 		panic(err)
@@ -224,7 +218,6 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		addressConfig,
 		settingPath,
 		self.Blockchain,
-		minDeposit,
 		kyberENV,
 		self.Setting,
 	)

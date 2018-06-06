@@ -2,9 +2,7 @@ package configuration
 
 import (
 	"log"
-	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -59,17 +57,14 @@ func NewExchangePool(
 	addressConfig common.AddressConfig,
 	settingPaths SettingPaths,
 	blockchain *blockchain.BaseBlockchain,
-	minDeposit common.ExchangesMinDepositConfig,
 	kyberENV string, setting *settings.Settings) (*ExchangePool, error) {
 	exchanges := map[common.ExchangeID]interface{}{}
-	params := os.Getenv("KYBER_EXCHANGES")
-	exparams := strings.Split(params, ",")
+	exparams := settings.RunningExchange()
 	for _, exparam := range exparams {
 		switch exparam {
 		case "stable_exchange":
 			stableEx, err := exchange.NewStableEx(
 				addressConfig.Exchanges["stable_exchange"],
-				minDeposit.Exchanges["stable_exchange"],
 				setting,
 			)
 			if err != nil {
@@ -87,7 +82,6 @@ func NewExchangePool(
 				addressConfig.Exchanges["bittrex"],
 				endpoint,
 				bittrexStorage,
-				minDeposit.Exchanges["bittrex"],
 				setting)
 			if err != nil {
 				return nil, err
@@ -110,7 +104,6 @@ func NewExchangePool(
 			bin, err := exchange.NewBinance(
 				addressConfig.Exchanges["binance"],
 				endpoint,
-				minDeposit.Exchanges["binance"],
 				storage,
 				setting)
 			if err != nil {
@@ -140,7 +133,6 @@ func NewExchangePool(
 				intermediatorSigner,
 				intermediatorNonce,
 				storage,
-				minDeposit.Exchanges["huobi"],
 				setting,
 			)
 			if err != nil {

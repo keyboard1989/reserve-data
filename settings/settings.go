@@ -46,19 +46,22 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 	}
 }
 
-// HandleEmptyFee
+// HandleEmptyFee will load the Fee settings from default file if the
+// fee database is empty
 func WithHandleEmptyFee(pathJSON string) SettingOption {
 	return func(setting *Settings) {
-		feeCount, err := setting.Exchange.Storage.CountFee()
-		if feeCount == 0 || err != nil {
-			if err != nil {
-				log.Printf("Setting Init: Fee DB is faulty (%s), attempt to load Fee from file", err)
-			} else {
-				log.Printf("Setting Init: Fee DB is empty, attempt to load Fee from file", err)
-			}
-			if err = setting.LoadFeeFromFile(pathJSON); err != nil {
-				log.Printf("Setting Init: cannot load Fee from file: %s, Fee is needed to be updated mnaually", err)
-			}
+		if err := setting.LoadFeeFromFile(pathJSON); err != nil {
+			log.Printf("WARNING: Setting Init: cannot load Fee from file: %s, Fee is needed to be updated manually", err)
+		}
+	}
+}
+
+// HandleEmptyMinDeposit will load the MinDeposit setting from fefault file if the database if
+// the Mindeposit database is empty
+func WithHandleEmptyMinDeposit(pathJSON string) SettingOption {
+	return func(setting *Settings) {
+		if err := setting.LoadMinDepositFromFile(pathJSON); err != nil {
+			log.Printf("WARNING: Setting Init: cannot load MinDeposit from file: %s, Fee is needed to be updated manually", err)
 		}
 	}
 }
@@ -66,6 +69,8 @@ func WithHandleEmptyFee(pathJSON string) SettingOption {
 // SettingOption sets the initialization behavior of the Settings instance.
 type SettingOption func(s *Settings)
 
+// NewSetting create setting object from its component, and handle if the setting database is empty
+// returns a pointer to setting object from which all core setting can be read and write to; and error if occurs.
 func NewSetting(token *TokenSetting, address *AddressSetting, exchange *ExchangeSetting, options ...SettingOption) (*Settings, error) {
 	setting := &Settings{
 		Tokens:   token,

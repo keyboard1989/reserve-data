@@ -10,12 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	huobiblockchain "github.com/KyberNetwork/reserve-data/exchange/huobi/blockchain"
 	huobihttp "github.com/KyberNetwork/reserve-data/exchange/huobi/http"
+	"github.com/KyberNetwork/reserve-data/settings"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 )
@@ -33,7 +32,6 @@ type Huobi struct {
 	blockchain        HuobiBlockchain
 	intermediatorAddr ethereum.Address
 	storage           HuobiStorage
-	minDeposit        common.ExchangesMinDeposit
 	setting           Setting
 }
 
@@ -106,8 +104,8 @@ func (self *Huobi) GetFee() (common.ExchangeFees, error) {
 	return self.setting.GetFee(settings.Huobi)
 }
 
-func (self *Huobi) GetMinDeposit() common.ExchangesMinDeposit {
-	return self.minDeposit
+func (self *Huobi) GetMinDeposit() (common.ExchangesMinDeposit, error) {
+	return self.setting.GetMinDeposit(settings.Huobi)
 }
 
 func (self *Huobi) ID() common.ExchangeID {
@@ -641,11 +639,14 @@ func (self *Huobi) OrderStatus(id string, base, quote string) (string, error) {
 
 func NewHuobi(
 	addressConfig map[string]string,
-	interf HuobiInterface, blockchain *blockchain.BaseBlockchain,
-	signer blockchain.Signer, nonce blockchain.NonceCorpus, storage HuobiStorage,
-	minDepositConfig common.ExchangesMinDeposit, setting Setting) (*Huobi, error) {
+	interf HuobiInterface,
+	blockchain *blockchain.BaseBlockchain,
+	signer blockchain.Signer,
+	nonce blockchain.NonceCorpus,
+	storage HuobiStorage,
+	setting Setting) (*Huobi, error) {
 
-	tokens, pairs, minDeposit, err := getExchangePairsAndFeesFromConfig(addressConfig, minDepositConfig, settings.Huobi, setting)
+	tokens, pairs, err := getExchangePairsAndFeesFromConfig(addressConfig, settings.Huobi, setting)
 	if err != nil {
 		return nil, err
 	}
@@ -663,7 +664,6 @@ func NewHuobi(
 		bc,
 		signer.GetAddress(),
 		storage,
-		minDeposit,
 		setting,
 	}
 	huobiObj.FetchTradeHistory()

@@ -24,7 +24,6 @@ type Bittrex struct {
 	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
 	exchangeInfo *common.ExchangeInfo
-	minDeposit   common.ExchangesMinDeposit
 	setting      Setting
 }
 
@@ -45,8 +44,8 @@ func (self *Bittrex) GetFee() (common.ExchangeFees, error) {
 	return self.setting.GetFee(settings.Bittrex)
 }
 
-func (self *Bittrex) GetMinDeposit() common.ExchangesMinDeposit {
-	return self.minDeposit
+func (self *Bittrex) GetMinDeposit() (common.ExchangesMinDeposit, error) {
+	return self.setting.GetMinDeposit(settings.Bittrex)
 }
 
 func (self *Bittrex) UpdateAllDepositAddresses(address string) {
@@ -425,9 +424,8 @@ func (self *Bittrex) GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTr
 func NewBittrex(addressConfig map[string]string,
 	interf BittrexInterface,
 	storage BittrexStorage,
-	minDepositConfig common.ExchangesMinDeposit,
 	setting Setting) (*Bittrex, error) {
-	tokens, pairs, minDeposit, err := getExchangePairsAndFeesFromConfig(addressConfig, minDepositConfig, settings.Bittrex, setting)
+	tokens, pairs, err := getExchangePairsAndFeesFromConfig(addressConfig, settings.Bittrex, setting)
 	if err != nil {
 		return nil, err
 	}
@@ -438,7 +436,6 @@ func NewBittrex(addressConfig map[string]string,
 		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),
-		minDeposit,
 		setting,
 	}
 	bittrex.FetchTradeHistory()
