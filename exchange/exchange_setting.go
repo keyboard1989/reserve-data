@@ -14,4 +14,5 @@ type Setting interface {
 	GetFee(ex settings.ExchangeName) (common.ExchangeFees, error)
 	GetMinDeposit(ex settings.ExchangeName) (common.ExchangesMinDeposit, error)
 	GetDepositAddress(ex settings.ExchangeName) (common.ExchangeAddresses, error)
+	GetTokenPairs(ex settings.ExchangeName) ([]common.TokenPair, error)
 }

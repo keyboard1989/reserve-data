@@ -90,7 +90,10 @@ func NewExchangePool(
 			// 	go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait, setting)
 			// }
 			wait.Wait()
-			bit.UpdatePairsPrecision()
+			err = bit.UpdatePairsPrecision()
+			if err != nil {
+				return nil, fmt.Errorf("Can not create exchange bittrex: (%s)", err)
+			}
 			exchanges[bit.ID()] = bit
 		case "binance":
 			binanceSigner := binance.NewSignerFromFile(settingPaths.secretPath)
@@ -112,7 +115,10 @@ func NewExchangePool(
 			// 	go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait, setting)
 			// }
 			wait.Wait()
-			bin.UpdatePairsPrecision()
+			err = bin.UpdatePairsPrecision()
+			if err != nil {
+				return nil, fmt.Errorf("Can not create exchange binance: (%s)", err)
+			}
 			exchanges[bin.ID()] = bin
 		case "huobi":
 			huobiSigner := huobi.NewSignerFromFile(settingPaths.secretPath)
@@ -141,7 +147,10 @@ func NewExchangePool(
 			// 	go AsyncUpdateDepositAddress(huobi, tokenID, addr, &wait, setting)
 			// }
 			wait.Wait()
-			huobi.UpdatePairsPrecision()
+			err = huobi.UpdatePairsPrecision()
+			if err != nil {
+				return nil, fmt.Errorf("Can not create exchange huobi: (%s)", err)
+			}
 			exchanges[huobi.ID()] = huobi
 		}
 	}

@@ -19,4 +19,10 @@ type ExchangeStorage interface {
 	// StoreDepositAddress stores the depositAddress with exchangeName as key into database and
 	// return error if occur
 	StoreDepositAddress(ex ExchangeName, addrs common.ExchangeAddresses) error
+	// GetTokenPairs returns a list of TokenPairs available at current exchange
+	// return error if occur
+	GetTokenPairs(ex ExchangeName) ([]common.TokenPair, error)
+	// StoreTokenPairs store the list of TokenPairs with exchangeName as key into database and
+	// return error if occur
+	StoreTokenPairs(ex ExchangeName, data []common.TokenPair) error
 }

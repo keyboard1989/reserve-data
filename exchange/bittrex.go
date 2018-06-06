@@ -19,7 +19,6 @@ const BITTREX_EPSILON float64 = 0.000001
 
 type Bittrex struct {
 	interf       BittrexInterface
-	pairs        []common.TokenPair
 	tokens       []common.Token
 	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
@@ -91,24 +90,28 @@ func (self *Bittrex) GetInfo() (*common.ExchangeInfo, error) {
 	return self.exchangeInfo, nil
 }
 
-func (self *Bittrex) UpdatePairsPrecision() {
+func (self *Bittrex) UpdatePairsPrecision() error {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
-	if err == nil {
-		symbols := exchangeInfo.Pairs
-		for _, pair := range self.pairs {
-			self.UpdatePrecisionLimit(pair, symbols)
-		}
-	} else {
-		log.Printf("RunningMode exchange info failed: %s\n", err)
+	if err != nil {
+		return err
 	}
+	symbols := exchangeInfo.Pairs
+	pairs, err := self.setting.GetTokenPairs(settings.Bittrex)
+	if err != nil {
+		return err
+	}
+	for _, pair := range pairs {
+		self.UpdatePrecisionLimit(pair, symbols)
+	}
+	return nil
 }
 
 func (self *Bittrex) ID() common.ExchangeID {
 	return common.ExchangeID("bittrex")
 }
 
-func (self *Bittrex) TokenPairs() []common.TokenPair {
-	return self.pairs
+func (self *Bittrex) TokenPairs() ([]common.TokenPair, error) {
+	return self.setting.GetTokenPairs(settings.Bittrex)
 }
 
 func (self *Bittrex) Name() string {
@@ -306,7 +309,10 @@ func (self *Bittrex) FetchOnePairData(wq *sync.WaitGroup, pair common.TokenPair,
 func (self *Bittrex) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
-	pairs := self.pairs
+	pairs, err := self.setting.GetTokenPairs(settings.Bittrex)
+	if err != nil {
+		return nil, err
+	}
 	for _, pair := range pairs {
 		wait.Add(1)
 		go self.FetchOnePairData(&wait, pair, &data, timepoint)
@@ -398,7 +404,11 @@ func (self *Bittrex) FetchTradeHistory() {
 			result := map[common.TokenPairID][]common.TradeHistory{}
 			timepoint := common.GetTimepoint()
 			data := sync.Map{}
-			pairs := self.pairs
+			pairs, err := self.setting.GetTokenPairs(settings.Bittrex)
+			if err != nil {
+				log.Printf("Bittrex fetch trade history failed (%s). This might due to pairs setting hasn't been init yet", err.Error())
+				continue
+			}
 			wait := sync.WaitGroup{}
 			for _, pair := range pairs {
 				wait.Add(1)
@@ -425,13 +435,12 @@ func NewBittrex(
 	interf BittrexInterface,
 	storage BittrexStorage,
 	setting Setting) (*Bittrex, error) {
-	tokens, pairs, err := getExchangePairsAndFeesFromConfig(settings.Bittrex, setting)
+	tokens, err := getExchangePairsAndFeesFromConfig(settings.Bittrex, setting)
 	if err != nil {
 		return nil, err
 	}
 	bittrex := &Bittrex{
 		interf,
-		pairs,
 		tokens,
 		common.NewExchangeAddresses(),
 		storage,

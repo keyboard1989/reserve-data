@@ -32,3 +32,15 @@ func (setting *Settings) GetDepositAddress(ex ExchangeName) (common.ExchangeAddr
 func (setting *Settings) StoreDepositAddress(ex ExchangeName, addrs common.ExchangeAddresses) error {
 	return setting.Exchange.Storage.StoreDepositAddress(ex, addrs)
 }
+
+// GetTokenPairs returns a list of TokenPairs available at current exchange
+// return error if occur
+func (setting *Settings) GetTokenPairs(ex ExchangeName) ([]common.TokenPair, error) {
+	return setting.Exchange.Storage.GetTokenPairs(ex)
+}
+
+// StoreTokenPairs store the list of TokenPairs with exchangeName as key into database and
+// return error if occur
+func (setting *Settings) StoreTokenPairs(ex ExchangeName, data []common.TokenPair) error {
+	return setting.Exchange.Storage.StoreTokenPairs(ex, data)
+}

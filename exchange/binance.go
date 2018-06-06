@@ -22,7 +22,6 @@ const (
 
 type Binance struct {
 	interf       BinanceInterface
-	pairs        []common.TokenPair
 	tokens       []common.Token
 	addresses    *common.ExchangeAddresses
 	exchangeInfo *common.ExchangeInfo
@@ -109,16 +108,20 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 	}
 }
 
-func (self *Binance) UpdatePairsPrecision() {
+func (self *Binance) UpdatePairsPrecision() error {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err != nil {
-		log.Printf("RunningMode exchange info failed: %s\n", err)
-	} else {
-		symbols := exchangeInfo.Symbols
-		for _, pair := range self.pairs {
-			self.UpdatePrecisionLimit(pair, symbols)
-		}
+		return err
 	}
+	symbols := exchangeInfo.Symbols
+	pairs, err := self.setting.GetTokenPairs(settings.Binance)
+	if err != nil {
+		return err
+	}
+	for _, pair := range pairs {
+		self.UpdatePrecisionLimit(pair, symbols)
+	}
+	return nil
 }
 
 func (self *Binance) GetInfo() (*common.ExchangeInfo, error) {
@@ -142,8 +145,8 @@ func (self *Binance) ID() common.ExchangeID {
 	return common.ExchangeID("binance")
 }
 
-func (self *Binance) TokenPairs() []common.TokenPair {
-	return self.pairs
+func (self *Binance) TokenPairs() ([]common.TokenPair, error) {
+	return self.setting.GetTokenPairs(settings.Binance)
 }
 
 func (self *Binance) Name() string {
@@ -247,7 +250,10 @@ func (self *Binance) FetchOnePairData(
 func (self *Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
-	pairs := self.pairs
+	pairs, err := self.setting.GetTokenPairs(settings.Binance)
+	if err != nil {
+		return nil, err
+	}
 	var i int = 0
 	var x int = 0
 	for i < len(pairs) {
@@ -381,7 +387,11 @@ func (self *Binance) FetchTradeHistory() {
 		for {
 			result := common.ExchangeTradeHistory{}
 			data := sync.Map{}
-			pairs := self.pairs
+			pairs, err := self.setting.GetTokenPairs(settings.Binance)
+			if err != nil {
+				log.Printf("Binance fetch trade history failed (%s). This might due to pairs setting hasn't been init yet", err.Error())
+				continue
+			}
 			wait := sync.WaitGroup{}
 			var i int = 0
 			var x int = 0
@@ -473,13 +483,12 @@ func NewBinance(
 	interf BinanceInterface,
 	storage BinanceStorage,
 	setting Setting) (*Binance, error) {
-	tokens, pairs, err := getExchangePairsAndFeesFromConfig(settings.Binance, setting)
+	tokens, err := getExchangePairsAndFeesFromConfig(settings.Binance, setting)
 	if err != nil {
 		return nil, err
 	}
 	binance := &Binance{
 		interf,
-		pairs,
 		tokens,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),

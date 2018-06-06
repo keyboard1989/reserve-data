@@ -75,8 +75,7 @@ func (setting *Settings) LoadFeeFromFile(path string) error {
 			return fmt.Errorf("Exchange %s is in KYBER_EXCHANGES, but not avail in current deployment", ex)
 		}
 		//Check if the current database has a record for such exchange
-		_, err := setting.Exchange.Storage.GetFee(exName)
-		if err != nil {
+		if _, err := setting.Exchange.Storage.GetFee(exName); err != nil {
 			log.Printf("Exchange %s is in KYBER_EXCHANGES but can't load fee in Database (%s). atempt to load it from config file", exName.String(), err.Error())
 			//Check if the config file has config for such exchange
 			exFee, ok := exFeeConfig.Exchanges[ex]
@@ -114,13 +113,12 @@ func (setting *Settings) LoadMinDepositFromFile(path string) error {
 			return fmt.Errorf("Exchange %s is in KYBER_EXCHANGES, but not avail in current deployment", ex)
 		}
 		//Check if the current database has a record for such exchange
-		_, err := setting.Exchange.Storage.GetMinDeposit(exName)
-		if err != nil {
+		if _, err := setting.Exchange.Storage.GetMinDeposit(exName); err != nil {
 			log.Printf("Exchange %s is in KYBER_EXCHANGES but can't load MinDeposit in Database (%s). atempt to load it from config file", exName.String(), err.Error())
 			//Check if the config file has config for such exchange
 			minDepo, ok := exMinDepositConfig.Exchanges[ex]
 			if !ok {
-				log.Printf("Warning: Exchange %s is in KYBER_EXCHANGES, but not avail in MinDeposit config file")
+				log.Printf("Warning: Exchange %s is in KYBER_EXCHANGES, but not avail in MinDepositconfig file", exName.String())
 				continue
 			}
 			if err = setting.Exchange.Storage.StoreMinDeposit(exName, minDepo); err != nil {
@@ -158,8 +156,7 @@ func (setting *Settings) LoadDepositAddressFromFile(path string) error {
 			return fmt.Errorf("Exchange %s is in KYBER_EXCHANGES, but not avail in current deployment", ex)
 		}
 		//Check if the current database has a record for such exchange
-		_, err := setting.Exchange.Storage.GetDepositAddress(exName)
-		if err != nil {
+		if _, err := setting.Exchange.Storage.GetDepositAddress(exName); err != nil {
 			log.Printf("Exchange %s is in KYBER_EXCHANGES but can't load DepositAddress in Database (%s). atempt to load it from config file", exName.String(), err.Error())
 			//Check if the config file has config for such exchange
 			exchangeAddressStr, ok := exAddressConfig.Exchanges[ex]
@@ -174,6 +171,46 @@ func (setting *Settings) LoadDepositAddressFromFile(path string) error {
 		}
 	}
 	return nil
+}
+
+func (setting *Settings) HandleEmptyTokenPairs() error {
+	runningExs := RunningExchange()
+	for _, ex := range runningExs {
+		exName, ok := exchangeNameValue[ex]
+		if !ok {
+			return fmt.Errorf("Exchange %s is in KYBER_EXCHANGES, but not avail in current deployment", ex)
+		}
+		if _, err := setting.Exchange.Storage.GetTokenPairs(exName); err != nil {
+			log.Printf("Exchange %s is in KYBER_EXCHANGES but can't load TokenPairs in Database (%s). atempt to init it", exName.String(), err.Error())
+			tokenPairs, err := setting.NewExchangeTokenPairs(exName)
+			if err != nil {
+				return err
+			}
+			if err = setting.Exchange.Storage.StoreTokenPairs(exName, tokenPairs); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (setting *Settings) NewExchangeTokenPairs(exName ExchangeName) ([]common.TokenPair, error) {
+	result := []common.TokenPair{}
+	addrs, err := setting.GetDepositAddress(exName)
+	if err != nil {
+		return result, err
+	}
+	for tokenID := range addrs {
+		_, err := setting.GetInternalTokenByID(tokenID)
+		if err != nil {
+			return result, fmt.Errorf("Internal Token failed :%s", err)
+		}
+		if tokenID != "ETH" {
+			pair := setting.MustCreateTokenPair(tokenID, "ETH")
+			result = append(result, pair)
+		}
+	}
+	return result, nil
 }
 
 func convertToAddressMap(data exchangeDepositAddress) common.ExchangeAddresses {

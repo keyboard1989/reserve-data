@@ -11,7 +11,6 @@ import (
 )
 
 type StableEx struct {
-	pairs        []common.TokenPair
 	exchangeInfo *common.ExchangeInfo
 	setting      Setting
 }
@@ -58,8 +57,8 @@ func (self *StableEx) ID() common.ExchangeID {
 	return common.ExchangeID("stable_exchange")
 }
 
-func (self *StableEx) TokenPairs() []common.TokenPair {
-	return self.pairs
+func (self *StableEx) TokenPairs() ([]common.TokenPair, error) {
+	return self.setting.GetTokenPairs(settings.StableExchange)
 }
 
 func (self *StableEx) Name() string {
@@ -137,12 +136,11 @@ func (self *StableEx) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 }
 
 func NewStableEx(setting Setting) (*StableEx, error) {
-	_, pairs, err := getExchangePairsAndFeesFromConfig(settings.StableExchange, setting)
+	_, err := getExchangePairsAndFeesFromConfig(settings.StableExchange, setting)
 	if err != nil {
 		return nil, err
 	}
 	return &StableEx{
-		pairs,
 		common.NewExchangeInfo(),
 		setting,
 	}, nil

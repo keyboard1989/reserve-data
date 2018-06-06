@@ -46,8 +46,8 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 	}
 }
 
-// WithHandleEmptyFee will load the Fee settings from default file if the
-// fee database is empty
+// WithHandleEmptyFee will load the Fee settings from default file
+// if the fee database is empty
 func WithHandleEmptyFee(pathJSON string) SettingOption {
 	return func(setting *Settings) {
 		if err := setting.LoadFeeFromFile(pathJSON); err != nil {
@@ -56,8 +56,8 @@ func WithHandleEmptyFee(pathJSON string) SettingOption {
 	}
 }
 
-// WithHandleEmptyMinDeposit will load the MinDeposit setting from fefault file if the database if
-// the Mindeposit database is empty
+// WithHandleEmptyMinDeposit will load the MinDeposit setting from fefault file
+// if the Mindeposit database is empty
 func WithHandleEmptyMinDeposit(pathJSON string) SettingOption {
 	return func(setting *Settings) {
 		if err := setting.LoadMinDepositFromFile(pathJSON); err != nil {
@@ -66,12 +66,22 @@ func WithHandleEmptyMinDeposit(pathJSON string) SettingOption {
 	}
 }
 
-// WithHandleEmptyDepositAddress will load the MinDeposit setting from fefault file if the database if
-// the Mindeposit database is empty
+// WithHandleEmptyDepositAddress will load the MinDeposit setting from fefault file
+// if the DepositAddress database is empty
 func WithHandleEmptyDepositAddress(pathJSON string) SettingOption {
 	return func(setting *Settings) {
 		if err := setting.LoadDepositAddressFromFile(pathJSON); err != nil {
 			log.Printf("WARNING: Setting Init: cannot load DepositAddress from file: %s, Fee is needed to be updated manually", err)
+		}
+	}
+}
+
+// WithHandleEmptyTokenPairs will create TokenPairs from list of Token DepositAddress with each exchange
+// if that exchange TokenPairs is empty
+func WithHandleEmptyTokenPairs() SettingOption {
+	return func(setting *Settings) {
+		if err := setting.HandleEmptyTokenPairs(); err != nil {
+			log.Printf("WARNING: Setting Init: cannot init TokenPairs %s, Token Pair is needed to be updated manualluy", err.Error())
 		}
 	}
 }

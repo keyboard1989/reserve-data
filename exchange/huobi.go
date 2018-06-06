@@ -25,7 +25,6 @@ const (
 
 type Huobi struct {
 	interf            HuobiInterface
-	pairs             []common.TokenPair
 	tokens            []common.Token
 	addresses         *common.ExchangeAddresses
 	exchangeInfo      *common.ExchangeInfo
@@ -80,15 +79,20 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExch
 	}
 }
 
-func (self *Huobi) UpdatePairsPrecision() {
+func (self *Huobi) UpdatePairsPrecision() error {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err != nil {
 		log.Printf("RunningMode exchange info failed: %s\n", err)
-	} else {
-		for _, pair := range self.pairs {
-			self.UpdatePrecisionLimit(pair, exchangeInfo)
-		}
+		return err
 	}
+	pairs, err := self.setting.GetTokenPairs(settings.Huobi)
+	if err != nil {
+		return err
+	}
+	for _, pair := range pairs {
+		self.UpdatePrecisionLimit(pair, exchangeInfo)
+	}
+	return nil
 }
 
 func (self *Huobi) GetInfo() (*common.ExchangeInfo, error) {
@@ -112,8 +116,8 @@ func (self *Huobi) ID() common.ExchangeID {
 	return common.ExchangeID("huobi")
 }
 
-func (self *Huobi) TokenPairs() []common.TokenPair {
-	return self.pairs
+func (self *Huobi) TokenPairs() ([]common.TokenPair, error) {
+	return self.setting.GetTokenPairs(settings.Huobi)
 }
 
 func (self *Huobi) Name() string {
@@ -224,7 +228,10 @@ func (self *Huobi) FetchOnePairData(
 func (self *Huobi) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
-	pairs := self.pairs
+	pairs, err := self.setting.GetTokenPairs(settings.Huobi)
+	if err != nil {
+		return nil, err
+	}
 	for _, pair := range pairs {
 		wait.Add(1)
 		go self.FetchOnePairData(&wait, pair, &data, timepoint)
@@ -259,7 +266,10 @@ func (self *Huobi) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
 
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
-	pairs := self.pairs
+	pairs, err := self.setting.GetTokenPairs(settings.Huobi)
+	if err != nil {
+		return result, err
+	}
 	for _, pair := range pairs {
 		wait.Add(1)
 		go self.OpenOrdersForOnePair(&wait, pair, &data, timepoint)
@@ -353,7 +363,11 @@ func (self *Huobi) FetchTradeHistory() {
 		for {
 			result := map[common.TokenPairID][]common.TradeHistory{}
 			data := sync.Map{}
-			pairs := self.pairs
+			pairs, err := self.setting.GetTokenPairs(settings.Huobi)
+			if err != nil {
+				log.Printf("Huobi fetch trade history failed (%s). This might due to pairs setting hasn't been init yet", err.Error())
+				continue
+			}
 			wait := sync.WaitGroup{}
 			for _, pair := range pairs {
 				wait.Add(1)
@@ -645,7 +659,7 @@ func NewHuobi(
 	storage HuobiStorage,
 	setting Setting) (*Huobi, error) {
 
-	tokens, pairs, err := getExchangePairsAndFeesFromConfig(settings.Huobi, setting)
+	tokens, err := getExchangePairsAndFeesFromConfig(settings.Huobi, setting)
 	if err != nil {
 		return nil, err
 	}
@@ -656,7 +670,6 @@ func NewHuobi(
 
 	huobiObj := Huobi{
 		interf,
-		pairs,
 		tokens,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),

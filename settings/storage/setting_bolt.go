@@ -13,6 +13,7 @@ const (
 	EXCHANGE_FEE_BUCKET         string = "exchange_fee"
 	EXCHANGE_MIN_DEPOSIT_BUCKET string = "exchange_min_deposit"
 	EXCHANGE_DEPOSIT_ADDRESS    string = "exchange_deposit_address"
+	EXCHANGE_TOKEN_PAIRS        string = "exchange_token_pairs"
 )
 
 type FilterFunction func(common.Token) bool
@@ -64,6 +65,9 @@ func NewBoltSettingStorage(dbPath string) (*BoltSettingStorage, error) {
 			return uErr
 		}
 		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_DEPOSIT_ADDRESS)); err != nil {
+			return uErr
+		}
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_TOKEN_PAIRS)); err != nil {
 			return uErr
 		}
 		return nil
