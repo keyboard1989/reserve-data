@@ -19,7 +19,6 @@ const BITTREX_EPSILON float64 = 0.000001
 
 type Bittrex struct {
 	interf       BittrexInterface
-	tokens       []common.Token
 	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
 	exchangeInfo *common.ExchangeInfo
@@ -354,7 +353,11 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 			// check if bittrex returned balance for all of the
 			// supported token.
 			// If it didn't, it is considered invalid
-			if len(result.AvailableBalance) != len(self.tokens) {
+			depositAddress, err := self.setting.GetDepositAddress(settings.Bittrex)
+			if err != nil {
+				return result, fmt.Errorf("Can't Get deposit addresses of Bittrex for validation (%s)", err)
+			}
+			if len(result.AvailableBalance) != len(depositAddress) {
 				result.Valid = false
 				result.Error = "Bittrex didn't return balance for all supported tokens"
 			}
@@ -435,13 +438,8 @@ func NewBittrex(
 	interf BittrexInterface,
 	storage BittrexStorage,
 	setting Setting) (*Bittrex, error) {
-	tokens, err := getExchangePairsAndFeesFromConfig(settings.Bittrex, setting)
-	if err != nil {
-		return nil, err
-	}
 	bittrex := &Bittrex{
 		interf,
-		tokens,
 		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),

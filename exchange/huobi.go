@@ -25,7 +25,6 @@ const (
 
 type Huobi struct {
 	interf            HuobiInterface
-	tokens            []common.Token
 	addresses         *common.ExchangeAddresses
 	exchangeInfo      *common.ExchangeInfo
 	blockchain        HuobiBlockchain
@@ -659,10 +658,6 @@ func NewHuobi(
 	storage HuobiStorage,
 	setting Setting) (*Huobi, error) {
 
-	tokens, err := getExchangePairsAndFeesFromConfig(settings.Huobi, setting)
-	if err != nil {
-		return nil, err
-	}
 	bc, err := huobiblockchain.NewBlockchain(blockchain, signer, nonce)
 	if err != nil {
 		return nil, err
@@ -670,7 +665,6 @@ func NewHuobi(
 
 	huobiObj := Huobi{
 		interf,
-		tokens,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		bc,

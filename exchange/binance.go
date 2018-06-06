@@ -22,7 +22,6 @@ const (
 
 type Binance struct {
 	interf       BinanceInterface
-	tokens       []common.Token
 	addresses    *common.ExchangeAddresses
 	exchangeInfo *common.ExchangeInfo
 	storage      BinanceStorage
@@ -483,13 +482,8 @@ func NewBinance(
 	interf BinanceInterface,
 	storage BinanceStorage,
 	setting Setting) (*Binance, error) {
-	tokens, err := getExchangePairsAndFeesFromConfig(settings.Binance, setting)
-	if err != nil {
-		return nil, err
-	}
 	binance := &Binance{
 		interf,
-		tokens,
 		common.NewExchangeAddresses(),
 		common.NewExchangeInfo(),
 		storage,

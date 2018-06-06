@@ -136,10 +136,6 @@ func (self *StableEx) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 }
 
 func NewStableEx(setting Setting) (*StableEx, error) {
-	_, err := getExchangePairsAndFeesFromConfig(settings.StableExchange, setting)
-	if err != nil {
-		return nil, err
-	}
 	return &StableEx{
 		common.NewExchangeInfo(),
 		setting,
