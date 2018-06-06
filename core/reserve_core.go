@@ -64,64 +64,77 @@ func (self ReserveCore) Trade(
 	rate float64,
 	amount float64,
 	timepoint uint64) (common.ActivityID, float64, float64, bool, error) {
+	var (
+		err    error
+		status string
+	)
 
-	var id string
-	var done, remaining float64
-	var finished bool
-	var err error
+	recordFn := func(id, status string, done, remaining float64, finished bool, err error) error {
+		uid := timebasedID(id)
+		log.Printf(
+			"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: id: %s, done: %s, remaining: %s, finished: %t, error: %s",
+			tradeType, exchange.ID(), base.ID, quote.ID,
+			strconv.FormatFloat(rate, 'f', -1, 64),
+			strconv.FormatFloat(amount, 'f', -1, 64), timepoint,
+			uid,
+			strconv.FormatFloat(done, 'f', -1, 64),
+			strconv.FormatFloat(remaining, 'f', -1, 64),
+			finished, err,
+		)
 
-	err = sanityCheckTrading(exchange, base, quote, rate, amount)
-	if err == nil {
-		id, done, remaining, finished, err = exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+		return self.activityStorage.Record(
+			"trade",
+			uid,
+			string(exchange.ID()),
+			map[string]interface{}{
+				"exchange":  exchange,
+				"type":      tradeType,
+				"base":      base,
+				"quote":     quote,
+				"rate":      rate,
+				"amount":    strconv.FormatFloat(amount, 'f', -1, 64),
+				"timepoint": timepoint,
+			}, map[string]interface{}{
+				"id":        id,
+				"done":      done,
+				"remaining": remaining,
+				"finished":  finished,
+				"error":     common.ErrorToString(err),
+			},
+			status,
+			"",
+			timepoint,
+		)
 	}
 
-	var status string
+	if err = sanityCheckTrading(exchange, base, quote, rate, amount); err != nil {
+		status = "failed"
+		if sErr := recordFn("", status, 0, 0, false, err); sErr != nil {
+			log.Printf("failed to save activity record: %s", sErr)
+		}
+		return common.ActivityID{}, 0, 0, false, err
+	}
+
+	id, done, remaining, finished, err := exchange.Trade(tradeType, base, quote, rate, amount, timepoint)
+	uid := timebasedID(id)
 	if err != nil {
 		status = "failed"
-	} else {
-		if finished {
-			status = "done"
-		} else {
-			status = "submitted"
+		if sErr := recordFn(id, status, done, remaining, finished, err); sErr != nil {
+			log.Printf("failed to save activity record: %s", sErr)
 		}
+		return uid, done, remaining, finished, err
 	}
-	uid := timebasedID(id)
-	sErr := self.activityStorage.Record(
-		"trade",
-		uid,
-		string(exchange.ID()),
-		map[string]interface{}{
-			"exchange":  exchange,
-			"type":      tradeType,
-			"base":      base,
-			"quote":     quote,
-			"rate":      rate,
-			"amount":    strconv.FormatFloat(amount, 'f', -1, 64),
-			"timepoint": timepoint,
-		}, map[string]interface{}{
-			"id":        id,
-			"done":      done,
-			"remaining": remaining,
-			"finished":  finished,
-			"error":     common.ErrorToString(err),
-		},
-		status,
-		"",
-		timepoint,
-	)
-	if sErr != nil {
-		log.Printf("Error save activity: %s", sErr.Error())
+
+	if finished {
+		status = "done"
+	} else {
+		status = "submitted"
 	}
-	log.Printf(
-		"Core ----------> %s on %s: base: %s, quote: %s, rate: %s, amount: %s, timestamp: %d ==> Result: id: %s, done: %s, remaining: %s, finished: %t, error: %s",
-		tradeType, exchange.ID(), base.ID, quote.ID,
-		strconv.FormatFloat(rate, 'f', -1, 64),
-		strconv.FormatFloat(amount, 'f', -1, 64), timepoint,
-		uid,
-		strconv.FormatFloat(done, 'f', -1, 64),
-		strconv.FormatFloat(remaining, 'f', -1, 64),
-		finished, err,
-	)
+
+	if err = recordFn(id, status, done, remaining, finished, nil); err != nil {
+		return uid, done, remaining, finished, err
+	}
+
 	return uid, done, remaining, finished, err
 }
 
