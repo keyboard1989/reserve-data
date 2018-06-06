@@ -35,7 +35,7 @@ type Binainfo struct {
 	CanTrade         bool   `json:"canTrade"`
 	CanWithdraw      bool   `json:"canWithdraw"`
 	CanDeposit       bool   `json:"canDeposit"`
-	Balances []struct {
+	Balances         []struct {
 		Asset  string `json:"asset"`
 		Free   string `json:"free"`
 		Locked string `json:"locked"`
@@ -206,12 +206,11 @@ type BinanceTradeHistory []struct {
 }
 
 type BinaAccountTradeHistory []struct {
-	ID          uint64 `json:"id"`
-	OrderID     uint64 `json:"orderId"`
-	Price       string `json:"price"`
-	Qty         string `json:"qty"`
-	Time        uint64 `json:"time"`
-	IsBuyer     bool   `json:"isBuyer"`
-	IsMaker     bool   `json:"isMaker"`
-	isBestMatch bool
+	ID      uint64 `json:"id"`
+	OrderID uint64 `json:"orderId"`
+	Price   string `json:"price"`
+	Qty     string `json:"qty"`
+	Time    uint64 `json:"time"`
+	IsBuyer bool   `json:"isBuyer"`
+	IsMaker bool   `json:"isMaker"`
 }

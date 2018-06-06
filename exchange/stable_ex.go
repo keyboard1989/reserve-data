@@ -41,8 +41,8 @@ func (self *StableEx) UpdateDepositAddress(token common.Token, address string) {
 	panic("dgx doesn't support update deposit addresses")
 }
 
-func (self *StableEx) GetInfo() (common.ExchangeInfo, error) {
-	return *self.exchangeInfo, nil
+func (self *StableEx) GetInfo() (*common.ExchangeInfo, error) {
+	return self.exchangeInfo, nil
 }
 
 func (self *StableEx) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
@@ -90,7 +90,7 @@ func (self *StableEx) CancelOrder(id, base, quote string) error {
 
 func (self *StableEx) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	result := map[common.TokenPairID]common.ExchangePrice{}
-	// TODO: Get price data from dgx connector and construct valid orderbooks
+	// TODO: RunningMode price data from dgx connector and construct valid orderbooks
 	return result, nil
 }
 
@@ -99,7 +99,7 @@ func (self *StableEx) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry,
 	result.Timestamp = common.Timestamp(fmt.Sprintf("%d", timepoint))
 	result.Valid = true
 	result.Status = true
-	// TODO: Get balance data from dgx connector
+	// TODO: RunningMode balance data from dgx connector
 	result.ReturnTime = common.GetTimestamp()
 	result.AvailableBalance = map[string]float64{"DGX": 0, "ETH": 0}
 	result.LockedBalance = map[string]float64{"DGX": 0, "ETH": 0}

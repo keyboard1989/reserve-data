@@ -4,6 +4,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/KyberNetwork/reserve-data/boltutil"
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/boltdb/bolt"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -69,7 +70,7 @@ func (self *BoltUserStorage) SetLastProcessedCatLogTimepoint(timepoint uint64) e
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_PROCESSOR_STATE))
-		err = b.Put([]byte("last_timepoint"), uint64ToBytes(timepoint))
+		err = b.Put([]byte("last_timepoint"), boltutil.Uint64ToBytes(timepoint))
 		return err
 	})
 	return err
@@ -80,7 +81,7 @@ func (self *BoltUserStorage) GetLastProcessedCatLogTimepoint() (uint64, error) {
 	var err error
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(CATLOG_PROCESSOR_STATE))
-		result = bytesToUint64(b.Get([]byte("last_timepoint")))
+		result = boltutil.BytesToUint64(b.Get([]byte("last_timepoint")))
 		return nil
 	})
 	return result, err
@@ -146,8 +147,11 @@ func (self *BoltUserStorage) UpdateUserAddresses(user string, addrs []ethereum.A
 			// remove the addresses bucket assocciated to this temp user
 			b = tx.Bucket([]byte(ID_ADDRESSES))
 			if oldID != nil {
-				err = b.DeleteBucket(oldID)
-				if err != nil {
+				if _, err := b.CreateBucketIfNotExists(oldID); err != nil {
+					return err
+				}
+
+				if err = b.DeleteBucket(oldID); err != nil {
 					return err
 				}
 			}
@@ -191,7 +195,7 @@ func (self *BoltUserStorage) UpdateUserAddresses(user string, addrs []ethereum.A
 				}
 			}
 			log.Printf("storing timestamp for %s - %d", address, timestamps[i])
-			if err = timeBucket.Put([]byte(address), uint64ToBytes(timestamps[i])); err != nil {
+			if err = timeBucket.Put([]byte(address), boltutil.Uint64ToBytes(timestamps[i])); err != nil {
 				return err
 			}
 		}
@@ -224,14 +228,14 @@ func (self *BoltUserStorage) GetAddressesOfUser(user string) ([]ethereum.Address
 		timeBucket := tx.Bucket([]byte(ADDRESS_TIME))
 		userBucket := b.Bucket([]byte(user))
 		if userBucket != nil {
-			userBucket.ForEach(func(k, v []byte) error {
+			err = userBucket.ForEach(func(k, v []byte) error {
 				addr := ethereum.HexToAddress(string(k))
 				result = append(result, addr)
-				timestamps = append(timestamps, bytesToUint64(timeBucket.Get(k)))
+				timestamps = append(timestamps, boltutil.BytesToUint64(timeBucket.Get(k)))
 				return nil
 			})
 		}
-		return nil
+		return err
 	})
 	return result, timestamps, err
 }
@@ -247,7 +251,7 @@ func (self *BoltUserStorage) GetUserOfAddress(ethaddr ethereum.Address) (string,
 		timeBucket := tx.Bucket([]byte(ADDRESS_TIME))
 		id := b.Get([]byte(addr))
 		result = string(id)
-		timestamp = bytesToUint64(timeBucket.Get([]byte(addr)))
+		timestamp = boltutil.BytesToUint64(timeBucket.Get([]byte(addr)))
 		return nil
 	})
 	return result, timestamp, err
@@ -263,7 +267,7 @@ func (self *BoltUserStorage) GetKycUsers() (map[string]uint64, error) {
 			id := string(v)
 			var timestamp uint64
 			if id != "" && id != string(k) {
-				timestamp = bytesToUint64(timeBucket.Get(k))
+				timestamp = boltutil.BytesToUint64(timeBucket.Get(k))
 				result[string(k)] = timestamp
 			}
 		}
@@ -279,11 +283,11 @@ func (self *BoltUserStorage) GetPendingAddresses() ([]ethereum.Address, error) {
 	result := []ethereum.Address{}
 	err = self.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_ADDRESSES))
-		b.ForEach(func(k, v []byte) error {
+		err = b.ForEach(func(k, v []byte) error {
 			result = append(result, ethereum.HexToAddress(string(k)))
 			return nil
 		})
-		return nil
+		return err
 	})
 	return result, err
 }

@@ -10,21 +10,24 @@ import (
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/archive"
+	"github.com/KyberNetwork/reserve-data/stat/statpruner"
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 const (
-	MAX_GET_RATES_PERIOD uint64 = 86400000 //7 days in milisec
+	MAX_GET_RATES_PERIOD uint64 = 86400000 //1 days in milisec
 )
 
 type ReserveStats struct {
-	analyticStorage  AnalyticStorage
-	statStorage      StatStorage
-	logStorage       LogStorage
-	userStorage      UserStorage
-	rateStorage      RateStorage
-	fetcher          *Fetcher
-	controllerRunner ControllerRunner
+	analyticStorage   AnalyticStorage
+	statStorage       StatStorage
+	logStorage        LogStorage
+	userStorage       UserStorage
+	rateStorage       RateStorage
+	feeSetRateStorage FeeSetRateStorage
+	fetcher           *Fetcher
+	storageController statpruner.StorageController
 }
 
 func NewReserveStats(
@@ -33,16 +36,23 @@ func NewReserveStats(
 	logStorage LogStorage,
 	rateStorage RateStorage,
 	userStorage UserStorage,
-	controllerRunner ControllerRunner,
-	fetcher *Fetcher) *ReserveStats {
+	feeSetRateStorage FeeSetRateStorage,
+	controllerRunner statpruner.ControllerRunner,
+	fetcher *Fetcher,
+	arch archive.Archive) *ReserveStats {
+	storageController, err := statpruner.NewStorageController(controllerRunner, arch)
+	if err != nil {
+		panic(err)
+	}
 	return &ReserveStats{
-		analyticStorage:  analyticStorage,
-		statStorage:      statStorage,
-		logStorage:       logStorage,
-		rateStorage:      rateStorage,
-		userStorage:      userStorage,
-		fetcher:          fetcher,
-		controllerRunner: controllerRunner,
+		analyticStorage:   analyticStorage,
+		statStorage:       statStorage,
+		logStorage:        logStorage,
+		rateStorage:       rateStorage,
+		userStorage:       userStorage,
+		feeSetRateStorage: feeSetRateStorage,
+		fetcher:           fetcher,
+		storageController: storageController,
 	}
 }
 
@@ -301,40 +311,67 @@ func (self ReserveStats) GetPendingAddresses() ([]string, error) {
 	return result, nil
 }
 
-func (self ReserveStats) RunAnalyticStorageController() {
+func (self ReserveStats) ControllPriceAnalyticSize() error {
 	for {
-		log.Printf("waiting for signal from analytic storage control channel")
-		t := <-self.controllerRunner.GetAnalyticStorageControlTicker()
+		log.Printf("StatPruner: waiting for signal from analytic storage control channel")
+		t := <-self.storageController.Runner.GetAnalyticStorageControlTicker()
 		timepoint := common.TimeToTimepoint(t)
-		log.Printf("got signal in analytic storage control channel with timestamp %d", timepoint)
-		fileName := fmt.Sprintf("ExpiredPriceAnalyticData_%s", time.Unix(int64(timepoint/1000), 0).UTC())
-		nRecord, err := self.analyticStorage.ExportPruneExpired(common.GetTimepoint(), fileName)
+		log.Printf("StatPruner: got signal in analytic storage control channel with timestamp %d", timepoint)
+		fileName := fmt.Sprintf("./exported/ExpiredPriceAnalyticData_%s", time.Unix(int64(timepoint/1000), 0).UTC())
+		nRecord, err := self.analyticStorage.ExportExpiredPriceAnalyticData(common.GetTimepoint(), fileName)
 		if err != nil {
-			log.Printf("export and prune operation failed: %s", err)
+			log.Printf("ERROR: StatPruner export Price Analytic operation failed: %s", err)
 		} else {
+			var integrity bool
 			if nRecord > 0 {
-				err := self.analyticStorage.BackupFile(fileName)
+				err := self.storageController.Arch.UploadFile(self.storageController.Arch.GetStatDataBucketName(), self.storageController.ExpiredPriceAnalyticPath, fileName)
 				if err != nil {
-					log.Printf("AnalyticPriceData: Back up file failed: %s", err)
+					log.Printf("StatPruner: Upload file failed: %s", err)
 				} else {
-					log.Printf("AnalyticPriceData: Back up file successfully.")
-				}
+					integrity, err = self.storageController.Arch.CheckFileIntergrity(self.storageController.Arch.GetStatDataBucketName(), self.storageController.ExpiredPriceAnalyticPath, fileName)
+					if err != nil {
+						log.Printf("ERROR: StatPruner: error in file integrity check (%s):", err)
+					}
+					if !integrity {
+						log.Printf("ERROR: StatPruner: file upload corrupted")
 
-			} else {
-				//remove the empty file
-				os.Remove(fileName)
+					}
+					if err != nil || !integrity {
+						//if the intergrity check failed, remove the remote file.
+						removalErr := self.storageController.Arch.RemoveFile(self.storageController.Arch.GetStatDataBucketName(), self.storageController.ExpiredPriceAnalyticPath, fileName)
+						if removalErr != nil {
+							log.Printf("ERROR: StatPruner: cannot remove remote file :(%s)", removalErr)
+						}
+					}
+				}
 			}
-			log.Printf("AnalyticPriceData: exported and pruned %d expired records from storage controll block from blockchain", nRecord)
+			if integrity && err == nil {
+				nPrunedRecords, err := self.analyticStorage.PruneExpiredPriceAnalyticData(common.TimeToTimepoint(t))
+				if err != nil {
+					log.Printf("StatPruner: Can not prune Price Analytic Data (%s)", err)
+				} else if nPrunedRecords != nRecord {
+					log.Printf("StatPruner: Number of exported Data is %d, which is different from number of Pruned Data %d", nRecord, nPrunedRecords)
+				} else {
+					log.Printf("StatPruner: exported and pruned %d expired records from Price Analytic Data", nRecord)
+				}
+			}
+		}
+		if err := os.Remove(fileName); err != nil {
+			log.Fatal(err)
 		}
 	}
 }
 
-func (self ReserveStats) RunDBController() error {
-	err := self.controllerRunner.Start()
+func (self ReserveStats) RunStorageController() error {
+	err := self.storageController.Runner.Start()
 	if err != nil {
 		return err
 	}
-	go self.RunAnalyticStorageController()
+	go func() {
+		if err := self.ControllPriceAnalyticSize(); err != nil {
+			log.Printf("Control price analytic failed: %s", err.Error())
+		}
+	}()
 	return err
 }
 
@@ -374,7 +411,7 @@ func (self ReserveStats) GetCapByUser(userID string) (*common.UserCap, error) {
 func isDuplicate(currentRate, latestRate common.ReserveRates) bool {
 	currentData := currentRate.Data
 	latestData := latestRate.Data
-	for key, _ := range currentData {
+	for key := range currentData {
 		if currentData[key].BuyReserveRate != latestData[key].BuyReserveRate ||
 			currentData[key].BuySanityRate != latestData[key].BuySanityRate ||
 			currentData[key].SellReserveRate != latestData[key].SellReserveRate ||
@@ -413,7 +450,7 @@ func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr et
 		}
 		latest = rate
 	}
-	log.Printf("Get reserve rate: %v", result)
+	log.Printf("RunningMode reserve rate: %v", result)
 	return result, err
 }
 
@@ -490,4 +527,8 @@ func (self ReserveStats) UpdatePriceAnalyticData(timestamp uint64, value []byte)
 
 func (self ReserveStats) GetPriceAnalyticData(fromTime uint64, toTime uint64) ([]common.AnalyticPriceResponse, error) {
 	return self.analyticStorage.GetPriceAnalyticData(fromTime, toTime)
+}
+
+func (self ReserveStats) GetFeeSetRateByDay(fromTime uint64, toTime uint64) ([]common.FeeSetRate, error) {
+	return self.feeSetRateStorage.GetFeeSetRateByDay(fromTime, toTime)
 }

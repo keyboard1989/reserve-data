@@ -216,7 +216,7 @@ func NetworkTokens() []Token {
 	return supportedTokens.GetTokens()
 }
 
-// Get token from SupportedToken and returns error
+// RunningMode token from SupportedToken and returns error
 // if the token is not supported
 func GetInternalToken(id string) (Token, error) {
 	return supportedTokens.GetInternalTokenByID(id)

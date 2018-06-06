@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"log"
-	"os"
 	"strconv"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/cmd/comparerates"
+	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/spf13/cobra"
 )
 
@@ -19,10 +19,7 @@ var fromTime string
 var toTime string
 
 func compareratestart(cmd *cobra.Command, args []string) {
-	kyberENV := os.Getenv("KYBER_ENV")
-	if kyberENV == "" {
-		kyberENV = "dev"
-	}
+	kyberENV := common.RunningMode()
 	params := make(map[string]string)
 	params["fromTime"] = fromTime
 	params["toTime"] = toTime
@@ -54,7 +51,9 @@ func init() {
 	//compare rate flags
 	compareRates.Flags().StringVar(&baseURL, "url", "https://internal-mainnet-core.kyber.network", "base URL for API query")
 	compareRates.Flags().StringVar(&fromTime, "from_time", "", "begining time for query, required params")
-	compareRates.MarkFlagRequired("from_time")
+	if err := compareRates.MarkFlagRequired("from_time"); err != nil {
+		log.Fatalf(err.Error())
+	}
 	compareRates.Flags().StringVar(&toTime, "to_time", "", "end time of querying, if not set then the program will run until force quit")
 	RootCmd.AddCommand(compareRates)
 }

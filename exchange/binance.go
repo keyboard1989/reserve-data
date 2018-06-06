@@ -45,7 +45,7 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 
 func (self *Binance) UpdateAllDepositAddresses(address string) {
 	data := self.addresses.GetData()
-	for k, _ := range data {
+	for k := range data {
 		self.addresses.Update(k, ethereum.HexToAddress(address))
 	}
 }
@@ -112,7 +112,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 func (self *Binance) UpdatePairsPrecision() {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err != nil {
-		log.Printf("Get exchange info failed: %s\n", err)
+		log.Printf("RunningMode exchange info failed: %s\n", err)
 	} else {
 		symbols := exchangeInfo.Symbols
 		for _, pair := range self.pairs {
@@ -121,8 +121,8 @@ func (self *Binance) UpdatePairsPrecision() {
 	}
 }
 
-func (self *Binance) GetInfo() (common.ExchangeInfo, error) {
-	return *self.exchangeInfo, nil
+func (self *Binance) GetInfo() (*common.ExchangeInfo, error) {
+	return self.exchangeInfo, nil
 }
 
 func (self *Binance) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
@@ -222,10 +222,10 @@ func (self *Binance) FetchOnePairData(
 				rate, _ := strconv.ParseFloat(buy.Rate, 64)
 				result.Bids = append(
 					result.Bids,
-					common.PriceEntry{
+					common.NewPriceEntry(
 						quantity,
 						rate,
-					},
+					),
 				)
 			}
 			for _, sell := range resp_data.Asks {
@@ -233,10 +233,10 @@ func (self *Binance) FetchOnePairData(
 				rate, _ := strconv.ParseFloat(sell.Rate, 64)
 				result.Asks = append(
 					result.Asks,
-					common.PriceEntry{
+					common.NewPriceEntry(
 						quantity,
 						rate,
-					},
+					),
 				)
 			}
 		}
@@ -363,13 +363,13 @@ func (self *Binance) FetchOnePairTradeHistory(
 		if trade.IsBuyer {
 			historyType = "buy"
 		}
-		tradeHistory := common.TradeHistory{
+		tradeHistory := common.NewTradeHistory(
 			strconv.FormatUint(trade.ID, 10),
 			price,
 			quantity,
 			historyType,
 			trade.Time,
-		}
+		)
 		result = append(result, tradeHistory)
 	}
 	data.Store(pairString, result)
@@ -398,7 +398,9 @@ func (self *Binance) FetchTradeHistory() {
 				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
 				return true
 			})
-			self.storage.StoreTradeHistory(result)
+			if err := self.storage.StoreTradeHistory(result); err != nil {
+				log.Printf("Store trade history error: %s", err.Error())
+			}
 			<-t.C
 		}
 	}()

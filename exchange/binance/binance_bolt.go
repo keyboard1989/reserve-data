@@ -2,7 +2,6 @@ package binance
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -33,7 +32,7 @@ func NewBoltExchangeStorage(path string) (*BinanceStorage, error) {
 		return nil, err
 	}
 	// init buckets
-	db.Update(func(tx *bolt.Tx) error {
+	err = db.Update(func(tx *bolt.Tx) error {
 		_, err = tx.CreateBucketIfNotExists([]byte(TRADE_HISTORY))
 		if err != nil {
 			return err
@@ -45,16 +44,6 @@ func NewBoltExchangeStorage(path string) (*BinanceStorage, error) {
 	}
 	storage := &BinanceStorage{sync.RWMutex{}, db}
 	return storage, nil
-}
-
-func uint64ToBytes(u uint64) []byte {
-	b := make([]byte, 8)
-	binary.BigEndian.PutUint64(b, u)
-	return b
-}
-
-func bytesToUint64(b []byte) uint64 {
-	return binary.BigEndian.Uint64(b)
 }
 
 func (self *BinanceStorage) StoreTradeHistory(data common.ExchangeTradeHistory) error {

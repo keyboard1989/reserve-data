@@ -5,13 +5,15 @@ import (
 	"log"
 	"math"
 	"math/big"
+	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
-	ether "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 )
 
@@ -34,7 +36,7 @@ const (
 
 var (
 	Big0   *big.Int = big.NewInt(0)
-	BigMax *big.Int = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
+	BigMax          = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(33), nil)
 )
 
 type Blockchain struct {
@@ -56,7 +58,7 @@ type Blockchain struct {
 	localSetRateNonce     uint64
 	setRateNonceTimestamp uint64
 
-  gasOracle *GasOracle
+	gasOracle *GasOracle
 }
 
 func (self *Blockchain) StandardGasPrice() float64 {
@@ -400,13 +402,13 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 		result.Valid = true
 		result.Data = map[string]common.RateEntry{}
 		for i, token := range validTokens {
-			result.Data[token.ID] = common.RateEntry{
+			result.Data[token.ID] = common.NewRateEntry(
 				baseBuys[i],
 				int8(compactBuys[i]),
 				baseSells[i],
 				int8(compactSells[i]),
 				blocks[i].Uint64(),
-			}
+			)
 		}
 		return result, nil
 	}
@@ -469,19 +471,19 @@ func (self *Blockchain) GetRawLogs(fromBlock uint64, toBlock uint64) ([]types.Lo
 	addresses = append(addresses, self.networkAddr, self.burnerAddr, self.whitelistAddr)
 	addresses = append(addresses, self.oldNetworks...)
 	addresses = append(addresses, self.oldBurners...)
-	param := ether.FilterQuery{
+	param := common.NewFilterQuery(
 		big.NewInt(int64(fromBlock)),
 		to,
 		addresses,
 		[][]ethereum.Hash{
-			[]ethereum.Hash{
+			{
 				ethereum.HexToHash(TradeEvent),
 				ethereum.HexToHash(BurnFeeEvent),
 				ethereum.HexToHash(FeeToWalletEvent),
 				ethereum.HexToHash(UserCatEvent),
 			},
 		},
-	}
+	)
 	log.Printf("LogFetcher - fetching logs data from block %d, to block %d", fromBlock, to.Uint64())
 	return self.BaseBlockchain.GetLogs(param)
 }
@@ -633,6 +635,20 @@ func (self *Blockchain) SetRateMinedNonce() (uint64, error) {
 	}
 }
 
+func (self *Blockchain) GetPricingMethod(inputData string) (*abi.Method, error) {
+	abiPricing := &self.pricing.ABI
+	inputDataByte, err := hexutil.Decode(inputData)
+	if err != nil {
+		log.Printf("Cannot decode data: %v", err)
+		return nil, err
+	}
+	method, err := abiPricing.MethodById(inputDataByte)
+	if err != nil {
+		return nil, err
+	}
+	return method, nil
+}
+
 func NewBlockchain(
 	base *blockchain.BaseBlockchain,
 	wrapperAddr, pricingAddr, burnerAddr,
@@ -640,17 +656,17 @@ func NewBlockchain(
 	log.Printf("wrapper address: %s", wrapperAddr.Hex())
 	wrapper := blockchain.NewContract(
 		wrapperAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/wrapper.abi",
+		filepath.Join(common.CurrentDir(), "wrapper.abi"),
 	)
 	log.Printf("reserve address: %s", reserveAddr.Hex())
 	reserve := blockchain.NewContract(
 		reserveAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/reserve.abi",
+		filepath.Join(common.CurrentDir(), "reserve.abi"),
 	)
 	log.Printf("pricing address: %s", pricingAddr.Hex())
 	pricing := blockchain.NewContract(
 		pricingAddr,
-		"/go/src/github.com/KyberNetwork/reserve-data/blockchain/pricing.abi",
+		filepath.Join(common.CurrentDir(), "pricing.abi"),
 	)
 
 	log.Printf("burner address: %s", burnerAddr.Hex())

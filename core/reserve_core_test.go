@@ -39,8 +39,8 @@ func (self testExchange) GetFee() common.ExchangeFees {
 func (self testExchange) GetMinDeposit() common.ExchangesMinDeposit {
 	return common.ExchangesMinDeposit{}
 }
-func (self testExchange) GetInfo() (common.ExchangeInfo, error) {
-	return common.ExchangeInfo{}, nil
+func (self testExchange) GetInfo() (*common.ExchangeInfo, error) {
+	return &common.ExchangeInfo{}, nil
 }
 func (self testExchange) TokenAddresses() map[string]ethereum.Address {
 	return map[string]ethereum.Address{}
@@ -63,7 +63,7 @@ func (self testBlockchain) Send(
 		0,
 		ethereum.Address{},
 		big.NewInt(0),
-		big.NewInt(300000),
+		300000,
 		big.NewInt(1000000000),
 		[]byte{})
 	return tx, nil
@@ -80,7 +80,7 @@ func (self testBlockchain) SetRates(
 		0,
 		ethereum.Address{},
 		big.NewInt(0),
-		big.NewInt(300000),
+		300000,
 		big.NewInt(1000000000),
 		[]byte{})
 	return tx, nil
@@ -152,7 +152,7 @@ func TestNotAllowDeposit(t *testing.T) {
 	core := getTestCore(alreadyHasDepositForOMGOnBittrex)
 	_, err := core.Deposit(
 		testExchange{},
-		common.Token{"OMG", "0x1111111111111111111111111111111111111111", 18},
+		common.NewToken("OMG", "0x1111111111111111111111111111111111111111", 18),
 		big.NewInt(10),
 		common.GetTimepoint(),
 	)
@@ -161,7 +161,7 @@ func TestNotAllowDeposit(t *testing.T) {
 	}
 	_, err = core.Deposit(
 		testExchange{},
-		common.Token{"KNC", "0x1111111111111111111111111111111111111111", 18},
+		common.NewToken("KNC", "0x1111111111111111111111111111111111111111", 18),
 		big.NewInt(10),
 		common.GetTimepoint(),
 	)

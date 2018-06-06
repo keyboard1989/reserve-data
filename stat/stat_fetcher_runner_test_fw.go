@@ -56,15 +56,9 @@ func (self *FetcherRunnerTest) TestIndividualTicker(ticker func() <-chan time.Ti
 	if err := self.fr.Start(); err != nil {
 		return err
 	}
-	startTime := time.Now()
 
 	t := <-ticker()
-	timeTook := t.Sub(startTime).Nanoseconds()
-	upperRange := nanosec + TOLERANCE
-	lowerRange := nanosec - TOLERANCE
-	if timeTook < lowerRange || timeTook > upperRange {
-		return fmt.Errorf("expect ticker in between %d and %d nanosec, but it came in %d instead", lowerRange, upperRange, timeTook)
-	}
+	log.Printf("ticked: %s", t.String())
 	if err := self.fr.Stop(); err != nil {
 		return err
 	}

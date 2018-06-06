@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
 	"github.com/KyberNetwork/reserve-data/world"
@@ -22,17 +23,17 @@ func GetAddressConfig(filePath string) common.AddressConfig {
 
 func GetChainType(kyberENV string) string {
 	switch kyberENV {
-	case "mainnet", "production":
+	case common.MAINNET_MODE, common.PRODUCTION_MODE:
 		return "byzantium"
-	case "dev":
+	case common.DEV_MODE:
 		return "homestead"
-	case "kovan":
+	case common.KOVAN_MODE:
 		return "homestead"
-	case "staging":
+	case common.STAGING_MODE:
 		return "byzantium"
-	case "simulation", "analytic_dev":
+	case common.SIMULATION_MODE, common.ANALYTIC_DEV_MODE:
 		return "homestead"
-	case "ropsten":
+	case common.ROPSTEN_MODE:
 		return "byzantium"
 	default:
 		return "homestead"
@@ -40,25 +41,16 @@ func GetChainType(kyberENV string) string {
 }
 
 func GetConfigPaths(kyberENV string) SettingPaths {
-	switch kyberENV {
-	case "mainnet", "production":
-		return (ConfigPaths["mainnet"])
-	case "dev":
-		return (ConfigPaths["dev"])
-	case "kovan":
-		return (ConfigPaths["kovan"])
-	case "staging":
-		return (ConfigPaths["staging"])
-	case "simulation":
-		return (ConfigPaths["simulation"])
-	case "ropsten":
-		return (ConfigPaths["ropsten"])
-	case "analytic_dev":
-		return (ConfigPaths["analytic_dev"])
-	default:
-		log.Println("Environment setting paths is not found, using dev...")
-		return (ConfigPaths["dev"])
+	// common.PRODUCTION_MODE and common.MAINNET_MODE are same thing.
+	if kyberENV == common.PRODUCTION_MODE {
+		kyberENV = common.MAINNET_MODE
 	}
+
+	if sp, ok := ConfigPaths[kyberENV]; ok {
+		return sp
+	}
+	log.Println("Environment setting paths is not found, using dev...")
+	return ConfigPaths[common.DEV_MODE]
 }
 
 func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enableStat bool) *Config {
@@ -71,7 +63,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 
 	addressConfig := GetAddressConfig(setPath.settingPath)
 	hmac512auth := http.NewKNAuthenticationFromFile(setPath.secretPath)
-
 	wrapperAddr := ethereum.HexToAddress(addressConfig.Wrapper)
 	pricingAddr := ethereum.HexToAddress(addressConfig.Pricing)
 	reserveAddr := ethereum.HexToAddress(addressConfig.Reserve)
@@ -84,9 +75,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	}
 
 	for id, t := range addressConfig.Tokens {
-		tok := common.Token{
-			id, t.Address, t.Decimals,
-		}
+		tok := common.NewToken(id, t.Address, t.Decimals)
 		if t.Active {
 			if t.KNReserveSupport {
 				common.RegisterInternalActiveToken(tok)
@@ -130,6 +119,11 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	if !authEnbl {
 		log.Printf("\nWARNING: No authentication mode\n")
 	}
+	awsConf, err := archive.GetAWSconfigFromFile(setPath.secretPath)
+	if err != nil {
+		panic(err)
+	}
+	s3archive := archive.NewS3Archive(awsConf)
 	config := &Config{
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,
@@ -141,6 +135,7 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		ChainType:               chainType,
 		AuthEngine:              hmac512auth,
 		EnableAuthentication:    authEnbl,
+		Archive:                 s3archive,
 		World:                   world,
 	}
 

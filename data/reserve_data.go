@@ -1,13 +1,23 @@
 package data
 
 import (
+	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/KyberNetwork/reserve-data/common"
+	"github.com/KyberNetwork/reserve-data/common/archive"
+	"github.com/KyberNetwork/reserve-data/data/datapruner"
 )
 
+//ReserveData struct for reserve data
 type ReserveData struct {
-	storage       Storage
-	globalStorage GlobalStorage
-	fetcher       Fetcher
+	storage           Storage
+	fetcher           Fetcher
+	storageController datapruner.StorageController
+	globalStorage     GlobalStorage
+	exchanges         []common.Exchange
 }
 
 func (self ReserveData) CurrentGoldInfoVersion(timepoint uint64) (common.Version, error) {
@@ -242,14 +252,103 @@ func (self ReserveData) GetNotifications() (common.ExchangeNotifications, error)
 	return self.storage.GetExchangeNotifications()
 }
 
+//Run run fetcher
 func (self ReserveData) Run() error {
 	return self.fetcher.Run()
 }
 
+//Stop stop the fetcher
 func (self ReserveData) Stop() error {
 	return self.fetcher.Stop()
 }
 
-func NewReserveData(storage Storage, globalStorage GlobalStorage, fetcher Fetcher) *ReserveData {
-	return &ReserveData{storage, globalStorage, fetcher}
+//ControlAuthDataSize pack old data to file, push to S3 and prune outdated data
+func (self ReserveData) ControlAuthDataSize() error {
+	for {
+		log.Printf("DataPruner: waiting for signal from runner AuthData controller channel")
+		t := <-self.storageController.Runner.GetAuthBucketTicker()
+		timepoint := common.TimeToTimepoint(t)
+		log.Printf("DataPruner: got signal in AuthData controller channel with timestamp %d", common.TimeToTimepoint(t))
+		fileName := fmt.Sprintf("./exported/ExpiredAuthData_at_%s", time.Unix(int64(timepoint/1000), 0).UTC())
+		nRecord, err := self.storage.ExportExpiredAuthData(common.TimeToTimepoint(t), fileName)
+		if err != nil {
+			log.Printf("ERROR: DataPruner export AuthData operation failed: %s", err)
+		} else {
+			var integrity bool
+			if nRecord > 0 {
+				err = self.storageController.Arch.UploadFile(self.storageController.Arch.GetReserveDataBucketName(), self.storageController.ExpiredAuthDataPath, fileName)
+				if err != nil {
+					log.Printf("DataPruner: Upload file failed: %s", err)
+				} else {
+					integrity, err = self.storageController.Arch.CheckFileIntergrity(self.storageController.Arch.GetReserveDataBucketName(), self.storageController.ExpiredAuthDataPath, fileName)
+					if err != nil {
+						log.Printf("ERROR: DataPruner: error in file integrity check (%s):", err)
+					} else if !integrity {
+						log.Printf("ERROR: DataPruner: file upload corrupted")
+
+					}
+					if err != nil || !integrity {
+						//if the intergrity check failed, remove the remote file.
+						removalErr := self.storageController.Arch.RemoveFile(self.storageController.Arch.GetReserveDataBucketName(), self.storageController.ExpiredAuthDataPath, fileName)
+						if removalErr != nil {
+							log.Printf("ERROR: DataPruner: cannot remove remote file :(%s)", removalErr)
+							return err
+						}
+					}
+				}
+			}
+			if integrity && err == nil {
+				nPrunedRecords, err := self.storage.PruneExpiredAuthData(common.TimeToTimepoint(t))
+				if err != nil {
+					log.Printf("DataPruner: Can not prune Auth Data (%s)", err)
+					return err
+				} else if nPrunedRecords != nRecord {
+					log.Printf("DataPruner: Number of Exported Data is %d, which is different from number of pruned data %d", nRecord, nPrunedRecords)
+				} else {
+					log.Printf("DataPruner: exported and pruned %d expired records from AuthData", nRecord)
+				}
+			}
+		}
+		if err := os.Remove(fileName); err != nil {
+			return err
+		}
+	}
+}
+
+func (self ReserveData) GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error) {
+	data := common.AllTradeHistory{}
+	data.Data = map[common.ExchangeID]common.ExchangeTradeHistory{}
+	for _, ex := range self.exchanges {
+		history, err := ex.GetTradeHistory(fromTime, toTime)
+		if err != nil {
+			return data, err
+		}
+		data.Data[ex.ID()] = history
+	}
+	data.Timestamp = common.GetTimestamp()
+	return data, nil
+}
+
+func (self ReserveData) RunStorageController() error {
+	if err := self.storageController.Runner.Start(); err != nil {
+		log.Fatalf("Storage controller runner error: %s", err.Error())
+	}
+	go func() {
+		if err := self.ControlAuthDataSize(); err != nil {
+			log.Printf("Control auth data size error: %s", err.Error())
+		}
+	}()
+	return nil
+}
+
+//NewReserveData initiate a new reserve instance
+func NewReserveData(storage Storage,
+	fetcher Fetcher, storageControllerRunner datapruner.StorageControllerRunner,
+	arch archive.Archive, globalStorage GlobalStorage,
+	exchanges []common.Exchange) *ReserveData {
+	storageController, err := datapruner.NewStorageController(storageControllerRunner, arch)
+	if err != nil {
+		panic(err)
+	}
+	return &ReserveData{storage, fetcher, storageController, globalStorage, exchanges}
 }

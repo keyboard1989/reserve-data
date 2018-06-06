@@ -1,108 +1,46 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
 	"runtime"
 
 	"github.com/KyberNetwork/reserve-data"
-	"github.com/KyberNetwork/reserve-data/blockchain"
-	"github.com/KyberNetwork/reserve-data/cmd/configuration"
 	"github.com/KyberNetwork/reserve-data/common"
-	"github.com/KyberNetwork/reserve-data/common/blockchain/nonce"
-	"github.com/KyberNetwork/reserve-data/core"
-	"github.com/KyberNetwork/reserve-data/data"
-	"github.com/KyberNetwork/reserve-data/data/fetcher"
 	"github.com/KyberNetwork/reserve-data/http"
-	"github.com/KyberNetwork/reserve-data/stat"
-	ethereum "github.com/ethereum/go-ethereum/common"
-	"github.com/robfig/cron"
 	"github.com/spf13/cobra"
-	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
+const remoteLogPath string = "core-log/"
+
+// logDir is located at base of this repository.
+var logDir = filepath.Join(filepath.Dir(filepath.Dir(common.CurrentDir())), "log")
 var noAuthEnable bool
 var servPort int = 8000
 var endpointOW string
-var base_url, auth_url string
+var base_url string
 var enableStat bool
 var noCore bool
 var stdoutLog bool
+var dryrun bool
 
-func loadTimestamp(path string) []uint64 {
-	raw, err := ioutil.ReadFile(path)
-	if err != nil {
-		panic(err)
-	}
-	timestamp := []uint64{}
-	err = json.Unmarshal(raw, &timestamp)
-	if err != nil {
-		panic(err)
-	}
-	return timestamp
-}
-
-// GetConfigFromENV: From ENV variable and overwriting instruction, build the config
-func GetConfigFromENV(kyberENV string) *configuration.Config {
-	log.Printf("Running in %s mode \n", kyberENV)
-	var config *configuration.Config
-	config = configuration.GetConfig(kyberENV,
-		!noAuthEnable,
-		endpointOW,
-		noCore,
-		enableStat)
-	return config
-}
-
-//set config log
-func configLog(stdoutLog bool) {
-	logger := &lumberjack.Logger{
-		Filename: "/go/src/github.com/KyberNetwork/reserve-data/log/core.log",
-		// MaxSize:  1, // megabytes
-		MaxBackups: 0,
-		MaxAge:     0, //days
-		// Compress:   true, // disabled by default
-	}
-
-	if stdoutLog {
-		mw := io.MultiWriter(os.Stdout, logger)
-		log.SetOutput(mw)
-	} else {
-		log.SetOutput(logger)
-	}
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds | log.Lshortfile)
-
-	c := cron.New()
-	c.AddFunc("@daily", func() { logger.Rotate() })
-	c.Start()
-}
-
-func InitInterface(kyberENV string) {
-	if base_url != configuration.Baseurl {
-		log.Printf("Overwriting base URL with %s \n", base_url)
-	}
-	configuration.SetInterface(base_url)
-}
-
-func serverStart(cmd *cobra.Command, args []string) {
+func serverStart(_ *cobra.Command, _ []string) {
 	numCPU := runtime.NumCPU()
 	runtime.GOMAXPROCS(numCPU)
 	configLog(stdoutLog)
-
-	//get configuration from ENV variable
-	kyberENV := os.Getenv("KYBER_ENV")
-	if kyberENV == "" {
-		kyberENV = "dev"
+	//create temp folder for exported file
+	err := os.MkdirAll("./exported", 0730)
+	if err != nil {
+		panic(err)
 	}
+	//get configuration from ENV variable
+	kyberENV := common.RunningMode()
 	InitInterface(kyberENV)
 	config := GetConfigFromENV(kyberENV)
+	backupLog(config.Archive)
 
-	var dataFetcher *fetcher.Fetcher
-	var statFetcher *stat.Fetcher
 	var rData reserve.ReserveData
 	var rCore reserve.ReserveCore
 	var rStat reserve.ReserveStats
@@ -112,111 +50,53 @@ func serverStart(cmd *cobra.Command, args []string) {
 		common.SupportedExchanges[ex.ID()] = ex
 	}
 
-	if !noCore {
-		//get fetcher based on config and ENV == simulation.
-		dataFetcher = fetcher.NewFetcher(
-			config.FetcherStorage,
-			config.FetcherGlobalStorage,
-			config.World,
-			config.FetcherRunner,
-			config.ReserveAddress,
-			kyberENV == "simulation",
-		)
-		for _, ex := range config.FetcherExchanges {
-			dataFetcher.AddExchange(ex)
-		}
-	}
-
-	if enableStat {
-		var deployBlock uint64
-		if kyberENV == "mainnet" || kyberENV == "production" || kyberENV == "dev" {
-			deployBlock = 5069586
-		}
-		statFetcher = stat.NewFetcher(
-			config.StatStorage,
-			config.LogStorage,
-			config.RateStorage,
-			config.UserStorage,
-			config.StatFetcherRunner,
-			deployBlock,
-			config.ReserveAddress,
-			config.ThirdPartyReserves,
-		)
-	}
-
-	//set block chain
-	bc, err := blockchain.NewBlockchain(
-		config.Blockchain,
-		config.WrapperAddress,
-		config.PricingAddress,
-		config.FeeBurnerAddress,
-		config.NetworkAddress,
-		config.ReserveAddress,
-		config.WhitelistAddress,
-	)
+	//Create blockchain object
+	bc, err := CreateBlockchain(config, kyberENV)
 	if err != nil {
-		panic(err)
+		log.Panicf("Can not create blockchain: (%s)", err)
 	}
 
+	//Create Data and Core, run if not in dry mode
 	if !noCore {
-		nonceCorpus := nonce.NewTimeWindow(config.BlockchainSigner.GetAddress(), 2000)
-		nonceDeposit := nonce.NewTimeWindow(config.DepositSigner.GetAddress(), 10000)
-		bc.RegisterPricingOperator(config.BlockchainSigner, nonceCorpus)
-		bc.RegisterDepositOperator(config.DepositSigner, nonceDeposit)
-		gasOracle := blockchain.NewGasOracle()
-		bc.AddGasOracle(gasOracle)
-	}
-
-	// we need to implicitly add old contract addresses to production
-	if kyberENV == "production" || kyberENV == "mainnet" {
-		// bc.AddOldNetwork(...)
-		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
-	}
-
-	for _, token := range config.SupportedTokens {
-		bc.AddToken(token)
-	}
-	err = bc.LoadAndSetTokenIndices()
-	if err != nil {
-		fmt.Printf("Can't load and set token indices: %s\n", err)
-	} else {
-		if !noCore {
-			dataFetcher.SetBlockchain(bc)
-			rData = data.NewReserveData(
-				config.DataStorage,
-				config.DataGlobalStorage,
-				dataFetcher,
-			)
-			rData.Run()
-			rCore = core.NewReserveCore(bc, config.ActivityStorage, config.ReserveAddress)
-		}
-		if enableStat {
-			statFetcher.SetBlockchain(bc)
-			rStat = stat.NewReserveStats(
-				config.AnalyticStorage,
-				config.StatStorage,
-				config.LogStorage,
-				config.RateStorage,
-				config.UserStorage,
-				config.StatControllerRunner,
-				statFetcher,
-			)
-			if kyberENV != "simulation" {
-				rStat.RunDBController()
+		rData, rCore = CreateDataCore(config, kyberENV, bc)
+		if !dryrun {
+			if kyberENV != common.SIMULATION_MODE {
+				rData.RunStorageController()
 			}
-			rStat.Run()
+			if err := rData.Run(); err != nil {
+				log.Panic(err)
+			}
 		}
-		servPortStr := fmt.Sprintf(":%d", servPort)
-		server := http.NewHTTPServer(
-			rData, rCore, rStat,
-			config.MetricStorage,
-			config.Exchanges,
-			servPortStr,
-			config.EnableAuthentication,
-			config.AuthEngine,
-			kyberENV,
-		)
+	}
+
+	//Create Stat, run if not in dry mode
+	if enableStat {
+		rStat = CreateStat(config, kyberENV, bc)
+		if !dryrun {
+			if kyberENV != common.SIMULATION_MODE {
+				rStat.RunStorageController()
+			}
+			if err := rStat.Run(); err != nil {
+				log.Panic(err)
+			}
+		}
+	}
+
+	//Create Server
+	servPortStr := fmt.Sprintf(":%d", servPort)
+	server := http.NewHTTPServer(
+		rData, rCore, rStat,
+		config.MetricStorage,
+		servPortStr,
+		config.EnableAuthentication,
+		config.AuthEngine,
+		kyberENV,
+	)
+
+	if !dryrun {
 		server.Run()
+	} else {
+		log.Printf("Dry run finished. All configs are corrected")
 	}
 }
 
@@ -238,5 +118,7 @@ func init() {
 	startServer.Flags().BoolVarP(&enableStat, "enable-stat", "", false, "enable stat related fetcher and api, event logs will not be fetched")
 	startServer.Flags().BoolVarP(&noCore, "no-core", "", false, "disable core related fetcher and api, this should be used only when we want to run an independent stat server")
 	startServer.Flags().BoolVarP(&stdoutLog, "log-to-stdout", "", false, "send log to both log file and stdout terminal")
+	startServer.Flags().BoolVarP(&dryrun, "dryrun", "", false, "only test if all the configs are set correctly, will not actually run core")
+
 	RootCmd.AddCommand(startServer)
 }

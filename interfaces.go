@@ -36,8 +36,9 @@ type ReserveStats interface {
 	GetCountries() ([]string, error)
 
 	GetUserList(fromTime, toTime uint64, timezone int64) (common.UserListResponse, error)
+	GetFeeSetRateByDay(fromTime uint64, toTime uint64) ([]common.FeeSetRate, error)
 
-	RunDBController() error
+	RunStorageController() error
 	Run() error
 	Stop() error
 }
@@ -69,7 +70,10 @@ type ReserveData interface {
 	UpdateExchangeNotification(exchange, action, tokenPair string, from, to uint64, isWarning bool, msg string) error
 	GetNotifications() (common.ExchangeNotifications, error)
 
+	GetTradeHistory(fromTime, toTime uint64) (common.AllTradeHistory, error)
+
 	Run() error
+	RunStorageController() error
 	Stop() error
 }
 

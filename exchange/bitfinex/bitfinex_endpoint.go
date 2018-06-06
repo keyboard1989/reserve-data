@@ -13,14 +13,17 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/exchange"
 	ethereum "github.com/ethereum/go-ethereum/common"
-	"sync"
 )
 
+//BitfinexEndpoint endpoint for interact with bitfinex
+//with signer for authentication api
+//and interface for different env
 type BitfinexEndpoint struct {
 	signer Signer
 	interf Interface
@@ -43,14 +46,15 @@ func (self *BitfinexEndpoint) fillRequest(req *http.Request, signNeeded bool, ti
 			"request": req.URL.Path,
 			"nonce":   fmt.Sprintf("%v", timepoint),
 		}
-		payloadJson, _ := json.Marshal(payload)
-		payloadEnc := base64.StdEncoding.EncodeToString(payloadJson)
+		payloadJSON, _ := json.Marshal(payload)
+		payloadEnc := base64.StdEncoding.EncodeToString(payloadJSON)
 		req.Header.Add("X-BFX-APIKEY", self.signer.GetKey())
 		req.Header.Add("X-BFX-PAYLOAD", payloadEnc)
 		req.Header.Add("X-BFX-SIGNATURE", self.signer.Sign(req.URL.String()))
 	}
 }
 
+//FetchOnePairData return one pair data
 func (self *BitfinexEndpoint) FetchOnePairData(
 	wg *sync.WaitGroup,
 	pair common.TokenPair,
@@ -80,39 +84,45 @@ func (self *BitfinexEndpoint) FetchOnePairData(
 		result.Valid = false
 		result.Error = err.Error()
 	} else {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
+		respBody, err := ioutil.ReadAll(resp.Body)
 		returnTime := common.GetTimestamp()
 		result.ReturnTime = returnTime
 		if err != nil {
 			result.Valid = false
 			result.Error = err.Error()
 		} else {
-			resp_data := exchange.Bitfresp{}
-			json.Unmarshal(resp_body, &resp_data)
-			if len(resp_data.Asks) == 0 && len(resp_data.Bids) == 0 {
+			respData := exchange.Bitfresp{}
+			if err := json.Unmarshal(respBody, &respData); err != nil {
+				log.Printf("Unmarshal response error: %s", err.Error())
+			}
+			if len(respData.Asks) == 0 && len(respData.Bids) == 0 {
 				result.Valid = false
 			} else {
-				for _, buy := range resp_data.Bids {
+				for _, buy := range respData.Bids {
 					quantity, _ := strconv.ParseFloat(buy["amount"], 64)
 					rate, _ := strconv.ParseFloat(buy["price"], 64)
 					result.Bids = append(
 						result.Bids,
-						common.PriceEntry{
+						common.NewPriceEntry(
 							quantity,
 							rate,
-						},
+						),
 					)
 				}
-				for _, sell := range resp_data.Asks {
+				for _, sell := range respData.Asks {
 					quantity, _ := strconv.ParseFloat(sell["amount"], 64)
 					rate, _ := strconv.ParseFloat(sell["price"], 64)
 					result.Asks = append(
 						result.Asks,
-						common.PriceEntry{
+						common.NewPriceEntry(
 							quantity,
 							rate,
-						},
+						),
 					)
 				}
 			}
@@ -144,11 +154,14 @@ func (self *BitfinexEndpoint) Trade(tradeType string, base, quote common.Token, 
 	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", resp_body)
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
+		respBody, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
-			err = json.Unmarshal(resp_body, &result)
+			err = json.Unmarshal(respBody, &result)
 		}
 	} else {
 		log.Printf("Error: %v, Code: %v\n", err, resp)
@@ -180,11 +193,14 @@ func (self *BitfinexEndpoint) Withdraw(token common.Token, amount *big.Int, addr
 	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil && resp.StatusCode == 200 {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
-		log.Printf("response: %s\n", resp_body)
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
+		respBody, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
-			err = json.Unmarshal(resp_body, &result)
+			err = json.Unmarshal(respBody, &result)
 		}
 		if err != nil {
 			return err
@@ -193,10 +209,8 @@ func (self *BitfinexEndpoint) Withdraw(token common.Token, amount *big.Int, addr
 			return errors.New(result.Error)
 		}
 		return nil
-	} else {
-		log.Printf("Error: %v, Code: %v\n", err, resp)
-		return errors.New("withdraw rejected by Bitfinex")
 	}
+	return errors.New("withdraw rejected by Bitfinex")
 }
 
 func (self *BitfinexEndpoint) GetInfo() (exchange.Bitfinfo, error) {
@@ -213,7 +227,6 @@ func (self *BitfinexEndpoint) GetInfo() (exchange.Bitfinfo, error) {
 		self.interf.AuthenticatedEndpoint(),
 		bytes.NewBufferString(params),
 	)
-	log.Printf("params: %v\n", params)
 	req.Header.Add("Content-Length", strconv.Itoa(len(params)))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
@@ -221,23 +234,30 @@ func (self *BitfinexEndpoint) GetInfo() (exchange.Bitfinfo, error) {
 	req.Header.Add("Sign", self.signer.Sign(params))
 	resp, err := client.Do(req)
 	if err == nil {
-		defer resp.Body.Close()
-		resp_body, err := ioutil.ReadAll(resp.Body)
+		defer func() {
+			if err := resp.Body.Close(); err != nil {
+				log.Printf("Response body close error: %s", err.Error())
+			}
+		}()
+		respBody, err := ioutil.ReadAll(resp.Body)
 		if err == nil {
-			json.Unmarshal(resp_body, &result)
+			err = json.Unmarshal(respBody, &result)
 		}
 	}
 	return result, err
 }
 
+//NewBitfinexEndpoint return bitfinex endpoint instance
 func NewBitfinexEndpoint(signer Signer, interf Interface) *BitfinexEndpoint {
 	return &BitfinexEndpoint{signer, interf}
 }
 
+//NewRealBitfinexEndpoint return real endpoint instance
 func NewRealBitfinexEndpoint(signer Signer) *BitfinexEndpoint {
 	return &BitfinexEndpoint{signer, NewRealInterface()}
 }
 
+//NewSimulatedBitfinexEndpoint return simulated endpoint
 func NewSimulatedBitfinexEndpoint(signer Signer) *BitfinexEndpoint {
 	return &BitfinexEndpoint{signer, NewSimulatedInterface()}
 }
