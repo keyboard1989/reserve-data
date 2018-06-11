@@ -40,7 +40,7 @@ func (self *StableEx) UpdateAllDepositAddresses(address string) {
 	panic("dgx doesn't support update deposit addresses")
 }
 
-func (self *StableEx) UpdateDepositAddress(token common.Token, address string) {
+func (self *StableEx) UpdateDepositAddress(token common.Token, address string) error {
 	panic("dgx doesn't support update deposit addresses")
 }
 
@@ -58,7 +58,7 @@ func (self *StableEx) GetFee() (common.ExchangeFees, error) {
 }
 
 func (self *StableEx) ID() common.ExchangeID {
-	return common.ExchangeID("stable_exchange")
+	return common.ExchangeID(string(settings.StableExchange))
 }
 
 func (self *StableEx) TokenPairs() ([]common.TokenPair, error) {

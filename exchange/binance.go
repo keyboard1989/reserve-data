@@ -154,7 +154,7 @@ func (self *Binance) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 }
 
 func (self *Binance) ID() common.ExchangeID {
-	return common.ExchangeID("binance")
+	return common.ExchangeID(string(settings.Binance))
 }
 
 func (self *Binance) TokenPairs() ([]common.TokenPair, error) {

@@ -75,7 +75,7 @@ func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
 	}
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Address == "" {
-		log.Printf("ERROR: Get Huobi live deposit address for token %s failed: (%v) or the replied address is empty. Check the currently available address instead", tokenID, err)
+		log.Printf("ERROR: Get Huobi live deposit address for token %s failed: (%v) or the replied address is empty. Check the currently available address instead", token.ID, err)
 		addrs, uErr := self.setting.GetDepositAddress(settings.Huobi)
 		if uErr != nil {
 			log.Printf("ERROR: get address of token %s in Huobi exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
@@ -154,7 +154,7 @@ func (self *Huobi) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 }
 
 func (self *Huobi) ID() common.ExchangeID {
-	return common.ExchangeID("huobi")
+	return common.ExchangeID(string(settings.Huobi))
 }
 
 func (self *Huobi) TokenPairs() ([]common.TokenPair, error) {
