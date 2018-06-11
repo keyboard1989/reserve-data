@@ -9,7 +9,6 @@ install:
 
 script:
   - gometalinter --config=gometalinter.json ./...
-  - cd stat
   - pushd stat && gometalinter --vendor --disable-all --enable=vetshadow ./...;popd
   - $GOPATH/bin/goveralls -v -service=travis-ci
 
