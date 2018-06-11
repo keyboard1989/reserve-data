@@ -99,9 +99,9 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	bkclients := map[string]*ethclient.Client{}
 	var callClients []*ethclient.Client
 	for _, ep := range bkendpoints {
-		bkclient, vErr := ethclient.Dial(ep)
-		if vErr != nil {
-			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, vErr)
+		bkclient, dErr := ethclient.Dial(ep)
+		if dErr != nil {
+			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, dErr)
 		} else {
 			bkclients[ep] = bkclient
 			callClients = append(callClients, bkclient)
