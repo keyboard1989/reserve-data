@@ -19,23 +19,42 @@ const BITTREX_EPSILON float64 = 0.000001
 
 type Bittrex struct {
 	interf       BittrexInterface
-	addresses    *common.ExchangeAddresses
 	storage      BittrexStorage
 	exchangeInfo *common.ExchangeInfo
 	setting      Setting
 }
 
-func (self *Bittrex) TokenAddresses() map[string]ethereum.Address {
-	return self.addresses.GetData()
+func (self *Bittrex) TokenAddresses() (map[string]ethereum.Address, error) {
+	addrs, err := self.setting.GetDepositAddress(settings.Bittrex)
+	if err != nil {
+		return nil, err
+	}
+	return addrs.GetData(), nil
 }
 
 func (self *Bittrex) MarshalText() (text []byte, err error) {
 	return []byte(self.ID()), nil
 }
 
+// Address return the deposit address of a token and return true if token is supported in the exchange.
+// Otherwise return false. This function will prioritize live address from exchange above the current stored address.
 func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.addresses.Get(token.ID)
-	return addr, supported
+	liveAddress, err := self.interf.GetDepositAddress(token.ID)
+	if err != nil || liveAddress.Result.Address == "" {
+		log.Printf("ERROR: Get Bittrex live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
+		addrs, uErr := self.setting.GetDepositAddress(settings.Bittrex)
+		if uErr != nil {
+			log.Printf("ERROR: get address of token %s in Bittrex exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
+			return ethereum.Address{}, false
+		}
+		return addrs.Get(token.ID)
+	}
+	log.Printf("Got Bittrex live deposit address for token %s, attempt to update it to current setting", token.ID)
+	token.Address = liveAddress.Result.Address
+	if err = self.setting.UpdateDepositAddress(settings.Bittrex, token); err != nil {
+		log.Printf("ERROR: can not update deposit address for token %s on Bittrex: (%s)", token.ID, err.Error())
+	}
+	return ethereum.HexToAddress(liveAddress.Result.Address), true
 }
 
 func (self *Bittrex) GetFee() (common.ExchangeFees, error) {
@@ -46,20 +65,16 @@ func (self *Bittrex) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 	return self.setting.GetMinDeposit(settings.Bittrex)
 }
 
-func (self *Bittrex) UpdateAllDepositAddresses(address string) {
-	data := self.addresses.GetData()
-	for k := range data {
-		self.addresses.Update(k, ethereum.HexToAddress(address))
+func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) error {
+	liveAddress, err := self.interf.GetDepositAddress(token.ID)
+	if err != nil || liveAddress.Result.Address == "" {
+		log.Printf("ERROR: Get Bittrex live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
+		token.Address = address
+		return self.setting.UpdateDepositAddress(settings.Bittrex, token)
 	}
-}
-
-func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) {
-	liveAddress, _ := self.interf.GetDepositAddress(token.ID)
-	if liveAddress.Result.Address != "" {
-		self.addresses.Update(token.ID, ethereum.HexToAddress(liveAddress.Result.Address))
-	} else {
-		self.addresses.Update(token.ID, ethereum.HexToAddress(address))
-	}
+	log.Printf("Got Bittrex live deposit address for token %s, attempt to update it to current setting", token.ID)
+	token.Address = liveAddress.Result.Address
+	return self.setting.UpdateDepositAddress(settings.Bittrex, token)
 }
 
 func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {
@@ -440,7 +455,6 @@ func NewBittrex(
 	setting Setting) (*Bittrex, error) {
 	bittrex := &Bittrex{
 		interf,
-		common.NewExchangeAddresses(),
 		storage,
 		common.NewExchangeInfo(),
 		setting,

@@ -1,6 +1,9 @@
 package settings
 
-import "github.com/KyberNetwork/reserve-data/common"
+import (
+	"github.com/KyberNetwork/reserve-data/common"
+	ethereum "github.com/ethereum/go-ethereum/common"
+)
 
 // GetFee returns a map[tokenID]exchangeFees and error if occur
 func (setting *Settings) GetFee(ex ExchangeName) (common.ExchangeFees, error) {
@@ -27,9 +30,14 @@ func (setting *Settings) GetDepositAddress(ex ExchangeName) (common.ExchangeAddr
 	return setting.Exchange.Storage.GetDepositAddress(ex)
 }
 
-// StoreDepositAddress stores the depositAddress with exchangeName as key into database and
-// return error if occur
-func (setting *Settings) StoreDepositAddress(ex ExchangeName, addrs common.ExchangeAddresses) error {
+// Update get the deposit Addresses with exchangeName as key, change the desired deposit address
+// then store into database and return error if occur
+func (setting *Settings) UpdateDepositAddress(ex ExchangeName, token common.Token) error {
+	addrs, err := setting.GetDepositAddress(ex)
+	if err != nil {
+		return err
+	}
+	addrs.Update(token.ID, ethereum.HexToAddress(token.Address))
 	return setting.Exchange.Storage.StoreDepositAddress(ex, addrs)
 }
 

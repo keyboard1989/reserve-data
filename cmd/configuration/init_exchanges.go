@@ -84,11 +84,15 @@ func NewExchangePool(
 			if err != nil {
 				return nil, fmt.Errorf("Can not create exchange bittrex: (%s)", err)
 			}
+			addrs, err := setting.GetDepositAddress(settings.Bittrex)
+			if err != nil {
+				return nil, err
+			}
 			wait := sync.WaitGroup{}
-			// for tokenID, addr := range addressConfig.Exchanges["bittrex"] {
-			// 	wait.Add(1)
-			// 	go AsyncUpdateDepositAddress(bit, tokenID, addr, &wait, setting)
-			// }
+			for tokenID, addr := range addrs {
+				wait.Add(1)
+				go AsyncUpdateDepositAddress(bit, tokenID, addr.Hex(), &wait, setting)
+			}
 			wait.Wait()
 			err = bit.UpdatePairsPrecision()
 			if err != nil {
@@ -109,11 +113,15 @@ func NewExchangePool(
 			if err != nil {
 				return nil, fmt.Errorf("Can not create exchange binance: (%s)", err)
 			}
+			addrs, err := setting.GetDepositAddress(settings.Binance)
+			if err != nil {
+				return nil, err
+			}
 			wait := sync.WaitGroup{}
-			// for tokenID, addr := range addressConfig.Exchanges["binance"] {
-			// 	wait.Add(1)
-			// 	go AsyncUpdateDepositAddress(bin, tokenID, addr, &wait, setting)
-			// }
+			for tokenID, addr := range addrs {
+				wait.Add(1)
+				go AsyncUpdateDepositAddress(bin, tokenID, addr.Hex(), &wait, setting)
+			}
 			wait.Wait()
 			err = bin.UpdatePairsPrecision()
 			if err != nil {
@@ -140,12 +148,15 @@ func NewExchangePool(
 			if err != nil {
 				return nil, fmt.Errorf("Can not create exchange huobi: (%s)", err)
 			}
-
+			addrs, err := setting.GetDepositAddress(settings.Huobi)
+			if err != nil {
+				return nil, err
+			}
 			wait := sync.WaitGroup{}
-			// for tokenID, addr := range addressConfig.Exchanges["huobi"] {
-			// 	wait.Add(1)
-			// 	go AsyncUpdateDepositAddress(huobi, tokenID, addr, &wait, setting)
-			// }
+			for tokenID, addr := range addrs {
+				wait.Add(1)
+				go AsyncUpdateDepositAddress(huobi, tokenID, addr.Hex(), &wait, setting)
+			}
 			wait.Wait()
 			err = huobi.UpdatePairsPrecision()
 			if err != nil {

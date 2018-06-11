@@ -3,6 +3,7 @@ package exchange
 import (
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/settings"
+	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 type Setting interface {
@@ -15,4 +16,6 @@ type Setting interface {
 	GetMinDeposit(ex settings.ExchangeName) (common.ExchangesMinDeposit, error)
 	GetDepositAddress(ex settings.ExchangeName) (common.ExchangeAddresses, error)
 	GetTokenPairs(ex settings.ExchangeName) ([]common.TokenPair, error)
+	GetAddress(name settings.AddressName) (ethereum.Address, error)
+	UpdateDepositAddress(name settings.ExchangeName, token common.Token) error
 }

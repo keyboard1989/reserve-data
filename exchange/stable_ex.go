@@ -15,12 +15,12 @@ type StableEx struct {
 	setting      Setting
 }
 
-func (self *StableEx) TokenAddresses() map[string]ethereum.Address {
+func (self *StableEx) TokenAddresses() (map[string]ethereum.Address, error) {
 	// returning admin multisig. In case anyone sent dgx to this address,
 	// we can still get it.
 	return map[string]ethereum.Address{
 		"DGX": ethereum.HexToAddress("0xFDF28Bf25779ED4cA74e958d54653260af604C20"),
-	}
+	}, nil
 }
 
 func (self *StableEx) MarshalText() (text []byte, err error) {
@@ -28,7 +28,11 @@ func (self *StableEx) MarshalText() (text []byte, err error) {
 }
 
 func (self *StableEx) Address(token common.Token) (ethereum.Address, bool) {
-	addr, supported := self.TokenAddresses()[token.ID]
+	addrs, err := self.TokenAddresses()
+	if err != nil {
+		return ethereum.Address{}, false
+	}
+	addr, supported := addrs[token.ID]
 	return addr, supported
 }
 
