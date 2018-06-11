@@ -6,7 +6,8 @@
 	"gotype",
 	"gotypex",
 	"vet",
-	"unused"
+    "unused",
+    "errcheck"
     ],
     "Deadline": "5m"
 }
