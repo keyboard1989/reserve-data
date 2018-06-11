@@ -450,7 +450,7 @@ func (self ReserveStats) GetReserveRates(fromTime, toTime uint64, reserveAddr et
 		}
 		latest = rate
 	}
-	log.Printf("RunningMode reserve rate: %v", result)
+	log.Printf("Get reserve rate: %v", result)
 	return result, err
 }
 

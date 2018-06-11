@@ -275,9 +275,16 @@
       "listed": true
     },
     "PAL": {
-      "name": "PolicyPal",
+      "name": "PolicyPal Network",
       "decimals": 18,
       "address": "0xfedae5642668f8636a11987ff386bfd215f942ee",
+      "internal use": false,
+      "listed": true
+    },
+    "ELEC": {
+      "name": "ElectrifyAsia",
+      "decimals": 18,
+      "address": "0xd49ff13661451313ca1553fd6954bd1d9b6e02b9",
       "internal use": false,
       "listed": true
     },
