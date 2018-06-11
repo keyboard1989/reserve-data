@@ -184,8 +184,8 @@ func (self *BaseBlockchain) transactTx(context context.Context, opts TxOpts, con
 	if gasLimit == 0 {
 		// Gas estimation cannot succeed without code for method invocations
 		if contract.Big().Cmp(ethereum.Big0) == 0 {
-			if code, vErr := self.client.PendingCodeAt(ensureContext(context), contract); vErr != nil {
-				return nil, vErr
+			if code, pErr := self.client.PendingCodeAt(ensureContext(context), contract); pErr != nil {
+				return nil, pErr
 			} else if len(code) == 0 {
 				return nil, bind.ErrNoCode
 			}
@@ -332,44 +332,7 @@ func (self *BaseBlockchain) TransactionByHash(ctx context.Context, hash ethereum
 func (self *BaseBlockchain) TxStatus(hash ethereum.Hash) (string, uint64, error) {
 	option := context.Background()
 	tx, pending, err := self.TransactionByHash(option, hash)
-	if err == nil {
-		// tx exist
-		if pending {
-			return "", 0, nil
-		}
-		receipt, vErr := self.client.TransactionReceipt(option, hash)
-		if vErr != nil {
-			// incompatibily between geth and parity
-			// so even err is not nil, receipt is still there
-			// and have valid fields
-			if receipt != nil {
-				// only byzantium has status field at the moment
-				// mainnet, ropsten are byzantium, other chains such as
-				// devchain, kovan are not
-				if self.chainType == "byzantium" {
-					if receipt.Status == 1 {
-						// successful tx
-						return "mined", tx.BlockNumber().Uint64(), nil
-					} else {
-						// failed tx
-						return "failed", tx.BlockNumber().Uint64(), nil
-					}
-				} else {
-					return "mined", tx.BlockNumber().Uint64(), nil
-				}
-			} else {
-				// networking issue
-				return "", 0, err
-			}
-		} else {
-			if receipt.Status == 1 {
-				// successful tx
-				return "mined", tx.BlockNumber().Uint64(), nil
-			}
-			// failed tx
-			return "failed", tx.BlockNumber().Uint64(), nil
-		}
-	} else {
+	if err != nil {
 		if err == ether.NotFound {
 			// tx doesn't exist. it failed
 			return "lost", 0, nil
@@ -377,6 +340,39 @@ func (self *BaseBlockchain) TxStatus(hash ethereum.Hash) (string, uint64, error)
 		// networking issue
 		return "", 0, err
 	}
+	// tx exist
+	if pending {
+		return "", 0, nil
+	}
+	var receipt *types.Receipt
+	receipt, err = self.client.TransactionReceipt(option, hash)
+	if err != nil {
+		// incompatibily between geth and parity
+		// so even err is not nil, receipt is still there
+		// and have valid fields
+		if receipt != nil {
+			// only byzantium has status field at the moment
+			// mainnet, ropsten are byzantium, other chains such as
+			// devchain, kovan are not
+			if self.chainType == "byzantium" {
+				if receipt.Status == 1 {
+					// successful tx
+					return "mined", tx.BlockNumber().Uint64(), nil
+				}
+				// failed tx
+				return "failed", tx.BlockNumber().Uint64(), nil
+			}
+			return "mined", tx.BlockNumber().Uint64(), nil
+		}
+		// networking issue
+		return "", 0, err
+	}
+	if receipt.Status == 1 {
+		// successful tx
+		return "mined", tx.BlockNumber().Uint64(), nil
+	}
+	// failed tx
+	return "failed", tx.BlockNumber().Uint64(), nil
 }
 
 func (self *BaseBlockchain) GetEthRate(timepoint uint64) float64 {

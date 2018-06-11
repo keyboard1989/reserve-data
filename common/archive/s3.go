@@ -31,8 +31,8 @@ func enforceFolderPath(fp string) string {
 func (archive *s3Archive) UploadFile(bucketName string, awsfolderPath string, filePath string) error {
 	file, err := os.Open(filePath)
 	defer func() {
-		if vErr := file.Close(); vErr != nil {
-			log.Printf("File close error: %s", vErr.Error())
+		if cErr := file.Close(); cErr != nil {
+			log.Printf("File close error: %s", cErr.Error())
 		}
 	}()
 	if err != nil {
@@ -68,8 +68,8 @@ func (archive *s3Archive) CheckFileIntergrity(bucketName string, awsfolderPath s
 	//get File info
 	file, err := os.Open(filePath)
 	defer func() {
-		if vErr := file.Close(); vErr != nil {
-			log.Printf("File close error: %s", vErr.Error())
+		if cErr := file.Close(); cErr != nil {
+			log.Printf("File close error: %s", cErr.Error())
 		}
 	}()
 	if err != nil {
