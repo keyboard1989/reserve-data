@@ -1159,7 +1159,9 @@ func (self *BoltStorage) StorePWIEquation(data string) error {
 		p := tx.Bucket([]byte(PWI_EQUATION))
 		idByte := boltutil.Uint64ToBytes(common.GetTimepoint())
 		pending := metric.PWIEquation{}
-		json.Unmarshal(v, &pending)
+		if uErr := json.Unmarshal(v, &pending); uErr != nil {
+			return uErr
+		}
 		if pending.Data != data {
 			return errors.New("Confirm data does not match pending data")
 		}

@@ -244,7 +244,7 @@ func (self *BoltStatStorage) SetBurnFeeStat(burnFeeStats map[string]common.BurnF
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := boltutil.Uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(BURNFEE_AGGREGATION), dataJSON)
+			return lastProcessBk.Put([]byte(BURNFEE_AGGREGATION), dataJSON)
 		}
 		return nil
 	})
@@ -283,7 +283,7 @@ func (self *BoltStatStorage) SetVolumeStat(volumeStats map[string]common.VolumeS
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := boltutil.Uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(VOLUME_STAT_AGGREGATION), dataJSON)
+			return lastProcessBk.Put([]byte(VOLUME_STAT_AGGREGATION), dataJSON)
 		}
 		return nil
 	})
@@ -338,7 +338,7 @@ func (self *BoltStatStorage) SetWalletStat(stats map[string]common.MetricStatsTi
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := boltutil.Uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(WALLET_AGGREGATION), dataJSON)
+			return lastProcessBk.Put([]byte(WALLET_AGGREGATION), dataJSON)
 		}
 		return nil
 	})
@@ -444,7 +444,7 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := boltutil.Uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(COUNTRY_AGGREGATION), dataJSON)
+			return lastProcessBk.Put([]byte(COUNTRY_AGGREGATION), dataJSON)
 		}
 		return nil
 	})
@@ -497,7 +497,9 @@ func (self *BoltStatStorage) SetFirstTradeEver(userTradeLog *[]common.TradeLog) 
 			timepoint := trade.Timestamp
 			if !self.DidTrade(tx, userAddr, timepoint) {
 				timestampByte := boltutil.Uint64ToBytes(timepoint)
-				b.Put([]byte(userAddr), timestampByte)
+				if pErr := b.Put([]byte(userAddr), timestampByte); pErr != nil {
+					log.Printf("Cannot put data: %s", pErr.Error())
+				}
 			}
 		}
 		return nil
@@ -583,7 +585,9 @@ func (self *BoltStatStorage) SetFirstTradeInDay(tradeLogs *[]common.TradeLog) er
 				userDailyBucket, _ := timezoneBk.CreateBucketIfNotExists(timestamp)
 				if !self.DidTradeInDay(tx, userAddr, timepoint, timezone) {
 					timestampByte := boltutil.Uint64ToBytes(timepoint)
-					userDailyBucket.Put([]byte(userAddr), timestampByte)
+					if pErr := userDailyBucket.Put([]byte(userAddr), timestampByte); pErr != nil {
+						log.Printf("Cannot put user daily first trade: %s", pErr.Error())
+					}
 				}
 			}
 		}
@@ -635,7 +639,7 @@ func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTim
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := boltutil.Uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(USER_INFO_AGGREGATION), dataJSON)
+			return lastProcessBk.Put([]byte(USER_INFO_AGGREGATION), dataJSON)
 		}
 		return err
 	})
@@ -882,7 +886,7 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 		lastProcessBk := tx.Bucket([]byte(TRADELOG_PROCESSOR_STATE))
 		if lastProcessBk != nil {
 			dataJSON := boltutil.Uint64ToBytes(lastProcessTimePoint)
-			lastProcessBk.Put([]byte(TRADE_SUMMARY_AGGREGATION), dataJSON)
+			return lastProcessBk.Put([]byte(TRADE_SUMMARY_AGGREGATION), dataJSON)
 		}
 		return nil
 	})
