@@ -45,15 +45,15 @@ func (self *BoltRateStorage) StoreReserveRates(ethReserveAddr ethereum.Address, 
 		var prevDataJSON common.ReserveRates
 		_, prevData := c.Last()
 		if prevData != nil {
-			if vErr := json.Unmarshal(prevData, &prevDataJSON); vErr != nil {
-				return vErr
+			if uErr := json.Unmarshal(prevData, &prevDataJSON); uErr != nil {
+				return uErr
 			}
 		}
 		if prevDataJSON.BlockNumber < rate.BlockNumber {
 			idByte := boltutil.Uint64ToBytes(timepoint)
-			dataJSON, vErr := json.Marshal(rate)
-			if vErr != nil {
-				return vErr
+			dataJSON, uErr := json.Marshal(rate)
+			if uErr != nil {
+				return uErr
 			}
 			return b.Put(idByte, dataJSON)
 		}
@@ -70,17 +70,16 @@ func (self *BoltRateStorage) GetReserveRates(fromTime, toTime uint64, ethReserve
 		return result, fmt.Errorf("Time range is too broad, it must be smaller or equal to %d miliseconds", MAX_GET_RATES_PERIOD)
 	}
 	err = self.db.Update(func(tx *bolt.Tx) error {
-		b, vErr := tx.CreateBucketIfNotExists([]byte(reserveAddr))
-		if vErr != nil {
-			return vErr
+		b, uErr := tx.CreateBucketIfNotExists([]byte(reserveAddr))
+		if uErr != nil {
+			return uErr
 		}
 		c := b.Cursor()
 		min := boltutil.Uint64ToBytes(fromTime)
 		max := boltutil.Uint64ToBytes(toTime)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			rates := common.ReserveRates{}
-			uErr := json.Unmarshal(v, &rates)
-			if uErr != nil {
+			if uErr = json.Unmarshal(v, &rates); uErr != nil {
 				return uErr
 			}
 			result = append(result, rates)

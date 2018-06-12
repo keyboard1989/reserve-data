@@ -399,11 +399,15 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		for country, timeZoneStat := range stats {
 			country = strings.ToUpper(country)
-			b, vErr := tx.CreateBucketIfNotExists([]byte(country))
-			if vErr != nil {
-				return vErr
+			b, uErr := tx.CreateBucketIfNotExists([]byte(country))
+			if uErr != nil {
+				return uErr
 			}
 			for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
+				var (
+					uErr     error
+					dataJSON []byte
+				)
 				stats := timeZoneStat[i]
 				freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
 				countryTzBucket, uErr := b.CreateBucketIfNotExists([]byte(freq))
@@ -415,8 +419,8 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 					currentData := common.MetricStats{}
 					v := countryTzBucket.Get(timestamp)
 					if v != nil {
-						if tErr := json.Unmarshal(v, &currentData); tErr != nil {
-							return tErr
+						if uErr = json.Unmarshal(v, &currentData); uErr != nil {
+							return uErr
 						}
 					}
 					currentData.ETHVolume += stat.ETHVolume
@@ -430,12 +434,12 @@ func (self *BoltStatStorage) SetCountryStat(stats map[string]common.MetricStatsT
 						currentData.ETHPerTrade = currentData.ETHVolume / float64(currentData.TradeCount)
 						currentData.USDPerTrade = currentData.USDVolume / float64(currentData.TradeCount)
 					}
-					dataJSON, cErr := json.Marshal(currentData)
-					if cErr != nil {
-						return cErr
+
+					if dataJSON, uErr = json.Marshal(currentData); uErr != nil {
+						return uErr
 					}
-					if cErr = countryTzBucket.Put(timestamp, dataJSON); cErr != nil {
-						return cErr
+					if uErr = countryTzBucket.Put(timestamp, dataJSON); uErr != nil {
+						return uErr
 					}
 				}
 			}
@@ -593,23 +597,25 @@ func (self *BoltStatStorage) SetFirstTradeInDay(tradeLogs *[]common.TradeLog) er
 
 func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTimezone, lastProcessTimePoint uint64) error {
 	err := self.db.Update(func(tx *bolt.Tx) error {
-		b, cErr := tx.CreateBucketIfNotExists([]byte(USER_LIST_BUCKET))
-		if cErr != nil {
-			return cErr
+		b, uErr := tx.CreateBucketIfNotExists([]byte(USER_LIST_BUCKET))
+		if uErr != nil {
+			return uErr
 		}
 		for userAddr, userInfoData := range userInfos {
-			userAddr = strings.ToLower(userAddr)
+			var (
+				timezoneBk *bolt.Bucket
+				userAddr   = strings.ToLower(userAddr)
+			)
 			for timezone := START_TIMEZONE; timezone <= END_TIMEZONE; timezone++ {
 				freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, timezone)
-				timezoneBk, vErr := b.CreateBucketIfNotExists([]byte(freq))
-				if vErr != nil {
-					return vErr
+				if timezoneBk, uErr = b.CreateBucketIfNotExists([]byte(freq)); uErr != nil {
+					return uErr
 				}
 				timezoneData := userInfoData[timezone]
 				for timepoint, userData := range timezoneData {
+					var timestampBk *bolt.Bucket
 					timestamp := getTimestampByFreq(timepoint, freq)
-					timestampBk, uErr := timezoneBk.CreateBucketIfNotExists(timestamp)
-					if uErr != nil {
+					if timestampBk, uErr = timezoneBk.CreateBucketIfNotExists(timestamp); uErr != nil {
 						return uErr
 					}
 					currentUserData := common.UserInfo{}
@@ -624,8 +630,7 @@ func (self *BoltStatStorage) SetUserList(userInfos map[string]common.UserInfoTim
 					currentUserData.Addr = userData.Addr
 					currentUserData.Email = userData.Email
 					dataJSON, _ := json.Marshal(currentUserData)
-					uErr = timestampBk.Put([]byte(userAddr), dataJSON)
-					if uErr != nil {
+					if uErr = timestampBk.Put([]byte(userAddr), dataJSON); uErr != nil {
 						return uErr
 					}
 				}
@@ -660,9 +665,9 @@ func (self *BoltStatStorage) GetUserList(fromTime, toTime uint64, timezone int64
 				cursor := timestampBk.Cursor()
 				for kk, vv := cursor.First(); kk != nil; kk, vv = cursor.Next() {
 					value := common.UserInfo{}
-					vErr := json.Unmarshal(vv, &value)
-					if vErr != nil {
-						return vErr
+					uErr := json.Unmarshal(vv, &value)
+					if uErr != nil {
+						return uErr
 					}
 					currentData, exist := result[value.Addr]
 					if !exist {
@@ -843,9 +848,9 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 			for i := START_TIMEZONE; i <= END_TIMEZONE; i++ {
 				stats := stats[i]
 				freq := fmt.Sprintf("%s%d", TIMEZONE_BUCKET_PREFIX, i)
-				tzBucket, vErr := b.CreateBucketIfNotExists([]byte(freq))
-				if vErr != nil {
-					return vErr
+				tzBucket, uErr := b.CreateBucketIfNotExists([]byte(freq))
+				if uErr != nil {
+					return uErr
 				}
 				for timepoint, stat := range stats {
 					timestamp := boltutil.Uint64ToBytes(timepoint)
@@ -868,12 +873,12 @@ func (self *BoltStatStorage) SetTradeSummary(tradeSummary map[string]common.Metr
 						currentData.ETHPerTrade = currentData.ETHVolume / float64(currentData.TradeCount)
 						currentData.USDPerTrade = currentData.USDVolume / float64(currentData.TradeCount)
 					}
-					dataJSON, cErr := json.Marshal(currentData)
-					if cErr != nil {
-						return cErr
+					dataJSON, uErr := json.Marshal(currentData)
+					if uErr != nil {
+						return uErr
 					}
-					if cErr = tzBucket.Put(timestamp, dataJSON); cErr != nil {
-						return cErr
+					if uErr = tzBucket.Put(timestamp, dataJSON); uErr != nil {
+						return uErr
 					}
 				}
 			}

@@ -84,35 +84,35 @@ func (self *BoltFeeSetRateStorage) StoreTransaction(txs []common.SetRateTxInfo) 
 		bTotal := tx.Bucket([]byte(TOTAL_GAS_SPENT_BUCKET))
 
 		for _, transaction := range txs {
-			blockNumUint, vErr := strconv.ParseUint(transaction.BlockNumber, 10, 64)
-			if vErr != nil {
-				return vErr
+			blockNumUint, uErr := strconv.ParseUint(transaction.BlockNumber, 10, 64)
+			if uErr != nil {
+				return uErr
 			}
-			txIndexUint, vErr := strconv.ParseUint(transaction.TransactionIndex, 10, 64)
-			if vErr != nil {
-				return vErr
+			txIndexUint, uErr := strconv.ParseUint(transaction.TransactionIndex, 10, 64)
+			if uErr != nil {
+				return uErr
 			}
 			keyStoreUint := blockNumUint*1000000 + txIndexUint
 			keyStore := boltutil.Uint64ToBytes(keyStoreUint)
-			storeTx, vErr := common.GetStoreTx(transaction)
-			if vErr != nil {
-				return vErr
+			storeTx, uErr := common.GetStoreTx(transaction)
+			if uErr != nil {
+				return uErr
 			}
-			vErr = bIndex.Put(boltutil.Uint64ToBytes(storeTx.TimeStamp), keyStore)
-			if vErr != nil {
-				return vErr
+			uErr = bIndex.Put(boltutil.Uint64ToBytes(storeTx.TimeStamp), keyStore)
+			if uErr != nil {
+				return uErr
 			}
-			vErr = storeTotalGasSpent(bTotal, storeTx)
-			if vErr != nil {
-				return vErr
+			uErr = storeTotalGasSpent(bTotal, storeTx)
+			if uErr != nil {
+				return uErr
 			}
-			dataJSON, vErr = json.Marshal(storeTx)
-			if vErr != nil {
-				return vErr
+			dataJSON, uErr = json.Marshal(storeTx)
+			if uErr != nil {
+				return uErr
 			}
-			vErr = b.Put(keyStore, dataJSON)
-			if vErr != nil {
-				return vErr
+			uErr = b.Put(keyStore, dataJSON)
+			if uErr != nil {
+				return uErr
 			}
 		}
 		return nil

@@ -213,9 +213,9 @@ func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (com
 
 	// get stats
 	for _, c := range countries {
-		cStats, vErr := self.statStorage.GetCountryStats(fromTime, toTime, c, tzparam)
-		if vErr != nil {
-			return arrResult, vErr
+		var cStats common.StatTicks
+		if cStats, err = self.statStorage.GetCountryStats(fromTime, toTime, c, tzparam); err != nil {
+			return arrResult, err
 		}
 		for _, stat := range cStats {
 			s := stat.(common.MetricStats)
@@ -263,10 +263,10 @@ func (self ReserveStats) GetTokenHeatmap(fromTime, toTime uint64, tokenStr, freq
 		return arrResult, err
 	}
 	for _, country := range countries {
+		var stats common.StatTicks
 		key := fmt.Sprintf("%s_%s", country, strings.ToLower(token.Address))
-		stats, vErr := self.statStorage.GetTokenHeatmap(fromTime, toTime, key, freq)
-		if vErr != nil {
-			return arrResult, vErr
+		if stats, err = self.statStorage.GetTokenHeatmap(fromTime, toTime, key, freq); err != nil {
+			return arrResult, err
 		}
 		for _, stat := range stats {
 			s := stat.(common.VolumeStats)
@@ -324,9 +324,9 @@ func (self ReserveStats) ControllPriceAnalyticSize() error {
 		} else {
 			var integrity bool
 			if nRecord > 0 {
-				vErr := self.storageController.Arch.UploadFile(self.storageController.Arch.GetStatDataBucketName(), self.storageController.ExpiredPriceAnalyticPath, fileName)
-				if vErr != nil {
-					log.Printf("StatPruner: Upload file failed: %s", vErr)
+				err := self.storageController.Arch.UploadFile(self.storageController.Arch.GetStatDataBucketName(), self.storageController.ExpiredPriceAnalyticPath, fileName)
+				if err != nil {
+					log.Printf("StatPruner: Upload file failed: %s", err)
 				} else {
 					integrity, err = self.storageController.Arch.CheckFileIntergrity(self.storageController.Arch.GetStatDataBucketName(), self.storageController.ExpiredPriceAnalyticPath, fileName)
 					if err != nil {
@@ -368,8 +368,8 @@ func (self ReserveStats) RunStorageController() error {
 		return err
 	}
 	go func() {
-		if vErr := self.ControllPriceAnalyticSize(); vErr != nil {
-			log.Printf("Control price analytic failed: %s", vErr.Error())
+		if cErr := self.ControllPriceAnalyticSize(); cErr != nil {
+			log.Printf("Control price analytic failed: %s", cErr.Error())
 		}
 	}()
 	return err
@@ -487,17 +487,19 @@ func (self ReserveStats) ExceedDailyLimit(address ethereum.Address) (bool, error
 		// address is not associated to any users
 		addrs = append(addrs, strings.ToLower(address.Hex()))
 	} else {
-		addrs, _, vErr := self.userStorage.GetAddressesOfUser(user)
+		var addrs []ethereum.Address
+		addrs, _, err = self.userStorage.GetAddressesOfUser(user)
 		log.Printf("got addresses %v for address %s", addrs, strings.ToLower(address.Hex()))
-		if vErr != nil {
-			return false, vErr
+		if err != nil {
+			return false, err
 		}
 	}
 	today := common.GetTimepoint() / uint64(24*time.Hour/time.Millisecond) * uint64(24*time.Hour/time.Millisecond)
 	var totalVolume float64
 	for _, addr := range addrs {
-		volumeStats, vErr := self.GetUserVolume(today-1, today, "D", addr)
-		if vErr == nil {
+		var volumeStats common.StatTicks
+		volumeStats, err = self.GetUserVolume(today-1, today, "D", addr)
+		if err == nil {
 			log.Printf("volumes: %+v", volumeStats)
 			if len(volumeStats) == 0 {
 			} else if len(volumeStats) > 1 {

@@ -65,8 +65,8 @@ func (self *BoltAnalyticStorage) ExportExpiredPriceAnalyticData(currentTime uint
 	expiredTimestampByte := boltutil.Uint64ToBytes(currentTime - PRICE_ANALYTIC_EXPIRED)
 	outFile, err := os.Create(fileName)
 	defer func() {
-		if vErr := outFile.Close(); vErr != nil {
-			log.Printf("Expire file close error: %s", vErr.Error())
+		if cErr := outFile.Close(); cErr != nil {
+			log.Printf("Expire file close error: %s", cErr.Error())
 		}
 	}()
 	if err != nil {

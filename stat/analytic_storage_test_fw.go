@@ -55,8 +55,8 @@ func (self *AnalyticStorageTest) TestPriceAnalyticData() error {
 
 	fileName := "testFile"
 	defer func() {
-		if vErr := os.Remove(fileName); vErr != nil {
-			log.Fatal(vErr)
+		if cErr := os.Remove(fileName); cErr != nil {
+			log.Fatal(cErr)
 		}
 	}()
 	//test ExportExpiredPriceAnalyticData
