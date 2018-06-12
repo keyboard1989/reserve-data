@@ -6,6 +6,12 @@
 
 ### Bug fixes:
 
+- Enable errcheck checker and fix all unhandled errors (#307)
+
+### Improvements:
+
+### Compatibility:
+
 ## 0.8.0 (2018-06-03)
 
 ### Features:
