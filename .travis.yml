@@ -9,8 +9,7 @@ install:
 
 script:
   - gometalinter --config=gometalinter.json ./...
-  - cd blockchain
-  - gometalinter --vendor --disable-all --enable=vetshadow ./...
+  - pushd common && gometalinter --vendor --disable-all --enable=vetshadow ./...;popd
   - $GOPATH/bin/goveralls -v -service=travis-ci
 
 go:
