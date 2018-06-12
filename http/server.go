@@ -293,9 +293,9 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	}
 	bigAfpMid := []*big.Int{}
 	for _, rate := range strings.Split(afpMid, "-") {
-		r, vErr := hexutil.DecodeBig(rate)
-		if vErr != nil {
-			httputil.ResponseFailure(c, httputil.WithError(vErr))
+		var r *big.Int
+		if r, err = hexutil.DecodeBig(rate); err != nil {
+			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
 		}
 		bigAfpMid = append(bigAfpMid, r)
@@ -603,6 +603,11 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 	metricEntry.Data = map[string]metric.TokenMetric{}
 	// data must be in form of <token>_afpmid_spread|<token>_afpmid_spread|...
 	for _, tokenData := range strings.Split(dataParam, "|") {
+		var (
+			afpmid float64
+			spread float64
+		)
+
 		parts := strings.Split(tokenData, "_")
 		if len(parts) != 3 {
 			httputil.ResponseFailure(c, httputil.WithReason("submitted data is not in correct format"))
@@ -612,13 +617,12 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 		afpmidStr := parts[1]
 		spreadStr := parts[2]
 
-		afpmid, vErr := strconv.ParseFloat(afpmidStr, 64)
-		if vErr != nil {
+		if afpmid, err = strconv.ParseFloat(afpmidStr, 64); err != nil {
 			httputil.ResponseFailure(c, httputil.WithReason("Afp mid "+afpmidStr+" is not float64"))
 			return
 		}
-		spread, vErr := strconv.ParseFloat(spreadStr, 64)
-		if vErr != nil {
+
+		if spread, err = strconv.ParseFloat(spreadStr, 64); err != nil {
 			httputil.ResponseFailure(c, httputil.WithReason("Spread "+spreadStr+" is not float64"))
 			return
 		}
@@ -1202,9 +1206,12 @@ func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 		return
 	}
 	for i, addr := range addrsStr {
-		a := ethereum.HexToAddress(addr)
-		t, vErr := strconv.ParseUint(timesStr[i], 10, 64)
-		if a.Big().Cmp(ethereum.Big0) != 0 && vErr == nil {
+		var (
+			t uint64
+			a = ethereum.HexToAddress(addr)
+		)
+		t, err = strconv.ParseUint(timesStr[i], 10, 64)
+		if a.Big().Cmp(ethereum.Big0) != 0 && err == nil {
 			addrs = append(addrs, a)
 			timestamps = append(timestamps, t)
 		}
