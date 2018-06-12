@@ -3,7 +3,6 @@ package binance
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"strconv"
@@ -82,7 +81,7 @@ func (self *BinanceStorage) GetTradeHistory(fromTime, toTime uint64) (common.Exc
 	result := common.ExchangeTradeHistory{}
 	var err error
 	if toTime-fromTime > MAX_GET_TRADE_HISTORY {
-		return result, fmt.Errorf("Time range is too broad, it must be smaller or equal to 3 days (miliseconds)"))
+		return result, fmt.Errorf("Time range is too broad, it must be smaller or equal to 3 days (miliseconds)")
 	}
 	min := []byte(strconv.FormatUint(fromTime, 10))
 	max := []byte(strconv.FormatUint(toTime, 10))
