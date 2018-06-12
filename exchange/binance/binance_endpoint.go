@@ -53,13 +53,16 @@ func (self *BinanceEndpoint) fillRequest(req *http.Request, signNeeded bool, tim
 func (self *BinanceEndpoint) GetResponse(
 	method string, url string,
 	params map[string]string, signNeeded bool, timepoint uint64) ([]byte, error) {
-
+	var (
+		err      error
+		respBody []byte
+	)
 	client := &http.Client{
 		Timeout: time.Duration(30 * time.Second),
 	}
-	req, newHTTPErr := http.NewRequest(method, url, nil)
-	if newHTTPErr != nil {
-		return nil, newHTTPErr
+	req, err := http.NewRequest(method, url, nil)
+	if err != nil {
+		return nil, err
 	}
 	req.Header.Add("Accept", "application/json")
 
@@ -69,8 +72,7 @@ func (self *BinanceEndpoint) GetResponse(
 	}
 	req.URL.RawQuery = q.Encode()
 	self.fillRequest(req, signNeeded, timepoint)
-	var err error
-	var respBody []byte
+
 	log.Printf("request to binance: %s\n", req.URL)
 	resp, err := client.Do(req)
 	if err != nil {
