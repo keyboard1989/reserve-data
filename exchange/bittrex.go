@@ -121,7 +121,7 @@ func (self *Bittrex) UpdatePairsPrecision() error {
 }
 
 func (self *Bittrex) ID() common.ExchangeID {
-	return common.ExchangeID(string(settings.Bittrex))
+	return common.ExchangeID(settings.Bittrex.String())
 }
 
 func (self *Bittrex) TokenPairs() ([]common.TokenPair, error) {

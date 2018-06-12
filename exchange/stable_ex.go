@@ -58,7 +58,7 @@ func (self *StableEx) GetFee() (common.ExchangeFees, error) {
 }
 
 func (self *StableEx) ID() common.ExchangeID {
-	return common.ExchangeID(string(settings.StableExchange))
+	return common.ExchangeID(settings.StableExchange.String())
 }
 
 func (self *StableEx) TokenPairs() ([]common.TokenPair, error) {

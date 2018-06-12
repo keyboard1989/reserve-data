@@ -154,7 +154,7 @@ func (self *Huobi) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 }
 
 func (self *Huobi) ID() common.ExchangeID {
-	return common.ExchangeID(string(settings.Huobi))
+	return common.ExchangeID(settings.Huobi.String())
 }
 
 func (self *Huobi) TokenPairs() ([]common.TokenPair, error) {
