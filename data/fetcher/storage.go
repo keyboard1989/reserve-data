@@ -4,6 +4,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
+// Storage is the interface that wraps all database operations of fetcher.
 type Storage interface {
 	StorePrice(data common.AllPriceEntry, timepoint uint64) error
 	StoreRate(data common.AllRateEntry, timepoint uint64) error

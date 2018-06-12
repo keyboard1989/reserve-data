@@ -4,6 +4,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
+// HuobiStorage is the interface that wraps all database operation of Huobi exchange.
 type HuobiStorage interface {
 	StoreIntermediateTx(id common.ActivityID, data common.TXEntry) error
 	StorePendingIntermediateTx(id common.ActivityID, data common.TXEntry) error
@@ -16,5 +17,6 @@ type HuobiStorage interface {
 	StoreTradeHistory(data common.ExchangeTradeHistory) error
 
 	GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTradeHistory, error)
+	// TODO: unused method
 	GetLastIDTradeHistory(exchange, pair string) (string, error)
 }

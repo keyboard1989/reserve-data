@@ -4,6 +4,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
+// MetricStorage is the interface that wraps all metrics database operations.
 type MetricStorage interface {
 	StoreMetric(data *MetricEntry, timepoint uint64) error
 	StoreTokenTargetQty(id, data string) error

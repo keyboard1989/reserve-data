@@ -10,10 +10,14 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+// Authentication is the authentication layer of HTTP APIs.
 type Authentication interface {
 	KNSign(message string) string
+	// TODO: unused method
 	KNReadonlySign(message string) string
+	// TODO: unused method
 	KNConfigurationSign(message string) string
+	// TODO: unused method
 	KNConfirmConfSign(message string) string
 	GetPermission(signed string, message string) []Permission
 }

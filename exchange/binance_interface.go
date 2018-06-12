@@ -7,6 +7,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+// BinanceInterface contains the methods to interact with Binance centralized exchange.
 type BinanceInterface interface {
 	GetDepthOnePair(pair common.TokenPair) (Binaresp, error)
 
@@ -40,5 +41,6 @@ type BinanceInterface interface {
 	OrderStatus(
 		symbol string, id uint64) (Binaorder, error)
 
+	// TODO: unused method
 	GetServerTime() (uint64, error)
 }

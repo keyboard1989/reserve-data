@@ -18,9 +18,11 @@ type FetcherRunner interface {
 	GetAuthDataTicker() <-chan time.Time
 	GetRateTicker() <-chan time.Time
 	GetBlockTicker() <-chan time.Time
+	// TODO: unused method
 	GetTradeHistoryTicker() <-chan time.Time
 }
 
+// TickerRunner is an implementation of FetcherRunner that use simple time ticker.
 type TickerRunner struct {
 	oduration          time.Duration
 	aduration          time.Duration
@@ -28,12 +30,13 @@ type TickerRunner struct {
 	bduration          time.Duration
 	tduration          time.Duration
 	globalDataDuration time.Duration
-	oclock             *time.Ticker
-	aclock             *time.Ticker
-	rclock             *time.Ticker
-	bclock             *time.Ticker
-	tclock             *time.Ticker
-	globalDataClock    *time.Ticker
+
+	oclock          *time.Ticker
+	aclock          *time.Ticker
+	rclock          *time.Ticker
+	bclock          *time.Ticker
+	tclock          *time.Ticker
+	globalDataClock *time.Ticker
 }
 
 func (self *TickerRunner) GetGlobalDataTicker() <-chan time.Time {
@@ -76,6 +79,7 @@ func (self *TickerRunner) Stop() error {
 	return nil
 }
 
+// NewTickerRunner creates a new instance of TickerRunner with given time durations in parameters.
 func NewTickerRunner(
 	oduration, aduration, rduration,
 	bduration, tduration, globalDataDuration time.Duration) *TickerRunner {
