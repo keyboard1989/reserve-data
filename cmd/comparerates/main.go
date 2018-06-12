@@ -42,9 +42,8 @@ func GetActivitiesResponse(url string, params map[string]string, config configur
 	if err != nil {
 		return allActionRep, err
 	}
-	if uErr := json.Unmarshal(data, &allActionRep); uErr != nil {
-		return allActionRep, uErr
-	}
+
+	err = json.Unmarshal(data, &allActionRep)
 	return allActionRep, err
 }
 

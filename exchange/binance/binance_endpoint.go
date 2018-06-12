@@ -74,8 +74,8 @@ func (self *BinanceEndpoint) GetResponse(
 		return respBody, err
 	}
 	defer func() {
-		if vErr := resp.Body.Close(); vErr != nil {
-			log.Printf("Response body close error: %s", vErr.Error())
+		if cErr := resp.Body.Close(); cErr != nil {
+			log.Printf("Response body close error: %s", cErr.Error())
 		}
 	}()
 	switch resp.StatusCode {

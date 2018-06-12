@@ -50,19 +50,19 @@ func (self *BinanceStorage) StoreTradeHistory(data common.ExchangeTradeHistory) 
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
 		for pair, pairHistory := range data {
-			pairBk, vErr := b.CreateBucketIfNotExists([]byte(pair))
-			if vErr != nil {
-				return vErr
+			pairBk, uErr := b.CreateBucketIfNotExists([]byte(pair))
+			if uErr != nil {
+				return uErr
 			}
 			for _, history := range pairHistory {
 				idBytes := []byte(fmt.Sprintf("%s%s", strconv.FormatUint(history.Timestamp, 10), history.ID))
-				dataJSON, vErr := json.Marshal(history)
-				if vErr != nil {
-					return vErr
+				dataJSON, uErr := json.Marshal(history)
+				if uErr != nil {
+					return uErr
 				}
-				vErr = pairBk.Put(idBytes, dataJSON)
-				if vErr != nil {
-					return vErr
+				uErr = pairBk.Put(idBytes, dataJSON)
+				if uErr != nil {
+					return uErr
 				}
 			}
 		}
