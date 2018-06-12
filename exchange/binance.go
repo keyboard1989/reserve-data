@@ -21,10 +21,9 @@ const (
 )
 
 type Binance struct {
-	interf       BinanceInterface
-	exchangeInfo *common.ExchangeInfo
-	storage      BinanceStorage
-	setting      Setting
+	interf  BinanceInterface
+	storage BinanceStorage
+	setting Setting
 }
 
 func (self *Binance) TokenAddresses() (map[string]ethereum.Address, error) {
@@ -79,7 +78,7 @@ func (self *Binance) precisionFromStepSize(stepSize string) int {
 	return 0
 }
 
-func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol) {
+func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol, exInfo *common.ExchangeInfo) {
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		if symbol.Symbol == strings.ToUpper(pairName) {
@@ -114,7 +113,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					exchangePrecisionLimit.MinNotional = minNotional
 				}
 			}
-			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
+			exInfo.Update(pair.PairID(), exchangePrecisionLimit)
 			break
 		}
 	}
@@ -130,19 +129,28 @@ func (self *Binance) UpdatePairsPrecision() error {
 	if err != nil {
 		return err
 	}
-	for _, pair := range pairs {
-		self.UpdatePrecisionLimit(pair, symbols)
+	exInfo, err := self.GetInfo()
+	if err != nil {
+		log.Printf("INFO: Can't get Exchange Info for Binance from persistent storage, attempt to init it from Binance Endpoint (%s)", err)
+		exInfo = common.NewExchangeInfo()
 	}
-	return nil
+	log.Printf("exInfo data is %v", exInfo.GetData())
+	for _, pair := range pairs {
+		self.UpdatePrecisionLimit(pair, symbols, exInfo)
+	}
+	return self.setting.UpdateExchangeInfo(settings.Binance, exInfo)
 }
 
 func (self *Binance) GetInfo() (*common.ExchangeInfo, error) {
-	return self.exchangeInfo, nil
+	return self.setting.GetExchangeInfo(settings.Binance)
 }
 
 func (self *Binance) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
-	data, err := self.exchangeInfo.Get(pair)
-	return data, err
+	exInfo, err := self.setting.GetExchangeInfo(settings.Binance)
+	if err != nil {
+		return common.ExchangePrecisionLimit{}, err
+	}
+	return exInfo.Get(pair)
 }
 
 func (self *Binance) GetFee() (common.ExchangeFees, error) {
@@ -497,7 +505,6 @@ func NewBinance(
 	setting Setting) (*Binance, error) {
 	binance := &Binance{
 		interf,
-		common.NewExchangeInfo(),
 		storage,
 		setting,
 	}

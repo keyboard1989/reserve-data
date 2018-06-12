@@ -25,7 +25,6 @@ const (
 
 type Huobi struct {
 	interf            HuobiInterface
-	exchangeInfo      *common.ExchangeInfo
 	blockchain        HuobiBlockchain
 	intermediatorAddr ethereum.Address
 	storage           HuobiStorage
@@ -106,7 +105,7 @@ func (self *Huobi) UpdateDepositAddress(token common.Token, address string) erro
 	return self.setting.UpdateDepositAddress(settings.Huobi, token)
 }
 
-func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExchangeInfo) {
+func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExchangeInfo, exInfo *common.ExchangeInfo) {
 	pairName := strings.ToLower(pair.Base.ID) + strings.ToLower(pair.Quote.ID)
 	for _, symbol := range symbols.Data {
 		if symbol.Base+symbol.Quote == pairName {
@@ -114,7 +113,7 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExch
 			exchangePrecisionLimit.Precision.Amount = symbol.AmountPrecision
 			exchangePrecisionLimit.Precision.Price = symbol.PricePrecision
 			exchangePrecisionLimit.MinNotional = 0.02
-			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
+			exInfo.Update(pair.PairID(), exchangePrecisionLimit)
 			break
 		}
 	}
@@ -130,18 +129,27 @@ func (self *Huobi) UpdatePairsPrecision() error {
 	if err != nil {
 		return err
 	}
-	for _, pair := range pairs {
-		self.UpdatePrecisionLimit(pair, exchangeInfo)
+	exInfo, err := self.GetInfo()
+	if err != nil {
+		log.Printf("INFO: Can't get Exchange Info for Huobi from persistent storage, attempt to init it from Huobi Endpoint (%s)", err)
+		exInfo = common.NewExchangeInfo()
 	}
-	return nil
+	for _, pair := range pairs {
+		self.UpdatePrecisionLimit(pair, exchangeInfo, exInfo)
+	}
+	return self.setting.UpdateExchangeInfo(settings.Huobi, exInfo)
 }
 
 func (self *Huobi) GetInfo() (*common.ExchangeInfo, error) {
-	return self.exchangeInfo, nil
+	return self.setting.GetExchangeInfo(settings.Huobi)
 }
 
 func (self *Huobi) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
-	data, err := self.exchangeInfo.Get(pair)
+	exInfo, err := self.setting.GetExchangeInfo(settings.Huobi)
+	if err != nil {
+		return common.ExchangePrecisionLimit{}, err
+	}
+	data, err := exInfo.Get(pair)
 	return data, err
 }
 
@@ -707,7 +715,6 @@ func NewHuobi(
 
 	huobiObj := Huobi{
 		interf,
-		common.NewExchangeInfo(),
 		bc,
 		signer.GetAddress(),
 		storage,

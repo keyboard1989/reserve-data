@@ -11,8 +11,7 @@ import (
 )
 
 type StableEx struct {
-	exchangeInfo *common.ExchangeInfo
-	setting      Setting
+	setting Setting
 }
 
 func (self *StableEx) TokenAddresses() (map[string]ethereum.Address, error) {
@@ -45,11 +44,15 @@ func (self *StableEx) UpdateDepositAddress(token common.Token, address string) e
 }
 
 func (self *StableEx) GetInfo() (*common.ExchangeInfo, error) {
-	return self.exchangeInfo, nil
+	return self.setting.GetExchangeInfo(settings.StableExchange)
 }
 
 func (self *StableEx) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
-	data, err := self.exchangeInfo.Get(pair)
+	exInfo, err := self.setting.GetExchangeInfo(settings.StableExchange)
+	if err != nil {
+		return common.ExchangePrecisionLimit{}, err
+	}
+	data, err := exInfo.Get(pair)
 	return data, err
 }
 
@@ -141,7 +144,6 @@ func (self *StableEx) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 
 func NewStableEx(setting Setting) (*StableEx, error) {
 	return &StableEx{
-		common.NewExchangeInfo(),
 		setting,
 	}, nil
 }

@@ -18,4 +18,6 @@ type Setting interface {
 	GetTokenPairs(ex settings.ExchangeName) ([]common.TokenPair, error)
 	GetAddress(name settings.AddressName) (ethereum.Address, error)
 	UpdateDepositAddress(name settings.ExchangeName, token common.Token) error
+	GetExchangeInfo(ex settings.ExchangeName) (*common.ExchangeInfo, error)
+	UpdateExchangeInfo(ex settings.ExchangeName, exInfo *common.ExchangeInfo) error
 }

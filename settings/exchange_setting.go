@@ -80,7 +80,7 @@ func (setting *Settings) LoadFeeFromFile(path string) error {
 			//Check if the config file has config for such exchange
 			exFee, ok := exFeeConfig.Exchanges[ex]
 			if !ok {
-				log.Printf("Warning: Exchange %s is in KYBER_EXCHANGES, but not avail in Fee config file.")
+				log.Printf("Warning: Exchange %s is in KYBER_EXCHANGES, but not avail in Fee config file.", ex)
 				continue
 			}
 			if err = setting.Exchange.Storage.StoreFee(exName, exFee); err != nil {
@@ -161,7 +161,7 @@ func (setting *Settings) LoadDepositAddressFromFile(path string) error {
 			//Check if the config file has config for such exchange
 			exchangeAddressStr, ok := exAddressConfig.Exchanges[ex]
 			if !ok {
-				log.Printf("Warning: Exchange %s is in KYBER_EXCHANGES, but not avail in DepositAddress config file")
+				log.Printf("Warning: Exchange %s is in KYBER_EXCHANGES, but not avail in DepositAddress config file", ex)
 				continue
 			}
 			exchangeAddresses := convertToAddressMap(exchangeAddressStr)

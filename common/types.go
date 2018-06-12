@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	ether "github.com/ethereum/go-ethereum"
@@ -78,26 +77,20 @@ type ExchangePrecisionLimit struct {
 
 // ExchangeInfo is written and read concurrently
 type ExchangeInfo struct {
-	mu   sync.RWMutex
 	data map[TokenPairID]ExchangePrecisionLimit
 }
 
 func NewExchangeInfo() *ExchangeInfo {
 	return &ExchangeInfo{
-		mu:   sync.RWMutex{},
 		data: map[TokenPairID]ExchangePrecisionLimit{},
 	}
 }
 
 func (self *ExchangeInfo) Update(pair TokenPairID, data ExchangePrecisionLimit) {
-	self.mu.Lock()
-	defer self.mu.Unlock()
 	self.data[pair] = data
 }
 
 func (self *ExchangeInfo) Get(pair TokenPairID) (ExchangePrecisionLimit, error) {
-	self.mu.RLock()
-	defer self.mu.RUnlock()
 	if info, exist := self.data[pair]; exist {
 		return info, nil
 	} else {
@@ -106,8 +99,6 @@ func (self *ExchangeInfo) Get(pair TokenPairID) (ExchangePrecisionLimit, error) 
 }
 
 func (self *ExchangeInfo) GetData() map[TokenPairID]ExchangePrecisionLimit {
-	self.mu.RLock()
-	defer self.mu.RUnlock()
 	return self.data
 }
 

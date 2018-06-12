@@ -75,18 +75,19 @@ func NewExchangePool(
 			endpoint := bittrex.NewBittrexEndpoint(bittrexSigner, getBittrexInterface(kyberENV))
 			bittrexStorage, err := bittrex.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "bittrex.db"))
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange bittrex: (%s)", err)
+				return nil, fmt.Errorf("Can not create Bittrex storage: (%s)", err)
 			}
 			bit, err := exchange.NewBittrex(
 				endpoint,
 				bittrexStorage,
 				setting)
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange bittrex: (%s)", err)
+				return nil, fmt.Errorf("Can not create exchange Bittrex: (%s)", err)
 			}
 			addrs, err := setting.GetDepositAddress(settings.Bittrex)
 			if err != nil {
-				return nil, err
+				log.Printf("INFO: Can't get Bittrex Deposit Addresses from Storage (%s), attempt to init it from Bittrex Endpoint", err)
+				addrs = make(common.ExchangeAddresses)
 			}
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addrs {
@@ -96,7 +97,7 @@ func NewExchangePool(
 			wait.Wait()
 			err = bit.UpdatePairsPrecision()
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange bittrex: (%s)", err)
+				return nil, fmt.Errorf("Can not Update Bittrex Pairs Precision : (%s)", err)
 			}
 			exchanges[bit.ID()] = bit
 		case "binance":
@@ -104,18 +105,19 @@ func NewExchangePool(
 			endpoint := binance.NewBinanceEndpoint(binanceSigner, getBinanceInterface(kyberENV))
 			storage, err := huobi.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "binance.db"))
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange binance: (%s)", err)
+				return nil, fmt.Errorf("Can not create Binance storage: (%s)", err)
 			}
 			bin, err := exchange.NewBinance(
 				endpoint,
 				storage,
 				setting)
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange binance: (%s)", err)
+				return nil, fmt.Errorf("Can not create exchange Binance: (%s)", err)
 			}
 			addrs, err := setting.GetDepositAddress(settings.Binance)
 			if err != nil {
-				return nil, err
+				log.Printf("INFO: Can't get Binance Deposit Addresses from Storage (%s), attempt to init it from Binance Endpoint", err.Error())
+				addrs = make(common.ExchangeAddresses)
 			}
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addrs {
@@ -125,7 +127,7 @@ func NewExchangePool(
 			wait.Wait()
 			err = bin.UpdatePairsPrecision()
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange binance: (%s)", err)
+				return nil, fmt.Errorf("Can not Update Binance Pairs Precision: (%s)", err)
 			}
 			exchanges[bin.ID()] = bin
 		case "huobi":
@@ -133,7 +135,7 @@ func NewExchangePool(
 			endpoint := huobi.NewHuobiEndpoint(huobiSigner, getHuobiInterface(kyberENV))
 			storage, err := huobi.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "huobi.db"))
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange huobi: (%s)", err)
+				return nil, fmt.Errorf("Can not create Huobi storage: (%s)", err)
 			}
 			intermediatorSigner := HuobiIntermediatorSignerFromFile(settingPaths.secretPath)
 			intermediatorNonce := nonce.NewTimeWindow(intermediatorSigner.GetAddress(), 10000)
@@ -146,11 +148,12 @@ func NewExchangePool(
 				setting,
 			)
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange huobi: (%s)", err)
+				return nil, fmt.Errorf("Can not create exchange Huobi: (%s)", err)
 			}
 			addrs, err := setting.GetDepositAddress(settings.Huobi)
 			if err != nil {
-				return nil, err
+				log.Printf("INFO: Can't get Huobi Deposit Addresses from Storage (%s), attempt to init it from Huobi Endpoint", err.Error())
+				addrs = make(common.ExchangeAddresses)
 			}
 			wait := sync.WaitGroup{}
 			for tokenID, addr := range addrs {
@@ -160,7 +163,7 @@ func NewExchangePool(
 			wait.Wait()
 			err = huobi.UpdatePairsPrecision()
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange huobi: (%s)", err)
+				return nil, fmt.Errorf("Can not Update Huobi Pairs Precision: (%s)", err)
 			}
 			exchanges[huobi.ID()] = huobi
 		}

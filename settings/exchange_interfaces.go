@@ -49,6 +49,18 @@ func (setting *Settings) GetTokenPairs(ex ExchangeName) ([]common.TokenPair, err
 
 // StoreTokenPairs store the list of TokenPairs with exchangeName as key into database and
 // return error if occur
-func (setting *Settings) StoreTokenPairs(ex ExchangeName, data []common.TokenPair) error {
+func (setting *Settings) UpdateTokenPairs(ex ExchangeName, data []common.TokenPair) error {
 	return setting.Exchange.Storage.StoreTokenPairs(ex, data)
+}
+
+// GetExchangeInfor returns the an ExchangeInfo Object for each exchange
+// and error if occur
+func (setting *Settings) GetExchangeInfo(ex ExchangeName) (*common.ExchangeInfo, error) {
+	return setting.Exchange.Storage.GetExchangeInfo(ex)
+}
+
+// UpdateExchangeInfo updates exchange info object using exchangeName as key
+// returns error if occur
+func (setting *Settings) UpdateExchangeInfo(ex ExchangeName, exInfo *common.ExchangeInfo) error {
+	return setting.Exchange.Storage.StoreExchangeInfo(ex, exInfo)
 }

@@ -18,10 +18,9 @@ import (
 const BITTREX_EPSILON float64 = 0.000001
 
 type Bittrex struct {
-	interf       BittrexInterface
-	storage      BittrexStorage
-	exchangeInfo *common.ExchangeInfo
-	setting      Setting
+	interf  BittrexInterface
+	storage BittrexStorage
+	setting Setting
 }
 
 func (self *Bittrex) TokenAddresses() (map[string]ethereum.Address, error) {
@@ -77,7 +76,7 @@ func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) er
 	return self.setting.UpdateDepositAddress(settings.Bittrex, token)
 }
 
-func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo) {
+func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo, exInfo *common.ExchangeInfo) {
 	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
 	for _, symbol := range symbols {
 		symbolName := strings.ToUpper(symbol.Base) + strings.ToUpper(symbol.Quote)
@@ -89,19 +88,22 @@ func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittP
 			// update limit
 			exchangePrecisionLimit.AmountLimit.Min = symbol.MinAmount
 			exchangePrecisionLimit.MinNotional = 0.02
-			self.exchangeInfo.Update(pair.PairID(), exchangePrecisionLimit)
+			exInfo.Update(pair.PairID(), exchangePrecisionLimit)
 			break
 		}
 	}
 }
 
 func (self *Bittrex) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
-	pairInfo, err := self.exchangeInfo.Get(pair)
-	return pairInfo, err
+	exInfo, err := self.setting.GetExchangeInfo(settings.Bittrex)
+	if err != nil {
+		return common.ExchangePrecisionLimit{}, err
+	}
+	return exInfo.Get(pair)
 }
 
 func (self *Bittrex) GetInfo() (*common.ExchangeInfo, error) {
-	return self.exchangeInfo, nil
+	return self.setting.GetExchangeInfo(settings.Bittrex)
 }
 
 func (self *Bittrex) UpdatePairsPrecision() error {
@@ -114,10 +116,15 @@ func (self *Bittrex) UpdatePairsPrecision() error {
 	if err != nil {
 		return err
 	}
-	for _, pair := range pairs {
-		self.UpdatePrecisionLimit(pair, symbols)
+	exInfo, err := self.GetInfo()
+	if err != nil {
+		log.Printf("INFO: Can't get Exchange Info for Bittrex from persistent storage, attempt to init it from Bittrex Endpoint (%s)", err)
+		exInfo = common.NewExchangeInfo()
 	}
-	return nil
+	for _, pair := range pairs {
+		self.UpdatePrecisionLimit(pair, symbols, exInfo)
+	}
+	return self.setting.UpdateExchangeInfo(settings.Binance, exInfo)
 }
 
 func (self *Bittrex) ID() common.ExchangeID {
@@ -456,7 +463,6 @@ func NewBittrex(
 	bittrex := &Bittrex{
 		interf,
 		storage,
-		common.NewExchangeInfo(),
 		setting,
 	}
 	bittrex.FetchTradeHistory()

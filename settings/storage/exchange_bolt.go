@@ -136,8 +136,7 @@ func (boltSettingStorage *BoltSettingStorage) GetTokenPairs(ex settings.Exchange
 		if data == nil {
 			return fmt.Errorf("key %s hasn't existed yet", ex.String())
 		}
-		uErr := json.Unmarshal(data, &result)
-		if uErr != nil {
+		if uErr := json.Unmarshal(data, &result); uErr != nil {
 			return uErr
 		}
 		return nil
@@ -158,6 +157,40 @@ func (boltSettingStorage *BoltSettingStorage) StoreTokenPairs(ex settings.Exchan
 			return uErr
 		}
 		return b.Put(boltutil.Uint64ToBytes(uint64(ex)), dataJSON)
+	})
+	return err
+}
+
+func (boltSettingStorage *BoltSettingStorage) GetExchangeInfo(ex settings.ExchangeName) (*common.ExchangeInfo, error) {
+	var result common.ExchangeInfo
+	err := boltSettingStorage.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(EXCHANGE_INFO))
+		if b == nil {
+			return fmt.Errorf("bucket %s hasn't existed yet", EXCHANGE_INFO)
+		}
+		data := b.Get(boltutil.Uint64ToBytes(uint64(ex)))
+		if data == nil {
+			return fmt.Errorf("key %s hasn't existed yet", ex.String())
+		}
+		if uErr := json.Unmarshal(data, &result); uErr != nil {
+			return uErr
+		}
+		return nil
+	})
+	return &result, err
+}
+
+func (boltSettingStorage *BoltSettingStorage) StoreExchangeInfo(ex settings.ExchangeName, exInfo *common.ExchangeInfo) error {
+	err := boltSettingStorage.db.Update(func(tx *bolt.Tx) error {
+		b, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_INFO))
+		if uErr != nil {
+			return uErr
+		}
+		dataJson, uErr := json.Marshal(exInfo)
+		if uErr != nil {
+			return uErr
+		}
+		return b.Put(boltutil.Uint64ToBytes(uint64(ex)), dataJson)
 	})
 	return err
 }

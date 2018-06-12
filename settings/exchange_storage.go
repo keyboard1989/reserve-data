@@ -25,4 +25,10 @@ type ExchangeStorage interface {
 	// StoreTokenPairs store the list of TokenPairs with exchangeName as key into database and
 	// return error if occur
 	StoreTokenPairs(ex ExchangeName, data []common.TokenPair) error
+	// GetExchangeInfo returns the an ExchangeInfo Object for each exchange
+	// and error if occur
+	GetExchangeInfo(ex ExchangeName) (*common.ExchangeInfo, error)
+	// StoreExchangeInfo store the ExchangeInfo Object using the exchangeName as the key into database
+	// return error if occur
+	StoreExchangeInfo(ex ExchangeName, exInfo *common.ExchangeInfo) error
 }
