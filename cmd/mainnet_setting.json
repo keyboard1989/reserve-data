@@ -289,9 +289,16 @@
       "listed": true
     },
     "PAL": {
-      "name": "PolicyPal",
+      "name": "PolicyPal Network",
       "decimals": 18,
       "address": "0xfedae5642668f8636a11987ff386bfd215f942ee",
+      "internal use": false,
+      "listed": true
+    },
+    "ELEC": {
+      "name": "ElectrifyAsia",
+      "decimals": 18,
+      "address": "0xd49ff13661451313ca1553fd6954bd1d9b6e02b9",
       "internal use": false,
       "listed": true
     },
@@ -327,10 +334,6 @@
       "AION":  "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
       "AE":  "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90",
       "BLZ":  "0x44d34a119ba21a42167ff8b77a88f0fc7bb2db90"
-    },
-    "huobi": {
-      "ETH": "0x0c8fd73eaf6089ef1b91231d0a07d0d2ca2b9d66",
-      "ABT": "0x0c8fd73eaf6089ef1b91231d0a07d0d2ca2b9d66"
     },
     "huobi": {
       "ETH": "0x0c8fd73eaf6089ef1b91231d0a07d0d2ca2b9d66",

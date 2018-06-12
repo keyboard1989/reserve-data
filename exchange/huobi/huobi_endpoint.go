@@ -254,7 +254,7 @@ func (self *HuobiEndpoint) OrderStatus(symbol string, id uint64) (exchange.Huobi
 		return result, err
 	}
 	if result.Status != "ok" {
-		err = fmt.Errorf("RunningMode order status failed: %s", result.Reason)
+		err = fmt.Errorf("Get order status failed: %s", result.Reason)
 	}
 	return result, err
 }

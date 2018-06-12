@@ -105,8 +105,8 @@ func (v *Verification) GetResponse(
 		return respBody, err
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Printf("Response body close error: %s", err.Error())
+		if cErr := resp.Body.Close(); cErr != nil {
+			log.Printf("Response body close error: %s", cErr.Error())
 		}
 	}()
 	respBody, err = ioutil.ReadAll(resp.Body)
@@ -182,7 +182,7 @@ func (v *Verification) Deposit(
 	if err != nil {
 		return result.ID, err
 	}
-	if err := json.Unmarshal(respBody, &result); err != nil {
+	if err = json.Unmarshal(respBody, &result); err != nil {
 		return result.ID, err
 	}
 	if result.Success != true {
@@ -283,10 +283,14 @@ func (v *Verification) VerifyDeposit() error {
 	var err error
 	timepoint := common.GetTimepoint()
 	token, err := common.GetInternalToken("ETH")
+	if err != nil {
+		return err
+	}
 	amount := getTokenAmount(0.5, token)
 	Info.Println("Start deposit to exchanges")
 	for _, exchange := range v.exchanges {
-		activityID, err := v.Deposit(exchange, token.ID, amount, timepoint)
+		var activityID common.ActivityID
+		activityID, err = v.Deposit(exchange, token.ID, amount, timepoint)
 		if err != nil {
 			return err
 		}
@@ -295,7 +299,7 @@ func (v *Verification) VerifyDeposit() error {
 		go v.CheckPendingAuthData(activityID, timepoint)
 		go v.CheckActivities(activityID, timepoint)
 	}
-	return err
+	return nil
 }
 
 //VerifyWithdraw to ensure withdraw action works as expected
@@ -303,11 +307,14 @@ func (v *Verification) VerifyWithdraw() error {
 	var err error
 	timepoint := common.GetTimepoint()
 	token, err := common.GetInternalToken("ETH")
+	if err != nil {
+		return err
+	}
 	amount := getTokenAmount(0.5, token)
 	for _, exchange := range v.exchanges {
-		activityID, err := v.Withdraw(exchange, token.ID, amount, timepoint)
+		var activityID common.ActivityID
+		activityID, err = v.Withdraw(exchange, token.ID, amount, timepoint)
 		if err != nil {
-			Error.Println(err.Error())
 			return err
 		}
 		Info.Printf("Withdraw ID: %s", activityID)
@@ -315,7 +322,7 @@ func (v *Verification) VerifyWithdraw() error {
 		go v.CheckPendingAuthData(activityID, timepoint)
 		go v.CheckPendingAuthData(activityID, timepoint)
 	}
-	return err
+	return nil
 }
 
 //RunVerification run package
