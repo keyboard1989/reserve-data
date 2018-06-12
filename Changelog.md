@@ -7,6 +7,7 @@
 ### Bug fixes:
 
 - Enable errcheck checker and fix all unhandled errors (#307)
+- Fix GetAccounts error is ignored for houbi exchange (#308)
 
 ### Improvements:
 
