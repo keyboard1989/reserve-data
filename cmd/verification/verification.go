@@ -182,8 +182,8 @@ func (v *Verification) Deposit(
 	if err != nil {
 		return result.ID, err
 	}
-	if uErr := json.Unmarshal(respBody, &result); uErr != nil {
-		return result.ID, uErr
+	if err = json.Unmarshal(respBody, &result); err != nil {
+		return result.ID, err
 	}
 	if result.Success != true {
 		err = fmt.Errorf("Cannot deposit: %s", result.Reason)
@@ -283,19 +283,23 @@ func (v *Verification) VerifyDeposit() error {
 	var err error
 	timepoint := common.GetTimepoint()
 	token, err := common.GetInternalToken("ETH")
+	if err != nil {
+		return err
+	}
 	amount := getTokenAmount(0.5, token)
 	Info.Println("Start deposit to exchanges")
 	for _, exchange := range v.exchanges {
-		activityID, dErr := v.Deposit(exchange, token.ID, amount, timepoint)
-		if dErr != nil {
-			return dErr
+		var activityID common.ActivityID
+		activityID, err = v.Deposit(exchange, token.ID, amount, timepoint)
+		if err != nil {
+			return err
 		}
 		Info.Printf("Deposit id: %s", activityID)
 		go v.CheckPendingActivities(activityID, timepoint)
 		go v.CheckPendingAuthData(activityID, timepoint)
 		go v.CheckActivities(activityID, timepoint)
 	}
-	return err
+	return nil
 }
 
 //VerifyWithdraw to ensure withdraw action works as expected
@@ -303,18 +307,22 @@ func (v *Verification) VerifyWithdraw() error {
 	var err error
 	timepoint := common.GetTimepoint()
 	token, err := common.GetInternalToken("ETH")
+	if err != nil {
+		return err
+	}
 	amount := getTokenAmount(0.5, token)
 	for _, exchange := range v.exchanges {
-		activityID, wErr := v.Withdraw(exchange, token.ID, amount, timepoint)
-		if wErr != nil {
-			return wErr
+		var activityID common.ActivityID
+		activityID, err = v.Withdraw(exchange, token.ID, amount, timepoint)
+		if err != nil {
+			return err
 		}
 		Info.Printf("Withdraw ID: %s", activityID)
 		go v.CheckPendingActivities(activityID, timepoint)
 		go v.CheckPendingAuthData(activityID, timepoint)
 		go v.CheckPendingAuthData(activityID, timepoint)
 	}
-	return err
+	return nil
 }
 
 //RunVerification run package
