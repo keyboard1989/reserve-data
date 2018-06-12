@@ -153,8 +153,8 @@ func (self *Fetcher) FetchTxs(client http.Client) error {
 		return err
 	}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Printf("cannot close response body: %s", err.Error())
+		if cErr := resp.Body.Close(); cErr != nil {
+			log.Printf("cannot close response body: %s", cErr.Error())
 		}
 	}()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -242,7 +242,8 @@ func (self *Fetcher) RunCatLogProcessor() {
 		if fromTime == 1 {
 			// there is no cat log being processed before
 			// load the first log we have and set the fromTime to it's timestamp
-			l, err := self.logStorage.GetFirstCatLog()
+			var l common.SetCatLog
+			l, err = self.logStorage.GetFirstCatLog()
 			if err != nil {
 				log.Printf("can't get first cat log: err(%s)", err)
 				continue
@@ -755,8 +756,8 @@ func GetTradeGeo(txHash string) (string, string, error) {
 	}
 	response := common.TradeLogGeoInfoResp{}
 	defer func() {
-		if err := resp.Body.Close(); err != nil {
-			log.Printf("Response body close error: %s", err.Error())
+		if cErr := resp.Body.Close(); cErr != nil {
+			log.Printf("Response body close error: %s", cErr.Error())
 		}
 	}()
 	body, err := ioutil.ReadAll(resp.Body)
@@ -768,6 +769,7 @@ func GetTradeGeo(txHash string) (string, string, error) {
 		return "", "", err
 	}
 	if response.Success {
+		var country string
 		if response.Data.Country != "" {
 			return response.Data.IP, response.Data.Country, err
 		}
