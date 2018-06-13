@@ -113,7 +113,7 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExch
 			exchangePrecisionLimit.Precision.Amount = symbol.AmountPrecision
 			exchangePrecisionLimit.Precision.Price = symbol.PricePrecision
 			exchangePrecisionLimit.MinNotional = 0.02
-			exInfo.Update(pair.PairID(), exchangePrecisionLimit)
+			exInfo.Update(pair, exchangePrecisionLimit)
 			break
 		}
 	}
@@ -125,16 +125,11 @@ func (self *Huobi) UpdatePairsPrecision() error {
 		log.Printf("RunningMode exchange info failed: %s\n", err)
 		return err
 	}
-	pairs, err := self.setting.GetTokenPairs(settings.Huobi)
-	if err != nil {
-		return err
-	}
 	exInfo, err := self.GetInfo()
 	if err != nil {
-		log.Printf("INFO: Can't get Exchange Info for Huobi from persistent storage, attempt to init it from Huobi Endpoint (%s)", err)
-		exInfo = common.NewExchangeInfo()
+		return fmt.Errorf("INFO: Can't get Exchange Info for Huobi from persistent storage (%s)", err)
 	}
-	for _, pair := range pairs {
+	for pair := range exInfo.GetData() {
 		self.UpdatePrecisionLimit(pair, exchangeInfo, exInfo)
 	}
 	return self.setting.UpdateExchangeInfo(settings.Huobi, exInfo)
@@ -144,7 +139,7 @@ func (self *Huobi) GetInfo() (*common.ExchangeInfo, error) {
 	return self.setting.GetExchangeInfo(settings.Huobi)
 }
 
-func (self *Huobi) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
+func (self *Huobi) GetExchangeInfo(pair common.TokenPair) (common.ExchangePrecisionLimit, error) {
 	exInfo, err := self.setting.GetExchangeInfo(settings.Huobi)
 	if err != nil {
 		return common.ExchangePrecisionLimit{}, err
@@ -166,7 +161,15 @@ func (self *Huobi) ID() common.ExchangeID {
 }
 
 func (self *Huobi) TokenPairs() ([]common.TokenPair, error) {
-	return self.setting.GetTokenPairs(settings.Huobi)
+	result := []common.TokenPair{}
+	exInfo, err := self.setting.GetExchangeInfo(settings.Huobi)
+	if err != nil {
+		return nil, err
+	}
+	for pair := range exInfo.GetData() {
+		result = append(result, pair)
+	}
+	return result, nil
 }
 
 func (self *Huobi) Name() string {
@@ -277,7 +280,7 @@ func (self *Huobi) FetchOnePairData(
 func (self *Huobi) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
-	pairs, err := self.setting.GetTokenPairs(settings.Huobi)
+	pairs, err := self.TokenPairs()
 	if err != nil {
 		return nil, err
 	}
@@ -315,7 +318,7 @@ func (self *Huobi) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
 
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
-	pairs, err := self.setting.GetTokenPairs(settings.Huobi)
+	pairs, err := self.TokenPairs()
 	if err != nil {
 		return result, err
 	}
@@ -412,7 +415,7 @@ func (self *Huobi) FetchTradeHistory() {
 		for {
 			result := map[common.TokenPairID][]common.TradeHistory{}
 			data := sync.Map{}
-			pairs, err := self.setting.GetTokenPairs(settings.Huobi)
+			pairs, err := self.TokenPairs()
 			if err != nil {
 				log.Printf("Huobi fetch trade history failed (%s). This might due to pairs setting hasn't been init yet", err.Error())
 				continue

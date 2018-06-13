@@ -47,7 +47,7 @@ func (self *StableEx) GetInfo() (*common.ExchangeInfo, error) {
 	return self.setting.GetExchangeInfo(settings.StableExchange)
 }
 
-func (self *StableEx) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
+func (self *StableEx) GetExchangeInfo(pair common.TokenPair) (common.ExchangePrecisionLimit, error) {
 	exInfo, err := self.setting.GetExchangeInfo(settings.StableExchange)
 	if err != nil {
 		return common.ExchangePrecisionLimit{}, err
@@ -65,7 +65,15 @@ func (self *StableEx) ID() common.ExchangeID {
 }
 
 func (self *StableEx) TokenPairs() ([]common.TokenPair, error) {
-	return self.setting.GetTokenPairs(settings.StableExchange)
+	result := []common.TokenPair{}
+	exInfo, err := self.setting.GetExchangeInfo(settings.StableExchange)
+	if err != nil {
+		return nil, err
+	}
+	for pair := range exInfo.GetData() {
+		result = append(result, pair)
+	}
+	return result, nil
 }
 
 func (self *StableEx) Name() string {

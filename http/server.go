@@ -648,7 +648,7 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
 	exchangeParam := c.Query("exchangeid")
 	if exchangeParam == "" {
-		data := map[string]map[common.TokenPairID]common.ExchangePrecisionLimit{}
+		data := map[string]map[common.TokenPair]common.ExchangePrecisionLimit{}
 		for _, ex := range common.SupportedExchanges {
 			exchangeInfo, err := ex.GetInfo()
 			if err != nil {
@@ -687,7 +687,7 @@ func (self *HTTPServer) GetPairInfo(c *gin.Context) {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-	pairInfo, err := exchange.GetExchangeInfo(pair.PairID())
+	pairInfo, err := exchange.GetExchangeInfo(pair)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return

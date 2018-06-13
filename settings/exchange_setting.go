@@ -194,6 +194,7 @@ func (setting *Settings) HandleEmptyTokenPairs() error {
 	return nil
 }
 
+// NewExchangeTokenPairs
 func (setting *Settings) NewExchangeTokenPairs(exName ExchangeName) ([]common.TokenPair, error) {
 	result := []common.TokenPair{}
 	addrs, err := setting.GetDepositAddress(exName)
@@ -219,4 +220,44 @@ func convertToAddressMap(data exchangeDepositAddress) common.ExchangeAddresses {
 		result[token] = ethereum.HexToAddress(addrStr)
 	}
 	return result
+}
+
+func (setting *Settings) HandleEmptyExchangeInfo() error {
+	runningExs := RunningExchange()
+	for _, ex := range runningExs {
+		exName, ok := exchangeNameValue[ex]
+		if !ok {
+			return fmt.Errorf("Exchange %s is in KYBER_EXCHANGES, but not avail in current deployment", ex)
+		}
+		if _, err := setting.Exchange.Storage.GetExchangeInfo(exName); err != nil {
+			log.Printf("Exchange %s is in KYBER_EXCHANGES but can't load its exchangeInfo in Database (%s). atempt to init it", exName.String(), err.Error())
+			exInfo, err := setting.NewExchangeTokenPairs(exName)
+			if err != nil {
+				return err
+			}
+			if err = setting.Exchange.Storage.StoreTokenPairs(exName, exInfo); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (setting *Settings) NewExchangeInfo(exName ExchangeName) (*common.ExchangeInfo, error) {
+	result := common.NewExchangeInfo()
+	addrs, err := setting.GetDepositAddress(exName)
+	if err != nil {
+		return result, err
+	}
+	for tokenID := range addrs {
+		_, err := setting.GetInternalTokenByID(tokenID)
+		if err != nil {
+			return result, fmt.Errorf("Internal Token failed :%s", err)
+		}
+		if tokenID != "ETH" {
+			pair := setting.MustCreateTokenPair(tokenID, "ETH")
+			result.Update(pair, common.ExchangePrecisionLimit{})
+		}
+	}
+	return result, nil
 }

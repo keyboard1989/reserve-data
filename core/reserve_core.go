@@ -407,8 +407,8 @@ func sanityCheck(buys, afpMid, sells []*big.Int) error {
 }
 
 func sanityCheckTrading(exchange common.Exchange, base, quote common.Token, rate, amount float64) error {
-	tokenPairID := makeTokenPair(base.ID, quote.ID)
-	exchangeInfo, err := exchange.GetExchangeInfo(tokenPairID)
+	tokenPair := makeTokenPair(base, quote)
+	exchangeInfo, err := exchange.GetExchangeInfo(tokenPair)
 	if err != nil {
 		return err
 	}
@@ -456,9 +456,9 @@ func checkZeroValue(buy, sell *big.Int) int {
 	return -1
 }
 
-func makeTokenPair(base, quote string) common.TokenPairID {
-	if base == "ETH" {
-		return common.NewTokenPairID(quote, base)
+func makeTokenPair(base, quote common.Token) common.TokenPair {
+	if base.ID == "ETH" {
+		return common.TokenPair{Base: quote, Quote: base}
 	}
-	return common.NewTokenPairID(base, quote)
+	return common.TokenPair{Base: base, Quote: quote}
 }

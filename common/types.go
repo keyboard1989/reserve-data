@@ -77,20 +77,20 @@ type ExchangePrecisionLimit struct {
 
 // ExchangeInfo is written and read concurrently
 type ExchangeInfo struct {
-	data map[TokenPairID]ExchangePrecisionLimit
+	data map[TokenPair]ExchangePrecisionLimit
 }
 
 func NewExchangeInfo() *ExchangeInfo {
 	return &ExchangeInfo{
-		data: map[TokenPairID]ExchangePrecisionLimit{},
+		data: map[TokenPair]ExchangePrecisionLimit{},
 	}
 }
 
-func (self *ExchangeInfo) Update(pair TokenPairID, data ExchangePrecisionLimit) {
+func (self *ExchangeInfo) Update(pair TokenPair, data ExchangePrecisionLimit) {
 	self.data[pair] = data
 }
 
-func (self *ExchangeInfo) Get(pair TokenPairID) (ExchangePrecisionLimit, error) {
+func (self *ExchangeInfo) Get(pair TokenPair) (ExchangePrecisionLimit, error) {
 	if info, exist := self.data[pair]; exist {
 		return info, nil
 	} else {
@@ -98,7 +98,7 @@ func (self *ExchangeInfo) Get(pair TokenPairID) (ExchangePrecisionLimit, error) 
 	}
 }
 
-func (self *ExchangeInfo) GetData() map[TokenPairID]ExchangePrecisionLimit {
+func (self *ExchangeInfo) GetData() map[TokenPair]ExchangePrecisionLimit {
 	return self.data
 }
 

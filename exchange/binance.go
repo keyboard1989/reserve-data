@@ -113,7 +113,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					exchangePrecisionLimit.MinNotional = minNotional
 				}
 			}
-			exInfo.Update(pair.PairID(), exchangePrecisionLimit)
+			exInfo.Update(pair, exchangePrecisionLimit)
 			break
 		}
 	}
@@ -125,17 +125,11 @@ func (self *Binance) UpdatePairsPrecision() error {
 		return err
 	}
 	symbols := exchangeInfo.Symbols
-	pairs, err := self.setting.GetTokenPairs(settings.Binance)
-	if err != nil {
-		return err
-	}
 	exInfo, err := self.GetInfo()
 	if err != nil {
-		log.Printf("INFO: Can't get Exchange Info for Binance from persistent storage, attempt to init it from Binance Endpoint (%s)", err)
-		exInfo = common.NewExchangeInfo()
+		return fmt.Errorf("INFO: Can't get Exchange Info for Binance from persistent storage. (%s)", err)
 	}
-	log.Printf("exInfo data is %v", exInfo.GetData())
-	for _, pair := range pairs {
+	for pair := range exInfo.GetData() {
 		self.UpdatePrecisionLimit(pair, symbols, exInfo)
 	}
 	return self.setting.UpdateExchangeInfo(settings.Binance, exInfo)
@@ -145,7 +139,7 @@ func (self *Binance) GetInfo() (*common.ExchangeInfo, error) {
 	return self.setting.GetExchangeInfo(settings.Binance)
 }
 
-func (self *Binance) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
+func (self *Binance) GetExchangeInfo(pair common.TokenPair) (common.ExchangePrecisionLimit, error) {
 	exInfo, err := self.setting.GetExchangeInfo(settings.Binance)
 	if err != nil {
 		return common.ExchangePrecisionLimit{}, err
@@ -166,7 +160,15 @@ func (self *Binance) ID() common.ExchangeID {
 }
 
 func (self *Binance) TokenPairs() ([]common.TokenPair, error) {
-	return self.setting.GetTokenPairs(settings.Binance)
+	result := []common.TokenPair{}
+	exInfo, err := self.setting.GetExchangeInfo(settings.Binance)
+	if err != nil {
+		return nil, err
+	}
+	for pair := range exInfo.GetData() {
+		result = append(result, pair)
+	}
+	return result, nil
 }
 
 func (self *Binance) Name() string {
@@ -270,7 +272,7 @@ func (self *Binance) FetchOnePairData(
 func (self *Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error) {
 	wait := sync.WaitGroup{}
 	data := sync.Map{}
-	pairs, err := self.setting.GetTokenPairs(settings.Binance)
+	pairs, err := self.TokenPairs()
 	if err != nil {
 		return nil, err
 	}
@@ -407,9 +409,9 @@ func (self *Binance) FetchTradeHistory() {
 		for {
 			result := common.ExchangeTradeHistory{}
 			data := sync.Map{}
-			pairs, err := self.setting.GetTokenPairs(settings.Binance)
+			pairs, err := self.TokenPairs()
 			if err != nil {
-				log.Printf("Binance fetch trade history failed (%s). This might due to pairs setting hasn't been init yet", err.Error())
+				log.Printf("Get Token pairs setting failed (%s)", err.Error())
 				continue
 			}
 			wait := sync.WaitGroup{}

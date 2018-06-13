@@ -18,7 +18,7 @@ type Exchange interface {
 	CancelOrder(id, base, quote string) error
 	MarshalText() (text []byte, err error)
 	GetInfo() (*ExchangeInfo, error)
-	GetExchangeInfo(TokenPairID) (ExchangePrecisionLimit, error)
+	GetExchangeInfo(TokenPair) (ExchangePrecisionLimit, error)
 	GetFee() (ExchangeFees, error)
 	GetMinDeposit() (ExchangesMinDeposit, error)
 	TokenAddresses() (map[string]ethereum.Address, error)

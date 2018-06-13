@@ -86,6 +86,14 @@ func WithHandleEmptyTokenPairs() SettingOption {
 	}
 }
 
+func WithHandleEmptyExchangeInfo() SettingOption {
+	return func(setting *Settings) {
+		if err := setting.HandleEmptyExchangeInfo(); err != nil {
+			log.Panicf("Setting Init: cannot init Exchange infor %s, this will stop the core funcion", err.Error())
+		}
+	}
+}
+
 // SettingOption sets the initialization behavior of the Settings instance.
 type SettingOption func(s *Settings)
 

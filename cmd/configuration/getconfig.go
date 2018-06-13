@@ -78,7 +78,7 @@ func GetSetting(setPath SettingPaths) (*settings.Settings, error) {
 		settings.WithHandleEmptyFee(setPath.feePath),
 		settings.WithHandleEmptyMinDeposit(filepath.Join(common.CmdDirLocation(), "min_deposit.json")),
 		settings.WithHandleEmptyDepositAddress(setPath.settingPath),
-		settings.WithHandleEmptyTokenPairs())
+		settings.WithHandleEmptyExchangeInfo())
 	return setting, err
 }
 
