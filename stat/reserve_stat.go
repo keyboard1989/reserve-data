@@ -324,7 +324,7 @@ func (self ReserveStats) ControllPriceAnalyticSize() error {
 		} else {
 			var integrity bool
 			if nRecord > 0 {
-				err := self.storageController.Arch.UploadFile(self.storageController.Arch.GetStatDataBucketName(), self.storageController.ExpiredPriceAnalyticPath, fileName)
+				err = self.storageController.Arch.UploadFile(self.storageController.Arch.GetStatDataBucketName(), self.storageController.ExpiredPriceAnalyticPath, fileName)
 				if err != nil {
 					log.Printf("StatPruner: Upload file failed: %s", err)
 				} else {

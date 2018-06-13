@@ -9,13 +9,6 @@ install:
 
 script:
   - gometalinter --config=gometalinter.json ./...
-  - pushd stat && gometalinter --vendor --disable-all --enable=vetshadow ./...;popd
-  - pushd world && gometalinter --vendor --disable-all --enable=vetshadow ./...; popd
-  - pushd data && gometalinter --vendor --disable-all --enable=vetshadow ./...; popd
-  - pushd common && gometalinter --vendor --disable-all --enable=vetshadow ./...; popd
-  - pushd cmd && gometalinter --vendor --disable-all --enable=vetshadow ./...; popd
-  - pushd exchange && gometalinter --vendor --disable-all --enable=vetshadow ./...; popd
-  - pushd http && gometalinter --vendor --disable-all --enable=vetshadow ./...; popd
   - $GOPATH/bin/goveralls -v -service=travis-ci
 
 go:

@@ -172,7 +172,7 @@ func (self *BoltUserStorage) UpdateUserAddresses(user string, addrs []ethereum.A
 			return uErr
 		}
 		for _, oldAddr := range oldAddrs {
-			if uErr := pendingBk.Delete([]byte(common.AddrToString(oldAddr))); uErr != nil {
+			if uErr = pendingBk.Delete([]byte(common.AddrToString(oldAddr))); uErr != nil {
 				return uErr
 			}
 		}

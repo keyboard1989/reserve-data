@@ -6,6 +6,13 @@
 
 ### Bug fixes:
 
+- Enable errcheck checker and fix all unhandled errors (#307)
+- Fix GetAccounts error is ignored for houbi exchange (#308)
+
+### Improvements:
+
+### Compatibility:
+
 ## 0.8.0 (2018-06-03)
 
 ### Features:

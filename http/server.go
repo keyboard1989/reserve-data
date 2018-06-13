@@ -1790,7 +1790,9 @@ func (self *HTTPServer) register() {
 
 func (self *HTTPServer) Run() {
 	self.register()
-	self.r.Run(self.host)
+	if err := self.r.Run(self.host); err != nil {
+		log.Panic(err)
+	}
 }
 
 func NewHTTPServer(

@@ -710,11 +710,11 @@ func (self *Fetcher) RunLogFetcher() {
 			if lastBlock+1 > toBlock {
 				continue
 			}
-			nextBlock, err := self.FetchLogs(lastBlock+1, toBlock, timepoint)
-			if err != nil {
+			nextBlock, fErr := self.FetchLogs(lastBlock+1, toBlock, timepoint)
+			if fErr != nil {
 				// in case there is error, we roll back and try it again.
 				// dont have to do anything here. just continute with the loop.
-				log.Printf("LogFetcher - continue with the loop to try it again")
+				log.Printf("LogFetcher - continue with the loop to try it again: %s", fErr)
 			} else {
 				if nextBlock == lastBlock && toBlock != 0 {
 					// in case that we are querying old blocks (6 hours in the past)
@@ -725,7 +725,7 @@ func (self *Fetcher) RunLogFetcher() {
 					nextBlock = toBlock
 				}
 				log.Printf("LogFetcher - update log block: %d", nextBlock)
-				if err := self.logStorage.UpdateLogBlock(nextBlock, timepoint); err != nil {
+				if err = self.logStorage.UpdateLogBlock(nextBlock, timepoint); err != nil {
 					log.Printf("Update log block: %s", err.Error())
 				}
 			}
@@ -773,7 +773,7 @@ func GetTradeGeo(txHash string) (string, string, error) {
 		if response.Data.Country != "" {
 			return response.Data.IP, response.Data.Country, err
 		}
-		country, err := util.IPToCountry(response.Data.IP)
+		country, err = util.IPToCountry(response.Data.IP)
 		if err != nil {
 			return "", "", err
 		}

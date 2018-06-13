@@ -1149,7 +1149,9 @@ func (self *BoltStorage) StorePWIEquation(data string) error {
 		p := tx.Bucket([]byte(PWI_EQUATION))
 		idByte := boltutil.Uint64ToBytes(common.GetTimepoint())
 		pending := metric.PWIEquation{}
-		json.Unmarshal(v, &pending)
+		if uErr := json.Unmarshal(v, &pending); uErr != nil {
+			return uErr
+		}
 		if pending.Data != data {
 			return errors.New("Confirm data does not match pending data")
 		}
@@ -1591,11 +1593,11 @@ func (self *BoltStorage) StorePWIEquationV2(data string) error {
 		if v == nil {
 			return errors.New("There is no pending equation")
 		}
-		confirmData := make(map[string]interface{})
+		confirmData := metric.PWIEquationRequestV2{}
 		if err := json.Unmarshal([]byte(data), &confirmData); err != nil {
 			return err
 		}
-		currentData := make(map[string]interface{})
+		currentData := metric.PWIEquationRequestV2{}
 		if err := json.Unmarshal(v, &currentData); err != nil {
 			return err
 		}
