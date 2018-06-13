@@ -14,5 +14,5 @@ type Setting interface {
 	NewTokenPair(base, quote string) (common.TokenPair, error)
 	UpdateToken(t common.Token) error
 	AddAddressToSet(setName settings.AddressSetName, address ethereum.Address) error
-	UpdateAdress(name settings.AddressName, address ethereum.Address) error
+	UpdateAddress(name settings.AddressName, address ethereum.Address) error
 }

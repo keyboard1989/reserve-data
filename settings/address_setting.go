@@ -33,9 +33,9 @@ var addressNameValues = map[string]AddressName{
 	"intermediator": Intermediator,
 }
 
-// AddressTypeValues returns the mapping of the string presentation
+// AddressNameValues returns the mapping of the string presentation
 // of address name and its value.
-func AddressTypeValues() map[string]AddressName {
+func AddressNameValues() map[string]AddressName {
 	return addressNameValues
 }
 
@@ -55,9 +55,9 @@ var addressSetNameValues = map[string]AddressSetName{
 	"oldBurners":           OldBurners,
 }
 
-// AddressSetTypeValues returns the mapping of the string presentation
+// AddressSetNameValues returns the mapping of the string presentation
 // of address set name and its value.
-func AddressSetTypeValues() map[string]AddressSetName {
+func AddressSetNameValues() map[string]AddressSetName {
 	return addressSetNameValues
 }
 

@@ -4,7 +4,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-func (setting *Settings) UpdateAdress(name AddressName, address ethereum.Address) error {
+func (setting *Settings) UpdateAddress(name AddressName, address ethereum.Address) error {
 	return setting.Address.Storage.UpdateOneAddress(name, address.Hex())
 }
 
