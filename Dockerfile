@@ -6,7 +6,7 @@ FROM golang
 ADD . /go/src/github.com/KyberNetwork/reserve-data
 
 ENV KYBER_EXCHANGES huobi,bittrex,binance
-WORKDIR /go/src/github.com/KyberNetwork/reserve-data/cmd
+WORKDIR /go/src/github.com/KyberNetwork/reserve-data
 RUN go install -v github.com/KyberNetwork/reserve-data/cmd
 
 EXPOSE 8000
