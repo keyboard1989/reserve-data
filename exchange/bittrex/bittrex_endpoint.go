@@ -72,8 +72,8 @@ func (self *BittrexEndpoint) GetResponse(
 		return respBody, err
 	}
 	defer func() {
-		if vErr := resp.Body.Close(); vErr != nil {
-			log.Printf("Unmarshal response error: %s", vErr.Error())
+		if cErr := resp.Body.Close(); cErr != nil {
+			log.Printf("Unmarshal response error: %s", cErr.Error())
 		}
 	}()
 	respBody, err = ioutil.ReadAll(resp.Body)
