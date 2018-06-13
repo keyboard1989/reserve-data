@@ -42,8 +42,8 @@ func (self *GasOracle) RunGasPricing() error {
 		return err
 	}
 	defer func() {
-		if vErr := r.Body.Close(); vErr != nil {
-			log.Printf("Response close error: %s", vErr.Error())
+		if cErr := r.Body.Close(); cErr != nil {
+			log.Printf("Response close error: %s", cErr.Error())
 		}
 	}()
 
