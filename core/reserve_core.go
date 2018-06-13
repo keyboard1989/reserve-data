@@ -142,67 +142,87 @@ func (self ReserveCore) Deposit(
 	token common.Token,
 	amount *big.Int,
 	timepoint uint64) (common.ActivityID, error) {
-
 	address, supported := exchange.Address(token)
+	var (
+		err         error
+		ok          bool
+		tx          *types.Transaction
+		amountFloat = common.BigToFloat(amount, token.Decimal)
+	)
 
-	var tx *types.Transaction
-	var txhex string = ethereum.Hash{}.Hex()
-	var txnonce string = "0"
-	var txprice string = "0"
-	var err error
-	var status string
+	uidGenerator := func(txhex string) common.ActivityID {
+		return timebasedID(txhex + "|" + token.ID + "|" + strconv.FormatFloat(amountFloat, 'f', -1, 64))
+	}
+	recordActivity := func(status, txhex, txnonce, txprice string, err error) error {
+		uid := uidGenerator(txhex)
+		log.Printf(
+			"Core ----------> Deposit to %s: token: %s, amount: %s, timestamp: %d ==> Result: tx: %s, error: %s",
+			exchange.ID(), token.ID, amount.Text(10), timepoint, txhex, err,
+		)
+		return self.activityStorage.Record(
+			"deposit",
+			uid,
+			string(exchange.ID()),
+			map[string]interface{}{
+				"exchange":  exchange,
+				"token":     token,
+				"amount":    strconv.FormatFloat(amountFloat, 'f', -1, 64),
+				"timepoint": timepoint,
+			}, map[string]interface{}{
+				"tx":       txhex,
+				"nonce":    txnonce,
+				"gasPrice": txprice,
+				"error":    common.ErrorToString(err),
+			},
+			"",
+			status,
+			timepoint,
+		)
+	}
 
 	if !supported {
 		err = fmt.Errorf("Exchange %s doesn't support token %s", exchange.ID(), token.ID)
-	} else if ok, perr := self.activityStorage.HasPendingDeposit(token, exchange); ok {
-		if perr != nil {
-			err = perr
-		} else {
-			err = fmt.Errorf("There is a pending %s deposit to %s currently, please try again", token.ID, exchange.ID())
+		if sErr := recordActivity(statusFailed, "", "", "", err); sErr != nil {
+			log.Printf("failed to save activity record: %s", sErr)
 		}
-	} else {
-		err = sanityCheckAmount(exchange, token, amount)
-		if err == nil {
-			tx, err = self.blockchain.Send(token, amount, address)
+		return common.ActivityID{}, err
+	}
+
+	if ok, err = self.activityStorage.HasPendingDeposit(token, exchange); err != nil {
+		if sErr := recordActivity(statusFailed, "", "", "", err); sErr != nil {
+			log.Printf("failed to save activity record: %s", sErr)
 		}
+		return common.ActivityID{}, err
 	}
-	if err != nil {
-		status = "failed"
-	} else {
-		status = "submitted"
-		txhex = tx.Hash().Hex()
-		txnonce = strconv.FormatUint(tx.Nonce(), 10)
-		txprice = tx.GasPrice().Text(10)
+	if ok {
+		err = fmt.Errorf("There is a pending %s deposit to %s currently, please try again", token.ID, exchange.ID())
+		if sErr := recordActivity(statusFailed, "", "", "", err); sErr != nil {
+			log.Printf("failed to save activity record: %s", sErr)
+		}
+		return common.ActivityID{}, err
 	}
-	amountFloat := common.BigToFloat(amount, token.Decimal)
-	uid := timebasedID(txhex + "|" + token.ID + "|" + strconv.FormatFloat(amountFloat, 'f', -1, 64))
-	serr := self.activityStorage.Record(
-		"deposit",
-		uid,
-		string(exchange.ID()),
-		map[string]interface{}{
-			"exchange":  exchange,
-			"token":     token,
-			"amount":    strconv.FormatFloat(amountFloat, 'f', -1, 64),
-			"timepoint": timepoint,
-		}, map[string]interface{}{
-			"tx":       txhex,
-			"nonce":    txnonce,
-			"gasPrice": txprice,
-			"error":    common.ErrorToString(err),
-		},
-		"",
-		status,
-		timepoint,
+
+	if err = sanityCheckAmount(exchange, token, amount); err != nil {
+		if sErr := recordActivity(statusFailed, "", "", "", err); sErr != nil {
+			log.Printf("failed to save activity record: %s", sErr)
+		}
+		return common.ActivityID{}, err
+	}
+	if tx, err = self.blockchain.Send(token, amount, address); err != nil {
+		if sErr := recordActivity(statusFailed, "", "", "", err); sErr != nil {
+			log.Printf("failed to save activity record: %s", sErr)
+		}
+		return common.ActivityID{}, err
+	}
+
+	err = recordActivity(
+		statusSubmitted,
+		tx.Hash().Hex(),
+		strconv.FormatUint(tx.Nonce(), 10),
+		tx.GasPrice().Text(10),
+		nil,
 	)
-	if serr != nil {
-		log.Printf("Cannot save activity: %s", err.Error())
-	}
-	log.Printf(
-		"Core ----------> Deposit to %s: token: %s, amount: %s, timestamp: %d ==> Result: tx: %s, error: %s",
-		exchange.ID(), token.ID, amount.Text(10), timepoint, txhex, err,
-	)
-	return uid, err
+	return uidGenerator(tx.Hash().Hex()), err
 }
 
 func (self ReserveCore) Withdraw(
