@@ -346,7 +346,7 @@ func (self *Binance) FetchOnePairTradeHistory(
 	defer wait.Done()
 	result := []common.TradeHistory{}
 	tokenPair := fmt.Sprintf("%s-%s", pair.Base.ID, pair.Quote.ID)
-	fromID, _ := self.storage.GetLastIDTradeHistory("binance", tokenPair)
+	fromID, _ := self.storage.GetLastIDTradeHistory(tokenPair)
 	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, fromID)
 	if err != nil {
 		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())

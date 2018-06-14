@@ -1,4 +1,4 @@
-package binance
+package bittrex
 
 import (
 	"io/ioutil"
@@ -10,9 +10,9 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
-func TestBinanceStorage(t *testing.T) {
-	boltFile := "test_binance_bolt.db"
-	tmpDir, err := ioutil.TempDir("", "binance_storage")
+func TestBittrexStorage(t *testing.T) {
+	boltFile := "test_bittrex_storage.db"
+	tmpDir, err := ioutil.TempDir("", "bittrex_storage")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func TestBinanceStorage(t *testing.T) {
 
 	storage, err := NewBoltStorage(filepath.Join(tmpDir, boltFile))
 	if err != nil {
-		t.Fatalf("Could not init binance bolt storage: %s", err.Error())
+		t.Fatalf("Could not init bittrex bolt storage: %s", err.Error())
 	}
 
 	// store trade history
@@ -54,16 +54,16 @@ func TestBinanceStorage(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !reflect.DeepEqual(tradeHistory, exchangeTradeHistory) {
-		t.Fatal("Get wrong trade history")
+		t.Fatal("Bittrex get wrong trade history")
 	}
 
 	// get last trade history id
 	var lastHistoryID string
 	lastHistoryID, err = storage.GetLastIDTradeHistory("OMGETH")
 	if err != nil {
-		t.Fatalf("Get last trade history id error: %s", err.Error())
+		t.Fatalf("Bittrex get last trade history id error: %s", err.Error())
 	}
 	if lastHistoryID != "12342" {
-		t.Fatalf("Get last trade history wrong")
+		t.Fatalf("Bittrex get last trade history wrong, shoudl return 12342 receive: %s", lastHistoryID)
 	}
 }
