@@ -76,16 +76,8 @@ func WithHandleEmptyDepositAddress(pathJSON string) SettingOption {
 	}
 }
 
-// WithHandleEmptyTokenPairs will create TokenPairs from list of Token DepositAddress with each exchange
-// if that exchange TokenPairs is empty
-func WithHandleEmptyTokenPairs() SettingOption {
-	return func(setting *Settings) {
-		if err := setting.HandleEmptyTokenPairs(); err != nil {
-			log.Printf("WARNING: Setting Init: cannot init TokenPairs %s, Token Pair is needed to be updated manualluy", err.Error())
-		}
-	}
-}
-
+// WithHandleEmptyExchangeInfo will create a map of TokenPairs from token deposit address to an empty ExchangePrecisionLimit
+// it will return error if occur
 func WithHandleEmptyExchangeInfo() SettingOption {
 	return func(setting *Settings) {
 		if err := setting.HandleEmptyExchangeInfo(); err != nil {

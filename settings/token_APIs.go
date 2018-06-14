@@ -67,7 +67,7 @@ func (setting *Settings) ETHToken() common.Token {
 	return eth
 }
 
-func (setting *Settings) NewTokenPair(base, quote string) (common.TokenPair, error) {
+func (setting *Settings) NewTokenPairFromID(base, quote string) (common.TokenPair, error) {
 	bToken, err1 := setting.GetInternalTokenByID(base)
 	qToken, err2 := setting.GetInternalTokenByID(quote)
 	if err1 != nil || err2 != nil {
@@ -78,7 +78,7 @@ func (setting *Settings) NewTokenPair(base, quote string) (common.TokenPair, err
 }
 
 func (setting *Settings) MustCreateTokenPair(base, quote string) common.TokenPair {
-	pair, err := setting.NewTokenPair(base, quote)
+	pair, err := setting.NewTokenPairFromID(base, quote)
 	if err != nil {
 		panic(err)
 	}

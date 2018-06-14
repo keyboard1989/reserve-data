@@ -173,47 +173,6 @@ func (setting *Settings) LoadDepositAddressFromFile(path string) error {
 	return nil
 }
 
-func (setting *Settings) HandleEmptyTokenPairs() error {
-	runningExs := RunningExchange()
-	for _, ex := range runningExs {
-		exName, ok := exchangeNameValue[ex]
-		if !ok {
-			return fmt.Errorf("Exchange %s is in KYBER_EXCHANGES, but not avail in current deployment", ex)
-		}
-		if _, err := setting.Exchange.Storage.GetTokenPairs(exName); err != nil {
-			log.Printf("Exchange %s is in KYBER_EXCHANGES but can't load TokenPairs in Database (%s). atempt to init it", exName.String(), err.Error())
-			tokenPairs, err := setting.NewExchangeTokenPairs(exName)
-			if err != nil {
-				return err
-			}
-			if err = setting.Exchange.Storage.StoreTokenPairs(exName, tokenPairs); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// NewExchangeTokenPairs
-func (setting *Settings) NewExchangeTokenPairs(exName ExchangeName) ([]common.TokenPair, error) {
-	result := []common.TokenPair{}
-	addrs, err := setting.GetDepositAddress(exName)
-	if err != nil {
-		return result, err
-	}
-	for tokenID := range addrs {
-		_, err := setting.GetInternalTokenByID(tokenID)
-		if err != nil {
-			return result, fmt.Errorf("Internal Token failed :%s", err)
-		}
-		if tokenID != "ETH" {
-			pair := setting.MustCreateTokenPair(tokenID, "ETH")
-			result = append(result, pair)
-		}
-	}
-	return result, nil
-}
-
 func convertToAddressMap(data exchangeDepositAddress) common.ExchangeAddresses {
 	result := make(common.ExchangeAddresses)
 	for token, addrStr := range data {
@@ -231,11 +190,11 @@ func (setting *Settings) HandleEmptyExchangeInfo() error {
 		}
 		if _, err := setting.Exchange.Storage.GetExchangeInfo(exName); err != nil {
 			log.Printf("Exchange %s is in KYBER_EXCHANGES but can't load its exchangeInfo in Database (%s). atempt to init it", exName.String(), err.Error())
-			exInfo, err := setting.NewExchangeTokenPairs(exName)
+			exInfo, err := setting.NewExchangeInfo(exName)
 			if err != nil {
 				return err
 			}
-			if err = setting.Exchange.Storage.StoreTokenPairs(exName, exInfo); err != nil {
+			if err = setting.Exchange.Storage.StoreExchangeInfo(exName, exInfo); err != nil {
 				return err
 			}
 		}

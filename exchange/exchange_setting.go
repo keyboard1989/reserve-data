@@ -15,7 +15,6 @@ type Setting interface {
 	GetFee(ex settings.ExchangeName) (common.ExchangeFees, error)
 	GetMinDeposit(ex settings.ExchangeName) (common.ExchangesMinDeposit, error)
 	GetDepositAddress(ex settings.ExchangeName) (common.ExchangeAddresses, error)
-	GetTokenPairs(ex settings.ExchangeName) ([]common.TokenPair, error)
 	GetAddress(name settings.AddressName) (ethereum.Address, error)
 	UpdateDepositAddress(name settings.ExchangeName, token common.Token) error
 	GetExchangeInfo(ex settings.ExchangeName) (*common.ExchangeInfo, error)
