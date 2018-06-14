@@ -132,15 +132,11 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.Exchan
 	return result, err
 }
 
-func (self *BoltStorage) GetLastIDTradeHistory(exchange, pair string) (string, error) {
+func (self *BoltStorage) GetLastIDTradeHistory(pair string) (string, error) {
 	history := common.TradeHistory{}
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
-		exchangeBk, vErr := b.CreateBucketIfNotExists([]byte(exchange))
-		if vErr != nil {
-			return vErr
-		}
-		pairBk, vErr := exchangeBk.CreateBucketIfNotExists([]byte(pair))
+		pairBk, vErr := b.CreateBucketIfNotExists([]byte(pair))
 		if vErr != nil {
 			return vErr
 		}

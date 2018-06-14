@@ -214,7 +214,7 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.Exchan
 }
 
 //GetLastIDTradeHistory get last trade history id
-func (self *BoltStorage) GetLastIDTradeHistory(exchange, pair string) (string, error) {
+func (self *BoltStorage) GetLastIDTradeHistory(pair string) (string, error) {
 	history := common.TradeHistory{}
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))

@@ -16,5 +16,5 @@ type HuobiStorage interface {
 	StoreTradeHistory(data common.ExchangeTradeHistory) error
 
 	GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTradeHistory, error)
-	GetLastIDTradeHistory(exchange, pair string) (string, error)
+	GetLastIDTradeHistory(pair string) (string, error)
 }
