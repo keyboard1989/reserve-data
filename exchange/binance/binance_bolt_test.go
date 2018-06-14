@@ -24,7 +24,7 @@ func TestStoreTradeHistory(t *testing.T) {
 
 	exchangeTradeHistory := common.ExchangeTradeHistory{
 		common.TokenPairID("OMGETH"): []common.TradeHistory{
-			common.TradeHistory{
+			{
 				ID:        "12342",
 				Price:     0.132131,
 				Qty:       12.3123,
