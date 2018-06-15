@@ -90,14 +90,6 @@ func (self testBlockchain) StandardGasPrice() float64 {
 	return 0
 }
 
-func (self testBlockchain) FastGasPrice() float64 {
-	return 0
-}
-
-func (self testBlockchain) SafeLowGasPrice() float64 {
-	return 0
-}
-
 func (self testBlockchain) SetRateMinedNonce() (uint64, error) {
 	return 0, nil
 }
@@ -148,8 +140,7 @@ func getTestCore(hasPendingDeposit bool) *ReserveCore {
 }
 
 func TestNotAllowDeposit(t *testing.T) {
-	alreadyHasDepositForOMGOnBittrex := true
-	core := getTestCore(alreadyHasDepositForOMGOnBittrex)
+	core := getTestCore(true)
 	_, err := core.Deposit(
 		testExchange{},
 		common.NewToken("OMG", "0x1111111111111111111111111111111111111111", 18),

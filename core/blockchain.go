@@ -9,13 +9,9 @@ import (
 )
 
 // Blockchain is the interface wraps around all core methods to interact
-// with blockchain.
+// with Ethereum blockchain.
 type Blockchain interface {
 	StandardGasPrice() float64
-	// TODO: unused method
-	SafeLowGasPrice() float64
-	// TODO: unused method
-	FastGasPrice() float64
 	Send(
 		token common.Token,
 		amount *big.Int,
