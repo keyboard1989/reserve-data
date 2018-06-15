@@ -38,13 +38,11 @@ func GetActivitiesResponse(url string, params map[string]string, config configur
 	var allActionRep AllActionHTTPReply
 	params["nonce"] = nonce
 	data, err := GetResponse("GET", fmt.Sprintf("%s/%s", url, "activities"), params, true, config)
-
 	if err != nil {
 		return allActionRep, err
 	}
-	if err := json.Unmarshal(data, &allActionRep); err != nil {
-		return allActionRep, err
-	}
+
+	err = json.Unmarshal(data, &allActionRep)
 	return allActionRep, err
 }
 
