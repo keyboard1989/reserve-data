@@ -11,6 +11,8 @@
 
 ### Improvements:
 
+- Remove many unused methods (#309)
+
 ### Compatibility:
 
 ## 0.8.0 (2018-06-03)
