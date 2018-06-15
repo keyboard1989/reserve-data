@@ -40,7 +40,6 @@ type ReserveStats interface {
 
 	RunStorageController() error
 	Run() error
-	// TODO: unused method
 	Stop() error
 }
 

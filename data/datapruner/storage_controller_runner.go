@@ -8,7 +8,6 @@ import (
 type StorageControllerRunner interface {
 	GetAuthBucketTicker() <-chan time.Time
 	Start() error
-	// TODO: unused method
 	Stop() error
 }
 
