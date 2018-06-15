@@ -72,7 +72,6 @@ func (self *HttpRunnerServer) register() {
 	self.r.GET("/atick", newTickerHandler(self.runner.aticker))
 	self.r.GET("/rtick", newTickerHandler(self.runner.rticker))
 	self.r.GET("/btick", newTickerHandler(self.runner.bticker))
-	self.r.GET("/ttick", newTickerHandler(self.runner.tticker))
 	self.r.GET("/gtick", newTickerHandler(self.runner.globalDataTicker))
 }
 

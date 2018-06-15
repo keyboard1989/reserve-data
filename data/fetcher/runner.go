@@ -18,8 +18,6 @@ type FetcherRunner interface {
 	GetAuthDataTicker() <-chan time.Time
 	GetRateTicker() <-chan time.Time
 	GetBlockTicker() <-chan time.Time
-	// TODO: unused method
-	GetTradeHistoryTicker() <-chan time.Time
 }
 
 // TickerRunner is an implementation of FetcherRunner that use simple time ticker.
@@ -28,14 +26,12 @@ type TickerRunner struct {
 	aduration          time.Duration
 	rduration          time.Duration
 	bduration          time.Duration
-	tduration          time.Duration
 	globalDataDuration time.Duration
 
 	oclock          *time.Ticker
 	aclock          *time.Ticker
 	rclock          *time.Ticker
 	bclock          *time.Ticker
-	tclock          *time.Ticker
 	globalDataClock *time.Ticker
 }
 
@@ -55,16 +51,12 @@ func (self *TickerRunner) GetAuthDataTicker() <-chan time.Time {
 func (self *TickerRunner) GetRateTicker() <-chan time.Time {
 	return self.rclock.C
 }
-func (self *TickerRunner) GetTradeHistoryTicker() <-chan time.Time {
-	return self.tclock.C
-}
 
 func (self *TickerRunner) Start() error {
 	self.oclock = time.NewTicker(self.oduration)
 	self.aclock = time.NewTicker(self.aduration)
 	self.rclock = time.NewTicker(self.rduration)
 	self.bclock = time.NewTicker(self.bduration)
-	self.tclock = time.NewTicker(self.tduration)
 	self.globalDataClock = time.NewTicker(self.globalDataDuration)
 	return nil
 }
@@ -74,7 +66,6 @@ func (self *TickerRunner) Stop() error {
 	self.aclock.Stop()
 	self.rclock.Stop()
 	self.bclock.Stop()
-	self.tclock.Stop()
 	self.globalDataClock.Stop()
 	return nil
 }
@@ -82,19 +73,12 @@ func (self *TickerRunner) Stop() error {
 // NewTickerRunner creates a new instance of TickerRunner with given time durations in parameters.
 func NewTickerRunner(
 	oduration, aduration, rduration,
-	bduration, tduration, globalDataDuration time.Duration) *TickerRunner {
+	bduration, globalDataDuration time.Duration) *TickerRunner {
 	return &TickerRunner{
-		oduration,
-		aduration,
-		rduration,
-		bduration,
-		tduration,
-		globalDataDuration,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
-		nil,
+		oduration:          oduration,
+		aduration:          aduration,
+		rduration:          rduration,
+		bduration:          bduration,
+		globalDataDuration: globalDataDuration,
 	}
 }
