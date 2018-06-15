@@ -84,8 +84,9 @@ func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
 		return result, supported
 	}
 	log.Printf("Got Huobi live deposit address for token %s, attempt to update it to current setting", token.ID)
-	token.Address = liveAddress.Address
-	if err = self.setting.UpdateDepositAddress(settings.Huobi, token); err != nil {
+	addrs := common.NewExchangeAddresses()
+	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
+	if err = self.setting.UpdateDepositAddress(settings.Huobi, *addrs); err != nil {
 		log.Printf("ERROR: can not update deposit address for token %s on Huobi: (%s)", token.ID, err.Error())
 	}
 	return result, true
@@ -97,12 +98,14 @@ func (self *Huobi) UpdateDepositAddress(token common.Token, address string) erro
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Address == "" {
 		log.Printf("ERROR: Get Huobi live deposit address for token %s failed: (%v) or the replied address is empty. Check the currently available address instead", token.ID, err)
-		token.Address = address
-		return self.setting.UpdateDepositAddress(settings.Huobi, token)
+		addrs := common.NewExchangeAddresses()
+		addrs.Update(token.ID, ethereum.HexToAddress(address))
+		return self.setting.UpdateDepositAddress(settings.Huobi, *addrs)
 	}
 	log.Printf("Got Huobi live deposit address for token %s, attempt to update it to current setting")
-	token.Address = liveAddress.Address
-	return self.setting.UpdateDepositAddress(settings.Huobi, token)
+	addrs := common.NewExchangeAddresses()
+	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
+	return self.setting.UpdateDepositAddress(settings.Huobi, *addrs)
 }
 
 func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPair, symbols HuobiExchangeInfo, exInfo *common.ExchangeInfo) {

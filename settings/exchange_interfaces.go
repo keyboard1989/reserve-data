@@ -1,8 +1,9 @@
 package settings
 
 import (
+	"log"
+
 	"github.com/KyberNetwork/reserve-data/common"
-	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
 // GetFee returns a map[tokenID]exchangeFees and error if occur
@@ -10,9 +11,25 @@ func (setting *Settings) GetFee(ex ExchangeName) (common.ExchangeFees, error) {
 	return setting.Exchange.Storage.GetFee(ex)
 }
 
-// StoreFee stores the fee with exchangeName as key into database and return error if occur
-func (setting *Settings) StoreFee(ex ExchangeName, data common.ExchangeFees) error {
-	return setting.Exchange.Storage.StoreFee(ex, data)
+// UpdateFee will merge the current fee setting to the new fee setting,
+// Any different will be overwriten from new fee to cufrent fee
+// Afterwhich it stores the fee with exchangeName as key into database and return error if occur
+func (setting *Settings) UpdateFee(exName ExchangeName, exFee common.ExchangeFees) error {
+	currExFee, err := setting.GetFee(exName)
+	if err != nil {
+		log.Printf("UpdateExchangeFee: Can't get current exchange fee of %s (%s), overwrite it with new data", exName.String(), err)
+		currExFee = common.NewExchangeFee(common.TradingFee{}, common.FundingFee{})
+	}
+	for tok, val := range exFee.Funding.Deposit {
+		currExFee.Funding.Deposit[tok] = val
+	}
+	for tok, val := range exFee.Funding.Withdraw {
+		currExFee.Funding.Withdraw[tok] = val
+	}
+	for tok, val := range exFee.Trading {
+		currExFee.Trading[tok] = val
+	}
+	return setting.Exchange.Storage.StoreFee(exName, currExFee)
 }
 
 // GetMinDeposit returns a map[tokenID]MinDeposit and error if occur
@@ -20,9 +37,19 @@ func (setting *Settings) GetMinDeposit(ex ExchangeName) (common.ExchangesMinDepo
 	return setting.Exchange.Storage.GetMinDeposit(ex)
 }
 
-// StoreMinDeposit stores the minDeposit with exchangeName as key into database and return error if occur
-func (setting *Settings) StoreMinDeposit(ex ExchangeName, minDeposit common.ExchangesMinDeposit) error {
-	return setting.Exchange.Storage.StoreMinDeposit(ex, minDeposit)
+// UpdateMinDeposit will merge the current min Deposit to the new min Deposit,
+// Any different will be overwriten from new minDeposit to cufrent minDeposit
+// Afterwhich it stores the fee with exchangeName as key into database and return error if occur
+func (setting *Settings) UpdateMinDeposit(exName ExchangeName, minDeposit common.ExchangesMinDeposit) error {
+	currExMinDep, err := setting.GetMinDeposit(exName)
+	if err != nil {
+		log.Printf("UpdateMinDeposit: Can't get current min deposit of %s (%s), overwrite it with new data", exName.String(), err)
+		currExMinDep = make(common.ExchangesMinDeposit)
+	}
+	for tok, val := range minDeposit {
+		currExMinDep[tok] = val
+	}
+	return setting.Exchange.Storage.StoreMinDeposit(exName, currExMinDep)
 }
 
 // GetDepositAddress returns a map[tokenID]DepositAddress and error if occur
@@ -32,13 +59,16 @@ func (setting *Settings) GetDepositAddress(ex ExchangeName) (common.ExchangeAddr
 
 // Update get the deposit Addresses with exchangeName as key, change the desired deposit address
 // then store into database and return error if occur
-func (setting *Settings) UpdateDepositAddress(ex ExchangeName, token common.Token) error {
-	addrs, err := setting.GetDepositAddress(ex)
+func (setting *Settings) UpdateDepositAddress(exName ExchangeName, addrs common.ExchangeAddresses) error {
+	currAddrs, err := setting.GetDepositAddress(exName)
 	if err != nil {
-		return err
+		log.Printf("UpdateDepositAddress: Can't get current deposit address of %s (%s), overwrite it with new data", exName.String(), err)
+		currAddrs = make(common.ExchangeAddresses)
 	}
-	addrs.Update(token.ID, ethereum.HexToAddress(token.Address))
-	return setting.Exchange.Storage.StoreDepositAddress(ex, addrs)
+	for tokenID, address := range addrs {
+		currAddrs.Update(tokenID, address)
+	}
+	return setting.Exchange.Storage.StoreDepositAddress(exName, currAddrs)
 }
 
 // GetExchangeInfor returns the an ExchangeInfo Object for each exchange
@@ -49,6 +79,14 @@ func (setting *Settings) GetExchangeInfo(ex ExchangeName) (*common.ExchangeInfo,
 
 // UpdateExchangeInfo updates exchange info object using exchangeName as key
 // returns error if occur
-func (setting *Settings) UpdateExchangeInfo(ex ExchangeName, exInfo *common.ExchangeInfo) error {
-	return setting.Exchange.Storage.StoreExchangeInfo(ex, exInfo)
+func (setting *Settings) UpdateExchangeInfo(exName ExchangeName, exInfo *common.ExchangeInfo) error {
+	currExInfo, err := setting.GetExchangeInfo(exName)
+	if err != nil {
+		log.Printf("UpdateExchangeInfo: Can't get exchange Info of %s (%s), overwrite it with new data", exName.String(), err)
+		currExInfo = common.NewExchangeInfo()
+	}
+	for token, exPreLim := range exInfo.GetData() {
+		currExInfo.Update(token, exPreLim)
+	}
+	return setting.Exchange.Storage.StoreExchangeInfo(exName, currExInfo)
 }

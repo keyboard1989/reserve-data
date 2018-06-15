@@ -1702,6 +1702,11 @@ func (self *HTTPServer) register() {
 	self.r.GET("/token-settings", self.TokenSettings)
 	self.r.POST("/update-address", self.UpdateAddress)
 	self.r.POST("/add-address-to-set", self.AddAddressToSet)
+	self.r.POST("/update-exchange-fee", self.UpdateExchangeFee)
+	self.r.POST("/update-exchange-mindeposit", self.UpdateExchangeMinDeposit)
+	self.r.POST("/update-deposit-address", self.UpdateDepositAddress)
+	self.r.POST("/update-exchange-info", self.UpdateExchangeInfo)
+
 	if self.core != nil && self.app != nil {
 		v2 := self.r.Group("/v2")
 

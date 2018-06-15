@@ -50,8 +50,9 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 		return addrs.Get(token.ID)
 	}
 	log.Printf("Got Binance live deposit address for token %s, attempt to update it to current setting", token.ID)
-	token.Address = liveAddress.Address
-	if err = self.setting.UpdateDepositAddress(settings.Binance, token); err != nil {
+	addrs := common.NewExchangeAddresses()
+	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
+	if err = self.setting.UpdateDepositAddress(settings.Binance, *addrs); err != nil {
 		log.Printf("ERROR: can not update deposit address for token %s on Binance: (%s)", token.ID, err.Error())
 	}
 	return ethereum.HexToAddress(liveAddress.Address), true
@@ -61,12 +62,14 @@ func (self *Binance) UpdateDepositAddress(token common.Token, address string) er
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Address == "" {
 		log.Printf("ERROR: Get Binance live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
-		token.Address = address
-		return self.setting.UpdateDepositAddress(settings.Binance, token)
+		addrs := common.NewExchangeAddresses()
+		addrs.Update(token.ID, ethereum.HexToAddress(address))
+		return self.setting.UpdateDepositAddress(settings.Binance, *addrs)
 	}
 	log.Printf("Got Binance live deposit address for token %s, attempt to update it to current setting", token.ID)
-	token.Address = liveAddress.Address
-	return self.setting.UpdateDepositAddress(settings.Binance, token)
+	addrs := common.NewExchangeAddresses()
+	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
+	return self.setting.UpdateDepositAddress(settings.Binance, *addrs)
 }
 
 func (self *Binance) precisionFromStepSize(stepSize string) int {
