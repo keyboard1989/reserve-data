@@ -13,6 +13,4 @@ type BittrexStorage interface {
 	StoreTradeHistory(data common.ExchangeTradeHistory) error
 
 	GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTradeHistory, error)
-	// TODO: unused method
-	GetLastIDTradeHistory(exchange, pair string) (string, error)
 }
