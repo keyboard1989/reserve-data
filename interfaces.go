@@ -54,9 +54,6 @@ type ReserveData interface {
 	CurrentAuthDataVersion(timestamp uint64) (common.Version, error)
 	GetAuthData(timestamp uint64) (common.AuthDataResponse, error)
 
-	// CurrentRateVersion returns the latest version of valid rate data.
-	// TODO: unused method
-	CurrentRateVersion(timestamp uint64) (common.Version, error)
 	// GetRate returns latest valid rates for all tokens that is before timestamp.
 	GetRate(timestamp uint64) (common.AllRateResponse, error)
 	// GetRates returns list of valid rates for all tokens that is collected between [fromTime, toTime).
