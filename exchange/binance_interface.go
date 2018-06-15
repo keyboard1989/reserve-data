@@ -35,12 +35,7 @@ type BinanceInterface interface {
 
 	DepositHistory(startTime, endTime uint64) (Binadeposits, error)
 
-	WithdrawHistory(
-		startTime, endTime uint64) (Binawithdrawals, error)
+	WithdrawHistory(startTime, endTime uint64) (Binawithdrawals, error)
 
-	OrderStatus(
-		symbol string, id uint64) (Binaorder, error)
-
-	// TODO: unused method
-	GetServerTime() (uint64, error)
+	OrderStatus(symbol string, id uint64) (Binaorder, error)
 }
