@@ -58,10 +58,6 @@ func (self *StableEx) ID() common.ExchangeID {
 	return common.ExchangeID("stable_exchange")
 }
 
-func (self *StableEx) TokenPairs() []common.TokenPair {
-	return self.pairs
-}
-
 func (self *StableEx) Name() string {
 	return "stable token exchange"
 }

@@ -8,8 +8,6 @@ import (
 type Exchange interface {
 	ID() common.ExchangeID
 	Name() string
-	// TODO: unused method
-	TokenPairs() []common.TokenPair
 	FetchPriceData(timepoint uint64) (map[common.TokenPairID]common.ExchangePrice, error)
 	FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error)
 	OrderStatus(id string, base, quote string) (string, error)

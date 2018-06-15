@@ -112,10 +112,6 @@ func (self *Huobi) ID() common.ExchangeID {
 	return common.ExchangeID("huobi")
 }
 
-func (self *Huobi) TokenPairs() []common.TokenPair {
-	return self.pairs
-}
-
 func (self *Huobi) Name() string {
 	return "huobi"
 }
