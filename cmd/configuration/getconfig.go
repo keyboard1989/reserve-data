@@ -4,12 +4,11 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/KyberNetwork/reserve-data/settings"
-
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/archive"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
 	"github.com/KyberNetwork/reserve-data/http"
+	"github.com/KyberNetwork/reserve-data/settings"
 	settingstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/KyberNetwork/reserve-data/world"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -114,7 +113,8 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 	bkclients := map[string]*ethclient.Client{}
 	var callClients []*ethclient.Client
 	for _, ep := range bkendpoints {
-		bkclient, err := ethclient.Dial(ep)
+		var bkclient *ethclient.Client
+		bkclient, err = ethclient.Dial(ep)
 		if err != nil {
 			log.Printf("Cannot connect to %s, err %s. Ignore it.", ep, err)
 		} else {
@@ -139,7 +139,6 @@ func GetConfig(kyberENV string, authEnbl bool, endpointOW string, noCore, enable
 		panic(err)
 	}
 	s3archive := archive.NewS3Archive(awsConf)
-
 	config := &Config{
 		Blockchain:              blockchain,
 		EthereumEndpoint:        endpoint,

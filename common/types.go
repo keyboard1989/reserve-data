@@ -499,6 +499,7 @@ type AuthDataResponse struct {
 	}
 }
 
+// RateEntry contains the buy/sell rates of a token and their compact forms.
 type RateEntry struct {
 	BaseBuy     *big.Int
 	CompactBuy  int8
@@ -541,9 +542,8 @@ func NewTXEntry(hash, exchange, token, miningStatus, exchangeStatus string, amou
 	}
 }
 
+// RateResponse is the human friendly format of a rate entry to returns in HTTP APIs.
 type RateResponse struct {
-	Valid       bool
-	Error       string
 	Timestamp   Timestamp
 	ReturnTime  Timestamp
 	BaseBuy     float64
@@ -554,19 +554,17 @@ type RateResponse struct {
 	Block       uint64
 }
 
+// AllRateEntry contains rates data of all tokens.
 type AllRateEntry struct {
-	Valid       bool
-	Error       string
 	Timestamp   Timestamp
 	ReturnTime  Timestamp
 	Data        map[string]RateEntry
 	BlockNumber uint64
 }
 
+// AllRateResponse is the response to query all rates.
 type AllRateResponse struct {
 	Version       Version
-	Valid         bool
-	Error         string
 	Timestamp     Timestamp
 	ReturnTime    Timestamp
 	Data          map[string]RateResponse

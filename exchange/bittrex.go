@@ -117,7 +117,7 @@ func (self *Bittrex) UpdatePairsPrecision() error {
 	symbols := exchangeInfo.Pairs
 	exInfo, err := self.GetInfo()
 	if err != nil {
-		return fmt.Errorf("INFO: Can't get Exchange Info for Bittrex from persistent storage. (%s)", err)
+		return fmt.Errorf("Can't get Exchange Info for Bittrex from persistent storage. (%s)", err)
 	}
 	for pair := range exInfo.GetData() {
 		self.UpdatePrecisionLimit(pair, symbols, exInfo)

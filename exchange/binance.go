@@ -130,7 +130,7 @@ func (self *Binance) UpdatePairsPrecision() error {
 	symbols := exchangeInfo.Symbols
 	exInfo, err := self.GetInfo()
 	if err != nil {
-		return fmt.Errorf("INFO: Can't get Exchange Info for Binance from persistent storage. (%s)", err)
+		return fmt.Errorf("Can't get Exchange Info for Binance from persistent storage. (%s)", err)
 	}
 	for pair := range exInfo.GetData() {
 		self.UpdatePrecisionLimit(pair, symbols, exInfo)

@@ -38,10 +38,13 @@ func NewBoltStorage(path string) (*BoltStorage, error) {
 	}
 	// init buckets
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, err := tx.CreateBucket([]byte(INTERMEDIATE_TX)); err != nil {
+		if _, err := tx.CreateBucketIfNotExists([]byte(INTERMEDIATE_TX)); err != nil {
 			return err
 		}
-		if _, err := tx.CreateBucket([]byte(PENDING_INTERMEDIATE_TX)); err != nil {
+		if _, err := tx.CreateBucketIfNotExists([]byte(PENDING_INTERMEDIATE_TX)); err != nil {
+			return err
+		}
+		if _, err := tx.CreateBucketIfNotExists([]byte(TRADE_HISTORY)); err != nil {
 			return err
 		}
 		return nil
@@ -79,13 +82,13 @@ func (self *BoltStorage) StorePendingIntermediateTx(id common.ActivityID, data c
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		var dataJSON []byte
 		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
-		dataJSON, err = json.Marshal(data)
-		if err != nil {
+		dataJSON, uErr := json.Marshal(data)
+		if uErr != nil {
 			return err
 		}
-		idJSON, err := json.Marshal(id)
-		if err != nil {
-			return err
+		idJSON, uErr := json.Marshal(id)
+		if uErr != nil {
+			return uErr
 		}
 		return b.Put(idJSON, dataJSON)
 	})
@@ -97,12 +100,11 @@ func (self *BoltStorage) RemovePendingIntermediateTx(id common.ActivityID) error
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
-		idJSON, err := json.Marshal(id)
-		if err != nil {
-			return err
+		idJSON, uErr := json.Marshal(id)
+		if uErr != nil {
+			return uErr
 		}
-		err = b.Delete(idJSON)
-		return err
+		return b.Delete(idJSON)
 	})
 	return err
 }
@@ -158,19 +160,19 @@ func (self *BoltStorage) StoreTradeHistory(data common.ExchangeTradeHistory) err
 	err = self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
 		for pair, pairHistory := range data {
-			pairBk, vErr := b.CreateBucketIfNotExists([]byte(pair))
-			if vErr != nil {
-				return vErr
+			pairBk, uErr := b.CreateBucketIfNotExists([]byte(pair))
+			if uErr != nil {
+				return uErr
 			}
 			for _, history := range pairHistory {
 				idBytes := []byte(fmt.Sprintf("%s%s", strconv.FormatUint(history.Timestamp, 10), history.ID))
-				dataJSON, vErr := json.Marshal(history)
-				if vErr != nil {
-					return vErr
+				dataJSON, uErr := json.Marshal(history)
+				if uErr != nil {
+					return uErr
 				}
-				vErr = pairBk.Put(idBytes, dataJSON)
-				if vErr != nil {
-					return vErr
+				uErr = pairBk.Put(idBytes, dataJSON)
+				if uErr != nil {
+					return uErr
 				}
 			}
 		}
@@ -198,8 +200,8 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.Exchan
 			pairCursor := pairBk.Cursor()
 			for pairKey, history := pairCursor.Seek(min); pairKey != nil && bytes.Compare(pairKey, max) <= 0; pairKey, history = pairCursor.Next() {
 				pairHistory := common.TradeHistory{}
-				if vErr := json.Unmarshal(history, &pairHistory); vErr != nil {
-					return vErr
+				if uErr := json.Unmarshal(history, &pairHistory); uErr != nil {
+					return uErr
 				}
 				pairsHistory = append(pairsHistory, pairHistory)
 			}
@@ -216,15 +218,15 @@ func (self *BoltStorage) GetLastIDTradeHistory(exchange, pair string) (string, e
 	history := common.TradeHistory{}
 	err := self.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(TRADE_HISTORY))
-		pairBk, vErr := b.CreateBucketIfNotExists([]byte(pair))
-		if vErr != nil {
-			return vErr
+		pairBk, uErr := b.CreateBucketIfNotExists([]byte(pair))
+		if uErr != nil {
+			return uErr
 		}
 		k, v := pairBk.Cursor().Last()
 		if k != nil {
-			vErr = json.Unmarshal(v, &history)
+			uErr = json.Unmarshal(v, &history)
 		}
-		return vErr
+		return uErr
 	})
 	return history.ID, err
 }
