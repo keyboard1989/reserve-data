@@ -24,9 +24,22 @@ const (
 	DEPOSIT_OP string = "depositOP"
 )
 
+// tbindex is where the token data stored in blockchain.
+// In blockchain, data of a token (sell/buy rates) is stored in an array of 32 bytes values called (tokenRatesCompactData).
+// Each data is stored in a byte.
+// https://github.com/KyberNetwork/smart-contracts/blob/fed8e09dc6e4365e1597474d9b3f53634eb405d2/contracts/ConversionRates.sol#L48
 type tbindex struct {
-	BulkIndex   uint64
+	// BulkIndex is the index of bytes32 value that store data of multiple tokens.
+	BulkIndex uint64
+	// IndexInBulk is the index in the above BulkIndex value where the sell/buy rates are stored following structure:
+	// sell: IndexInBulk + 4
+	// buy: IndexInBulk + 8
 	IndexInBulk uint64
+}
+
+// newTBIndex creates new tbindex instance with given parameters.
+func newTBIndex(bulkIndex, indexInBulk uint64) tbindex {
+	return tbindex{BulkIndex: bulkIndex, IndexInBulk: indexInBulk}
 }
 
 const (
@@ -145,6 +158,7 @@ func (self *Blockchain) LoadAndSetTokenIndices(tokenAddrs []ethereum.Address) er
 	self.mu.Lock()
 	defer self.mu.Unlock()
 	self.tokenIndices = map[string]tbindex{}
+	// this is not really needed. Just a safe guard. Use a very big indices so it is does not exist.
 	self.tokenIndices[ethereum.HexToAddress(self.setting.ETHToken().Address).Hex()] = tbindex{1000000, 1000000}
 	opts := self.GetCallOpts(0)
 	pricingAddr, err := self.setting.GetAddress(settings.Pricing)
@@ -160,12 +174,11 @@ func (self *Blockchain) LoadAndSetTokenIndices(tokenAddrs []ethereum.Address) er
 		return err
 	}
 	for i, tok := range tokenAddrs {
-		self.tokenIndices[tok.Hex()] = tbindex{
+		self.tokenIndices[tok.Hex()] = newTBIndex(
 			bulkIndices[i].Uint64(),
 			indicesInBulk[i].Uint64(),
-		}
+		)
 	}
-
 	log.Printf("Token indices: %+v", self.tokenIndices)
 	return nil
 }
@@ -368,7 +381,6 @@ func (self *Blockchain) FetchBalanceData(reserve ethereum.Address, atBlock uint6
 				ReturnTime: returnTime,
 			}
 		}
-
 	} else {
 		for i, tok := range tokensSetting {
 			if balances[i].Cmp(Big0) == 0 || balances[i].Cmp(BigMax) > 0 {
@@ -416,28 +428,25 @@ func (self *Blockchain) FetchRates(atBlock uint64, currentBlock uint64) (common.
 	baseBuys, baseSells, compactBuys, compactSells, blocks, err := self.GeneratedGetTokenRates(
 		opts, pricingAddr, tokenAddrs,
 	)
+	if err != nil {
+		return result, err
+	}
 	returnTime := common.GetTimestamp()
 	result.Timestamp = timestamp
 	result.ReturnTime = returnTime
 	result.BlockNumber = currentBlock
-	if err != nil {
-		result.Valid = false
-		result.Error = err.Error()
-		return result, err
-	} else {
-		result.Valid = true
-		result.Data = map[string]common.RateEntry{}
-		for i, token := range validTokens {
-			result.Data[token.ID] = common.NewRateEntry(
-				baseBuys[i],
-				int8(compactBuys[i]),
-				baseSells[i],
-				int8(compactSells[i]),
-				blocks[i].Uint64(),
-			)
-		}
-		return result, nil
+
+	result.Data = map[string]common.RateEntry{}
+	for i, token := range validTokens {
+		result.Data[token.ID] = common.NewRateEntry(
+			baseBuys[i],
+			int8(compactBuys[i]),
+			baseSells[i],
+			int8(compactSells[i]),
+			blocks[i].Uint64(),
+		)
 	}
+	return result, nil
 }
 
 func (self *Blockchain) GetReserveRates(
@@ -623,7 +632,6 @@ func (self *Blockchain) GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLo
 					if ethRate := self.GetEthRate(tradeLog.Timestamp / 1000000); ethRate != 0 {
 						// fiatAmount = amount * ethRate
 						eth := self.setting.ETHToken()
-
 						f := new(big.Float)
 						if strings.ToLower(eth.Address) == strings.ToLower(srcAddr.String()) {
 							f.SetInt(tradeLog.SrcAmount)

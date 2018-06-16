@@ -17,7 +17,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/metric"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/getsentry/raven-go"
+	raven "github.com/getsentry/raven-go"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sentry"
 	"github.com/gin-gonic/gin"
@@ -268,9 +268,8 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 		if err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
-		} else {
-			tokens = append(tokens, token)
 		}
+		tokens = append(tokens, token)
 	}
 	bigBuys := []*big.Int{}
 	for _, rate := range strings.Split(buys, "-") {
@@ -278,9 +277,8 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 		if err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
-		} else {
-			bigBuys = append(bigBuys, r)
 		}
+		bigBuys = append(bigBuys, r)
 	}
 	bigSells := []*big.Int{}
 	for _, rate := range strings.Split(sells, "-") {
@@ -288,9 +286,8 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 		if err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
-		} else {
-			bigSells = append(bigSells, r)
 		}
+		bigSells = append(bigSells, r)
 	}
 	intBlock, err := strconv.ParseInt(block, 10, 64)
 	if err != nil {
@@ -299,21 +296,19 @@ func (self *HTTPServer) SetRate(c *gin.Context) {
 	}
 	bigAfpMid := []*big.Int{}
 	for _, rate := range strings.Split(afpMid, "-") {
-		r, err := hexutil.DecodeBig(rate)
-		if err != nil {
+		var r *big.Int
+		if r, err = hexutil.DecodeBig(rate); err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
-		} else {
-			bigAfpMid = append(bigAfpMid, r)
 		}
+		bigAfpMid = append(bigAfpMid, r)
 	}
 	id, err := self.core.SetRates(tokens, bigBuys, bigSells, big.NewInt(intBlock), bigAfpMid, msgs)
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
-	} else {
-		httputil.ResponseSuccess(c, httputil.WithField("id", id))
 	}
+	httputil.ResponseSuccess(c, httputil.WithField("id", id))
 }
 
 func (self *HTTPServer) Trade(c *gin.Context) {
@@ -569,9 +564,8 @@ func (self *HTTPServer) Metrics(c *gin.Context) {
 		if err != nil {
 			httputil.ResponseFailure(c, httputil.WithError(err))
 			return
-		} else {
-			tokens = append(tokens, token)
 		}
+		tokens = append(tokens, token)
 	}
 	from, err := strconv.ParseUint(fromParam, 10, 64)
 	if err != nil {
@@ -612,6 +606,11 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 	metricEntry.Data = map[string]metric.TokenMetric{}
 	// data must be in form of <token>_afpmid_spread|<token>_afpmid_spread|...
 	for _, tokenData := range strings.Split(dataParam, "|") {
+		var (
+			afpmid float64
+			spread float64
+		)
+
 		parts := strings.Split(tokenData, "_")
 		if len(parts) != 3 {
 			httputil.ResponseFailure(c, httputil.WithReason("submitted data is not in correct format"))
@@ -621,13 +620,12 @@ func (self *HTTPServer) StoreMetrics(c *gin.Context) {
 		afpmidStr := parts[1]
 		spreadStr := parts[2]
 
-		afpmid, err := strconv.ParseFloat(afpmidStr, 64)
-		if err != nil {
+		if afpmid, err = strconv.ParseFloat(afpmidStr, 64); err != nil {
 			httputil.ResponseFailure(c, httputil.WithReason("Afp mid "+afpmidStr+" is not float64"))
 			return
 		}
-		spread, err := strconv.ParseFloat(spreadStr, 64)
-		if err != nil {
+
+		if spread, err = strconv.ParseFloat(spreadStr, 64); err != nil {
 			httputil.ResponseFailure(c, httputil.WithReason("Spread "+spreadStr+" is not float64"))
 			return
 		}
@@ -1153,7 +1151,7 @@ func (self *HTTPServer) RejectPWIEquation(c *gin.Context) {
 	if !ok {
 		return
 	}
-	// postData := postForm.RunningMode("data")
+	// postData := postForm.Get("data")
 	err := self.metric.RemovePendingPWIEquation()
 	if err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
@@ -1214,8 +1212,11 @@ func (self *HTTPServer) UpdateUserAddresses(c *gin.Context) {
 		return
 	}
 	for i, addr := range addrsStr {
-		a := ethereum.HexToAddress(addr)
-		t, err := strconv.ParseUint(timesStr[i], 10, 64)
+		var (
+			t uint64
+			a = ethereum.HexToAddress(addr)
+		)
+		t, err = strconv.ParseUint(timesStr[i], 10, 64)
 		if a.Big().Cmp(ethereum.Big0) != 0 && err == nil {
 			addrs = append(addrs, a)
 			timestamps = append(timestamps, t)
@@ -1799,7 +1800,9 @@ func (self *HTTPServer) register() {
 
 func (self *HTTPServer) Run() {
 	self.register()
-	self.r.Run(self.host)
+	if err := self.r.Run(self.host); err != nil {
+		log.Panic(err)
+	}
 }
 
 func NewHTTPServer(
@@ -1813,7 +1816,6 @@ func NewHTTPServer(
 	env string,
 	bc *blockchain.Blockchain,
 	setting Setting) *HTTPServer {
-
 	r := gin.Default()
 	sentryCli, err := raven.NewWithTags(
 		"https://bf15053001464a5195a81bc41b644751:eff41ac715114b20b940010208271b13@sentry.io/228067",

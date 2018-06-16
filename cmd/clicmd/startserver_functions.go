@@ -19,7 +19,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/stat"
 	ethereum "github.com/ethereum/go-ethereum/common"
 	"github.com/robfig/cron"
-	"gopkg.in/natefinch/lumberjack.v2"
+	lumberjack "gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
@@ -28,10 +28,10 @@ const (
 
 func backupLog(arch archive.Archive) {
 	c := cron.New()
-	c.AddFunc("@daily", func() {
-		files, err := ioutil.ReadDir(logDir)
-		if err != nil {
-			log.Printf("ERROR: Log backup: Can not view log folder")
+	err := c.AddFunc("@daily", func() {
+		files, rErr := ioutil.ReadDir(logDir)
+		if rErr != nil {
+			log.Printf("ERROR: Log backup: Can not view log folder - %s", rErr.Error())
 		}
 		for _, file := range files {
 			matched, err := regexp.MatchString("core.*\\.log", file.Name())
@@ -60,6 +60,9 @@ func backupLog(arch archive.Archive) {
 		}
 		return
 	})
+	if err != nil {
+		log.Printf("Cannot rotate log: %s", err.Error())
+	}
 	c.Start()
 }
 

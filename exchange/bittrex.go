@@ -100,7 +100,7 @@ func (self *Bittrex) UpdatePairsPrecision() {
 			self.UpdatePrecisionLimit(pair, symbols)
 		}
 	} else {
-		log.Printf("RunningMode exchange info failed: %s\n", err)
+		log.Printf("Get exchange info failed: %s\n", err)
 	}
 }
 
