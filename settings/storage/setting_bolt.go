@@ -15,6 +15,8 @@ const (
 	EXCHANGE_DEPOSIT_ADDRESS    string = "exchange_deposit_address"
 	EXCHANGE_TOKEN_PAIRS        string = "exchange_token_pairs"
 	EXCHANGE_INFO               string = "exchange_info"
+	EXCHANGE_STATUS             string = "exchange_status"
+	EXCHANGE_NOTIFICATIONS      string = "exchange_notifications"
 )
 
 type FilterFunction func(common.Token) bool
@@ -47,31 +49,37 @@ func NewBoltSettingStorage(dbPath string) (*BoltSettingStorage, error) {
 		return nil, err
 	}
 	err = db.Update(func(tx *bolt.Tx) error {
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ID)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ID)); uErr != nil {
 			return uErr
 		}
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ADDRESS)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(TOKEN_BUCKET_BY_ADDRESS)); uErr != nil {
 			return uErr
 		}
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(ADDRESS_SETTING_BUCKET)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(ADDRESS_SETTING_BUCKET)); uErr != nil {
 			return uErr
 		}
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(ADDRESS_SET_SETTING_BUCKET)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(ADDRESS_SET_SETTING_BUCKET)); uErr != nil {
 			return uErr
 		}
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_FEE_BUCKET)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_FEE_BUCKET)); uErr != nil {
 			return uErr
 		}
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_MIN_DEPOSIT_BUCKET)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_MIN_DEPOSIT_BUCKET)); uErr != nil {
 			return uErr
 		}
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_DEPOSIT_ADDRESS)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_DEPOSIT_ADDRESS)); uErr != nil {
 			return uErr
 		}
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_TOKEN_PAIRS)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_TOKEN_PAIRS)); uErr != nil {
 			return uErr
 		}
-		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_INFO)); err != nil {
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_INFO)); uErr != nil {
+			return uErr
+		}
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_STATUS)); uErr != nil {
+			return uErr
+		}
+		if _, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_NOTIFICATIONS)); uErr != nil {
 			return uErr
 		}
 		return nil

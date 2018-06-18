@@ -3,6 +3,7 @@ package storage
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/KyberNetwork/reserve-data/boltutil"
 	"github.com/KyberNetwork/reserve-data/common"
@@ -172,10 +173,7 @@ func (boltSettingStorage *BoltSettingStorage) GetExchangeInfo(ex settings.Exchan
 		if data == nil {
 			return fmt.Errorf("key %s hasn't existed yet", ex.String())
 		}
-		if uErr := json.Unmarshal(data, &result); uErr != nil {
-			return uErr
-		}
-		return nil
+		return json.Unmarshal(data, &result)
 	})
 	return result, err
 }
@@ -193,4 +191,112 @@ func (boltSettingStorage *BoltSettingStorage) StoreExchangeInfo(ex settings.Exch
 		return b.Put(boltutil.Uint64ToBytes(uint64(ex)), dataJSON)
 	})
 	return err
+}
+
+// GetExchangeStatus get exchange status to dashboard and analytics
+func (boltSettingStorage *BoltSettingStorage) GetExchangeStatus() (common.ExchangesStatus, error) {
+	result := make(common.ExchangesStatus)
+	var err error
+	err = boltSettingStorage.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(EXCHANGE_STATUS))
+		if b == nil {
+			return fmt.Errorf("Bucket %s hasn't existed yet", EXCHANGE_STATUS)
+		}
+		c := b.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var exstat common.ExStatus
+			if _, vErr := common.GetExchange(string(k)); vErr != nil {
+				continue
+			}
+			if vErr := json.Unmarshal(v, &exstat); vErr != nil {
+				return vErr
+			}
+			result[string(k)] = exstat
+		}
+		return nil
+	})
+	return result, err
+}
+
+func (boltSettingStorage *BoltSettingStorage) StoreExchangeStatus(data common.ExchangesStatus) error {
+	var err error
+	err = boltSettingStorage.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(EXCHANGE_STATUS))
+		if b == nil {
+			return fmt.Errorf("Bucket %s hasn't existed yet", EXCHANGE_STATUS)
+		}
+		for k, v := range data {
+			dataJSON, uErr := json.Marshal(v)
+			if uErr != nil {
+				return uErr
+			}
+			if uErr := b.Put([]byte(k), dataJSON); uErr != nil {
+				return uErr
+			}
+		}
+		return nil
+	})
+	return err
+}
+
+func (boltSettingStorage *BoltSettingStorage) StoreExchangeNotification(
+	exchange, action, token string, fromTime, toTime uint64, isWarning bool, msg string) error {
+	var err error
+	err = boltSettingStorage.db.Update(func(tx *bolt.Tx) error {
+		exchangeBk := tx.Bucket([]byte(EXCHANGE_NOTIFICATIONS))
+		b, uErr := exchangeBk.CreateBucketIfNotExists([]byte(exchange))
+		if uErr != nil {
+			return uErr
+		}
+		key := fmt.Sprintf("%s_%s", action, token)
+		noti := common.ExchangeNotiContent{
+			FromTime:  fromTime,
+			ToTime:    toTime,
+			IsWarning: isWarning,
+			Message:   msg,
+		}
+
+		// update new value
+		dataJSON, uErr := json.Marshal(noti)
+		if uErr != nil {
+			return uErr
+		}
+		return b.Put([]byte(key), dataJSON)
+	})
+	return err
+}
+
+func (boltSettingStorage *BoltSettingStorage) GetExchangeNotifications() (common.ExchangeNotifications, error) {
+	result := common.ExchangeNotifications{}
+	var err error
+	err = boltSettingStorage.db.View(func(tx *bolt.Tx) error {
+		exchangeBks := tx.Bucket([]byte(EXCHANGE_NOTIFICATIONS))
+		c := exchangeBks.Cursor()
+		for name, bucket := c.First(); name != nil; name, bucket = c.Next() {
+			// if bucket == nil, then name is a child bucket name (according to bolt docs)
+			if bucket == nil {
+				b := exchangeBks.Bucket(name)
+				c := b.Cursor()
+				actionContent := common.ExchangeActionNoti{}
+				for k, v := c.First(); k != nil; k, v = c.Next() {
+					actionToken := strings.Split(string(k), "_")
+					action := actionToken[0]
+					token := actionToken[1]
+					notiContent := common.ExchangeNotiContent{}
+					if uErr := json.Unmarshal(v, &notiContent); uErr != nil {
+						return uErr
+					}
+					tokenContent, exist := actionContent[action]
+					if !exist {
+						tokenContent = common.ExchangeTokenNoti{}
+					}
+					tokenContent[token] = notiContent
+					actionContent[action] = tokenContent
+				}
+				result[string(name)] = actionContent
+			}
+		}
+		return nil
+	})
+	return result, err
 }

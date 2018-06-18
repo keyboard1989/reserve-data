@@ -50,21 +50,25 @@ func (self *Fetcher) SetBlockchain(blockchain Blockchain) {
 func (self *Fetcher) AddExchange(exchange Exchange) {
 	self.exchanges = append(self.exchanges, exchange)
 	// initiate exchange status as up
-	exchangeStatus, _ := self.storage.GetExchangeStatus()
+	exchangeStatus, _ := self.setting.GetExchangeStatus()
 	if exchangeStatus == nil {
 		exchangeStatus = map[string]common.ExStatus{}
 	}
 	exchangeID := string(exchange.ID())
 	_, exist := exchangeStatus[exchangeID]
+
 	if !exist {
 		exchangeStatus[exchangeID] = common.ExStatus{
 			Timestamp: common.GetTimepoint(),
 			Status:    true,
 		}
 	}
-	if err := self.storage.UpdateExchangeStatus(exchangeStatus); err != nil {
+
+	if err := self.setting.UpdateExchangeStatus(exchangeStatus); err != nil {
 		log.Printf("Update exchange status error: %s", err.Error())
 	}
+	// log.Printf("Exstatuses %v", exchangeStatus)
+	// log.Panic("Mother fucker")
 }
 
 func (self *Fetcher) Stop() error {

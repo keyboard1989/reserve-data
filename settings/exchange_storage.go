@@ -25,4 +25,8 @@ type ExchangeStorage interface {
 	// StoreExchangeInfo store the ExchangeInfo Object using the exchangeName as the key into database
 	// return error if occur
 	StoreExchangeInfo(ex ExchangeName, exInfo common.ExchangeInfo) error
+	GetExchangeStatus() (common.ExchangesStatus, error)
+	StoreExchangeStatus(data common.ExchangesStatus) error
+	GetExchangeNotifications() (common.ExchangeNotifications, error)
+	StoreExchangeNotification(exchange, action, tokenPair string, fromTime, toTime uint64, isWarning bool, msg string) error
 }

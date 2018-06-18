@@ -90,3 +90,19 @@ func (setting *Settings) UpdateExchangeInfo(exName ExchangeName, exInfo common.E
 	}
 	return setting.Exchange.Storage.StoreExchangeInfo(exName, currExInfo)
 }
+
+func (setting *Settings) GetExchangeStatus() (common.ExchangesStatus, error) {
+	return setting.Exchange.Storage.GetExchangeStatus()
+}
+
+func (setting *Settings) UpdateExchangeStatus(exStatus common.ExchangesStatus) error {
+	return setting.Exchange.Storage.StoreExchangeStatus(exStatus)
+}
+
+func (setting *Settings) GetExchangeNotifications() (common.ExchangeNotifications, error) {
+	return setting.Exchange.Storage.GetExchangeNotifications()
+}
+
+func (setting *Settings) UpdateExchangeNotification(exchange, action, tokenPair string, fromTime, toTime uint64, isWarning bool, msg string) error {
+	return setting.Exchange.Storage.StoreExchangeNotification(exchange, action, tokenPair, fromTime, toTime, isWarning, msg)
+}
