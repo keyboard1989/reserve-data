@@ -158,6 +158,9 @@ func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token
 		base.ID+quote.ID,
 		orderID,
 	)
+	if err != nil {
+		log.Printf("Query order error: %s", err.Error())
+	}
 	return result.OrderID, done, remaining, finished, err
 }
 
