@@ -787,7 +787,12 @@ func (self *BoltStorage) HasPendingDeposit(token common.Token, exchange common.E
 			if uErr := json.Unmarshal(v, &record); uErr != nil {
 				return uErr
 			}
-			if record.Action == "deposit" && record.Params["token"].(string) == token.ID && record.Destination == string(exchange.ID()) {
+			log.Printf("token is  %v", record.Params["token"])
+			token, xerr := record.Params["token"].(common.Token)
+			if !xerr {
+				log.Printf("this shit is not token")
+			}
+			if record.Action == "deposit" && record.Params["token"].(common.Token).ID == token.ID && record.Destination == string(exchange.ID()) {
 				result = true
 			}
 		}
