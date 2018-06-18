@@ -99,20 +99,21 @@ func (self *BoltStorage) StorePendingIntermediateTx(id common.ActivityID, data c
 func (self *BoltStorage) StoreIntermediateTx(id common.ActivityID, data common.TXEntry) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {
-		var dataJSON []byte
 		b := tx.Bucket([]byte(INTERMEDIATE_TX))
-		dataJSON, err = json.Marshal(data)
-		if err != nil {
-			return err
+		dataJSON, uErr := json.Marshal(data)
+		if uErr != nil {
+			return uErr
 		}
 		idByte := id.ToBytes()
-		return b.Put(idByte[:], dataJSON)
+		if uErr = b.Put(idByte[:], dataJSON); uErr != nil {
+			return uErr
+		}
 
 		// remove pending intermediate tx
 		pendingBucket := tx.Bucket([]byte(PENDING_INTERMEDIATE_TX))
-		idJSON, err := json.Marshal(id)
-		if err != nil {
-			return err
+		idJSON, uErr := json.Marshal(id)
+		if uErr != nil {
+			return uErr
 		}
 		return pendingBucket.Delete(idJSON)
 	})

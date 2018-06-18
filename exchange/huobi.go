@@ -515,7 +515,8 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 			return "", nil
 		}
-		deposits, err := self.interf.DepositHistory()
+		var deposits HuobiDeposits
+		deposits, err = self.interf.DepositHistory()
 		if err != nil || deposits.Status != "ok" {
 			log.Printf("Getting deposit history from huobi failed, error: %v, status: %s", err, deposits.Status)
 			return "", nil
