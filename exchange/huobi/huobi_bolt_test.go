@@ -17,8 +17,8 @@ func TestHuobiStoreTradeHistory(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := os.RemoveAll(tmpDir); err != nil {
-			t.Error(err)
+		if rErr := os.RemoveAll(tmpDir); rErr != nil {
+			t.Error(rErr)
 		}
 	}()
 	storage, err := NewBoltStorage(filepath.Join(tmpDir, boltFile))
@@ -75,8 +75,8 @@ func TestHuobiStoreDepositActivity(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer func() {
-		if err := os.RemoveAll(tmpDir); err != nil {
-			t.Error(err)
+		if rErr := os.RemoveAll(tmpDir); rErr != nil {
+			t.Error(rErr)
 		}
 	}()
 	storage, err := NewBoltStorage(filepath.Join(tmpDir, boltFile))
