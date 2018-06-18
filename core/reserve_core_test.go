@@ -35,7 +35,7 @@ func (self testExchange) CancelOrder(id string, base, quote string) error {
 func (self testExchange) MarshalText() (text []byte, err error) {
 	return []byte("bittrex"), nil
 }
-func (self testExchange) GetExchangeInfo(pair common.TokenPair) (common.ExchangePrecisionLimit, error) {
+func (self testExchange) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
 	return common.ExchangePrecisionLimit{}, nil
 }
 func (self testExchange) GetFee() (common.ExchangeFees, error) {
@@ -44,8 +44,8 @@ func (self testExchange) GetFee() (common.ExchangeFees, error) {
 func (self testExchange) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 	return common.ExchangesMinDeposit{}, nil
 }
-func (self testExchange) GetInfo() (*common.ExchangeInfo, error) {
-	return &common.ExchangeInfo{}, nil
+func (self testExchange) GetInfo() (common.ExchangeInfo, error) {
+	return common.ExchangeInfo{}, nil
 }
 func (self testExchange) TokenAddresses() (map[string]ethereum.Address, error) {
 	return map[string]ethereum.Address{}, nil

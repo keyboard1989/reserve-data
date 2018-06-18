@@ -175,11 +175,11 @@ func (self *Binance) TokenPairs() ([]common.TokenPair, error) {
 		}
 		tok1, uErr := self.setting.GetTokenByID(pairIDs[0])
 		if uErr != nil {
-			return result, fmt.Errorf("cant get Token %s, %s", tok1, uErr)
+			return result, fmt.Errorf("cant get Token %s, %s", pairIDs[0], uErr)
 		}
-		tok2, uErr := self.setting.GetTokenByID(pairIDs[0])
+		tok2, uErr := self.setting.GetTokenByID(pairIDs[1])
 		if uErr != nil {
-			return result, fmt.Errorf("cant get Token %s, %s", tok2, uErr)
+			return result, fmt.Errorf("cant get Token %s, %s", pairIDs[1], uErr)
 		}
 		tokPair := common.TokenPair{
 			Base:  tok1,
