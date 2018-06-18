@@ -161,7 +161,7 @@ func (boltSettingStorage *BoltSettingStorage) StoreTokenPairs(ex settings.Exchan
 	return err
 }
 
-func (boltSettingStorage *BoltSettingStorage) GetExchangeInfo(ex settings.ExchangeName) (*common.ExchangeInfo, error) {
+func (boltSettingStorage *BoltSettingStorage) GetExchangeInfo(ex settings.ExchangeName) (common.ExchangeInfo, error) {
 	var result common.ExchangeInfo
 	err := boltSettingStorage.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_INFO))
@@ -177,20 +177,20 @@ func (boltSettingStorage *BoltSettingStorage) GetExchangeInfo(ex settings.Exchan
 		}
 		return nil
 	})
-	return &result, err
+	return result, err
 }
 
-func (boltSettingStorage *BoltSettingStorage) StoreExchangeInfo(ex settings.ExchangeName, exInfo *common.ExchangeInfo) error {
+func (boltSettingStorage *BoltSettingStorage) StoreExchangeInfo(ex settings.ExchangeName, exInfo common.ExchangeInfo) error {
 	err := boltSettingStorage.db.Update(func(tx *bolt.Tx) error {
 		b, uErr := tx.CreateBucketIfNotExists([]byte(EXCHANGE_INFO))
 		if uErr != nil {
 			return uErr
 		}
-		dataJson, uErr := json.Marshal(exInfo)
+		dataJSON, uErr := json.Marshal(exInfo)
 		if uErr != nil {
 			return uErr
 		}
-		return b.Put(boltutil.Uint64ToBytes(uint64(ex)), dataJson)
+		return b.Put(boltutil.Uint64ToBytes(uint64(ex)), dataJSON)
 	})
 	return err
 }

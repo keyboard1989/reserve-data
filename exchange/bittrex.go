@@ -79,8 +79,8 @@ func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) er
 	return self.setting.UpdateDepositAddress(settings.Bittrex, *addrs)
 }
 
-func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittPairInfo, exInfo *common.ExchangeInfo) {
-	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
+func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPairID, symbols []BittPairInfo, exInfo *common.ExchangeInfo) {
+	pairName := strings.Replace(string(pair), "-", "", 1)
 	for _, symbol := range symbols {
 		symbolName := strings.ToUpper(symbol.Base) + strings.ToUpper(symbol.Quote)
 		if symbolName == pairName {
@@ -91,13 +91,13 @@ func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPair, symbols []BittP
 			// update limit
 			exchangePrecisionLimit.AmountLimit.Min = symbol.MinAmount
 			exchangePrecisionLimit.MinNotional = 0.02
-			exInfo.Update(pair, exchangePrecisionLimit)
+			(*exInfo)[pair] = exchangePrecisionLimit
 			break
 		}
 	}
 }
 
-func (self *Bittrex) GetExchangeInfo(pair common.TokenPair) (common.ExchangePrecisionLimit, error) {
+func (self *Bittrex) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
 	exInfo, err := self.setting.GetExchangeInfo(settings.Bittrex)
 	if err != nil {
 		return common.ExchangePrecisionLimit{}, err
@@ -105,7 +105,7 @@ func (self *Bittrex) GetExchangeInfo(pair common.TokenPair) (common.ExchangePrec
 	return exInfo.Get(pair)
 }
 
-func (self *Bittrex) GetInfo() (*common.ExchangeInfo, error) {
+func (self *Bittrex) GetInfo() (common.ExchangeInfo, error) {
 	return self.setting.GetExchangeInfo(settings.Bittrex)
 }
 
@@ -120,7 +120,7 @@ func (self *Bittrex) UpdatePairsPrecision() error {
 		return fmt.Errorf("Can't get Exchange Info for Bittrex from persistent storage. (%s)", err)
 	}
 	for pair := range exInfo.GetData() {
-		self.UpdatePrecisionLimit(pair, symbols, exInfo)
+		self.UpdatePrecisionLimit(pair, symbols, &exInfo)
 	}
 	return self.setting.UpdateExchangeInfo(settings.Binance, exInfo)
 }
@@ -136,7 +136,23 @@ func (self *Bittrex) TokenPairs() ([]common.TokenPair, error) {
 		return nil, err
 	}
 	for pair := range exInfo.GetData() {
-		result = append(result, pair)
+		pairIDs := strings.Split(string(pair), "-")
+		if len(pairIDs) != 2 {
+			return result, fmt.Errorf("PairID %s is malformed", string(pair))
+		}
+		tok1, uErr := self.setting.GetTokenByID(pairIDs[0])
+		if uErr != nil {
+			return result, fmt.Errorf("cant get Token %s, %s", tok1, uErr)
+		}
+		tok2, uErr := self.setting.GetTokenByID(pairIDs[0])
+		if uErr != nil {
+			return result, fmt.Errorf("cant get Token %s, %s", tok2, uErr)
+		}
+		tokPair := common.TokenPair{
+			Base:  tok1,
+			Quote: tok2,
+		}
+		result = append(result, tokPair)
 	}
 	return result, nil
 }

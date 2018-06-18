@@ -202,7 +202,7 @@ func (setting *Settings) HandleEmptyExchangeInfo() error {
 	return nil
 }
 
-func (setting *Settings) NewExchangeInfo(exName ExchangeName) (*common.ExchangeInfo, error) {
+func (setting *Settings) NewExchangeInfo(exName ExchangeName) (common.ExchangeInfo, error) {
 	result := common.NewExchangeInfo()
 	addrs, err := setting.GetDepositAddress(exName)
 	if err != nil {
@@ -215,7 +215,7 @@ func (setting *Settings) NewExchangeInfo(exName ExchangeName) (*common.ExchangeI
 		}
 		if tokenID != "ETH" {
 			pair := setting.MustCreateTokenPair(tokenID, "ETH")
-			result.Update(pair, common.ExchangePrecisionLimit{})
+			result[pair.PairID()] = common.ExchangePrecisionLimit{}
 		}
 	}
 	return result, nil

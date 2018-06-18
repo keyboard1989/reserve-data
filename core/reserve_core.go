@@ -450,7 +450,7 @@ func sanityCheck(buys, afpMid, sells []*big.Int) error {
 
 func sanityCheckTrading(exchange common.Exchange, base, quote common.Token, rate, amount float64) error {
 	tokenPair := makeTokenPair(base, quote)
-	exchangeInfo, err := exchange.GetExchangeInfo(tokenPair)
+	exchangeInfo, err := exchange.GetExchangeInfo(tokenPair.PairID())
 	if err != nil {
 		return err
 	}

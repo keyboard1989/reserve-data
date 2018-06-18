@@ -227,7 +227,7 @@ func (self *HTTPServer) UpdateExchangeInfo(c *gin.Context) {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 		return
 	}
-	if err := self.setting.UpdateExchangeInfo(exName, &exInfo); err != nil {
+	if err := self.setting.UpdateExchangeInfo(exName, exInfo); err != nil {
 		httputil.ResponseFailure(c, httputil.WithError(err))
 	}
 	httputil.ResponseSuccess(c)

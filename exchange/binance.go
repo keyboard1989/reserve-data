@@ -81,8 +81,8 @@ func (self *Binance) precisionFromStepSize(stepSize string) int {
 	return 0
 }
 
-func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []BinanceSymbol, exInfo *common.ExchangeInfo) {
-	pairName := strings.ToUpper(pair.Base.ID) + strings.ToUpper(pair.Quote.ID)
+func (self *Binance) UpdatePrecisionLimit(pair common.TokenPairID, symbols []BinanceSymbol, exInfo *common.ExchangeInfo) {
+	pairName := strings.Replace(string(pair), "-", "", 1)
 	for _, symbol := range symbols {
 		if symbol.Symbol == strings.ToUpper(pairName) {
 			//update precision
@@ -116,7 +116,7 @@ func (self *Binance) UpdatePrecisionLimit(pair common.TokenPair, symbols []Binan
 					exchangePrecisionLimit.MinNotional = minNotional
 				}
 			}
-			exInfo.Update(pair, exchangePrecisionLimit)
+			(*exInfo)[pair] = exchangePrecisionLimit
 			break
 		}
 	}
@@ -133,16 +133,16 @@ func (self *Binance) UpdatePairsPrecision() error {
 		return fmt.Errorf("Can't get Exchange Info for Binance from persistent storage. (%s)", err)
 	}
 	for pair := range exInfo.GetData() {
-		self.UpdatePrecisionLimit(pair, symbols, exInfo)
+		self.UpdatePrecisionLimit(pair, symbols, &exInfo)
 	}
 	return self.setting.UpdateExchangeInfo(settings.Binance, exInfo)
 }
 
-func (self *Binance) GetInfo() (*common.ExchangeInfo, error) {
+func (self *Binance) GetInfo() (common.ExchangeInfo, error) {
 	return self.setting.GetExchangeInfo(settings.Binance)
 }
 
-func (self *Binance) GetExchangeInfo(pair common.TokenPair) (common.ExchangePrecisionLimit, error) {
+func (self *Binance) GetExchangeInfo(pair common.TokenPairID) (common.ExchangePrecisionLimit, error) {
 	exInfo, err := self.setting.GetExchangeInfo(settings.Binance)
 	if err != nil {
 		return common.ExchangePrecisionLimit{}, err
@@ -169,7 +169,23 @@ func (self *Binance) TokenPairs() ([]common.TokenPair, error) {
 		return nil, err
 	}
 	for pair := range exInfo.GetData() {
-		result = append(result, pair)
+		pairIDs := strings.Split(string(pair), "-")
+		if len(pairIDs) != 2 {
+			return result, fmt.Errorf("PairID %s is malformed", string(pair))
+		}
+		tok1, uErr := self.setting.GetTokenByID(pairIDs[0])
+		if uErr != nil {
+			return result, fmt.Errorf("cant get Token %s, %s", tok1, uErr)
+		}
+		tok2, uErr := self.setting.GetTokenByID(pairIDs[0])
+		if uErr != nil {
+			return result, fmt.Errorf("cant get Token %s, %s", tok2, uErr)
+		}
+		tokPair := common.TokenPair{
+			Base:  tok1,
+			Quote: tok2,
+		}
+		result = append(result, tokPair)
 	}
 	return result, nil
 }

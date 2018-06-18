@@ -73,20 +73,20 @@ func (setting *Settings) UpdateDepositAddress(exName ExchangeName, addrs common.
 
 // GetExchangeInfor returns the an ExchangeInfo Object for each exchange
 // and error if occur
-func (setting *Settings) GetExchangeInfo(ex ExchangeName) (*common.ExchangeInfo, error) {
+func (setting *Settings) GetExchangeInfo(ex ExchangeName) (common.ExchangeInfo, error) {
 	return setting.Exchange.Storage.GetExchangeInfo(ex)
 }
 
 // UpdateExchangeInfo updates exchange info object using exchangeName as key
 // returns error if occur
-func (setting *Settings) UpdateExchangeInfo(exName ExchangeName, exInfo *common.ExchangeInfo) error {
+func (setting *Settings) UpdateExchangeInfo(exName ExchangeName, exInfo common.ExchangeInfo) error {
 	currExInfo, err := setting.GetExchangeInfo(exName)
 	if err != nil {
 		log.Printf("UpdateExchangeInfo: Can't get exchange Info of %s (%s), overwrite it with new data", exName.String(), err)
 		currExInfo = common.NewExchangeInfo()
 	}
-	for token, exPreLim := range exInfo.GetData() {
-		currExInfo.Update(token, exPreLim)
+	for tokenPairID, exPreLim := range exInfo {
+		currExInfo[tokenPairID] = exPreLim
 	}
 	return setting.Exchange.Storage.StoreExchangeInfo(exName, currExInfo)
 }

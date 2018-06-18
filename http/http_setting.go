@@ -21,6 +21,6 @@ type Setting interface {
 	UpdateMinDeposit(ex settings.ExchangeName, minDeposit common.ExchangesMinDeposit) error
 	GetDepositAddress(ex settings.ExchangeName) (common.ExchangeAddresses, error)
 	UpdateDepositAddress(ex settings.ExchangeName, addrs common.ExchangeAddresses) error
-	GetExchangeInfo(ex settings.ExchangeName) (*common.ExchangeInfo, error)
-	UpdateExchangeInfo(ex settings.ExchangeName, exInfo *common.ExchangeInfo) error
+	GetExchangeInfo(ex settings.ExchangeName) (common.ExchangeInfo, error)
+	UpdateExchangeInfo(ex settings.ExchangeName, exInfo common.ExchangeInfo) error
 }

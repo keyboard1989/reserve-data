@@ -21,8 +21,8 @@ type ExchangeStorage interface {
 	StoreDepositAddress(ex ExchangeName, addrs common.ExchangeAddresses) error
 	// GetExchangeInfo returns the an ExchangeInfo Object for each exchange
 	// and error if occur
-	GetExchangeInfo(ex ExchangeName) (*common.ExchangeInfo, error)
+	GetExchangeInfo(ex ExchangeName) (common.ExchangeInfo, error)
 	// StoreExchangeInfo store the ExchangeInfo Object using the exchangeName as the key into database
 	// return error if occur
-	StoreExchangeInfo(ex ExchangeName, exInfo *common.ExchangeInfo) error
+	StoreExchangeInfo(ex ExchangeName, exInfo common.ExchangeInfo) error
 }
