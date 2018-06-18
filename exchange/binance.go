@@ -41,10 +41,10 @@ func (self *Binance) MarshalText() (text []byte, err error) {
 func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Address == "" {
-		log.Printf("ERROR: Get Binance live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
+		log.Printf("WARNING: Get Binance live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
 		addrs, uErr := self.setting.GetDepositAddress(settings.Binance)
 		if uErr != nil {
-			log.Printf("ERROR: get address of token %s in Binance exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
+			log.Printf("WARNING: get address of token %s in Binance exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
 			return ethereum.Address{}, false
 		}
 		return addrs.Get(token.ID)
@@ -53,7 +53,7 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 	addrs := common.NewExchangeAddresses()
 	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
 	if err = self.setting.UpdateDepositAddress(settings.Binance, *addrs); err != nil {
-		log.Printf("ERROR: can not update deposit address for token %s on Binance: (%s)", token.ID, err.Error())
+		log.Printf("WARNING: can not update deposit address for token %s on Binance: (%s)", token.ID, err.Error())
 	}
 	return ethereum.HexToAddress(liveAddress.Address), true
 }
@@ -61,7 +61,7 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 func (self *Binance) UpdateDepositAddress(token common.Token, address string) error {
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Address == "" {
-		log.Printf("ERROR: Get Binance live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
+		log.Printf("WARNING: Get Binance live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
 		addrs := common.NewExchangeAddresses()
 		addrs.Update(token.ID, ethereum.HexToAddress(address))
 		return self.setting.UpdateDepositAddress(settings.Binance, *addrs)

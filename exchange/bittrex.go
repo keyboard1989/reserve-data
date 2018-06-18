@@ -40,10 +40,10 @@ func (self *Bittrex) MarshalText() (text []byte, err error) {
 func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Result.Address == "" {
-		log.Printf("ERROR: Get Bittrex live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
+		log.Printf("WARNING: Get Bittrex live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
 		addrs, uErr := self.setting.GetDepositAddress(settings.Bittrex)
 		if uErr != nil {
-			log.Printf("ERROR: get address of token %s in Bittrex exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
+			log.Printf("WARNING: get address of token %s in Bittrex exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
 			return ethereum.Address{}, false
 		}
 		return addrs.Get(token.ID)
@@ -52,7 +52,7 @@ func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
 	addrs := common.NewExchangeAddresses()
 	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Result.Address))
 	if err = self.setting.UpdateDepositAddress(settings.Bittrex, *addrs); err != nil {
-		log.Printf("ERROR: can not update deposit address for token %s on Bittrex: (%s)", token.ID, err.Error())
+		log.Printf("WARNING: can not update deposit address for token %s on Bittrex: (%s)", token.ID, err.Error())
 	}
 	return ethereum.HexToAddress(liveAddress.Result.Address), true
 }
@@ -68,7 +68,7 @@ func (self *Bittrex) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) error {
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Result.Address == "" {
-		log.Printf("ERROR: Get Bittrex live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
+		log.Printf("WARNING: Get Bittrex live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
 		addrs := common.NewExchangeAddresses()
 		addrs.Update(token.ID, ethereum.HexToAddress(address))
 		return self.setting.UpdateDepositAddress(settings.Bittrex, *addrs)
