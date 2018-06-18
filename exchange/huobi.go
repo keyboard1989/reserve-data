@@ -510,14 +510,12 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			sentAmount,
 			common.GetTimestamp(),
 		)
-
-		if err = self.storage.StorePendingIntermediateTx(id, data); err != nil {
+		err = self.storage.StorePendingIntermediateTx(id, data)
+		if err != nil {
 			log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 			return "", nil
 		}
-
-		var deposits HuobiDeposits
-		deposits, err = self.interf.DepositHistory()
+		deposits, err := self.interf.DepositHistory()
 		if err != nil || deposits.Status != "ok" {
 			log.Printf("Getting deposit history from huobi failed, error: %v, status: %s", err, deposits.Status)
 			return "", nil
@@ -536,14 +534,9 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 						sentAmount,
 						common.GetTimestamp(),
 					)
-
-					if err = self.storage.StoreIntermediateTx(id, data); err != nil {
+					err = self.storage.StoreIntermediateTx(id, data)
+					if err != nil {
 						log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
-						return "", nil
-					}
-
-					if err = self.storage.RemovePendingIntermediateTx(id); err != nil {
-						log.Printf("Trying to remove pending intermediate tx from huobi storage, error: %s. Ignore it and treat it like it is still pending", err.Error())
 						return "", nil
 					}
 					return "done", nil
@@ -579,14 +572,9 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 				sentAmount,
 				common.GetTimestamp(),
 			)
-
-			if err = self.storage.StoreIntermediateTx(id, data); err != nil {
+			err = self.storage.StoreIntermediateTx(id, data)
+			if err != nil {
 				log.Printf("Trying to store intermediate tx failed, error: %s. Ignore it and treat it like it is still pending", err.Error())
-				return "", nil
-			}
-
-			if err = self.storage.RemovePendingIntermediateTx(id); err != nil {
-				log.Printf("Trying to remove pending intermediate tx from huobi storage, error: %s. Ignore it and treat it like it is still pending", err.Error())
 				return "", nil
 			}
 			log.Printf("The tx is not found for over 15mins, it is considered as lost and the deposit failed")
@@ -633,6 +621,7 @@ func (self *Huobi) OrderStatus(id string, base, quote string) (string, error) {
 	return "done", nil
 }
 
+//NewHuobi creates new Huobi exchange instance
 func NewHuobi(
 	addressConfig map[string]string,
 	feeConfig common.ExchangeFees,
