@@ -95,7 +95,7 @@ func (self *BoltStorage) StorePendingIntermediateTx(id common.ActivityID, data c
 	return err
 }
 
-//StoreIntermediateTx store transaction
+//StoreIntermediateTx store intermediate transaction and remove it from pending bucket
 func (self *BoltStorage) StoreIntermediateTx(id common.ActivityID, data common.TXEntry) error {
 	var err error
 	err = self.db.Update(func(tx *bolt.Tx) error {

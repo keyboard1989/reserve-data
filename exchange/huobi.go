@@ -490,8 +490,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 				sentAmount,
 				common.GetTimestamp(),
 			)
-			err = self.storage.StorePendingIntermediateTx(id, data)
-			if err != nil {
+			if err = self.storage.StorePendingIntermediateTx(id, data); err != nil {
 				log.Printf("Trying to store 2nd tx to pending tx storage failed, error: %s. It will be ignored and can make us to send to huobi again and the deposit will be marked as failed because the fund is not efficient", err.Error())
 			}
 			return "", nil
@@ -515,8 +514,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			sentAmount,
 			common.GetTimestamp(),
 		)
-		err = self.storage.StorePendingIntermediateTx(id, data)
-		if err != nil {
+		if err = self.storage.StorePendingIntermediateTx(id, data); err != nil {
 			log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 			return "", nil
 		}
@@ -540,8 +538,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 						sentAmount,
 						common.GetTimestamp(),
 					)
-					err = self.storage.StoreIntermediateTx(id, data)
-					if err != nil {
+					if err = self.storage.StoreIntermediateTx(id, data); err != nil {
 						log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 						return "", nil
 					}
@@ -578,8 +575,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 				sentAmount,
 				common.GetTimestamp(),
 			)
-			err = self.storage.StoreIntermediateTx(id, data)
-			if err != nil {
+			if err = self.storage.StoreIntermediateTx(id, data); err != nil {
 				log.Printf("Trying to store intermediate tx failed, error: %s. Ignore it and treat it like it is still pending", err.Error())
 				return "", nil
 			}

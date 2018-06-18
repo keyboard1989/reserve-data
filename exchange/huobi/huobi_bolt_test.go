@@ -146,4 +146,15 @@ func TestHuobiStoreDepositActivity(t *testing.T) {
 	if equal := reflect.DeepEqual(tx, txEntry); !equal {
 		t.Fatal("Huobi get intermediate tx wrong")
 	}
+
+	// Test pending intermediate tx shoud be removed
+	pendingIntermediateTxs, err = storage.GetPendingIntermediateTXs()
+	if err != nil {
+		t.Fatalf("Huobi get pending intermediate tx failed: %s", err.Error())
+	}
+
+	pendingTx, exist = pendingIntermediateTxs[txID]
+	if exist {
+		t.Fatal("Huobi remove pending intermediate failed. Pending intermediate should be removed.")
+	}
 }
