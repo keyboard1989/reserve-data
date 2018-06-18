@@ -8,6 +8,7 @@
 
 - Enable errcheck checker and fix all unhandled errors (#307)
 - Fix GetAccounts error is ignored for houbi exchange (#308)
+- Fix missing required fields in PWIs v2 APIs (#314)
 
 ### Improvements:
 
