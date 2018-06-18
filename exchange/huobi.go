@@ -515,10 +515,10 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 			return "", nil
 		}
-		tokens, err := self.setting.GetAllTokens()
-		if err != nil {
-			log.Printf("ERROR: Can not get list of tokens from setting (%s)", err)
-			return "", err
+		tokens, uErr := self.setting.GetAllTokens()
+		if uErr != nil {
+			log.Printf("ERROR: Can not get list of tokens from setting (%s)", uErr)
+			return "", uErr
 		}
 		var deposits HuobiDeposits
 		deposits, err = self.interf.DepositHistory(tokens)

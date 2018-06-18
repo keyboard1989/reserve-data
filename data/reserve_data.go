@@ -97,10 +97,10 @@ func (self ReserveData) GetAuthData(timepoint uint64) (common.AuthDataResponse, 
 		result.Data.Block = data.Block
 		result.Data.ReserveBalances = map[string]common.BalanceResponse{}
 		for tokenID, balance := range data.ReserveBalances {
-			token, err := self.setting.GetInternalTokenByID(tokenID)
+			token, uErr := self.setting.GetInternalTokenByID(tokenID)
 			//If the token is invalid, this must Panic
-			if err != nil {
-				return result, fmt.Errorf("Can't get Internal token %s: (%s)", tokenID, err)
+			if uErr != nil {
+				return result, fmt.Errorf("Can't get Internal token %s: (%s)", tokenID, uErr)
 			}
 			result.Data.ReserveBalances[tokenID] = balance.ToBalanceResponse(
 				token.Decimal,
