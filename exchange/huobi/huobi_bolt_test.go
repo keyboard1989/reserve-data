@@ -10,7 +10,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
-func TestHuobiStorage(t *testing.T) {
+func TestHuobiStoreTradeHistory(t *testing.T) {
 	boltFile := "test_huobi_storage.db"
 	tmpDir, err := ioutil.TempDir("", "huobi_storage")
 	if err != nil {
@@ -21,7 +21,11 @@ func TestHuobiStorage(t *testing.T) {
 			t.Error(err)
 		}
 	}()
-
+	storage, err := NewBoltStorage(filepath.Join(tmpDir, boltFile))
+	if err != nil {
+		t.Fatalf("Could not init huobi bolt storage: %s", err.Error())
+	}
+	//Mock exchange history
 	exchangeTradeHistory := common.ExchangeTradeHistory{
 		common.TokenPairID("OMGETH"): []common.TradeHistory{
 			{
@@ -32,11 +36,6 @@ func TestHuobiStorage(t *testing.T) {
 				Timestamp: 1528949872,
 			},
 		},
-	}
-
-	storage, err := NewBoltStorage(filepath.Join(tmpDir, boltFile))
-	if err != nil {
-		t.Fatalf("Could not init huobi bolt storage: %s", err.Error())
 	}
 
 	// store trade history
@@ -65,5 +64,86 @@ func TestHuobiStorage(t *testing.T) {
 	}
 	if lastHistoryID != "12342" {
 		t.Fatalf("Huobi get last trade history wrong, shoudl return 12342 receive: %s", lastHistoryID)
+	}
+
+}
+
+func TestHuobiStoreDepositActivity(t *testing.T) {
+	boltFile := "test_huobi_storage.db"
+	tmpDir, err := ioutil.TempDir("", "huobi_storage")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		if err := os.RemoveAll(tmpDir); err != nil {
+			t.Error(err)
+		}
+	}()
+	storage, err := NewBoltStorage(filepath.Join(tmpDir, boltFile))
+	if err != nil {
+		t.Fatalf("Could not init huobi bolt storage: %s", err.Error())
+	}
+
+	// Mock intermediate deposit transaction and transaction id
+	txEntry := common.TXEntry{
+		Hash:           "0x884767eb42edef14b1a00759cf4050ea49a612424dbf484f8672fd17ebb92752",
+		Exchange:       "huobi",
+		Token:          "KNC",
+		MiningStatus:   "",
+		ExchangeStatus: "",
+		Amount:         10,
+		Timestamp:      "1529307214",
+	}
+	txID := common.ActivityID{
+		Timepoint: 1529307214,
+		EID:       "0x884767eb42edef14b1a00759cf4050ea49a612424dbf484f8672fd17ebb92752|KNC|10",
+	}
+
+	// Test get pending intermediate TXs empty
+	pendingIntermediateTxs, err := storage.GetPendingIntermediateTXs()
+	if err != nil {
+		t.Fatalf("Huobi get pending intermediate txs failed: %s", err.Error())
+	}
+
+	if len(pendingIntermediateTxs) != 0 {
+		t.Fatalf("Huobi get pending intermediate txs expected empty get %d pending activities.", len(pendingIntermediateTxs))
+	}
+
+	// Test store pending intermediate Tx
+	err = storage.StorePendingIntermediateTx(txID, txEntry)
+	if err != nil {
+		t.Fatalf("Huobi store pending intermediate failed: %s", err.Error())
+	}
+
+	// get pending tx
+	pendingIntermediateTxs, err = storage.GetPendingIntermediateTXs()
+	if len(pendingIntermediateTxs) != 1 {
+		t.Fatalf("Huobi get pending intermediate txs expected 1 pending tx got %d pending txs.", len(pendingIntermediateTxs))
+	}
+
+	pendingTx, exist := pendingIntermediateTxs[txID]
+	if !exist {
+		t.Fatalf("Huobi store pending intermediate wrong. Expected key: %+v not found.", txID)
+	}
+
+	// check if pending tx is correct
+	if equal := reflect.DeepEqual(txEntry, pendingTx); !equal {
+		t.Fatalf("Huobi store pending wrong pending tx. Expected %+v, got %+v", txEntry, pendingTx)
+	}
+
+	// stored intermediate tx
+	err = storage.StoreIntermediateTx(txID, txEntry)
+	if err != nil {
+		t.Fatalf("Huobi store intermedate tx failed: %s", err.Error())
+	}
+
+	// get intermedate tx
+	tx, err := storage.GetIntermedatorTx(txID)
+	if err != nil {
+		t.Fatalf("Huobi get intermediate tx failed: %s", err.Error())
+	}
+
+	if equal := reflect.DeepEqual(tx, txEntry); !equal {
+		t.Fatal("Huobi get intermediate tx wrong")
 	}
 }

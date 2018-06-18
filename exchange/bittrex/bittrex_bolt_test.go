@@ -66,25 +66,4 @@ func TestBittrexStorage(t *testing.T) {
 	if lastHistoryID != "12342" {
 		t.Fatalf("Bittrex get last trade history wrong, shoudl return 12342 receive: %s", lastHistoryID)
 	}
-
-	newDepositActivityID := common.NewActivityID(
-		1513328774800747341,
-		"0x4e3c6c5e5c56ef2f65867e0dac874f3e2ec2f66e05793b7a52281549c02e68d9|OMG|5",
-	)
-	// test new deposit
-	checkNewDeposit := storage.IsNewBittrexDeposit(newDepositActivityID.Timepoint, newDepositActivityID)
-	if !checkNewDeposit {
-		t.Fatal("Bittrex check new deposit wrong.")
-	}
-
-	// register new deposit
-	err = storage.RegisterBittrexDeposit(newDepositActivityID.Timepoint, newDepositActivityID)
-	if err != nil {
-		t.Fatalf("Bittrex register new deposit wrong: %s", err.Error())
-	}
-
-	// checkNewDeposit = storage.IsNewBittrexDeposit(newDepositActivityID.Timepoint, newDepositActivityID)
-	// if checkNewDeposit {
-	// 	t.Fatal("Bittrex check new deposit wrong")
-	// }
 }
