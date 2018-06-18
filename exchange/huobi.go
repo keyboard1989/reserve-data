@@ -102,7 +102,7 @@ func (self *Huobi) UpdateDepositAddress(token common.Token, address string) erro
 		addrs.Update(token.ID, ethereum.HexToAddress(address))
 		return self.setting.UpdateDepositAddress(settings.Huobi, *addrs)
 	}
-	log.Printf("Got Huobi live deposit address for token %s, attempt to update it to current setting")
+	log.Printf("Got Huobi live deposit address for token %s, attempt to update it to current setting", token.ID)
 	addrs := common.NewExchangeAddresses()
 	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
 	return self.setting.UpdateDepositAddress(settings.Huobi, *addrs)

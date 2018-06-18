@@ -4,8 +4,6 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-type exchange map[string]string
-
 type TokenInfo struct {
 	Address  ethereum.Address `json:"address"`
 	Decimals int64            `json:"decimals"`
