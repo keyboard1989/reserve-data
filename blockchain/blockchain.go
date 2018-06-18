@@ -12,6 +12,7 @@ import (
 
 	"github.com/KyberNetwork/reserve-data/common"
 	"github.com/KyberNetwork/reserve-data/common/blockchain"
+	hbblockchain "github.com/KyberNetwork/reserve-data/exchange/huobi/blockchain"
 	"github.com/KyberNetwork/reserve-data/settings"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	ethereum "github.com/ethereum/go-ethereum/common"
@@ -147,15 +148,16 @@ func (self *Blockchain) GetAddresses() (*common.Addresses, error) {
 	}
 	opAddrs := self.OperatorAddresses()
 	return &common.Addresses{
-		Tokens:           tokens,
-		Exchanges:        exs,
-		WrapperAddress:   wrapperAddr,
-		PricingAddress:   pricingAddr,
-		ReserveAddress:   reserveAddr,
-		FeeBurnerAddress: burnerAddr,
-		NetworkAddress:   networkAddr,
-		PricingOperator:  opAddrs[PRICING_OP],
-		DepositOperator:  opAddrs[DEPOSIT_OP],
+		Tokens:               tokens,
+		Exchanges:            exs,
+		WrapperAddress:       wrapperAddr,
+		PricingAddress:       pricingAddr,
+		ReserveAddress:       reserveAddr,
+		FeeBurnerAddress:     burnerAddr,
+		NetworkAddress:       networkAddr,
+		PricingOperator:      opAddrs[PRICING_OP],
+		DepositOperator:      opAddrs[DEPOSIT_OP],
+		IntermediateOperator: opAddrs[hbblockchain.HUOBI_OP],
 	}, nil
 }
 

@@ -24,11 +24,10 @@ const (
 )
 
 type Huobi struct {
-	interf            HuobiInterface
-	blockchain        HuobiBlockchain
-	intermediatorAddr ethereum.Address
-	storage           HuobiStorage
-	setting           Setting
+	interf     HuobiInterface
+	blockchain HuobiBlockchain
+	storage    HuobiStorage
+	setting    Setting
 }
 
 func (self *Huobi) MarshalText() (text []byte, err error) {
@@ -55,7 +54,7 @@ func (self *Huobi) RealDepositAddress(tokenID string) (ethereum.Address, error) 
 		}
 		result, supported := addrs.Get(tokenID)
 		if !supported {
-			return result, fmt.Errorf("Real deposit address of token %s is not available, this shouldn't happen unless Huobi delisted the token and the token was deleted from database", tokenID)
+			return result, fmt.Errorf("Real deposit address of token %s is not available", tokenID)
 		}
 		return result, nil
 	}
@@ -67,27 +66,11 @@ func (self *Huobi) RealDepositAddress(tokenID string) (ethereum.Address, error) 
 // Due to the logic of Huobi exchange, every token if supported will be
 // deposited to an Intermediator address instead.
 func (self *Huobi) Address(token common.Token) (ethereum.Address, bool) {
-	result, err := self.setting.GetAddress(settings.Intermediator)
+	result := self.blockchain.GetIntermediatorAddr()
+	_, err := self.RealDepositAddress(token.ID)
+	//if the realDepositAddress can not be querried, that mean the token isn't supported on Huobi
 	if err != nil {
-		log.Printf("WARNING: get intermediate address in huobi exchange failed:(%s)", err.Error())
 		return result, false
-	}
-	liveAddress, err := self.interf.GetDepositAddress(token.ID)
-	if err != nil || liveAddress.Address == "" {
-		log.Printf("WARNING: Get Huobi live deposit address for token %s failed: (%v) or the replied address is empty. Check the currently available address instead", token.ID, err)
-		addrs, uErr := self.setting.GetDepositAddress(settings.Huobi)
-		if uErr != nil {
-			log.Printf("WARNING: get address of token %s in Huobi exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
-			return result, false
-		}
-		_, supported := addrs.Get(token.ID)
-		return result, supported
-	}
-	log.Printf("Got Huobi live deposit address for token %s, attempt to update it to current setting", token.ID)
-	addrs := common.NewExchangeAddresses()
-	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
-	if err = self.setting.UpdateDepositAddress(settings.Huobi, *addrs); err != nil {
-		log.Printf("ERROR: can not update deposit address for token %s on Huobi: (%s)", token.ID, err.Error())
 	}
 	return result, true
 }
@@ -741,7 +724,6 @@ func NewHuobi(
 	huobiObj := Huobi{
 		interf,
 		bc,
-		signer.GetAddress(),
 		storage,
 		setting,
 	}
