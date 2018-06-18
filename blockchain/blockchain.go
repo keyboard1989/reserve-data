@@ -96,12 +96,12 @@ func (self *Blockchain) AddGasOracle(gasOracle *GasOracle) {
 	self.gasOracle = gasOracle
 }
 
-func (self *Blockchain) AddOldNetwork(addr ethereum.Address) {
-	self.setting.AddAddressToSet(settings.OldNetWorks, addr)
+func (self *Blockchain) AddOldNetwork(addr ethereum.Address) error {
+	return self.setting.AddAddressToSet(settings.OldNetWorks, addr)
 }
 
-func (self *Blockchain) AddOldBurners(addr ethereum.Address) {
-	self.setting.AddAddressToSet(settings.OldBurners, addr)
+func (self *Blockchain) AddOldBurners(addr ethereum.Address) error {
+	return self.setting.AddAddressToSet(settings.OldBurners, addr)
 }
 
 func (self *Blockchain) GetAddresses() (*common.Addresses, error) {

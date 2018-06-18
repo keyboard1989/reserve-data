@@ -126,7 +126,9 @@ func CreateBlockchain(config *configuration.Config, kyberENV string) (bc *blockc
 	}
 	// we need to implicitly add old contract addresses to production
 	if kyberENV == common.PRODUCTION_MODE || kyberENV == common.MAINNET_MODE {
-		bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e"))
+		if err := bc.AddOldBurners(ethereum.HexToAddress("0x4E89bc8484B2c454f2F7B25b612b648c45e14A8e")); err != nil {
+			log.Printf("WARNING: Can't add old burner address %s", err)
+		}
 	}
 	tokens, err := config.Setting.GetInternalTokens()
 	if err != nil {

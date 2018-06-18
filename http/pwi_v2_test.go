@@ -12,7 +12,8 @@ import (
 	"github.com/KyberNetwork/reserve-data/data"
 	"github.com/KyberNetwork/reserve-data/data/storage"
 	"github.com/KyberNetwork/reserve-data/http/httputil"
-	ethereum "github.com/ethereum/go-ethereum/common"
+	"github.com/KyberNetwork/reserve-data/settings"
+	settingsstorage "github.com/KyberNetwork/reserve-data/settings/storage"
 	"github.com/gin-gonic/gin"
 )
 
@@ -149,9 +150,6 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 	`
 	)
 
-	common.RegisterInternalActiveToken(common.Token{ID: "EOS"})
-	common.RegisterInternalActiveToken(common.Token{ID: "ETH"})
-
 	tmpDir, err := ioutil.TempDir("", "test_pwi_equation_v2")
 	if err != nil {
 		t.Fatal(err)
@@ -167,13 +165,42 @@ func TestHTTPServerPWIEquationV2(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	tokenStorage, err := settingsstorage.NewBoltTokenStorage(filepath.Join(tmpDir, "token.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
 
+	addressStorage, err := settingsstorage.NewBoltAddressStorage(filepath.Join(tmpDir, "address.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	setting := settings.NewSetting(tokenStorage, addressStorage)
+	err = setting.UpdateToken(common.Token{
+		ID:       "EOS",
+		Address:  "xxx",
+		Internal: true,
+		Active:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = setting.UpdateToken(common.Token{
+		ID:       "ETH",
+		Address:  "xxx",
+		Internal: true,
+		Active:   true,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	s := HTTPServer{
-		app:         data.NewReserveData(st, nil, nil, nil, nil, nil),
-		core:        core.NewReserveCore(nil, st, ethereum.Address{}),
+		app:         data.NewReserveData(st, nil, nil, nil, nil, nil, setting),
+		core:        core.NewReserveCore(nil, st, setting),
 		metric:      st,
 		authEnabled: false,
-		r:           gin.Default()}
+		r:           gin.Default(),
+		setting:     setting}
 	s.register()
 
 	var tests = []testCase{
