@@ -143,10 +143,6 @@ func (self *Binance) ID() common.ExchangeID {
 	return common.ExchangeID("binance")
 }
 
-func (self *Binance) TokenPairs() []common.TokenPair {
-	return self.pairs
-}
-
 func (self *Binance) Name() string {
 	return "binance"
 }

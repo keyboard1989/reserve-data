@@ -113,10 +113,6 @@ func (self *Huobi) ID() common.ExchangeID {
 	return common.ExchangeID("huobi")
 }
 
-func (self *Huobi) TokenPairs() []common.TokenPair {
-	return self.pairs
-}
-
 func (self *Huobi) Name() string {
 	return "huobi"
 }
@@ -126,14 +122,18 @@ func (self *Huobi) QueryOrder(symbol string, id uint64) (done float64, remaining
 	if err != nil {
 		return 0, 0, false, err
 	}
-	done, err = strconv.ParseFloat(result.Data.ExecutedQty, 64)
-	if err != nil {
-		return 0, 0, false, err
+	if result.Data.ExecutedQty != "" {
+		done, err = strconv.ParseFloat(result.Data.ExecutedQty, 64)
+		if err != nil {
+			return 0, 0, false, err
+		}
 	}
 	var total float64
-	total, err = strconv.ParseFloat(result.Data.OrigQty, 64)
-	if err != nil {
-		return 0, 0, false, err
+	if result.Data.OrigQty != "" {
+		total, err = strconv.ParseFloat(result.Data.OrigQty, 64)
+		if err != nil {
+			return 0, 0, false, err
+		}
 	}
 	return done, total - done, total-done < HUOBI_EPSILON, nil
 }
@@ -145,14 +145,19 @@ func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token
 		return "", 0, 0, false, err
 	}
 	var orderID uint64
-	orderID, err = strconv.ParseUint(result.OrderID, 10, 64)
-	if err != nil {
-		return "", 0, 0, false, err
+	if result.OrderID != "" {
+		orderID, err = strconv.ParseUint(result.OrderID, 10, 64)
+		if err != nil {
+			return "", 0, 0, false, err
+		}
 	}
 	done, remaining, finished, err = self.QueryOrder(
 		base.ID+quote.ID,
 		orderID,
 	)
+	if err != nil {
+		log.Printf("Query order error: %s", err.Error())
+	}
 	return result.OrderID, done, remaining, finished, err
 }
 

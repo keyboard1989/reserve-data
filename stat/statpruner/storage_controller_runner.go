@@ -4,6 +4,7 @@ import (
 	"time"
 )
 
+// ControllerRunner contains the tickers that control the pruner services.
 type ControllerRunner interface {
 	GetAnalyticStorageControlTicker() <-chan time.Time
 	Start() error
