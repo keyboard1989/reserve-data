@@ -56,16 +56,6 @@ func TestHuobiStoreTradeHistory(t *testing.T) {
 		t.Fatal("Huobi get wrong trade history")
 	}
 
-	// get last trade history id
-	var lastHistoryID string
-	lastHistoryID, err = storage.GetLastIDTradeHistory("OMGETH")
-	if err != nil {
-		t.Fatalf("Huobi get last trade history id error: %s", err.Error())
-	}
-	if lastHistoryID != "12342" {
-		t.Fatalf("Huobi get last trade history wrong, shoudl return 12342 receive: %s", lastHistoryID)
-	}
-
 }
 
 func TestHuobiStoreDepositActivity(t *testing.T) {
