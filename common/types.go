@@ -237,6 +237,7 @@ func NewActivityRecord(action string, id ActivityID, destination string, params,
 		for _, t := range tokens {
 			tokenIDs = append(tokenIDs, t.ID)
 		}
+		params["tokens"] = tokenIDs
 	}
 	return ActivityRecord{
 		Action:         action,
