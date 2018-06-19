@@ -185,7 +185,6 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, kyberENV string) {
 			5*time.Second,  // authdata fetching interval
 			3*time.Second,  // rate fetching interval
 			5*time.Second,  // block fetching interval
-			10*time.Minute, // tradeHistory fetching interval
 			10*time.Second, // global data fetching interval
 		)
 		dataControllerRunner = datapruner.NewStorageControllerTickerRunner(24 * time.Hour)

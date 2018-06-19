@@ -7,6 +7,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+// Exchange represents a centralized exchange like Binance, Huobi...
 type Exchange interface {
 	ID() ExchangeID
 	// Address return the deposit address of a token and return true if token is supported in the exchange.

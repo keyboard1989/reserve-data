@@ -105,7 +105,7 @@ func NewExchangePool(
 		case "binance":
 			binanceSigner := binance.NewSignerFromFile(settingPaths.secretPath)
 			endpoint := binance.NewBinanceEndpoint(binanceSigner, getBinanceInterface(kyberENV))
-			storage, err := huobi.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "binance.db"))
+			storage, err := binance.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "binance.db"))
 			if err != nil {
 				return nil, fmt.Errorf("Can not create Binance storage: (%s)", err)
 			}

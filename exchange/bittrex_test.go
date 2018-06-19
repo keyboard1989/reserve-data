@@ -85,9 +85,6 @@ func (self *testBittrexStorage) StoreTradeHistory(data common.ExchangeTradeHisto
 func (self *testBittrexStorage) GetTradeHistory(fromTime, toTime uint64) (common.ExchangeTradeHistory, error) {
 	return common.ExchangeTradeHistory{}, nil
 }
-func (self *testBittrexStorage) GetLastIDTradeHistory(exchange, pair string) (string, error) {
-	return "", nil
-}
 
 func getTestBittrex(depositHistory string, registered bool) *Bittrex {
 	tmpDir, err := ioutil.TempDir("", "bittrex_test")

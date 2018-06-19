@@ -4,6 +4,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
+// Storage is the interface that wraps all database operations of ReserveData.
 type Storage interface {
 	CurrentPriceVersion(timepoint uint64) (common.Version, error)
 	GetAllPrices(common.Version) (common.AllPriceEntry, error)

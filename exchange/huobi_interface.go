@@ -7,12 +7,11 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+// HuobiInterface contains the methods to interact with Huobi centralized exchange.
 type HuobiInterface interface {
-	GetDepthOnePair(
-		pair common.TokenPair) (HuobiDepth, error)
+	GetDepthOnePair(pair common.TokenPair) (HuobiDepth, error)
 
-	OpenOrdersForOnePair(
-		pair common.TokenPair) (HuobiOrder, error)
+	OpenOrdersForOnePair(pair common.TokenPair) (HuobiOrder, error)
 
 	GetInfo() (HuobiInfo, error)
 
@@ -39,6 +38,5 @@ type HuobiInterface interface {
 
 	WithdrawHistory(token []common.Token) (HuobiWithdraws, error)
 
-	OrderStatus(
-		symbol string, id uint64) (HuobiOrder, error)
+	OrderStatus(symbol string, id uint64) (HuobiOrder, error)
 }

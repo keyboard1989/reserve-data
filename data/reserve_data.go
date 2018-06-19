@@ -110,10 +110,6 @@ func (self ReserveData) GetAuthData(timepoint uint64) (common.AuthDataResponse, 
 	}
 }
 
-func (self ReserveData) CurrentRateVersion(timepoint uint64) (common.Version, error) {
-	return self.storage.CurrentRateVersion(timepoint)
-}
-
 func isDuplicated(oldData, newData map[string]common.RateResponse) bool {
 	for tokenID, oldElem := range oldData {
 		newelem, ok := newData[tokenID]

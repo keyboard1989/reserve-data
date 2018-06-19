@@ -212,21 +212,3 @@ func (self *BoltStorage) GetTradeHistory(fromTime, toTime uint64) (common.Exchan
 	})
 	return result, err
 }
-
-//GetLastIDTradeHistory get last trade history id
-func (self *BoltStorage) GetLastIDTradeHistory(exchange, pair string) (string, error) {
-	history := common.TradeHistory{}
-	err := self.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(TRADE_HISTORY))
-		pairBk, uErr := b.CreateBucketIfNotExists([]byte(pair))
-		if uErr != nil {
-			return uErr
-		}
-		k, v := pairBk.Cursor().Last()
-		if k != nil {
-			uErr = json.Unmarshal(v, &history)
-		}
-		return uErr
-	})
-	return history.ID, err
-}
