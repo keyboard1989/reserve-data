@@ -158,8 +158,9 @@ func (self *Binance) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 	return self.setting.GetMinDeposit(settings.Binance)
 }
 
+// ID() must return the exact string or else simulation will fail
 func (self *Binance) ID() common.ExchangeID {
-	return common.ExchangeID(settings.Binance.String())
+	return common.ExchangeID("binance")
 }
 
 func (self *Binance) TokenPairs() ([]common.TokenPair, error) {

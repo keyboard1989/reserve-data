@@ -56,19 +56,15 @@ func (self *Fetcher) AddExchange(exchange Exchange) {
 	}
 	exchangeID := string(exchange.ID())
 	_, exist := exchangeStatus[exchangeID]
-
 	if !exist {
 		exchangeStatus[exchangeID] = common.ExStatus{
 			Timestamp: common.GetTimepoint(),
 			Status:    true,
 		}
 	}
-
 	if err := self.setting.UpdateExchangeStatus(exchangeStatus); err != nil {
 		log.Printf("Update exchange status error: %s", err.Error())
 	}
-	// log.Printf("Exstatuses %v", exchangeStatus)
-	// log.Panic("Mother fucker")
 }
 
 func (self *Fetcher) Stop() error {

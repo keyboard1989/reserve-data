@@ -160,6 +160,7 @@ func (self ReserveCore) Deposit(
 			"Core ----------> Deposit to %s: token: %s, amount: %s, timestamp: %d ==> Result: tx: %s, error: %s",
 			exchange.ID(), token.ID, amount.Text(10), timepoint, txhex, err,
 		)
+
 		return self.activityStorage.Record(
 			"deposit",
 			uid,

@@ -231,6 +231,13 @@ func NewActivityRecord(action string, id ActivityID, destination string, params,
 	if ok {
 		params["token"] = token.ID
 	}
+	tokens, ok := params["tokens"].([]Token)
+	if ok {
+		var tokenIDs []string
+		for _, t := range tokens {
+			tokenIDs = append(tokenIDs, t.ID)
+		}
+	}
 	return ActivityRecord{
 		Action:         action,
 		ID:             id,
