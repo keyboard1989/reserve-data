@@ -6,6 +6,8 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+// Blockchain is the interface wraps around all stat methods to interact
+// with blockchain.
 type Blockchain interface {
 	CurrentBlock() (uint64, error)
 	GetLogs(fromBlock uint64, toBlock uint64) ([]common.KNLog, error)

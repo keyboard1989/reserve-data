@@ -107,10 +107,6 @@ func (self *Bittrex) ID() common.ExchangeID {
 	return common.ExchangeID("bittrex")
 }
 
-func (self *Bittrex) TokenPairs() []common.TokenPair {
-	return self.pairs
-}
-
 func (self *Bittrex) Name() string {
 	return "bittrex"
 }

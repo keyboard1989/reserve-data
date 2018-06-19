@@ -11,7 +11,7 @@ import (
 	"github.com/KyberNetwork/reserve-data/common"
 )
 
-//TheWorld object
+//TheWorld is the concrete implementation of fetcher.TheWorld interface.
 type TheWorld struct {
 	endpoint Endpoint
 }

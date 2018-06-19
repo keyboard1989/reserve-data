@@ -5,6 +5,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
+// StatStorage is the interface that wraps all database operations of stat.
 type StatStorage interface {
 	GetAssetVolume(fromTime, toTime uint64, freq string, assetAddr ethereum.Address) (common.StatTicks, error)
 	GetBurnFee(fromTime, toTime uint64, freq string, reserveAddr ethereum.Address) (common.StatTicks, error)

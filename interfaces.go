@@ -7,7 +7,7 @@ import (
 	ethereum "github.com/ethereum/go-ethereum/common"
 )
 
-// all of the functions must support concurrency
+// ReserveStats is the interface of all statistic methods.
 type ReserveStats interface {
 	GetTradeLogs(fromTime uint64, toTime uint64) ([]common.TradeLog, error)
 	GetCatLogs(fromTime uint64, toTime uint64) ([]common.SetCatLog, error)
@@ -43,7 +43,8 @@ type ReserveStats interface {
 	Stop() error
 }
 
-// all of the functions must support concurrency
+// ReserveData is the interface of of all data query methods.
+// All methods' implementations must support concurrency.
 type ReserveData interface {
 	CurrentPriceVersion(timestamp uint64) (common.Version, error)
 	GetAllPrices(timestamp uint64) (common.AllPriceResponse, error)
@@ -52,8 +53,6 @@ type ReserveData interface {
 	CurrentAuthDataVersion(timestamp uint64) (common.Version, error)
 	GetAuthData(timestamp uint64) (common.AuthDataResponse, error)
 
-	// CurrentRateVersio returns the latest version of valid rate data.
-	CurrentRateVersion(timestamp uint64) (common.Version, error)
 	// GetRate returns latest valid rates for all tokens that is before timestamp.
 	GetRate(timestamp uint64) (common.AllRateResponse, error)
 	// GetRates returns list of valid rates for all tokens that is collected between [fromTime, toTime).
@@ -77,6 +76,8 @@ type ReserveData interface {
 	Stop() error
 }
 
+// ReserveCore is the interface that wrap around all interactions
+// with exchanges and blockchain.
 type ReserveCore interface {
 	// place order
 	Trade(

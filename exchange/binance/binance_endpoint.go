@@ -414,7 +414,7 @@ func (self *BinanceEndpoint) GetExchangeInfo() (exchange.BinanceExchangeInfo, er
 	return result, err
 }
 
-func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
+func (self *BinanceEndpoint) getServerTime() (uint64, error) {
 	result := exchange.BinaServerTime{}
 	respBody, err := self.GetResponse(
 		"GET",
@@ -431,7 +431,7 @@ func (self *BinanceEndpoint) GetServerTime() (uint64, error) {
 
 func (self *BinanceEndpoint) UpdateTimeDelta() error {
 	currentTime := common.GetTimepoint()
-	serverTime, err := self.GetServerTime()
+	serverTime, err := self.getServerTime()
 	responseTime := common.GetTimepoint()
 	if err != nil {
 		return err
