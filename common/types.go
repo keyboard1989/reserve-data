@@ -227,9 +227,11 @@ type ActivityRecord struct {
 
 //New ActivityRecord return an activity record with params["token"] only as token.ID
 func NewActivityRecord(action string, id ActivityID, destination string, params, result map[string]interface{}, exStatus, miStatus string, timestamp Timestamp) ActivityRecord {
-	token, ok := params["token"].(Token)
-	if ok {
-		params["token"] = token.ID
+	//if any params is a token, save it as tokenID
+	for k, v := range params {
+		if tok, ok := v.(Token); ok {
+			params[k] = tok.ID
+		}
 	}
 	tokens, ok := params["tokens"].([]Token)
 	if ok {
