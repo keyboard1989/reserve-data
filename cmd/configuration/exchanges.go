@@ -147,7 +147,11 @@ func NewExchangePool(
 func (self *ExchangePool) FetcherExchanges() []fetcher.Exchange {
 	result := []fetcher.Exchange{}
 	for _, ex := range self.Exchanges {
-		result = append(result, ex.(fetcher.Exchange))
+		fcEx, ok := ex.(fetcher.Exchange)
+		if !ok {
+			log.Panic("Can not convert ExchangePool to fetcher exchange")
+		}
+		result = append(result, fcEx)
 	}
 	return result
 }
@@ -155,7 +159,11 @@ func (self *ExchangePool) FetcherExchanges() []fetcher.Exchange {
 func (self *ExchangePool) CoreExchanges() []common.Exchange {
 	result := []common.Exchange{}
 	for _, ex := range self.Exchanges {
-		result = append(result, ex.(common.Exchange))
+		cmEx, ok := ex.(common.Exchange)
+		if !ok {
+			log.Panic("Can not convert ExchangePool to core Exchange")
+		}
+		result = append(result, cmEx)
 	}
 	return result
 }

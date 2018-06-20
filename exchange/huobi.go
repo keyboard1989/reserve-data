@@ -245,8 +245,20 @@ func (self *Huobi) FetchPriceData(timepoint uint64) (map[common.TokenPairID]comm
 	}
 	wait.Wait()
 	result := map[common.TokenPairID]common.ExchangePrice{}
+	var err error
 	data.Range(func(key, value interface{}) bool {
-		result[key.(common.TokenPairID)] = value.(common.ExchangePrice)
+		tokenPairID, ok := key.(common.TokenPairID)
+		//if there is conversion error, continue to next key,val
+		if !ok {
+			err = fmt.Errorf("Key (%v) cannot be converted to TokenPairID", key)
+			return true
+		}
+		exPrice, ok := value.(common.ExchangePrice)
+		if !ok {
+			err = fmt.Errorf("Value (%v) cannot be converted to ExchangePrice", value)
+			return true
+		}
+		result[tokenPairID] = exPrice
 		return true
 	})
 	return result, nil
@@ -281,9 +293,13 @@ func (self *Huobi) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
 	wait.Wait()
 
 	result.ReturnTime = common.GetTimestamp()
-
+	var err error
 	data.Range(func(key, value interface{}) bool {
-		orders := value.([]common.Order)
+		orders, ok := value.([]common.Order)
+		if !ok {
+			err = fmt.Errorf("cannot convert value (%v) to Order", value)
+			return true
+		}
 		result.Data = append(result.Data, orders...)
 		return true
 	})
@@ -375,7 +391,18 @@ func (self *Huobi) FetchTradeHistory() {
 			}
 			wait.Wait()
 			data.Range(func(key, value interface{}) bool {
-				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+				tokenPairID, ok := key.(common.TokenPairID)
+				//if there is conversion error, continue to next key,val
+				if !ok {
+					log.Printf("Key (%v) cannot be converted to TokenPairID", key)
+					return true
+				}
+				tradeHistories, ok := value.([]common.TradeHistory)
+				if !ok {
+					log.Printf("Value (%v) cannot be converted to []TradeHistory", value)
+					return true
+				}
+				result[tokenPairID] = tradeHistories
 				return true
 			})
 			if err := self.storage.StoreTradeHistory(result); err != nil {

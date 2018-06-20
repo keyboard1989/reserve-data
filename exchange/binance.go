@@ -255,12 +255,24 @@ func (self *Binance) FetchPriceData(timepoint uint64) (map[common.TokenPairID]co
 		wait.Wait()
 		i = x
 	}
+	var err error
 	result := map[common.TokenPairID]common.ExchangePrice{}
 	data.Range(func(key, value interface{}) bool {
-		result[key.(common.TokenPairID)] = value.(common.ExchangePrice)
+		//if there is conversion error, continue to next key,val
+		tokenPairID, ok := key.(common.TokenPairID)
+		if !ok {
+			err = fmt.Errorf("Key (%v) cannot be converted to TokenPairID", key)
+			return true
+		}
+		exPrice, ok := value.(common.ExchangePrice)
+		if !ok {
+			err = fmt.Errorf("Value (%v) cannot be converted to ExchangePrice", value)
+			return true
+		}
+		result[tokenPairID] = exPrice
 		return true
 	})
-	return result, nil
+	return result, err
 }
 
 func (self *Binance) OpenOrdersForOnePair(
@@ -391,7 +403,18 @@ func (self *Binance) FetchTradeHistory() {
 				wait.Wait()
 			}
 			data.Range(func(key, value interface{}) bool {
-				result[key.(common.TokenPairID)] = value.([]common.TradeHistory)
+				tokenPairID, ok := key.(common.TokenPairID)
+				//if there is conversion error, continue to next key,val
+				if !ok {
+					log.Printf("Key (%v) cannot be converted to TokenPairID", key)
+					return true
+				}
+				tradeHistories, ok := value.([]common.TradeHistory)
+				if !ok {
+					log.Printf("Value (%v) cannot be converted to []TradeHistory", value)
+					return true
+				}
+				result[tokenPairID] = tradeHistories
 				return true
 			})
 			if err := self.storage.StoreTradeHistory(result); err != nil {
