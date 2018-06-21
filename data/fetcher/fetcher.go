@@ -206,8 +206,8 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 				continue
 			}
 			//Set activity result tx to tx from cexs if currently result tx is not nil an is an empty string
-			resultTx, uOk := activity.Result["tx"].(string)
-			if !uOk {
+			resultTx, ok := activity.Result["tx"].(string)
+			if !ok {
 				log.Printf("ERROR: Activity Result Tx (value %v) cannot be converted to string", activity.Result["tx"])
 				continue
 			}

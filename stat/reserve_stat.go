@@ -220,8 +220,7 @@ func (self ReserveStats) GetHeatMap(fromTime, toTime uint64, tzparam int64) (com
 		for _, stat := range cStats {
 			s, ok := stat.(common.MetricStats)
 			if !ok {
-				err = fmt.Errorf("cannot convert stat (%v) to MetricStat", s)
-				continue
+				return arrResult, fmt.Errorf("cannot convert stat (%v) to MetricStat", s)
 			}
 			current := result[c]
 			result[c] = common.HeatmapType{
@@ -275,8 +274,7 @@ func (self ReserveStats) GetTokenHeatmap(fromTime, toTime uint64, tokenStr, freq
 		for _, stat := range stats {
 			s, ok := stat.(common.VolumeStats)
 			if !ok {
-				err = fmt.Errorf("cannot convert stat (%v) to VolumeStats", s)
-				continue
+				return arrResult, fmt.Errorf("cannot convert stat (%v) to VolumeStats", s)
 			}
 			current := result[country]
 			result[country] = common.VolumeStats{
