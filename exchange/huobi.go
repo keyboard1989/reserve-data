@@ -261,7 +261,7 @@ func (self *Huobi) FetchPriceData(timepoint uint64) (map[common.TokenPairID]comm
 		result[tokenPairID] = exPrice
 		return true
 	})
-	return result, nil
+	return result, err
 }
 
 func (self *Huobi) OpenOrdersForOnePair(
@@ -303,7 +303,7 @@ func (self *Huobi) FetchOrderData(timepoint uint64) (common.OrderEntry, error) {
 		result.Data = append(result.Data, orders...)
 		return true
 	})
-	return result, nil
+	return result, err
 }
 
 func (self *Huobi) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, error) {
