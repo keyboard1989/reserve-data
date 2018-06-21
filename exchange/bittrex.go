@@ -80,9 +80,9 @@ func (self *Bittrex) UpdateDepositAddress(token common.Token, address string) er
 }
 
 func (self *Bittrex) UpdatePrecisionLimit(pair common.TokenPairID, symbols []BittPairInfo, exInfo *common.ExchangeInfo) {
-	pairName := strings.Replace(string(pair), "-", "", 1)
+	pairName := strings.ToUpper(strings.Replace(string(pair), "-", "", 1))
 	for _, symbol := range symbols {
-		symbolName := strings.ToUpper(symbol.Base) + strings.ToUpper(symbol.Quote)
+		symbolName := strings.ToUpper(symbol.Base + symbol.Quote)
 		if symbolName == pairName {
 			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
 			//update precision

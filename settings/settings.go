@@ -17,12 +17,12 @@ func WithHandleEmptyToken(pathJSON string) SettingOption {
 		allToks, err := setting.GetAllTokens()
 		if err != nil || len(allToks) < 1 {
 			if err != nil {
-				log.Printf("Setting Init: Token DB is faulty (%s), attempt to load token from file", err)
+				log.Printf("Setting Init: Token DB is faulty (%s), attempt to load token from file", err.Error())
 			} else {
 				log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
 			}
 			if err = setting.LoadTokenFromFile(pathJSON); err != nil {
-				log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err)
+				log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err.Error())
 			}
 		}
 	}
@@ -35,12 +35,12 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 		addressCount, err := setting.Address.Storage.CountAddress()
 		if addressCount == 0 || err != nil {
 			if err != nil {
-				log.Printf("Setting Init: Address DB is faulty (%s), attempt to load Address from file", err)
+				log.Printf("Setting Init: Address DB is faulty (%s), attempt to load Address from file", err.Error())
 			} else {
 				log.Printf("Setting Init: Address DB is empty, attempt to load address from file")
 			}
 			if err = setting.LoadAddressFromFile(pathJSON); err != nil {
-				log.Printf("Setting Init: Can not load Address from file: %s, address DB is needed to be updated manually", err)
+				log.Printf("Setting Init: Can not load Address from file: %s, address DB is needed to be updated manually", err.Error())
 			}
 		}
 	}
@@ -51,7 +51,7 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 func WithHandleEmptyFee(pathJSON string) SettingOption {
 	return func(setting *Settings) {
 		if err := setting.LoadFeeFromFile(pathJSON); err != nil {
-			log.Printf("WARNING: Setting Init: cannot load Fee from file: %s, Fee is needed to be updated manually", err)
+			log.Printf("WARNING: Setting Init: cannot load Fee from file: %s, Fee is needed to be updated manually", err.Error())
 		}
 	}
 }
@@ -61,7 +61,7 @@ func WithHandleEmptyFee(pathJSON string) SettingOption {
 func WithHandleEmptyMinDeposit(pathJSON string) SettingOption {
 	return func(setting *Settings) {
 		if err := setting.LoadMinDepositFromFile(pathJSON); err != nil {
-			log.Printf("WARNING: Setting Init: cannot load MinDeposit from file: %s, Fee is needed to be updated manually", err)
+			log.Printf("WARNING: Setting Init: cannot load MinDeposit from file: %s, Fee is needed to be updated manually", err.Error())
 		}
 	}
 }
@@ -71,7 +71,7 @@ func WithHandleEmptyMinDeposit(pathJSON string) SettingOption {
 func WithHandleEmptyDepositAddress(pathJSON string) SettingOption {
 	return func(setting *Settings) {
 		if err := setting.LoadDepositAddressFromFile(pathJSON); err != nil {
-			log.Printf("WARNING: Setting Init: cannot load DepositAddress from file: %s, Fee is needed to be updated manually", err)
+			log.Printf("WARNING: Setting Init: cannot load DepositAddress from file: %s, Fee is needed to be updated manually", err.Error())
 		}
 	}
 }

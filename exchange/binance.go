@@ -38,6 +38,8 @@ func (self *Binance) MarshalText() (text []byte, err error) {
 	return []byte(self.ID()), nil
 }
 
+// Address returns the deposit address of a token on Binance.
+// It will prioritize the live adress from Binance over the current address in storage
 func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Address == "" {
@@ -53,7 +55,7 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 	addrs := common.NewExchangeAddresses()
 	addrs.Update(token.ID, ethereum.HexToAddress(liveAddress.Address))
 	if err = self.setting.UpdateDepositAddress(settings.Binance, *addrs); err != nil {
-		log.Printf("WARNING: can not update deposit address for token %s on Binance: (%s)", token.ID, err.Error())
+		log.Printf("WARNING: cannot update deposit address for token %s on Binance: (%s)", token.ID, err.Error())
 	}
 	return ethereum.HexToAddress(liveAddress.Address), true
 }
@@ -82,9 +84,9 @@ func (self *Binance) precisionFromStepSize(stepSize string) int {
 }
 
 func (self *Binance) UpdatePrecisionLimit(pair common.TokenPairID, symbols []BinanceSymbol, exInfo *common.ExchangeInfo) {
-	pairName := strings.Replace(string(pair), "-", "", 1)
+	pairName := strings.ToUpper(strings.Replace(string(pair), "-", "", 1))
 	for _, symbol := range symbols {
-		if symbol.Symbol == strings.ToUpper(pairName) {
+		if strings.ToUpper(symbol.Symbol) == pairName {
 			//update precision
 			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
 			exchangePrecisionLimit.Precision.Amount = symbol.BaseAssetPrecision

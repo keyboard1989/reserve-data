@@ -648,17 +648,13 @@ func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
 	if exchangeParam == "" {
 		data := map[string]common.ExchangeInfo{}
 		for _, ex := range common.SupportedExchanges {
-			log.Printf("Exchange is %v", ex)
 			exchangeInfo, err := ex.GetInfo()
 			if err != nil {
 				httputil.ResponseFailure(c, httputil.WithError(err))
 				return
 			}
-			log.Printf("exchange info data is %v", exchangeInfo.GetData())
 			data[string(ex.ID())] = exchangeInfo
 		}
-		log.Printf("data is %v", data)
-		log.Printf("data huobi is %v", data["Huobi"])
 		httputil.ResponseSuccess(c, httputil.WithData(data))
 	} else {
 		exchange, err := common.GetExchange(exchangeParam)
@@ -673,7 +669,6 @@ func (self *HTTPServer) GetExchangeInfo(c *gin.Context) {
 		}
 		httputil.ResponseSuccess(c, httputil.WithData(exchangeInfo.GetData()))
 	}
-	log.Printf("2 not failed")
 }
 
 func (self *HTTPServer) GetPairInfo(c *gin.Context) {

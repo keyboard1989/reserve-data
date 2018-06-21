@@ -25,10 +25,10 @@ func AsyncUpdateDepositAddress(ex common.Exchange, tokenID, addr string, wait *s
 	defer wait.Done()
 	token, err := setting.GetInternalTokenByID(tokenID)
 	if err != nil {
-		log.Panicf("ERROR: Can't get internal token %s. Error: %s", tokenID, err)
+		log.Panicf("ERROR: Can't get internal token %s. Error: %s", tokenID, err.Error())
 	}
 	if err := ex.UpdateDepositAddress(token, addr); err != nil {
-		log.Printf("WARNING: Cant not update deposit address for token %s (%s), this will need to be manually update", tokenID, err)
+		log.Printf("WARNING: Cant not update deposit address for token %s on exchange %s (%s), this will need to be manually update", tokenID, ex.ID(), err.Error())
 	}
 }
 
@@ -69,7 +69,7 @@ func NewExchangePool(
 				setting,
 			)
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange stable_exchange: (%s)", err)
+				return nil, fmt.Errorf("Can not create exchange stable_exchange: (%s)", err.Error())
 			}
 			exchanges[stableEx.ID()] = stableEx
 		case "bittrex":
@@ -77,18 +77,18 @@ func NewExchangePool(
 			endpoint := bittrex.NewBittrexEndpoint(bittrexSigner, getBittrexInterface(kyberENV))
 			bittrexStorage, err := bittrex.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "bittrex.db"))
 			if err != nil {
-				return nil, fmt.Errorf("Can not create Bittrex storage: (%s)", err)
+				return nil, fmt.Errorf("Can not create Bittrex storage: (%s)", err.Error())
 			}
 			bit, err := exchange.NewBittrex(
 				endpoint,
 				bittrexStorage,
 				setting)
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange Bittrex: (%s)", err)
+				return nil, fmt.Errorf("Can not create exchange Bittrex: (%s)", err.Error())
 			}
 			addrs, err := setting.GetDepositAddress(settings.Bittrex)
 			if err != nil {
-				log.Printf("INFO: Can't get Bittrex Deposit Addresses from Storage (%s), attempt to init it from Bittrex Endpoint", err)
+				log.Printf("INFO: Can't get Bittrex Deposit Addresses from Storage (%s), attempt to init it from Bittrex Endpoint", err.Error())
 				addrs = make(common.ExchangeAddresses)
 			}
 			wait := sync.WaitGroup{}
@@ -99,7 +99,7 @@ func NewExchangePool(
 			wait.Wait()
 			err = bit.UpdatePairsPrecision()
 			if err != nil {
-				return nil, fmt.Errorf("Can not Update Bittrex Pairs Precision : (%s)", err)
+				return nil, fmt.Errorf("Can not Update Bittrex Pairs Precision : (%s)", err.Error())
 			}
 			exchanges[bit.ID()] = bit
 		case "binance":
@@ -107,14 +107,14 @@ func NewExchangePool(
 			endpoint := binance.NewBinanceEndpoint(binanceSigner, getBinanceInterface(kyberENV))
 			storage, err := binance.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "binance.db"))
 			if err != nil {
-				return nil, fmt.Errorf("Can not create Binance storage: (%s)", err)
+				return nil, fmt.Errorf("Can not create Binance storage: (%s)", err.Error())
 			}
 			bin, err := exchange.NewBinance(
 				endpoint,
 				storage,
 				setting)
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange Binance: (%s)", err)
+				return nil, fmt.Errorf("Can not create exchange Binance: (%s)", err.Error())
 			}
 			addrs, err := setting.GetDepositAddress(settings.Binance)
 			if err != nil {
@@ -129,7 +129,7 @@ func NewExchangePool(
 			wait.Wait()
 			err = bin.UpdatePairsPrecision()
 			if err != nil {
-				return nil, fmt.Errorf("Can not Update Binance Pairs Precision: (%s)", err)
+				return nil, fmt.Errorf("Can not Update Binance Pairs Precision: (%s)", err.Error())
 			}
 			exchanges[bin.ID()] = bin
 		case "huobi":
@@ -137,7 +137,7 @@ func NewExchangePool(
 			endpoint := huobi.NewHuobiEndpoint(huobiSigner, getHuobiInterface(kyberENV))
 			storage, err := huobi.NewBoltStorage(filepath.Join(common.CmdDirLocation(), "huobi.db"))
 			if err != nil {
-				return nil, fmt.Errorf("Can not create Huobi storage: (%s)", err)
+				return nil, fmt.Errorf("Can not create Huobi storage: (%s)", err.Error())
 			}
 			intermediatorSigner := HuobiIntermediatorSignerFromFile(settingPaths.secretPath)
 			intermediatorNonce := nonce.NewTimeWindow(intermediatorSigner.GetAddress(), 10000)
@@ -150,7 +150,7 @@ func NewExchangePool(
 				setting,
 			)
 			if err != nil {
-				return nil, fmt.Errorf("Can not create exchange Huobi: (%s)", err)
+				return nil, fmt.Errorf("Can not create exchange Huobi: (%s)", err.Error())
 			}
 			addrs, err := setting.GetDepositAddress(settings.Huobi)
 			if err != nil {
@@ -165,7 +165,7 @@ func NewExchangePool(
 			wait.Wait()
 			err = huobi.UpdatePairsPrecision()
 			if err != nil {
-				return nil, fmt.Errorf("Can not Update Huobi Pairs Precision: (%s)", err)
+				return nil, fmt.Errorf("Can not Update Huobi Pairs Precision: (%s)", err.Error())
 			}
 			exchanges[huobi.ID()] = huobi
 		}

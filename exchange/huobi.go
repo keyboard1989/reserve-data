@@ -58,7 +58,6 @@ func (self *Huobi) RealDepositAddress(tokenID string) (ethereum.Address, error) 
 		}
 		return result, nil
 	}
-	log.Printf("Got Huobi live deposit address for token %s", tokenID)
 	return ethereum.HexToAddress(liveAddress.Address), nil
 }
 
@@ -92,9 +91,10 @@ func (self *Huobi) UpdateDepositAddress(token common.Token, address string) erro
 }
 
 func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPairID, symbols HuobiExchangeInfo, exInfo *common.ExchangeInfo) {
-	pairName := strings.Replace(string(pair), "-", "", 1)
+	pairName := strings.ToUpper(strings.Replace(string(pair), "-", "", 1))
 	for _, symbol := range symbols.Data {
-		if symbol.Base+symbol.Quote == pairName {
+		symbolName := strings.ToUpper(symbol.Base + symbol.Quote)
+		if symbolName == pairName {
 			exchangePrecisionLimit := common.ExchangePrecisionLimit{}
 			exchangePrecisionLimit.Precision.Amount = symbol.AmountPrecision
 			exchangePrecisionLimit.Precision.Price = symbol.PricePrecision
@@ -108,7 +108,6 @@ func (self *Huobi) UpdatePrecisionLimit(pair common.TokenPairID, symbols HuobiEx
 func (self *Huobi) UpdatePairsPrecision() error {
 	exchangeInfo, err := self.interf.GetExchangeInfo()
 	if err != nil {
-		log.Printf("Get exchange info failed: %s\n", err)
 		return err
 	}
 	exInfo, err := self.GetInfo()
