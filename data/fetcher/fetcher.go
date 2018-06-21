@@ -202,13 +202,13 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 		if found {
 			activityStatus, ok := status.(common.ActivityStatus)
 			if !ok {
-				log.Print("ERROR: status from cexs can not be converted to common.ActivityStatus")
+				log.Print("ERROR: status from cexs cannot be converted to common.ActivityStatus")
 				continue
 			}
 			//Set activity result tx to tx from cexs if currently result tx is not nil an is an empty string
 			resultTx, uOk := activity.Result["tx"].(string)
 			if !uOk {
-				log.Printf("ERROR: Activity Result Tx (value %v) can not be converted to string", activity.Result["tx"])
+				log.Printf("ERROR: Activity Result Tx (value %v) cannot be converted to string", activity.Result["tx"])
 				continue
 			}
 			if resultTx == "" {
@@ -302,7 +302,7 @@ func (self *Fetcher) newNonceValidator() func(common.ActivityRecord) bool {
 		}
 		nonce, err := strconv.ParseUint(actNonce, 10, 64)
 		if err != nil {
-			log.Printf("ERROR convert act.Result[nonce] to Uint64 failed %s", err)
+			log.Printf("ERROR convert act.Result[nonce] to Uint64 failed %s", err.Error())
 			return false
 		}
 		return nonce < minedNonce
@@ -320,7 +320,7 @@ func (self *Fetcher) FetchStatusFromBlockchain(pendings []common.ActivityRecord)
 			var err error
 			txStr, ok := activity.Result["tx"].(string)
 			if !ok {
-				log.Printf("ERROR: can not convert activity.Result[tx] (value %v) to string type", activity.Result["tx"])
+				log.Printf("ERROR: cannot convert activity.Result[tx] (value %v) to string type", activity.Result["tx"])
 				continue
 			}
 			tx := ethereum.HexToHash(txStr)
@@ -417,7 +417,7 @@ func updateActivitywithBlockchainStatus(activity *common.ActivityRecord, bstatus
 
 	activityStatus, ok := status.(common.ActivityStatus)
 	if !ok {
-		log.Printf("ERROR: status (%v) can not be converted to common.ActivityStatus", status)
+		log.Printf("ERROR: status (%v) cannot be converted to common.ActivityStatus", status)
 		return
 	}
 	log.Printf("In PersistSnapshot: blockchain activity status for %+v: %+v", activity.ID, activityStatus)
@@ -441,17 +441,17 @@ func updateActivitywithExchangeStatus(activity *common.ActivityRecord, estatuses
 	}
 	activityStatus, ok := status.(common.ActivityStatus)
 	if !ok {
-		log.Printf("ERROR: status (%v) can not be converted to common.ActivityStatus", status)
+		log.Printf("ERROR: status (%v) cannot be converted to common.ActivityStatus", status)
 		return
 	}
 	log.Printf("In PersistSnapshot: exchange activity status for %+v: %+v", activity.ID, activityStatus)
 	if activity.IsExchangePending() {
 		activity.ExchangeStatus = activityStatus.ExchangeStatus
 	}
-	resultTx, uOK := activity.Result["tx"].(string)
-	if !uOK {
-		log.Printf("ERROR: activity.Result[tx] (value %v) can not be converted to string type", activity.Result["tx"])
-	} else if uOK && resultTx == "" {
+	resultTx, ok := activity.Result["tx"].(string)
+	if !ok {
+		log.Printf("ERROR: activity.Result[tx] (value %v) cannot be converted to string type", activity.Result["tx"])
+	} else if ok && resultTx == "" {
 		activity.Result["tx"] = activityStatus.Tx
 	}
 
@@ -478,12 +478,12 @@ func (self *Fetcher) PersistSnapshot(
 		//if type conversion went wrong, continue to the next record
 		v, ok := value.(common.EBalanceEntry)
 		if !ok {
-			log.Printf("ERROR: value (%v) can not be converted to common.EbalanceEntry", v)
+			log.Printf("ERROR: value (%v) cannot be converted to common.EbalanceEntry", v)
 			return true
 		}
 		exID, ok := key.(common.ExchangeID)
 		if !ok {
-			log.Printf("ERROR: key (%v) can not be converted to common.ExchangeID", key)
+			log.Printf("ERROR: key (%v) cannot be converted to common.ExchangeID", key)
 			return true
 		}
 		allEBalances[exID] = v

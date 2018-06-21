@@ -661,9 +661,9 @@ func interfaceConverstionToUint64(intf interface{}) uint64 {
 		log.Printf("(%v) can't be converted to type string", intf)
 		return 0
 	}
-	num, uErr := strconv.ParseUint(numString, 10, 64)
-	if uErr != nil {
-		log.Printf("ERROR: parsing error %s, inteface conversion to uint64 will set to 0", uErr)
+	num, err := strconv.ParseUint(numString, 10, 64)
+	if err != nil {
+		log.Printf("ERROR: parsing error %s, inteface conversion to uint64 will set to 0", err)
 		return 0
 	}
 	return num

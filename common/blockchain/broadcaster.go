@@ -42,11 +42,11 @@ func (self Broadcaster) Broadcast(tx *types.Transaction) (map[string]error, bool
 	failures.Range(func(key, value interface{}) bool {
 		k, ok := key.(string)
 		if !ok {
-			return false
+			return true
 		}
 		err, ok := value.(error)
 		if !ok {
-			return false
+			return true
 		}
 		result[k] = err
 		return true
