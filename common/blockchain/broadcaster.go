@@ -2,6 +2,7 @@ package blockchain
 
 import (
 	"context"
+	"log"
 	"sync"
 	"time"
 
@@ -42,10 +43,12 @@ func (self Broadcaster) Broadcast(tx *types.Transaction) (map[string]error, bool
 	failures.Range(func(key, value interface{}) bool {
 		k, ok := key.(string)
 		if !ok {
+			log.Printf("Broadcast: key (%v) cannot be asserted to string", key)
 			return true
 		}
 		err, ok := value.(error)
 		if !ok {
+			log.Printf("Broadcast: value (%v) cannot be asserted to error", value)
 			return true
 		}
 		result[k] = err

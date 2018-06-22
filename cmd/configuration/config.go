@@ -259,8 +259,17 @@ func (self *Config) AddCoreConfig(settingPath SettingPaths, addressConfig common
 		self.Blockchain,
 		minDeposit,
 		kyberENV)
-	self.FetcherExchanges = exchangePool.FetcherExchanges()
-	self.Exchanges = exchangePool.CoreExchanges()
+
+	fetcherExchanges, err := exchangePool.FetcherExchanges()
+	if err != nil {
+		log.Panicf("cannot Create fetcher exchanges : (%s)", err.Error())
+	}
+	self.FetcherExchanges = fetcherExchanges
+	coreExchanges, err := exchangePool.CoreExchanges()
+	if err != nil {
+		log.Panicf("cannot Create core exchanges : (%s)", err.Error())
+	}
+	self.Exchanges = coreExchanges
 }
 
 func (self *Config) MapTokens() map[string]common.Token {

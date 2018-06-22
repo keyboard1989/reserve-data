@@ -685,12 +685,12 @@ func (self *Fetcher) FetchReserveRates(timepoint uint64) {
 		reserveAddr, ok := key.(ethereum.Address)
 		//if there is conversion error, continue to next key,val
 		if !ok {
-			log.Printf("key (%v) cannot be converted to ethereum.Address", key)
+			log.Printf("key (%v) cannot be asserted to ethereum.Address", key)
 			return true
 		}
 		rates, ok := value.(common.ReserveRates)
 		if !ok {
-			log.Printf("valuve (%v) cannot be convereted to reserveRates", value)
+			log.Printf("valuve (%v) cannot be asserted to reserveRates", value)
 			return true
 		}
 		log.Printf("Storing reserve rates to db...")

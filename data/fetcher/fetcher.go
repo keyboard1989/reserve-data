@@ -202,13 +202,13 @@ func (self *Fetcher) FetchAllAuthData(timepoint uint64) {
 		if found {
 			activityStatus, ok := status.(common.ActivityStatus)
 			if !ok {
-				log.Print("ERROR: status from cexs cannot be converted to common.ActivityStatus")
+				log.Print("ERROR: status from cexs cannot be asserted to common.ActivityStatus")
 				continue
 			}
 			//Set activity result tx to tx from cexs if currently result tx is not nil an is an empty string
 			resultTx, ok := activity.Result["tx"].(string)
 			if !ok {
-				log.Printf("ERROR: Activity Result Tx (value %v) cannot be converted to string", activity.Result["tx"])
+				log.Printf("ERROR: Activity Result Tx (value %v) cannot be asserted to string", activity.Result["tx"])
 				continue
 			}
 			if resultTx == "" {
@@ -410,14 +410,15 @@ func unchanged(pre, post map[common.ActivityID]common.ActivityStatus) bool {
 }
 
 func updateActivitywithBlockchainStatus(activity *common.ActivityRecord, bstatuses *sync.Map, snapshot *common.AuthDataSnapshot) {
-	status, _ := bstatuses.Load(activity.ID)
-	if status == nil {
+	status, ok := bstatuses.Load(activity.ID)
+	if !ok || status == nil {
+		log.Printf("block chain status for %s is nil or not existed ", activity.ID.String())
 		return
 	}
 
 	activityStatus, ok := status.(common.ActivityStatus)
 	if !ok {
-		log.Printf("ERROR: status (%v) cannot be converted to common.ActivityStatus", status)
+		log.Printf("ERROR: status (%v) cannot be asserted to common.ActivityStatus", status)
 		return
 	}
 	log.Printf("In PersistSnapshot: blockchain activity status for %+v: %+v", activity.ID, activityStatus)
@@ -435,13 +436,14 @@ func updateActivitywithBlockchainStatus(activity *common.ActivityRecord, bstatus
 }
 
 func updateActivitywithExchangeStatus(activity *common.ActivityRecord, estatuses *sync.Map, snapshot *common.AuthDataSnapshot) {
-	status, _ := estatuses.Load(activity.ID)
-	if status == nil {
+	status, ok := estatuses.Load(activity.ID)
+	if !ok || status == nil {
+		log.Printf("exchange status for %s is nil or not existed ", activity.ID.String())
 		return
 	}
 	activityStatus, ok := status.(common.ActivityStatus)
 	if !ok {
-		log.Printf("ERROR: status (%v) cannot be converted to common.ActivityStatus", status)
+		log.Printf("ERROR: status (%v) cannot be asserted to common.ActivityStatus", status)
 		return
 	}
 	log.Printf("In PersistSnapshot: exchange activity status for %+v: %+v", activity.ID, activityStatus)
@@ -450,7 +452,7 @@ func updateActivitywithExchangeStatus(activity *common.ActivityRecord, estatuses
 	}
 	resultTx, ok := activity.Result["tx"].(string)
 	if !ok {
-		log.Printf("ERROR: activity.Result[tx] (value %v) cannot be converted to string type", activity.Result["tx"])
+		log.Printf("ERROR: activity.Result[tx] (value %v) cannot be asserted to string type", activity.Result["tx"])
 	} else if ok && resultTx == "" {
 		activity.Result["tx"] = activityStatus.Tx
 	}
@@ -478,12 +480,12 @@ func (self *Fetcher) PersistSnapshot(
 		//if type conversion went wrong, continue to the next record
 		v, ok := value.(common.EBalanceEntry)
 		if !ok {
-			log.Printf("ERROR: value (%v) cannot be converted to common.EbalanceEntry", v)
+			log.Printf("ERROR: value (%v) cannot be asserted to common.EbalanceEntry", v)
 			return true
 		}
 		exID, ok := key.(common.ExchangeID)
 		if !ok {
-			log.Printf("ERROR: key (%v) cannot be converted to common.ExchangeID", key)
+			log.Printf("ERROR: key (%v) cannot be asserted to common.ExchangeID", key)
 			return true
 		}
 		allEBalances[exID] = v
