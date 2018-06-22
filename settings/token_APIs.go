@@ -1,10 +1,8 @@
 package settings
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"log"
 
 	"github.com/KyberNetwork/reserve-data/common"
@@ -87,22 +85,4 @@ func (setting *Settings) MustCreateTokenPair(base, quote string) common.TokenPai
 
 func (setting *Settings) UpdateToken(t common.Token) error {
 	return setting.Tokens.Storage.UpdateToken(t)
-}
-
-func (setting *Settings) LoadTokenFromFile(filePath string) error {
-	data, err := ioutil.ReadFile(filePath)
-	tokens := TokenConfig{}
-	if err != nil {
-		return err
-	}
-	if err = json.Unmarshal(data, &tokens); err != nil {
-		return err
-	}
-	for id, t := range tokens.Tokens {
-		token := common.NewToken(id, t.Name, t.Address, t.Decimal, t.Active, t.Internal, t.MinimalRecordResolution, t.MaxPerBlockImbalance, t.MaxTotalImbalance)
-		if err = setting.UpdateToken(token); err != nil {
-			return err
-		}
-	}
-	return nil
 }

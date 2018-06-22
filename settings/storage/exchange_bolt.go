@@ -85,8 +85,8 @@ func (boltSettingStorage *BoltSettingStorage) StoreMinDeposit(ex settings.Exchan
 	return err
 }
 
-// GetDepositAddress returns a map[tokenID]DepositAddress and error if occur
-func (boltSettingStorage *BoltSettingStorage) GetDepositAddress(ex settings.ExchangeName) (common.ExchangeAddresses, error) {
+// GetDepositAddresses returns a map[tokenID]DepositAddress and error if occur
+func (boltSettingStorage *BoltSettingStorage) GetDepositAddresses(ex settings.ExchangeName) (common.ExchangeAddresses, error) {
 	result := make(common.ExchangeAddresses)
 	err := boltSettingStorage.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(EXCHANGE_DEPOSIT_ADDRESS))

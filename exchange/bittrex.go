@@ -24,7 +24,7 @@ type Bittrex struct {
 }
 
 func (self *Bittrex) TokenAddresses() (map[string]ethereum.Address, error) {
-	addrs, err := self.setting.GetDepositAddress(settings.Bittrex)
+	addrs, err := self.setting.GetDepositAddresses(settings.Bittrex)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func (self *Bittrex) Address(token common.Token) (ethereum.Address, bool) {
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Result.Address == "" {
 		log.Printf("WARNING: Get Bittrex live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
-		addrs, uErr := self.setting.GetDepositAddress(settings.Bittrex)
+		addrs, uErr := self.setting.GetDepositAddresses(settings.Bittrex)
 		if uErr != nil {
 			log.Printf("WARNING: get address of token %s in Bittrex exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
 			return ethereum.Address{}, false
@@ -119,13 +119,16 @@ func (self *Bittrex) UpdatePairsPrecision() error {
 	if err != nil {
 		return fmt.Errorf("Can't get Exchange Info for Bittrex from persistent storage. (%s)", err)
 	}
+	if exInfo == nil {
+		return errors.New("Exchange info of Bittrex is nil")
+	}
 	for pair := range exInfo.GetData() {
 		self.UpdatePrecisionLimit(pair, symbols, &exInfo)
 	}
 	return self.setting.UpdateExchangeInfo(settings.Binance, exInfo)
 }
 
-// ID() must return the exact string or else simulation will fail
+// ID must return the exact string or else simulation will fail
 func (self *Bittrex) ID() common.ExchangeID {
 	return common.ExchangeID("bittrex")
 }
@@ -139,15 +142,15 @@ func (self *Bittrex) TokenPairs() ([]common.TokenPair, error) {
 	for pair := range exInfo.GetData() {
 		pairIDs := strings.Split(string(pair), "-")
 		if len(pairIDs) != 2 {
-			return result, fmt.Errorf("PairID %s is malformed", string(pair))
+			return result, fmt.Errorf("Bittrex PairID %s is malformed", string(pair))
 		}
 		tok1, uErr := self.setting.GetTokenByID(pairIDs[0])
 		if uErr != nil {
-			return result, fmt.Errorf("cant get Token %s, %s", pairIDs[0], uErr)
+			return result, fmt.Errorf("Bittrex cant get Token %s, %s", pairIDs[0], uErr)
 		}
 		tok2, uErr := self.setting.GetTokenByID(pairIDs[1])
 		if uErr != nil {
-			return result, fmt.Errorf("cant get Token %s, %s", pairIDs[1], uErr)
+			return result, fmt.Errorf("Bittrex cant get Token %s, %s", pairIDs[1], uErr)
 		}
 		tokPair := common.TokenPair{
 			Base:  tok1,
@@ -398,11 +401,11 @@ func (self *Bittrex) FetchEBalanceData(timepoint uint64) (common.EBalanceEntry, 
 			// check if bittrex returned balance for all of the
 			// supported token.
 			// If it didn't, it is considered invalid
-			depositAddress, err := self.setting.GetDepositAddress(settings.Bittrex)
+			depositAddresses, err := self.setting.GetDepositAddresses(settings.Bittrex)
 			if err != nil {
 				return result, fmt.Errorf("Can't Get deposit addresses of Bittrex for validation (%s)", err)
 			}
-			if len(result.AvailableBalance) != len(depositAddress) {
+			if len(result.AvailableBalance) != len(depositAddresses) {
 				result.Valid = false
 				result.Error = "Bittrex didn't return balance for all supported tokens"
 			}

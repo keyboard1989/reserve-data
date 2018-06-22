@@ -14,8 +14,8 @@ type ExchangeStorage interface {
 	GetMinDeposit(ex ExchangeName) (common.ExchangesMinDeposit, error)
 	// StoreMinDeposit stores the minDeposit with exchangeName as key into database and return error if occur
 	StoreMinDeposit(ex ExchangeName, minDeposit common.ExchangesMinDeposit) error
-	// GetDepositAddress returns a map[tokenID]DepositAddress and error if occur
-	GetDepositAddress(ex ExchangeName) (common.ExchangeAddresses, error)
+	// GetDepositAddresses returns a map[tokenID]DepositAddress and error if occur
+	GetDepositAddresses(ex ExchangeName) (common.ExchangeAddresses, error)
 	// StoreDepositAddress stores the depositAddress with exchangeName as key into database and
 	// return error if occur
 	StoreDepositAddress(ex ExchangeName, addrs common.ExchangeAddresses) error

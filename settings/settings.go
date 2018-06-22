@@ -21,7 +21,7 @@ func WithHandleEmptyToken(pathJSON string) SettingOption {
 			} else {
 				log.Printf("Setting Init: Token DB is empty, attempt to load token from file")
 			}
-			if err = setting.LoadTokenFromFile(pathJSON); err != nil {
+			if err = setting.loadTokenFromFile(pathJSON); err != nil {
 				log.Printf("Setting Init: Can not load Token from file: %s, Token DB is needed to be updated manually", err.Error())
 			}
 		}
@@ -39,7 +39,7 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 			} else {
 				log.Printf("Setting Init: Address DB is empty, attempt to load address from file")
 			}
-			if err = setting.LoadAddressFromFile(pathJSON); err != nil {
+			if err = setting.loadAddressFromFile(pathJSON); err != nil {
 				log.Printf("Setting Init: Can not load Address from file: %s, address DB is needed to be updated manually", err.Error())
 			}
 		}
@@ -50,7 +50,7 @@ func WithHandleEmptyAddress(pathJSON string) SettingOption {
 // if the fee database is empty
 func WithHandleEmptyFee(pathJSON string) SettingOption {
 	return func(setting *Settings) {
-		if err := setting.LoadFeeFromFile(pathJSON); err != nil {
+		if err := setting.loadFeeFromFile(pathJSON); err != nil {
 			log.Printf("WARNING: Setting Init: cannot load Fee from file: %s, Fee is needed to be updated manually", err.Error())
 		}
 	}
@@ -60,7 +60,7 @@ func WithHandleEmptyFee(pathJSON string) SettingOption {
 // if the Mindeposit database is empty
 func WithHandleEmptyMinDeposit(pathJSON string) SettingOption {
 	return func(setting *Settings) {
-		if err := setting.LoadMinDepositFromFile(pathJSON); err != nil {
+		if err := setting.loadMinDepositFromFile(pathJSON); err != nil {
 			log.Printf("WARNING: Setting Init: cannot load MinDeposit from file: %s, Fee is needed to be updated manually", err.Error())
 		}
 	}
@@ -70,7 +70,7 @@ func WithHandleEmptyMinDeposit(pathJSON string) SettingOption {
 // if the DepositAddress database is empty
 func WithHandleEmptyDepositAddress(pathJSON string) SettingOption {
 	return func(setting *Settings) {
-		if err := setting.LoadDepositAddressFromFile(pathJSON); err != nil {
+		if err := setting.loadDepositAddressFromFile(pathJSON); err != nil {
 			log.Printf("WARNING: Setting Init: cannot load DepositAddress from file: %s, Fee is needed to be updated manually", err.Error())
 		}
 	}
@@ -80,7 +80,7 @@ func WithHandleEmptyDepositAddress(pathJSON string) SettingOption {
 // it will return error if occur
 func WithHandleEmptyExchangeInfo() SettingOption {
 	return func(setting *Settings) {
-		if err := setting.HandleEmptyExchangeInfo(); err != nil {
+		if err := setting.handleEmptyExchangeInfo(); err != nil {
 			log.Panicf("Setting Init: cannot init Exchange infor %s, this will stop the core funcion", err.Error())
 		}
 	}

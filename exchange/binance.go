@@ -1,6 +1,7 @@
 package exchange
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/big"
@@ -27,7 +28,7 @@ type Binance struct {
 }
 
 func (self *Binance) TokenAddresses() (map[string]ethereum.Address, error) {
-	addresses, err := self.setting.GetDepositAddress(settings.Binance)
+	addresses, err := self.setting.GetDepositAddresses(settings.Binance)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +45,7 @@ func (self *Binance) Address(token common.Token) (ethereum.Address, bool) {
 	liveAddress, err := self.interf.GetDepositAddress(token.ID)
 	if err != nil || liveAddress.Address == "" {
 		log.Printf("WARNING: Get Binance live deposit address for token %s failed: err: (%v) or the address repplied is empty . Use the currently available address instead", token.ID, err)
-		addrs, uErr := self.setting.GetDepositAddress(settings.Binance)
+		addrs, uErr := self.setting.GetDepositAddresses(settings.Binance)
 		if uErr != nil {
 			log.Printf("WARNING: get address of token %s in Binance exchange failed:(%s), it will be considered as not supported", token.ID, err.Error())
 			return ethereum.Address{}, false
@@ -134,6 +135,9 @@ func (self *Binance) UpdatePairsPrecision() error {
 	if err != nil {
 		return fmt.Errorf("Can't get Exchange Info for Binance from persistent storage. (%s)", err)
 	}
+	if exInfo == nil {
+		return errors.New("Exchange info of Binance is nil")
+	}
 	for pair := range exInfo.GetData() {
 		self.UpdatePrecisionLimit(pair, symbols, &exInfo)
 	}
@@ -160,7 +164,7 @@ func (self *Binance) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 	return self.setting.GetMinDeposit(settings.Binance)
 }
 
-// ID() must return the exact string or else simulation will fail
+// ID must return the exact string or else simulation will fail
 func (self *Binance) ID() common.ExchangeID {
 	return common.ExchangeID("binance")
 }
@@ -174,15 +178,15 @@ func (self *Binance) TokenPairs() ([]common.TokenPair, error) {
 	for pair := range exInfo.GetData() {
 		pairIDs := strings.Split(string(pair), "-")
 		if len(pairIDs) != 2 {
-			return result, fmt.Errorf("PairID %s is malformed", string(pair))
+			return result, fmt.Errorf("Binance PairID %s is malformed", string(pair))
 		}
 		tok1, uErr := self.setting.GetTokenByID(pairIDs[0])
 		if uErr != nil {
-			return result, fmt.Errorf("cant get Token %s, %s", pairIDs[0], uErr)
+			return result, fmt.Errorf("Binance cant get Token %s, %s", pairIDs[0], uErr)
 		}
 		tok2, uErr := self.setting.GetTokenByID(pairIDs[1])
 		if uErr != nil {
-			return result, fmt.Errorf("cant get Token %s, %s", pairIDs[1], uErr)
+			return result, fmt.Errorf("Binance cant get Token %s, %s", pairIDs[1], uErr)
 		}
 		tokPair := common.TokenPair{
 			Base:  tok1,
@@ -403,7 +407,7 @@ func (self *Binance) FetchOnePairTradeHistory(
 	fromID, _ := self.storage.GetLastIDTradeHistory("binance", tokenPair)
 	resp, err := self.interf.GetAccountTradeHistory(pair.Base, pair.Quote, fromID)
 	if err != nil {
-		log.Printf("Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
+		log.Printf("Binance Cannot fetch data for pair %s%s: %s", pair.Base.ID, pair.Quote.ID, err.Error())
 	}
 	pairString := pair.PairID()
 	for _, trade := range resp {
@@ -433,7 +437,7 @@ func (self *Binance) FetchTradeHistory() {
 			data := sync.Map{}
 			pairs, err := self.TokenPairs()
 			if err != nil {
-				log.Printf("Get Token pairs setting failed (%s)", err.Error())
+				log.Printf("Binance Get Token pairs setting failed (%s)", err.Error())
 				continue
 			}
 			wait := sync.WaitGroup{}
@@ -453,7 +457,7 @@ func (self *Binance) FetchTradeHistory() {
 				return true
 			})
 			if err := self.storage.StoreTradeHistory(result); err != nil {
-				log.Printf("Store trade history error: %s", err.Error())
+				log.Printf("Binance Store trade history error: %s", err.Error())
 			}
 			<-t.C
 		}
@@ -480,7 +484,7 @@ func (self *Binance) DepositStatus(id common.ActivityID, txHash, currency string
 				}
 			}
 		}
-		log.Printf("Deposit is not found in deposit list returned from Binance. This might cause by wrong start/end time, please check again.")
+		log.Printf("Binance Deposit is not found in deposit list returned from Binance. This might cause by wrong start/end time, please check again.")
 		return "", nil
 	}
 }
@@ -501,7 +505,7 @@ func (self *Binance) WithdrawStatus(id, currency string, amount float64, timepoi
 				}
 			}
 		}
-		log.Printf("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
+		log.Printf("Binance Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from binance and activity ID are not consistently designed")
 		return "", "", nil
 	}
 }

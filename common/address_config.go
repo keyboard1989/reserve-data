@@ -22,4 +22,30 @@ type Addresses struct {
 	IntermediateOperator ethereum.Address              `json:"intermediate_operator"`
 }
 
+func NewAddresses(
+	Tokens map[string]TokenInfo,
+	Exchanges map[ExchangeID]TokenAddresses,
+	WrapperAddress ethereum.Address,
+	PricingAddress ethereum.Address,
+	ReserveAddress ethereum.Address,
+	FeeBurnerAddress ethereum.Address,
+	NetworkAddress ethereum.Address,
+	PricingOperator ethereum.Address,
+	DepositOperator ethereum.Address,
+	IntermediateOperator ethereum.Address,
+) *Addresses {
+	return &Addresses{
+		Tokens,
+		Exchanges,
+		WrapperAddress,
+		PricingAddress,
+		ReserveAddress,
+		FeeBurnerAddress,
+		NetworkAddress,
+		PricingOperator,
+		DepositOperator,
+		IntermediateOperator,
+	}
+}
+
 type TokenAddresses map[string]ethereum.Address

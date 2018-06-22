@@ -133,18 +133,18 @@ func (self *Blockchain) GetAddresses() (*common.Addresses, error) {
 		return nil, err
 	}
 	opAddrs := self.OperatorAddresses()
-	return &common.Addresses{
-		Tokens:               tokens,
-		Exchanges:            exs,
-		WrapperAddress:       wrapperAddr,
-		PricingAddress:       pricingAddr,
-		ReserveAddress:       reserveAddr,
-		FeeBurnerAddress:     burnerAddr,
-		NetworkAddress:       networkAddr,
-		PricingOperator:      opAddrs[PRICING_OP],
-		DepositOperator:      opAddrs[DEPOSIT_OP],
-		IntermediateOperator: opAddrs[hbblockchain.HUOBI_OP],
-	}, nil
+	return common.NewAddresses(
+		tokens,
+		exs,
+		wrapperAddr,
+		pricingAddr,
+		reserveAddr,
+		burnerAddr,
+		networkAddr,
+		opAddrs[PRICING_OP],
+		opAddrs[DEPOSIT_OP],
+		opAddrs[hbblockchain.HUOBI_OP],
+	), nil
 }
 
 func (self *Blockchain) LoadAndSetTokenIndices(tokenAddrs []ethereum.Address) error {

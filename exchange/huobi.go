@@ -35,7 +35,7 @@ func (self *Huobi) MarshalText() (text []byte, err error) {
 }
 
 func (self *Huobi) TokenAddresses() (map[string]ethereum.Address, error) {
-	addrs, err := self.setting.GetDepositAddress(settings.Huobi)
+	addrs, err := self.setting.GetDepositAddresses(settings.Huobi)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (self *Huobi) RealDepositAddress(tokenID string) (ethereum.Address, error) 
 	liveAddress, err := self.interf.GetDepositAddress(tokenID)
 	if err != nil || liveAddress.Address == "" {
 		log.Printf("WARNING: Get Huobi live deposit address for token %s failed: (%v) or the replied address is empty. Check the currently available address instead", tokenID, err)
-		addrs, uErr := self.setting.GetDepositAddress(settings.Huobi)
+		addrs, uErr := self.setting.GetDepositAddresses(settings.Huobi)
 		if uErr != nil {
 			return ethereum.Address{}, uErr
 		}
@@ -114,6 +114,9 @@ func (self *Huobi) UpdatePairsPrecision() error {
 	if err != nil {
 		return fmt.Errorf("INFO: Can't get Exchange Info for Huobi from persistent storage (%s)", err)
 	}
+	if exInfo == nil {
+		return errors.New("Exchange info of Huobi is nil")
+	}
 	for pair := range exInfo.GetData() {
 		self.UpdatePrecisionLimit(pair, exchangeInfo, &exInfo)
 	}
@@ -141,7 +144,7 @@ func (self *Huobi) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 	return self.setting.GetMinDeposit(settings.Huobi)
 }
 
-// ID() must return the exact string or else simulation will fail
+// ID must return the exact string or else simulation will fail
 func (self *Huobi) ID() common.ExchangeID {
 	return common.ExchangeID("huobi")
 }
@@ -155,15 +158,15 @@ func (self *Huobi) TokenPairs() ([]common.TokenPair, error) {
 	for pair := range exInfo.GetData() {
 		pairIDs := strings.Split(string(pair), "-")
 		if len(pairIDs) != 2 {
-			return result, fmt.Errorf("PairID %s is malformed", string(pair))
+			return result, fmt.Errorf("Huobi PairID %s is malformed", string(pair))
 		}
 		tok1, uErr := self.setting.GetTokenByID(pairIDs[0])
 		if uErr != nil {
-			return result, fmt.Errorf("cant get Token %s, %s", pairIDs[0], uErr)
+			return result, fmt.Errorf("Huobi cant get Token %s, %s", pairIDs[0], uErr)
 		}
 		tok2, uErr := self.setting.GetTokenByID(pairIDs[1])
 		if uErr != nil {
-			return result, fmt.Errorf("cant get Token %s, %s", pairIDs[1], uErr)
+			return result, fmt.Errorf("Huobi cant get Token %s, %s", pairIDs[1], uErr)
 		}
 		tokPair := common.TokenPair{
 			Base:  tok1,
@@ -217,7 +220,7 @@ func (self *Huobi) Trade(tradeType string, base common.Token, quote common.Token
 		orderID,
 	)
 	if err != nil {
-		log.Printf("Query order error: %s", err.Error())
+		log.Printf("Huobi Query order error: %s", err.Error())
 	}
 	return result.OrderID, done, remaining, finished, err
 }
@@ -243,7 +246,7 @@ func (self *Huobi) CancelOrder(id, base, quote string) error {
 		return err
 	}
 	if result.Status != "ok" {
-		return errors.New("Couldn't cancel order id " + id)
+		return errors.New("Huobi Couldn't cancel order id " + id)
 	}
 	return nil
 }
@@ -531,10 +534,10 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 
 		status, blockno, err := self.blockchain.TxStatus(ethereum.HexToHash(tx1Hash))
 		if err != nil {
-			log.Printf("Can not get TX status (%s)", err.Error())
+			log.Printf("Huobi Can not get TX status (%s)", err.Error())
 			return "", nil
 		}
-		log.Printf("Status for Tx1 was %s at block %d ", status, blockno)
+		log.Printf("Huobi Status for Tx1 was %s at block %d ", status, blockno)
 		if status == "mined" {
 			//if it is mined, send 2nd tx.
 			log.Printf("Found a new deposit status, which deposit %f %s. Procceed to send it to Huobi", sentAmount, currency)
@@ -549,7 +552,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			}
 			tx2, err := self.Send2ndTransaction(sentAmount, token, exchangeAddress)
 			if err != nil {
-				log.Printf("Trying to send 2nd tx failed, error: %s. Will retry next time", err.Error())
+				log.Printf("Huobi Trying to send 2nd tx failed, error: %s. Will retry next time", err.Error())
 				return "", nil
 			}
 			//store tx2 to pendingIntermediateTx
@@ -577,7 +580,7 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 		return "", err
 	}
 	if status == "mined" {
-		log.Println("2nd Transaction is mined. Processed to store it and check the Huobi Deposit history")
+		log.Println("Huobi 2nd Transaction is mined. Processed to store it and check the Huobi Deposit history")
 		data = common.NewTXEntry(
 			tx2Entry.Hash,
 			self.Name(),
@@ -588,18 +591,18 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			common.GetTimestamp(),
 		)
 		if err = self.storage.StorePendingIntermediateTx(id, data); err != nil {
-			log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
+			log.Printf("Huobi Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 			return "", nil
 		}
 		tokens, uErr := self.setting.GetAllTokens()
 		if uErr != nil {
-			log.Printf("ERROR: Can not get list of tokens from setting (%s)", uErr)
+			log.Printf("Huobi ERROR: Can not get list of tokens from setting (%s)", uErr)
 			return "", uErr
 		}
 		var deposits HuobiDeposits
 		deposits, err = self.interf.DepositHistory(tokens)
 		if err != nil || deposits.Status != "ok" {
-			log.Printf("Getting deposit history from huobi failed, error: %v, status: %s", err, deposits.Status)
+			log.Printf("Huobi Getting deposit history from huobi failed, error: %v, status: %s", err, deposits.Status)
 			return "", nil
 		}
 		//check tx2 deposit status from Huobi
@@ -618,22 +621,22 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 					)
 
 					if err = self.storage.StoreIntermediateTx(id, data); err != nil {
-						log.Printf("Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
+						log.Printf("Huobi Trying to store intermediate tx to huobi storage, error: %s. Ignore it and try later", err.Error())
 						return "", nil
 					}
 
 					if err = self.storage.RemovePendingIntermediateTx(id); err != nil {
-						log.Printf("Trying to remove pending intermediate tx from huobi storage, error: %s. Ignore it and treat it like it is still pending", err.Error())
+						log.Printf("Huobi Trying to remove pending intermediate tx from huobi storage, error: %s. Ignore it and treat it like it is still pending", err.Error())
 						return "", nil
 					}
 					return "done", nil
 				}
 				//TODO : handle other states following https://github.com/huobiapi/API_Docs_en/wiki/REST_Reference#deposit-states
-				log.Printf("Tx %s is found but the status was not safe but %s", deposit.TxHash, deposit.State)
+				log.Printf("Huobi Tx %s is found but the status was not safe but %s", deposit.TxHash, deposit.State)
 				return "", nil
 			}
 		}
-		log.Printf("Deposit doesn't exist. Huobi hasn't recognized the deposit yet or in theory, you have more than %d deposits at the same time.", len(tokens)*2)
+		log.Printf("Huobi Deposit doesn't exist. Huobi hasn't recognized the deposit yet or in theory, you have more than %d deposits at the same time.", len(tokens)*2)
 		return "", nil
 	} else if status == "failed" {
 		data = common.NewTXEntry(
@@ -661,20 +664,19 @@ func (self *Huobi) DepositStatus(id common.ActivityID, tx1Hash, currency string,
 			)
 
 			if err = self.storage.StoreIntermediateTx(id, data); err != nil {
-				log.Printf("Trying to store intermediate tx failed, error: %s. Ignore it and treat it like it is still pending", err.Error())
+				log.Printf("Huobi Trying to store intermediate tx failed, error: %s. Ignore it and treat it like it is still pending", err.Error())
 				return "", nil
 			}
 
 			if err = self.storage.RemovePendingIntermediateTx(id); err != nil {
-				log.Printf("Trying to remove pending intermediate tx from huobi storage, error: %s. Ignore it and treat it like it is still pending", err.Error())
+				log.Printf("Huobi Trying to remove pending intermediate tx from huobi storage, error: %s. Ignore it and treat it like it is still pending", err.Error())
 				return "", nil
 			}
-			log.Printf("The tx is not found for over 15mins, it is considered as lost and the deposit failed")
+			log.Printf("Huobi The tx is not found for over 15mins, it is considered as lost and the deposit failed")
 			return "failed", nil
 		}
 		return "", nil
 	}
-	log.Printf("should not be here")
 	return "", nil
 }
 
@@ -683,13 +685,13 @@ func (self *Huobi) WithdrawStatus(
 	withdrawID, _ := strconv.ParseUint(id, 10, 64)
 	tokens, err := self.setting.GetAllTokens()
 	if err != nil {
-		return "", "", fmt.Errorf("Can't get list of token from setting (%s)", err)
+		return "", "", fmt.Errorf("Huobi Can't get list of token from setting (%s)", err)
 	}
 	withdraws, err := self.interf.WithdrawHistory(tokens)
 	if err != nil {
 		return "", "", nil
 	}
-	log.Printf("Withdrawal id: %d", withdrawID)
+	log.Printf("Huobi Withdrawal id: %d", withdrawID)
 	for _, withdraw := range withdraws.Data {
 		if withdraw.TxID == withdrawID {
 			if withdraw.State == "confirmed" {
@@ -698,7 +700,7 @@ func (self *Huobi) WithdrawStatus(
 			return "", withdraw.TxHash, nil
 		}
 	}
-	return "", "", errors.New("Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from huobi and activity ID are not consistently designed")
+	return "", "", errors.New("Huobi Withdrawal doesn't exist. This shouldn't happen unless tx returned from withdrawal from huobi and activity ID are not consistently designed")
 }
 
 func (self *Huobi) OrderStatus(id string, base, quote string) (string, error) {

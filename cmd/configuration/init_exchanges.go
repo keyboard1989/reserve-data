@@ -61,7 +61,7 @@ func NewExchangePool(
 	blockchain *blockchain.BaseBlockchain,
 	kyberENV string, setting *settings.Settings) (*ExchangePool, error) {
 	exchanges := map[common.ExchangeID]interface{}{}
-	exparams := settings.RunningExchange()
+	exparams := settings.RunningExchanges()
 	for _, exparam := range exparams {
 		switch exparam {
 		case "stable_exchange":
@@ -86,9 +86,9 @@ func NewExchangePool(
 			if err != nil {
 				return nil, fmt.Errorf("Can not create exchange Bittrex: (%s)", err.Error())
 			}
-			addrs, err := setting.GetDepositAddress(settings.Bittrex)
+			addrs, err := setting.GetDepositAddresses(settings.Bittrex)
 			if err != nil {
-				log.Printf("INFO: Can't get Bittrex Deposit Addresses from Storage (%s), attempt to init it from Bittrex Endpoint", err.Error())
+				log.Printf("INFO: Can't get Bittrex Deposit Addresses from Storage (%s).", err.Error())
 				addrs = make(common.ExchangeAddresses)
 			}
 			wait := sync.WaitGroup{}
@@ -116,9 +116,9 @@ func NewExchangePool(
 			if err != nil {
 				return nil, fmt.Errorf("Can not create exchange Binance: (%s)", err.Error())
 			}
-			addrs, err := setting.GetDepositAddress(settings.Binance)
+			addrs, err := setting.GetDepositAddresses(settings.Binance)
 			if err != nil {
-				log.Printf("INFO: Can't get Binance Deposit Addresses from Storage (%s), attempt to init it from Binance Endpoint", err.Error())
+				log.Printf("INFO: Can't get Binance Deposit Addresses from Storage (%s)", err.Error())
 				addrs = make(common.ExchangeAddresses)
 			}
 			wait := sync.WaitGroup{}
@@ -152,9 +152,9 @@ func NewExchangePool(
 			if err != nil {
 				return nil, fmt.Errorf("Can not create exchange Huobi: (%s)", err.Error())
 			}
-			addrs, err := setting.GetDepositAddress(settings.Huobi)
+			addrs, err := setting.GetDepositAddresses(settings.Huobi)
 			if err != nil {
-				log.Printf("INFO: Can't get Huobi Deposit Addresses from Storage (%s), attempt to init it from Huobi Endpoint", err.Error())
+				log.Printf("INFO: Can't get Huobi Deposit Addresses from Storage (%s)", err.Error())
 				addrs = make(common.ExchangeAddresses)
 			}
 			wait := sync.WaitGroup{}

@@ -501,7 +501,7 @@ func checkZeroValue(buy, sell *big.Int) int {
 
 func makeTokenPair(base, quote common.Token) common.TokenPair {
 	if base.ID == "ETH" {
-		return common.TokenPair{Base: quote, Quote: base}
+		return common.NewTokenPair(quote, base)
 	}
-	return common.TokenPair{Base: base, Quote: quote}
+	return common.NewTokenPair(base, quote)
 }

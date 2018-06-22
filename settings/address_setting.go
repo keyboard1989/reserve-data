@@ -83,7 +83,7 @@ func NewAddressSetting(addressStorage AddressStorage) (*AddressSetting, error) {
 	return &AddressSetting{addressStorage}, nil
 }
 
-func (setting *Settings) LoadAddressFromFile(path string) error {
+func (setting *Settings) loadAddressFromFile(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err

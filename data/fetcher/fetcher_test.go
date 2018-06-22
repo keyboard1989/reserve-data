@@ -2,7 +2,6 @@ package fetcher
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -91,7 +90,7 @@ func TestExchangeDown(t *testing.T) {
 
 	fstorage, err := storage.NewBoltStorage(testFetcherStoragePath)
 	if err != nil {
-		log.Fatal(err.Error())
+		t.Fatal(err.Error())
 	}
 	defer func() {
 		if rErr := os.RemoveAll(tmpDir); rErr != nil {
@@ -104,24 +103,24 @@ func TestExchangeDown(t *testing.T) {
 	}
 	boltSettingStorage, err := settingstorage.NewBoltSettingStorage(filepath.Join(tmpDir, "setting.db"))
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	tokenSetting, err := settings.NewTokenSetting(boltSettingStorage)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	addressSetting, err := settings.NewAddressSetting(boltSettingStorage)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	exchangeSetting, err := settings.NewExchangeSetting(boltSettingStorage)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 
 	setting, err := settings.NewSetting(tokenSetting, addressSetting, exchangeSetting)
 	if err != nil {
-		log.Fatal(err)
+		t.Fatal(err)
 	}
 	fetcher := NewFetcher(fstorage, fstorage, &world.TheWorld{}, runner, true, setting)
 

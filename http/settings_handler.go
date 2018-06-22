@@ -172,7 +172,7 @@ func (self *HTTPServer) UpdateExchangeMinDeposit(c *gin.Context) {
 	name := postForm.Get("name")
 	exName, ok := settings.ExchangTypeValues()[name]
 	if !ok {
-		httputil.ResponseFailure(c, httputil.WithError(fmt.Errorf("Exchange %s is not in current deployment", name)))
+		httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("Exchange %s is not in current deployment", name)))
 		return
 	}
 	data := []byte(postForm.Get("data"))
@@ -195,7 +195,7 @@ func (self *HTTPServer) UpdateDepositAddress(c *gin.Context) {
 	name := postForm.Get("name")
 	exName, ok := settings.ExchangTypeValues()[name]
 	if !ok {
-		httputil.ResponseFailure(c, httputil.WithError(fmt.Errorf("Exchange %s is not in current deployment", name)))
+		httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("Exchange %s is not in current deployment", name)))
 		return
 	}
 	data := []byte(postForm.Get("data"))
@@ -218,7 +218,7 @@ func (self *HTTPServer) UpdateExchangeInfo(c *gin.Context) {
 	name := postForm.Get("name")
 	exName, ok := settings.ExchangTypeValues()[name]
 	if !ok {
-		httputil.ResponseFailure(c, httputil.WithError(fmt.Errorf("Exchange %s is not in current deployment", name)))
+		httputil.ResponseFailure(c, httputil.WithReason(fmt.Sprintf("Exchange %s is not in current deployment", name)))
 		return
 	}
 	data := []byte(postForm.Get("data"))

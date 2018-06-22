@@ -52,15 +52,15 @@ func (setting *Settings) UpdateMinDeposit(exName ExchangeName, minDeposit common
 	return setting.Exchange.Storage.StoreMinDeposit(exName, currExMinDep)
 }
 
-// GetDepositAddress returns a map[tokenID]DepositAddress and error if occur
-func (setting *Settings) GetDepositAddress(ex ExchangeName) (common.ExchangeAddresses, error) {
-	return setting.Exchange.Storage.GetDepositAddress(ex)
+// GetDepositAddresses returns a map[tokenID]DepositAddress and error if occur
+func (setting *Settings) GetDepositAddresses(ex ExchangeName) (common.ExchangeAddresses, error) {
+	return setting.Exchange.Storage.GetDepositAddresses(ex)
 }
 
 // Update get the deposit Addresses with exchangeName as key, change the desired deposit address
 // then store into database and return error if occur
 func (setting *Settings) UpdateDepositAddress(exName ExchangeName, addrs common.ExchangeAddresses) error {
-	currAddrs, err := setting.GetDepositAddress(exName)
+	currAddrs, err := setting.GetDepositAddresses(exName)
 	if err != nil {
 		log.Printf("UpdateDepositAddress: Can't get current deposit address of %s (%s), overwrite it with new data", exName.String(), err)
 		currAddrs = make(common.ExchangeAddresses)

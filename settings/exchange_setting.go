@@ -22,7 +22,7 @@ const (
 	Huobi
 	StableExchange
 )
-const exchange_env string = "KYBER_EXCHANGES"
+const exchangeEnv string = "KYBER_EXCHANGES"
 
 type ExchangeFeesConfig struct {
 	Exchanges map[string]common.ExchangeFees `json:"exchanges"`
@@ -35,8 +35,8 @@ var exchangeNameValue = map[string]ExchangeName{
 	"stable_exchange": StableExchange,
 }
 
-func RunningExchange() []string {
-	exchangesStr, ok := os.LookupEnv(exchange_env)
+func RunningExchanges() []string {
+	exchangesStr, ok := os.LookupEnv(exchangeEnv)
 	if !ok {
 		log.Print("WARNING: core is running without exchange")
 		return nil
@@ -57,7 +57,7 @@ func NewExchangeSetting(exchangeStorage ExchangeStorage) (*ExchangeSetting, erro
 	return &ExchangeSetting{exchangeStorage}, nil
 }
 
-func (setting *Settings) LoadFeeFromFile(path string) error {
+func (setting *Settings) loadFeeFromFile(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func (setting *Settings) LoadFeeFromFile(path string) error {
 	if err = json.Unmarshal(data, &exFeeConfig); err != nil {
 		return err
 	}
-	runningExs := RunningExchange()
+	runningExs := RunningExchanges()
 
 	for _, ex := range runningExs {
 		//Check if the exchange is in current code deployment.
@@ -95,7 +95,7 @@ type ExchangesMinDepositConfig struct {
 	Exchanges map[string]common.ExchangesMinDeposit `json:"exchanges"`
 }
 
-func (setting *Settings) LoadMinDepositFromFile(path string) error {
+func (setting *Settings) loadMinDepositFromFile(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (setting *Settings) LoadMinDepositFromFile(path string) error {
 	if err = json.Unmarshal(data, &exMinDepositConfig); err != nil {
 		return err
 	}
-	runningExs := RunningExchange()
+	runningExs := RunningExchanges()
 	for _, ex := range runningExs {
 		//Check if the exchange is in current code deployment.
 		exName, ok := exchangeNameValue[ex]
@@ -139,7 +139,7 @@ type AddressDepositConfig struct {
 	Exchanges map[string]exchangeDepositAddress `json:"exchanges"`
 }
 
-func (setting *Settings) LoadDepositAddressFromFile(path string) error {
+func (setting *Settings) loadDepositAddressFromFile(path string) error {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -148,7 +148,7 @@ func (setting *Settings) LoadDepositAddressFromFile(path string) error {
 	if err = json.Unmarshal(data, &exAddressConfig); err != nil {
 		return err
 	}
-	runningExs := RunningExchange()
+	runningExs := RunningExchanges()
 	for _, ex := range runningExs {
 		//Check if the exchange is in current code deployment.
 		exName, ok := exchangeNameValue[ex]
@@ -156,7 +156,7 @@ func (setting *Settings) LoadDepositAddressFromFile(path string) error {
 			return fmt.Errorf("Exchange %s is in KYBER_EXCHANGES, but not avail in current deployment", ex)
 		}
 		//Check if the current database has a record for such exchange
-		if _, err := setting.Exchange.Storage.GetDepositAddress(exName); err != nil {
+		if _, err := setting.Exchange.Storage.GetDepositAddresses(exName); err != nil {
 			log.Printf("Exchange %s is in KYBER_EXCHANGES but can't load DepositAddress in Database (%s). atempt to load it from config file", exName.String(), err.Error())
 			//Check if the config file has config for such exchange
 			exchangeAddressStr, ok := exAddressConfig.Exchanges[ex]
@@ -181,8 +181,8 @@ func convertToAddressMap(data exchangeDepositAddress) common.ExchangeAddresses {
 	return result
 }
 
-func (setting *Settings) HandleEmptyExchangeInfo() error {
-	runningExs := RunningExchange()
+func (setting *Settings) handleEmptyExchangeInfo() error {
+	runningExs := RunningExchanges()
 	for _, ex := range runningExs {
 		exName, ok := exchangeNameValue[ex]
 		if !ok {
@@ -204,7 +204,7 @@ func (setting *Settings) HandleEmptyExchangeInfo() error {
 
 func (setting *Settings) NewExchangeInfo(exName ExchangeName) (common.ExchangeInfo, error) {
 	result := common.NewExchangeInfo()
-	addrs, err := setting.GetDepositAddress(exName)
+	addrs, err := setting.GetDepositAddresses(exName)
 	if err != nil {
 		return result, err
 	}
