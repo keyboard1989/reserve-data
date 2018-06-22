@@ -61,9 +61,9 @@ func (self *StableEx) GetFee() (common.ExchangeFees, error) {
 	return self.setting.GetFee(settings.StableExchange)
 }
 
-// ID() must return the exact string or else simulation will fail
+// ID must return the exact string or else simulation will fail
 func (self *StableEx) ID() common.ExchangeID {
-	return common.ExchangeID("stable_exchange")
+	return common.ExchangeID(settings.StableExchange.String())
 }
 
 func (self *StableEx) TokenPairs() ([]common.TokenPair, error) {

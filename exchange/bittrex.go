@@ -130,7 +130,7 @@ func (self *Bittrex) UpdatePairsPrecision() error {
 
 // ID must return the exact string or else simulation will fail
 func (self *Bittrex) ID() common.ExchangeID {
-	return common.ExchangeID("bittrex")
+	return common.ExchangeID(settings.Bittrex.String())
 }
 
 func (self *Bittrex) TokenPairs() ([]common.TokenPair, error) {

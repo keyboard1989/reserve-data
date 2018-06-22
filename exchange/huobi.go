@@ -146,7 +146,7 @@ func (self *Huobi) GetMinDeposit() (common.ExchangesMinDeposit, error) {
 
 // ID must return the exact string or else simulation will fail
 func (self *Huobi) ID() common.ExchangeID {
-	return common.ExchangeID("huobi")
+	return common.ExchangeID(settings.Huobi.String())
 }
 
 func (self *Huobi) TokenPairs() ([]common.TokenPair, error) {
